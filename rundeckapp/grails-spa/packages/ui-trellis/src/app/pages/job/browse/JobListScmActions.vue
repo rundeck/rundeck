@@ -5,7 +5,7 @@
       <i class="glyphicon glyphicon-circle-arrow-right" />
       {{ $t("scm.export.actions.title") }}
     </li>
-    <li v-for="action in scmExport?.actions">
+    <li v-for="action in scmExport?.actions" :key="action.id">
       <a
         :href="jobPageStore.createProjectScmActionHref(action.id, 'export')"
         :title="action.description"
@@ -20,7 +20,7 @@
       <i class="glyphicon glyphicon-circle-arrow-left" />
       {{ $t("scm.import.actions.title") }}
     </li>
-    <li v-for="action in scmImport?.actions">
+    <li v-for="action in scmImport?.actions" :key="action.id">
       <a
         :href="jobPageStore.createProjectScmActionHref(action.id, 'import')"
         :title="action.description"

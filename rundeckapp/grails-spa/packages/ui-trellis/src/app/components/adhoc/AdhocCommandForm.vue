@@ -70,6 +70,7 @@
             </ul>
           </span>
 
+          <!-- eslint-disable vuejs-accessibility/no-autofocus -- intentional initial focus on the command input -->
           <input
             id="runFormExec"
             ref="commandInputRef"
@@ -86,6 +87,7 @@
             @input="handleCommandInput"
             @keypress="handleKeyPress"
           />
+          <!-- eslint-enable vuejs-accessibility/no-autofocus -->
 
           <span class="input-group-btn">
             <button

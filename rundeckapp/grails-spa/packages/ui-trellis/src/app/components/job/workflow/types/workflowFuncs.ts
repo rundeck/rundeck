@@ -53,7 +53,7 @@ export function editCommandsToStepsData(editData: StepsEditData): StepsData {
 }
 
 export function commandToEditConfig(cmd: StepData): CommandEditData {
-  let editData = {
+  const editData = {
     description: cmd.description,
     id: mkid(),
     filters: cmd.plugins?.LogFilter || [],
@@ -109,7 +109,7 @@ export function mkid() {
 }
 
 export function editToCommandConfig(plugin: EditStepData): StepData {
-  let data = {
+  const data = {
     description: plugin.description,
     nodeStep: plugin.nodeStep,
     jobref: plugin.jobref,
@@ -120,14 +120,14 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     };
   }
   if (plugin.type === "script-inline") {
-    let scriptInline = plugin.config as ScriptInlinePluginConfig;
+    const scriptInline = plugin.config as ScriptInlinePluginConfig;
     data.script = scriptInline.adhocLocalString;
     data.args = scriptInline.argString;
     data.scriptInterpreter = scriptInline.scriptInterpreter;
     data.interpreterArgsQuoted = scriptInline.interpreterArgsQuoted;
     data.fileExtension = scriptInline.fileExtension;
   } else if (plugin.type === "script-file-url") {
-    let scriptFile = plugin.config as ScriptFilePluginConfig;
+    const scriptFile = plugin.config as ScriptFilePluginConfig;
     if (scriptFile.adhocFilepath != null) {
       const isUrl = /^(https?|file):.*$/i.test(scriptFile.adhocFilepath);
       if (isUrl) {
@@ -142,7 +142,7 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     data.interpreterArgsQuoted = scriptFile.interpreterArgsQuoted;
     data.fileExtension = scriptFile.fileExtension;
   } else if (plugin.type === "exec-command") {
-    let commandExec = plugin.config as CommandExecPluginConfig;
+    const commandExec = plugin.config as CommandExecPluginConfig;
     data.exec = commandExec.adhocRemoteString;
   } else if (plugin.type) {
     data.type = plugin.type;

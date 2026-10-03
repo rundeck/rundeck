@@ -80,7 +80,7 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "Pagination",
+  name: "RdPagination",
   props: {
     modelValue: {
       type: Number,

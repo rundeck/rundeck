@@ -3,7 +3,7 @@
     <li class="divider"></li>
     <li class="dropdown-header">{{ $t("scm.export.plugin") }}</li>
 
-    <li v-for="action in exportActions">
+    <li v-for="action in exportActions" :key="action.id">
       <a :title="action.description" :href="scmActionHref(action.id, 'export')">
         {{ action.title }}
       </a>
@@ -28,7 +28,7 @@
     <li class="divider"></li>
     <li class="dropdown-header">{{ $t("scm.import.plugin") }}</li>
 
-    <li v-for="action in importActions">
+    <li v-for="action in importActions" :key="action.id">
       <a :title="action.description" :href="scmActionHref(action.id, 'import')">
         {{ action.title }}
       </a>

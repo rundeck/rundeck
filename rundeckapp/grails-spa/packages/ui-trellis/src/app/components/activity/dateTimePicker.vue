@@ -80,6 +80,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles third-party component internals -->
 <style lang="scss">
 .bs-date-picker {
   .btn-primary {

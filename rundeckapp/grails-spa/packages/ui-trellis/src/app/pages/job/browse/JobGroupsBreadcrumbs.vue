@@ -5,7 +5,7 @@
         <slot name="root">&larr;</slot>
       </a>
     </span>
-    <template v-for="(part, i) in parts">
+    <template v-for="(part, i) in parts" :key="i">
       <span v-if="i != 0" class="breadcrumb-separator job-breadcrumb-item">
         <slot name="separator">/</slot>
       </span>

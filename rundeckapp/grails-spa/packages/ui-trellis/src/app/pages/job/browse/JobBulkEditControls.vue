@@ -116,7 +116,7 @@
               </a>
             </li>
             <li class="divider"></li>
-            <li v-for="action in ['enable', 'disable']">
+            <li v-for="action in ['enable', 'disable']" :key="action">
               <a
                 :id="`bulk_${action}_schedules_action`"
                 role="button"
@@ -134,7 +134,7 @@
               </a>
             </li>
             <li class="divider"></li>
-            <li v-for="action in ['enable', 'disable']">
+            <li v-for="action in ['enable', 'disable']" :key="action">
               <a
                 :id="`bulk_${action}_execution_action`"
                 role="button"
@@ -211,7 +211,6 @@ export default defineComponent({
     CreateNewJobButton,
     UiSocket,
     JobListScmActions,
-    Notification,
   },
   props: {
     showControls: {

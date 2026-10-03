@@ -26,6 +26,7 @@
           <li v-for="plugin in pluginProviders" :key="plugin.name">
             <a
               role="button"
+              :aria-label="plugin.title"
               :data-plugin-type="plugin.name"
               @click="setOrchestratorType(plugin.name)"
             >
@@ -63,7 +64,7 @@
           </plugin-info>
         </span>
         <div>
-          <template v-for="(val, key) in updatedValue.config">
+          <template v-for="(val, key) in updatedValue.config" :key="key">
             <input
               type="hidden"
               :name="`orchestratorPlugin.${updatedValue.type}.config.${key}`"
@@ -90,22 +91,18 @@
   </div>
 </template>
 <script lang="ts">
-import InlineValidationErrors from "../../../components/form/InlineValidationErrors.vue";
 import { defineComponent, ref } from "vue";
 import type { PropType } from "vue";
 
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../../library/modules/pluginService";
-import ExtendedDescription from "../../../../library/components/utils/ExtendedDescription.vue";
 
 export default defineComponent({
   name: "OrchestratorEditor",
   components: {
-    InlineValidationErrors,
     PluginInfo,
     PluginConfig,
-    ExtendedDescription,
   },
   props: {
     modelValue: {

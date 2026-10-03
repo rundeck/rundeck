@@ -23,9 +23,9 @@
         :footer="false"
       >
         <key-storage-edit
+          v-model:upload-setting="uploadSetting"
           :project="project"
           :root-path="rootPath"
-          :upload-setting="uploadSetting"
           :storage-filter="storageFilter"
           @key-created="updateSelectedKey"
           @cancel-editing="handleCancelEditing"

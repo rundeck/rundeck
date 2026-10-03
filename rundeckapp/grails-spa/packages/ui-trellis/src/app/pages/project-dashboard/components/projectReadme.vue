@@ -15,7 +15,7 @@
 
 <script>
 export default {
-  name: "Readme",
+  name: "ProjectReadme",
   props: ["project"],
   data() {
     return {

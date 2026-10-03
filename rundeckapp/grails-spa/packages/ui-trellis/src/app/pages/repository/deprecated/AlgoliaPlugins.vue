@@ -28,40 +28,32 @@
                 <!-- <div class="omnisearch-filter--header" @click="toggleFilter()">
                 FILTER <font-awesome-icon :icon="[ 'fa', 'chevron-down' ]" class="chevron" :class="{ 'active': showFilter }" />
                 </div>-->
-                <transition name="slide-fade">
-                  <div class="omnisearch-filter--body card-content">
-                    <div class="body-inner row">
-                      <div class="body-title col-xs-12 col-sm-2">Support</div>
-                      <div
-                        class="body-results results-tags col-xs-12 col-sm-10"
-                      >
-                        <ais-refinement-list
-                          attribute="taxonomies.plugin_support_type"
-                          :transform-items="
-                            (items) =>
-                              items.sort((a, b) =>
-                                a.value.localeCompare(b.value),
-                              )
-                          "
-                        />
-                      </div>
-                    </div>
-                    <div class="columns body-inner">
-                      <div class="column is-one-fifth body-title">Types</div>
-                      <div class="column body-results results-types">
-                        <ais-refinement-list
-                          attribute="taxonomies.plugin_type"
-                          :transform-items="
-                            (items) =>
-                              items.sort((a, b) =>
-                                a.value.localeCompare(b.value),
-                              )
-                          "
-                        />
-                      </div>
+                <div class="omnisearch-filter--body card-content">
+                  <div class="body-inner row">
+                    <div class="body-title col-xs-12 col-sm-2">Support</div>
+                    <div class="body-results results-tags col-xs-12 col-sm-10">
+                      <ais-refinement-list
+                        attribute="taxonomies.plugin_support_type"
+                        :transform-items="
+                          (items) =>
+                            items.sort((a, b) => a.value.localeCompare(b.value))
+                        "
+                      />
                     </div>
                   </div>
-                </transition>
+                  <div class="columns body-inner">
+                    <div class="column is-one-fifth body-title">Types</div>
+                    <div class="column body-results results-types">
+                      <ais-refinement-list
+                        attribute="taxonomies.plugin_type"
+                        :transform-items="
+                          (items) =>
+                            items.sort((a, b) => a.value.localeCompare(b.value))
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -236,6 +228,7 @@ export default {
   },
 };
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles third-party component internals -->
 <style lang="scss">
 .ais-RefinementList-item {
   display: inline-block;

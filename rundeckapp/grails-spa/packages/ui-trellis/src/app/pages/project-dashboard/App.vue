@@ -14,10 +14,8 @@
 </template>
 
 <script>
-import projectDescription from "./components/description.vue";
 import projectReadme from "./components/projectReadme.vue";
 import activitySummary from "./components/activitySummary.vue";
-import activityList from "../../components/activity/activityList.vue";
 
 import { getRundeckContext } from "../../../library";
 
@@ -25,10 +23,8 @@ export default {
   name: "App",
   components: {
     // motd,
-    projectDescription,
     projectReadme,
     activitySummary,
-    activityList,
   },
   props: ["eventBus", "showDescription", "showReadme", "showSummary"],
   data() {
@@ -62,5 +58,3 @@ export default {
   },
 };
 </script>
-
-<style></style>

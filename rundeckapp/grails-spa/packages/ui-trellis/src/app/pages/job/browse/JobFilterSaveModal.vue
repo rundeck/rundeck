@@ -42,7 +42,7 @@ export default defineComponent({
     },
     error: {
       type: String,
-      default: false,
+      default: "",
     },
   },
   emits: ["save", "update:modelValue"],

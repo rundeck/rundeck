@@ -149,6 +149,7 @@
                 v-for="plugin in filteredPluginProviders"
                 :key="plugin.name"
                 href="#"
+                :aria-label="plugin.title"
                 class="list-group-item"
                 @click="addPlugin(plugin.name)"
               >
@@ -181,7 +182,6 @@
 import { defineComponent } from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "../../../library";
-import Expandable from "../../../library/components/utils/Expandable.vue";
 import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
@@ -212,7 +212,6 @@ export default defineComponent({
   components: {
     PluginInfo,
     PluginConfig,
-    Expandable,
   },
   props: {
     editMode: {
@@ -474,5 +473,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style></style>

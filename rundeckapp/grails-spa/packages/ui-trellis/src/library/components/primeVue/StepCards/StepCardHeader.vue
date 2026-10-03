@@ -96,7 +96,7 @@
           data-testid="step-card-header-more-btn"
           @click="handleMoreActions"
         />
-        <Menu ref="menu" id="overlay_menu" :model="menuItems" popup />
+        <PMenu ref="menu" id="overlay_menu" :model="menuItems" popup />
       </template>
     </div>
   </div>
@@ -112,7 +112,7 @@ import type PluginValidation from "../../../interfaces/PluginValidation";
 
 export default defineComponent({
   name: "StepCardHeader",
-  components: { Menu, PluginInfo, PtButton, Tag },
+  components: { PMenu: Menu, PluginInfo, PtButton, Tag },
   props: {
     pluginDetails: {
       type: Object,
@@ -217,6 +217,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
 .stepCardHeader {
   p,

@@ -9,56 +9,54 @@
       </p>
     </template>
     <ul class="list-unstyled">
-      <li
-        v-for="item in sortedGroups"
-        v-if="sortedGroups.length > 0"
-        :key="item.groupPath"
-      >
-        <browse-group-item
-          :key="item.groupPath"
-          :item="item"
-          :expanded="isExpanded(item.groupPath)"
-          :href="jobPageStore.jobPagePathHref(item.groupPath)"
-          @toggle-expanded="toggle(item.groupPath)"
-          @root-browse="rootBrowse(item.groupPath)"
-        >
-          <template
-            v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)"
-            #supplemental
+      <template v-if="sortedGroups.length > 0">
+        <li v-for="item in sortedGroups" :key="item.groupPath">
+          <browse-group-item
+            :key="item.groupPath"
+            :item="item"
+            :expanded="isExpanded(item.groupPath)"
+            :href="jobPageStore.jobPagePathHref(item.groupPath)"
+            @toggle-expanded="toggle(item.groupPath)"
+            @root-browse="rootBrowse(item.groupPath)"
           >
-            <btn
-              size="xs"
-              type="simple"
-              class="btn-hover visibility-hidden button-spacing"
-              @click="selectAll(item.groupPath)"
+            <template
+              v-if="jobPageStore.bulkEditMode && isExpanded(item.groupPath)"
+              #supplemental
             >
-              <b class="glyphicon glyphicon-check"></b>
-              {{ $t("select.all") }}
-            </btn>
-            <btn
-              size="xs"
-              type="simple"
-              class="btn-hover visibility-hidden"
-              @click="selectNone(item.groupPath)"
-            >
-              <b class="glyphicon glyphicon-unchecked"></b>
-              {{ $t("select.none") }}
-            </btn>
-          </template>
-        </browse-group-item>
-        <Browser
-          v-if="isExpanded(item.groupPath)"
-          :key="item.groupPath"
-          :path="item.groupPath"
-          :expand-level="expandLevel - 1"
-          :query-refresh="queryRefresh"
-          @root-browse="rootBrowse"
-          @empty="childGroupEmpty(item)"
-        />
-      </li>
+              <btn
+                size="xs"
+                type="simple"
+                class="btn-hover visibility-hidden button-spacing"
+                @click="selectAll(item.groupPath)"
+              >
+                <b class="glyphicon glyphicon-check"></b>
+                {{ $t("select.all") }}
+              </btn>
+              <btn
+                size="xs"
+                type="simple"
+                class="btn-hover visibility-hidden"
+                @click="selectNone(item.groupPath)"
+              >
+                <b class="glyphicon glyphicon-unchecked"></b>
+                {{ $t("select.none") }}
+              </btn>
+            </template>
+          </browse-group-item>
+          <JobBrowser
+            v-if="isExpanded(item.groupPath)"
+            :key="item.groupPath"
+            :path="item.groupPath"
+            :expand-level="expandLevel - 1"
+            :query-refresh="queryRefresh"
+            @root-browse="rootBrowse"
+            @empty="childGroupEmpty(item)"
+          />
+        </li>
+      </template>
       <RecycleScroller
         ref="scroller"
-        v-slot="{ item, active }"
+        v-slot="{ item }"
         :key="browsePath"
         :items="sortedItems"
         :item-size="27"
@@ -87,7 +85,6 @@
 import BrowseGroupItem from "@/app/pages/job/browse/tree/BrowseGroupItem.vue";
 import BrowserJobItem from "@/app/pages/job/browse/tree/BrowserJobItem.vue";
 import { getRundeckContext } from "@/library";
-import UiSocket from "@/library/components/utils/UiSocket.vue";
 import {
   JobBrowserStore,
   JobBrowserStoreInjectionKey,
@@ -106,8 +103,8 @@ import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
-  name: "Browser",
-  components: { RecycleScroller, BrowseGroupItem, BrowserJobItem, UiSocket },
+  name: "JobBrowser",
+  components: { RecycleScroller, BrowseGroupItem, BrowserJobItem },
   props: {
     path: {
       type: String,

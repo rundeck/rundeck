@@ -16,7 +16,7 @@
             display: flex;
           "
         >
-          <img :src="article.imageUrl" />
+          <img :src="article.imageUrl" alt="" />
         </div>
         <div class="news-article__details">
           <p class="news-article__date">{{ article.date.toUTCString() }}</p>
@@ -43,7 +43,7 @@ import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import Skeleton from "../../skeleton/Skeleton.vue";
 
 export default defineComponent({
-  name: "News",
+  name: "NewsWidget",
   components: {
     Skeleton,
   },

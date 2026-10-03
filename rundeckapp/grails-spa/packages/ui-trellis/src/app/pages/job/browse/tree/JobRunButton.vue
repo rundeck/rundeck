@@ -14,7 +14,7 @@
       </btn>
       <btn
         v-else
-        :v-tooltip.hover="$t('disabled.job.run')"
+        v-tooltip.hover="$t('disabled.job.run')"
         disabled
         size="xs"
         type="simple"
