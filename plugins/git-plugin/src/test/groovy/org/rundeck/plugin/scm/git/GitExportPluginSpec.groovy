@@ -65,6 +65,27 @@ class GitExportPluginSpec extends Specification {
         }
     }
 
+    /**
+     * Test map that requires callers to hold the map monitor for compound access.
+     */
+    private static class MonitorCheckedMap<K, V> extends LinkedHashMap<K, V> {
+        @Override
+        boolean containsKey(Object key) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('containsKey requires the map monitor')
+            }
+            super.containsKey(key)
+        }
+
+        @Override
+        V put(K key, V value) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('put requires the map monitor')
+            }
+            super.put(key, value)
+        }
+    }
+
     @Unroll
     def "create plugin, required input"() {
         given:
@@ -1041,6 +1062,30 @@ class GitExportPluginSpec extends Specification {
         where:
         tagName     | _
         'asdf asdf' | _
+    }
+
+    def "push action treats up-to-date remote updates as success"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        def originGit = createGit(origindir)
+        def initialCommit = addCommitFile(origindir, originGit, 'blah-xyz.xml', 'blah')
+        originGit.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        when:
+        def result = plugin.export(ctxt, GitExportPlugin.PROJECT_PUSH_ACTION_ID, [] as Set, [] as Set, [:])
+
+        then:
+        result.success
+        result.id == initialCommit.name
+        result.commit.commitId == initialCommit.name
+        result.message == "Remote push result: OK. (Commit: ${initialCommit.name})"
     }
     def "commit missing user info"() {
         given:
@@ -2098,6 +2143,24 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "init job status synchronizes the check and insert on the job-state map"() {
+        given:
+        def plugin = new GitExportPlugin(Mock(Export))
+        plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
+        def jobrefs = [
+                Stub(JobExportReference) {
+                    getId() >> 'xyz'
+                    getVersion() >> 1
+                }
+        ]
+
+        when:
+        plugin.initJobsStatus(jobrefs)
+
+        then:
+        plugin.jobStateMap['xyz'].synch == SynchState.LOADING
+    }
+
     def "Should delete directory if this exists no matter the OS"(){
         given:
             def gitdir = new File(tempdir, 'scm')
@@ -2139,5 +2202,52 @@ class GitExportPluginSpec extends Specification {
         then:
         !base.exists()
         0 * FileUtils.delete(_, _)
+    }
+
+    def "cleanJobStatusCache refreshes stale cached status after commit"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+        localfile << 'newtext'
+
+        def serializer = Mock(JobSerializer) {
+            _ * serialize('xml', _, _, _) >> { args -> args[1].write('newtext'.bytes) }
+        }
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+
+        //populate the cache with the pre-commit "modified" status, as a real status check would
+        def preCommitStatus = plugin.getJobStatus(jobref)
+
+        when:
+        def input = [message: "commit message", push: 'false']
+        def result = plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
+
+        then:
+        preCommitStatus.synchState == SynchState.EXPORT_NEEDED
+        result.success
+        //the cached status must be refreshed to reflect the commit, not left stale as EXPORT_NEEDED
+        plugin.jobStateMap['xyz'].synch == SynchState.CLEAN
     }
 }

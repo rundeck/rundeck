@@ -46,7 +46,7 @@ class PathRegexFilter extends TreeFilter {
             return true
         } else {
             return walker.getPathString().matches(pattern)
-        };
+        }
     }
 
     @Override

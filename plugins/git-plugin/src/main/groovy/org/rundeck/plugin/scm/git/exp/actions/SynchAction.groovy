@@ -25,7 +25,6 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
-
 /**
  * Created by greg on 9/8/15.
  */
@@ -70,7 +69,7 @@ Pulling from remote branch: `${plugin.branch}`"""
 * `ours` - apply our changes over theirs
 * `theirs` - apply their changes over ours
 * `recursive` - recursive merge"""
-                        values([MergeStrategy.OURS,MergeStrategy.THEIRS,MergeStrategy.RECURSIVE]*.name)
+                        values([MergeStrategy.OURS, MergeStrategy.THEIRS, MergeStrategy.RECURSIVE]*.name)
                         defaultValue "ours"
                         required true
                     },
@@ -96,10 +95,8 @@ Pulling from remote branch: `${plugin.branch}`"""
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         def status = plugin.getStatusInternal(context, false)
-
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
             plugin.gitResolve(context, input.refresh == 'rebase', input.resolution)
@@ -109,7 +106,6 @@ Pulling from remote branch: `${plugin.branch}`"""
             //no action
             notActionNeeded(status)
         }
-
     }
 
     ScmExportResult gitPull(final ScmOperationContext context, final GitExportPlugin plugin) {
@@ -121,7 +117,7 @@ Pulling from remote branch: `${plugin.branch}`"""
         result
     }
 
-    ScmExportResult notActionNeeded(ScmExportSynchState status){
+    ScmExportResult notActionNeeded(ScmExportSynchState status) {
         def result = new ScmExportResultImpl()
         result.success = true
         result.message = ""

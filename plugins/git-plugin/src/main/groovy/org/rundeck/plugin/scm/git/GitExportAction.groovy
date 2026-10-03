@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
  * Created by greg on 9/8/15.
  */
 interface GitExportAction extends Action {
-
     BasicInputView getInputView(final ScmOperationContext context, final GitExportPlugin plugin)
 
     ScmExportResult perform(
