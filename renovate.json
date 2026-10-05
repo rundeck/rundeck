@@ -216,6 +216,24 @@
       "addLabels": ["shipped-image"]
     },
     {
+      "description": "Documented exceptions: legacy Dockerfiles on EOL bases that CI does not use stay untouched (no pin, no updates)",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["docker/centos7systemd/**", "docker/debinstall/**", "docker/installcommon/**", "docker/package/**", "docker/rpminstall/**", "docker/yuminstall/**", "docker/yuminstall-centos7/**", "test/docker/dockers/testnode/**", "test/docker/dockers/hostnode/**", "test/docker/dockers/ubuntudeb/**"],
+      "enabled": false
+    },
+    {
+      "description": "Documented exceptions: internal images built in the same pipeline are never pinned or updated by Renovate",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["rundeck/ubuntu-base", "rdtest", "rundeckansible", "rundeck/testdeck", "local/c7-systemd", "/^rd.*-util$/"],
+      "enabled": false
+    },
+    {
+      "description": "Documented exceptions: SNAPSHOT tags are per-pipeline builds of our own images",
+      "matchDatasources": ["docker"],
+      "matchCurrentValue": "/SNAPSHOT/",
+      "enabled": false
+    },
+    {
       "description": "rundeck/node-demo only publishes 'latest', which has no release timestamp; without this its digest refreshes would wait on minimumReleaseAge forever",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["rundeck/node-demo"],
