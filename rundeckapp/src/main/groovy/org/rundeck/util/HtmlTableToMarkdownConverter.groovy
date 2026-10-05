@@ -137,8 +137,33 @@ class HtmlTableToMarkdownConverter {
                 return text
             }
             result.append(text, lastEnd, span.start)
-            appendMissingNewlines(result, countNewlinesBefore(text, span.start))
-            result.append(markdownTable)
+            int markerLineStart = text.lastIndexOf('\n', span.start - 1) + 1
+            boolean markerLineStartsFreshBlock = markerLineStart == 0 ||
+                countNewlinesBefore(text, markerLineStart) >= BLOCK_SEPARATION
+            String tablePrefix = markerLineStartsFreshBlock
+                ? continuationPrefix(linePrefix(text, span.start))
+                : null
+            if (tablePrefix != null) {
+                // The table starts on a line already prefixed by a
+                // blockquote/list marker (e.g. "> " or "- "): it is a
+                // continuation of that block, not a new one, so no blank
+                // line goes before it, and every line after the first needs
+                // the same context repeated (verbatim for a blockquote; as
+                // equal-width spaces, not the marker itself, for a list item
+                // -- repeating "- " would start a second list item instead
+                // of continuing the first one). This is only attempted when
+                // the marker's own line starts a fresh block (text start, or
+                // right after a blank line): a marker line that is itself a
+                // lazy-continuation of an earlier paragraph in the same
+                // blockquote/list item does not reliably let a table
+                // interrupt that paragraph -- verified empirically to
+                // instead merge the table's pipe syntax into the paragraph
+                // as plain text, rendering no table at all.
+                result.append(applyLinePrefix(markdownTable, tablePrefix))
+            } else {
+                appendMissingNewlines(result, countNewlinesBefore(text, span.start))
+                result.append(markdownTable)
+            }
             appendMissingNewlines(result, countNewlinesAfter(text, span.end))
             lastEnd = span.end
             convertedAny = true
@@ -148,6 +173,62 @@ class HtmlTableToMarkdownConverter {
         }
         result.append(text, lastEnd, text.length())
         return result.toString()
+    }
+
+    private static final Pattern BLOCKQUOTE_PREFIX = Pattern.compile('^(?:[ \\t]*>[ \\t]?)+$')
+    private static final Pattern LIST_ITEM_PREFIX = Pattern.compile('^[ \\t]*(?:[-*+]|\\d+[.)])[ \\t]+$')
+
+    /**
+     * The text on the table's own line before it (from the start of that
+     * line, or the start of the whole text, up to {@code position}).
+     */
+    private static String linePrefix(String text, int position) {
+        int lineStart = text.lastIndexOf('\n', position - 1) + 1
+        return text.substring(lineStart, position)
+    }
+
+    /**
+     * If {@code rawPrefix} is recognizably JUST a blockquote marker
+     * ({@code >}, possibly nested) or JUST a single list item marker
+     * ({@code -}/{@code *}/{@code +}/{@code 1.}) with its trailing
+     * whitespace -- nothing else before the table on that line -- returns
+     * the prefix to repeat on each subsequent generated table line.
+     * Anything not cleanly matching either shape returns {@code null}, so
+     * the table falls back to ordinary top-level block formatting rather
+     * than guessing at a context this method cannot confidently recognize.
+     */
+    private static String continuationPrefix(String rawPrefix) {
+        if (!rawPrefix) {
+            return null
+        }
+        if (BLOCKQUOTE_PREFIX.matcher(rawPrefix).matches()) {
+            // Repeated verbatim: a blockquote's continuation lines need the
+            // same ">" marker(s) repeated, not replaced with whitespace.
+            return rawPrefix
+        }
+        if (LIST_ITEM_PREFIX.matcher(rawPrefix).matches()) {
+            // Replaced with equal-width spaces: a list item's continuation
+            // lines are aligned to where its content starts, not prefixed
+            // with another copy of the marker (which would start a new,
+            // separate list item instead of continuing this one).
+            return ' ' * rawPrefix.length()
+        }
+        return null
+    }
+
+    /**
+     * Prepends {@code prefix} to every line of {@code markdownTable} except
+     * the first -- the first line continues directly after the prefix that
+     * was already present in the original text (and already copied to the
+     * output) immediately before the table started.
+     */
+    private static String applyLinePrefix(String markdownTable, String prefix) {
+        String[] lines = markdownTable.split('\n', -1)
+        StringBuilder sb = new StringBuilder(lines[0])
+        for (int i = 1; i < lines.length; i++) {
+            sb.append('\n').append(prefix).append(lines[i])
+        }
+        return sb.toString()
     }
 
     private static final int BLOCK_SEPARATION = 2
