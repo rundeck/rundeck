@@ -24,6 +24,7 @@
       :option-disabled="isObjectMode ? optionDisabled : undefined"
       :complete-on-focus="showOptionsOnFocus"
       @complete="onComplete"
+      @clear="onClear"
       @option-select="handleOptionSelect"
       @keydown.enter.prevent
       @change="onChange"
@@ -173,6 +174,13 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    // Opt-in: when the user empties the input, show the full option list
+    // again instead of leaving the panel closed. Requires showOptionsOnFocus
+    // (the full list is only the "empty" state when that is set).
+    reopenOnClear: {
+      type: Boolean,
+      default: false,
+    },
     invalid: {
       type: Boolean,
       default: false,
@@ -235,6 +243,7 @@ export default defineComponent({
       currentQuery: "",
       filterDebounceTimer: null as ReturnType<typeof setTimeout> | null,
       debounceTimer: null as ReturnType<typeof setTimeout> | null,
+      reopenTimer: null as ReturnType<typeof setTimeout> | null,
     };
   },
   computed: {
@@ -303,11 +312,32 @@ export default defineComponent({
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
+    if (this.reopenTimer) {
+      clearTimeout(this.reopenTimer);
+    }
   },
   methods: {
     onComplete(event: AutoCompleteCompleteEvent): void {
       this.$emit("onComplete", event);
       this.debouncedFilterSuggestions(event);
+    },
+
+    // PrimeVue hides the panel (and emits `clear`, not `complete`) when the
+    // input is emptied. When reopenOnClear is set, show the full list again
+    // instead of leaving the panel closed.
+    onClear(): void {
+      if (!this.reopenOnClear || !this.showOptionsOnFocus) {
+        return;
+      }
+      this.applySuggestionFilter("");
+      if (this.reopenTimer) {
+        clearTimeout(this.reopenTimer);
+      }
+      // AutoComplete hides via setTimeout(0); re-show once that has run.
+      this.reopenTimer = setTimeout(() => {
+        (this.$refs.autoInput as { show?: () => void } | undefined)?.show?.();
+        this.reopenTimer = null;
+      }, 0);
     },
 
     debouncedFilterSuggestions(event: AutoCompleteCompleteEvent): void {

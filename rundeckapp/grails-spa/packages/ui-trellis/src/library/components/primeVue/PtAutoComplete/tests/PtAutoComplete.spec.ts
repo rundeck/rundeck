@@ -282,6 +282,39 @@ describe("PtAutoComplete", () => {
     });
   });
 
+  describe("clearing the input", () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("re-shows the full option list when the input is emptied and reopenOnClear is set", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({
+        showOptionsOnFocus: true,
+        reopenOnClear: true,
+      });
+      const inner = wrapper.findComponent(AutoComplete);
+      const show = jest.spyOn(inner.vm as any, "show");
+
+      await inner.vm.$emit("clear");
+      jest.runAllTimers();
+
+      expect(show).toHaveBeenCalled();
+    });
+
+    it("leaves the panel closed when the input is emptied without reopenOnClear, even with showOptionsOnFocus", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({ showOptionsOnFocus: true });
+      const inner = wrapper.findComponent(AutoComplete);
+      const show = jest.spyOn(inner.vm as any, "show");
+
+      await inner.vm.$emit("clear");
+      jest.runAllTimers();
+
+      expect(show).not.toHaveBeenCalled();
+    });
+  });
+
   describe("object mode (optionValue provided)", () => {
     // Still plain ContextVariable objects — `description` stands in as the
     // field carrying the underlying committed value (distinct from the
