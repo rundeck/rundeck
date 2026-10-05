@@ -182,7 +182,16 @@ class HtmlTableToMarkdownConverter {
                 i++
                 continue
             }
-            if (isPositionInAnyRange(i, codeRanges)) {
+            if (depth == 0 && isPositionInAnyRange(i, codeRanges)) {
+                // Code-range skipping only applies while deciding whether to
+                // START tracking a table (depth zero): that's the "is this
+                // whole table just a documented example" question. Once
+                // we're already inside a real table (depth > 0), a `<table`
+                // hidden in a code span must be treated as genuine nesting,
+                // not silently ignored -- otherwise its closing tag can
+                // still end the real table's depth-tracking early while the
+                // attacker-controlled text after the hidden opening tag is
+                // left unescaped outside the (truncated) match.
                 i++
                 continue
             }
