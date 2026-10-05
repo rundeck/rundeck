@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/vendor/**", "**/examples/**"],
   "minimumReleaseAge": "4 days",
   "commitMessagePrefix": "[RUN-0000]",
   "dependencyDashboard": true,
