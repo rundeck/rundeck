@@ -137,7 +137,9 @@ class HtmlTableToMarkdownConverter {
                 return text
             }
             result.append(text, lastEnd, span.start)
-            result.append('\n\n').append(markdownTable).append('\n\n')
+            appendMissingNewlines(result, countNewlinesBefore(text, span.start))
+            result.append(markdownTable)
+            appendMissingNewlines(result, countNewlinesAfter(text, span.end))
             lastEnd = span.end
             convertedAny = true
         }
@@ -146,6 +148,60 @@ class HtmlTableToMarkdownConverter {
         }
         result.append(text, lastEnd, text.length())
         return result.toString()
+    }
+
+    private static final int BLOCK_SEPARATION = 2
+
+    /**
+     * Appends only as many newlines as are missing to reach a full blank
+     * line of separation (two newlines) around the generated table, instead
+     * of always adding two: if the original text already had a blank line
+     * at this boundary, nothing more is added, so converting a table never
+     * introduces extra vertical whitespace that wasn't there before.
+     */
+    private static void appendMissingNewlines(StringBuilder result, int existing) {
+        for (int n = existing; n < BLOCK_SEPARATION; n++) {
+            result.append('\n')
+        }
+    }
+
+    /**
+     * How many of the up-to-{@link #BLOCK_SEPARATION} characters
+     * immediately before {@code position} are newlines. Returns
+     * {@link #BLOCK_SEPARATION} unchanged at the very start of the text --
+     * there is nothing before the table to separate it from.
+     */
+    private static int countNewlinesBefore(String text, int position) {
+        if (position == 0) {
+            return BLOCK_SEPARATION
+        }
+        int count = 0
+        int i = position - 1
+        while (i >= 0 && count < BLOCK_SEPARATION && text.charAt(i) == '\n' as char) {
+            count++
+            i--
+        }
+        return count
+    }
+
+    /**
+     * How many of the up-to-{@link #BLOCK_SEPARATION} characters
+     * immediately after {@code position} are newlines. Returns
+     * {@link #BLOCK_SEPARATION} unchanged at the very end of the text --
+     * there is nothing after the table to separate it from.
+     */
+    private static int countNewlinesAfter(String text, int position) {
+        int length = text.length()
+        if (position == length) {
+            return BLOCK_SEPARATION
+        }
+        int count = 0
+        int i = position
+        while (i < length && count < BLOCK_SEPARATION && text.charAt(i) == '\n' as char) {
+            count++
+            i++
+        }
+        return count
     }
 
     /**
