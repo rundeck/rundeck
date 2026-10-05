@@ -1,6 +1,43 @@
 #!/bin/bash
 set -e
 
+# Runs "apt-get update && apt-get install" with retries to survive transient Ubuntu mirror errors.
+# Usage: apt_get_retry <package>...
+# Retries up to 3 times, APT_RETRY_DELAY seconds apart (default 15). Returns 1 after the last failure.
+apt_get_retry() {
+    local max_attempts=3
+    local attempt
+    for attempt in $(seq 1 "${max_attempts}"); do
+        if sudo apt-get update && sudo apt-get -y --no-install-recommends install "$@"; then
+            return 0
+        fi
+        echo "apt-get attempt ${attempt}/${max_attempts} failed for: $*"
+        if [[ "${attempt}" -lt "${max_attempts}" ]]; then
+            sleep "${APT_RETRY_DELAY:-15}"
+        fi
+    done
+    return 1
+}
+
+# Directory (inside the workspace) where the Build job persists its JDK for the downstream jobs.
+ci_jdk_dir() {
+    echo "${WORKDIR:-${HOME}/workspace}/.ci-jdk"
+}
+
+# Copies the JDK running this job to the workspace so downstream jobs don't have to install one with apt.
+# Symlinks are dereferenced so the copy is self-contained (e.g. cacerts pointing to /etc/ssl).
+dependencies_persist_jdk() {
+    local javac_path jdk_home target
+    javac_path="$(readlink -f "$(command -v javac)")"
+    jdk_home="$(dirname "$(dirname "${javac_path}")")"
+    target="$(ci_jdk_dir)"
+    echo "Persisting JDK ${jdk_home} to ${target}"
+    rm -rf "${target}"
+    cp -aL "${jdk_home}" "${target}"
+    "${target}/bin/java" -version 2>&1 | grep -q 'version "25'
+    "${target}/bin/javac" -version
+}
+
 # Install Azul Zulu JDK 11 (legacy)
 dependencies_install_zulu11jdk() {
       # Azul Zulu JDK Install
@@ -57,13 +94,11 @@ dependencies_install_zulu21jdk() {
 # Install Azul Zulu JDK 25 (forward-compat / newer-LTS testing on CI host).
 # Writes JAVA_HOME + PATH into BASH_ENV so later Circle steps use this JDK.
 dependencies_install_zulu25jdk() {
-      sudo apt-get update
-      sudo apt install gnupg ca-certificates curl
+      apt_get_retry gnupg ca-certificates curl
       curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
       echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
 
-      sudo apt-get update
-      sudo apt-get -y --no-install-recommends install zulu25-jdk-headless
+      apt_get_retry zulu25-jdk-headless
 
       local java_home=""
       for candidate in /usr/lib/jvm/zulu25-ca-amd64 /usr/lib/jvm/zulu25-amd64 /usr/lib/jvm/zulu25; do
