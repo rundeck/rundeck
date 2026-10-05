@@ -505,6 +505,86 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result == 'Intro.\n\n| a |\n| --- |\n\nOutro.'
     }
 
+    def "a table as the only content of a blockquote stays inside the blockquote when rendered"() {
+        given:
+        String text = '> <table><tr><td>a</td><td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        result == '> | a | b |\n> | --- | --- |'
+        int blockquoteStart = rendered.indexOf('<blockquote>')
+        int tableStart = rendered.indexOf('<table>')
+        int blockquoteEnd = rendered.indexOf('</blockquote>')
+        blockquoteStart >= 0
+        tableStart > blockquoteStart
+        tableStart < blockquoteEnd
+    }
+
+    def "a table continuing a blockquote paragraph (no blank line before it) falls back safely instead of merging into garbled text"() {
+        given:
+        // Verified empirically: commonmark does not let a table interrupt a
+        // paragraph lazily continued inside the same blockquote this way --
+        // attempting the prefix here would merge the pipe-table syntax into
+        // the preceding paragraph as plain text, rendering no table at all,
+        // which is worse than the existing (pre-this-feature) behavior.
+        String text = '> Quote text\n> <table><tr><td>a</td><td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        rendered.contains('<table>')
+        rendered.contains('<blockquote>')
+    }
+
+    def "a table immediately after a list item marker stays inside the list item when rendered"() {
+        given:
+        String text = '- <table><tr><td>a</td><td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        result == '- | a | b |\n  | --- | --- |'
+        int listStart = rendered.indexOf('<li>')
+        int tableStart = rendered.indexOf('<table>')
+        int listEnd = rendered.indexOf('</li>')
+        listStart >= 0
+        tableStart > listStart
+        tableStart < listEnd
+    }
+
+    def "a table continuing a list item paragraph (no blank line before it) falls back safely instead of merging into garbled text"() {
+        given:
+        String text = '- Item text\n  <table><tr><td>a</td><td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        rendered.contains('<table>')
+    }
+
+    def "a table NOT directly after a recognizable marker falls back to ordinary top-level formatting"() {
+        given:
+        // Plain indentation alone (no marker) is deliberately not treated as
+        // a continuation context -- too ambiguous to guess at safely.
+        String text = '    <table><tr><td>a</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('| a |')
+        !result.contains('    | a |')
+    }
+
     def "a line break tag inserts a space instead of merging the surrounding text"() {
         given:
         String html = '<table><tr><td>first<br>second</td></tr></table>'
