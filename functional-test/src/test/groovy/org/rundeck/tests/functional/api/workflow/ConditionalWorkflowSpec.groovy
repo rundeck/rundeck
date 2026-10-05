@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.api.workflow
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.execution.ExecutionStatus
@@ -12,8 +13,11 @@ import org.rundeck.util.container.BaseContainer
  * Functional tests for Conditional Workflow Logic in the open source build.
  * Conditional steps require a workflow strategy that supports them, which only the
  * Enterprise build provides, so the open source build rejects jobs that contain them.
+ * Excluded from the Enterprise run, where conditional jobs are accepted (covered by
+ * the Enterprise ConditionalWorkflowProSpec).
  */
 @APITest
+@ExcludePro
 class ConditionalWorkflowSpec extends BaseContainer {
 
     static final String PROJECT_NAME = "ConditionalWorkflowTest"
