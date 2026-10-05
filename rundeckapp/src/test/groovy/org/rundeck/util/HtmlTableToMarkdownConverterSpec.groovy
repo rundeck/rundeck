@@ -425,6 +425,30 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !rendered.contains('evil')
     }
 
+    def "a table tag hidden inside a code span within a real table's cell is treated as genuine nesting, not a documented example"() {
+        given:
+        // The fake opening "<table>" is hidden inside backticks (normally a
+        // documented-example signal), but the closing "</table>" right after
+        // it is live markup. Code-range skipping must not apply once we are
+        // already inside a real table, or the real close is found too
+        // early and the trailing image syntax leaks out unescaped.
+        String html = '<table><tr><td>`<table>`<tr><td>inner</td></tr></table>' +
+            '![evil](https://attacker.example/leak)</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        // Falls back to the safe, unchanged-text path (nested table) rather
+        // than emitting a truncated, partially-converted result -- the
+        // whole input is then escaped as one inert block by the existing,
+        // unmodified MarkdownCodec, same as any other unconverted raw HTML.
+        result == html
+        !rendered.contains('<img')
+        !rendered.contains('<a ')
+    }
+
     def "a line break tag inserts a space instead of merging the surrounding text"() {
         given:
         String html = '<table><tr><td>first<br>second</td></tr></table>'
