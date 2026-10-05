@@ -9,8 +9,9 @@ import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.BaseContainer
 
 /**
- * Functional tests for Conditional Workflow Logic
- * Tests the conditional step execution, validation, and export/import functionality
+ * Functional tests for Conditional Workflow Logic in the open source build.
+ * Conditional steps require a workflow strategy that supports them, which only the
+ * Enterprise build provides, so the open source build rejects jobs that contain them.
  */
 @APITest
 class ConditionalWorkflowSpec extends BaseContainer {
@@ -23,7 +24,7 @@ class ConditionalWorkflowSpec extends BaseContainer {
         setupProject(PROJECT_NAME)
     }
 
-    def "create job with conditional step using JSON format"() {
+    def "reject job with conditional step using JSON format"() {
         given: "a job definition with conditional logic in JSON format"
             def jobDef = [[
                 name: "conditional-job-json",
@@ -75,15 +76,15 @@ class ConditionalWorkflowSpec extends BaseContainer {
             def response = client.doPost("/project/${PROJECT_NAME}/jobs/import?format=json",
                 MAPPER.writeValueAsString(jobDef), "application/json")
 
-        then: "job creation succeeds"
+        then: "job import is rejected because no workflow strategy supports conditional steps"
             response.code() == 200
             def json = jsonValue(response.body(), Map)
-            json.succeeded != null
-            json.succeeded.size() == 1
-            json.succeeded[0].id != null
+            json.succeeded.size() == 0
+            json.failed.size() == 1
+            json.failed[0].error.contains("does not support conditional steps")
     }
 
-    def "create job with conditional step using YAML format"() {
+    def "reject job with conditional step using YAML format"() {
         given: "a job definition with conditional logic in YAML"
             def yamlContent = """
 - name: conditional-job-yaml
@@ -117,60 +118,12 @@ class ConditionalWorkflowSpec extends BaseContainer {
         when: "the job is imported via API"
             def response = client.doPost("/project/${PROJECT_NAME}/jobs/import?format=yaml", yamlContent, "application/yaml")
 
-        then: "job import succeeds"
+        then: "job import is rejected because no workflow strategy supports conditional steps"
             response.code() == 200
             def json = jsonValue(response.body(), Map)
-            json.succeeded.size() == 1
-            json.failed.size() == 0
-    }
-
-    def "reject export of job with conditional step in XML format"() {
-        given: "a job with conditional logic"
-            def jobDef = [[
-                name: "conditional-export-xml-fail",
-                project: PROJECT_NAME,
-                description: "Export test job XML - should fail",
-                loglevel: "INFO",
-                sequence: [
-                    keepgoing: false,
-                    strategy: "sequential",
-                    commands: [
-                        [
-                            type: "conditional",
-                            nodeStep: true,
-                            conditionGroups: [[
-                                [
-                                    key: '${option.test}',
-                                    operator: "==",
-                                    value: "true"
-                                ]
-                            ]],
-                            subSteps: [
-                                [
-                                    exec: "echo 'test'",
-                                    description: "Test step"
-                                ]
-                            ]
-                        ]
-                    ]
-                ],
-                options: [
-                    [name: "test", required: true, value: "true"]
-                ]
-            ]]
-
-            def createResponse = client.doPost("/project/${PROJECT_NAME}/jobs/import?format=json",
-                MAPPER.writeValueAsString(jobDef), "application/json")
-            assert createResponse.code() == 200
-            def jobJson = jsonValue(createResponse.body(), Map)
-            def jobId = jobJson.succeeded[0].id
-
-        when: "the job is exported in XML format"
-            def exportResponse = doGet("/job/${jobId}?format=xml")
-
-        then: "export fails or returns error"
-            exportResponse.code() >= 400 ||
-            (exportResponse.code() == 200 && exportResponse.body().string().contains("error"))
+            json.succeeded.size() == 0
+            json.failed.size() == 1
+            json.failed[0].error.contains("does not support conditional steps")
     }
 
     /**
