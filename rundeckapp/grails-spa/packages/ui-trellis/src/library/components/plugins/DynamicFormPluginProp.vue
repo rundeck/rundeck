@@ -18,16 +18,16 @@
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
-            :data-testid="'field-input-' + index"
             @change="changeField()"
+            :data-testid="'field-input-' + index"
           />
         </div>
         <div class="col-sm-1">
           <span
             class="btn btn-xs btn-default"
             :title="$t('message_delete')"
-            data-testid="remove-field-button"
             @click="removeField(field)"
+            data-testid="remove-field-button"
           >
             <i class="glyphicon glyphicon-remove"></i
           ></span>
@@ -42,8 +42,8 @@
 
     <btn
       type="primary"
-      data-testid="add-field-button"
       @click="openNewField()"
+      data-testid="add-field-button"
       >{{ $t("message_addField") }}</btn
     >
 
@@ -63,9 +63,9 @@
       <div class="row" style="padding-left: 30px !important">
         <alert
           v-if="duplicate"
-          ref="duplicateWarningRef"
           type="warning"
           data-testid="duplicate-warning"
+          ref="duplicateWarningRef"
           ><b>{{ $t("message_warning") }}</b>
           {{ $t("message_duplicated") }}.</alert
         >
@@ -98,29 +98,6 @@
                   append-to="self"
                   data-testid="multiselect"
                 />
-              </div>
-            </div>
-
-            <div :class="['form-data']">
-              <label class="col-md-4" :for="`${uid}-description-input`">
-                {{ $t("message_description") }}
-              </label>
-              <div class="col-md-8">
-                <input
-                  :id="`${uid}-description-input`"
-                  v-model="newFieldDescription"
-                  type="text"
-                  :class="['form-control']"
-                  :aria-describedby="`${uid}-description-help`"
-                  data-testid="field-description-input"
-                />
-                <div
-                  :id="`${uid}-description-help`"
-                  class="help-block"
-                  data-testid="new-field-description-help"
-                >
-                  {{ $t("message_fieldDescriptionHelp") }}
-                </div>
               </div>
             </div>
           </div>
@@ -171,8 +148,10 @@
                 </div>
               </div>
             </div>
+          </div>
 
-            <div :class="['form-group']">
+          <div class="form">
+            <div :class="useOptions ? 'form-data' : 'form-group'">
               <label class="col-md-4" :for="`${uid}-description-input`">
                 {{ $t("message_description") }}
               </label>
@@ -203,8 +182,8 @@
           <button
             type="button"
             class="btn btn-default reset_page_confirm"
-            data-testid="cancel-button"
             @click="modalAddField = false"
+            data-testid="cancel-button"
           >
             {{ $t("message_cancel") }}
           </button>
@@ -212,8 +191,8 @@
           <button
             type="button"
             class="btn btn-cta reset_page_confirm"
-            data-testid="confirm-add-field-button"
             @click="addField()"
+            data-testid="confirm-add-field-button"
           >
             {{ $t("message_add") }}
           </button>
@@ -281,7 +260,10 @@ export default defineComponent({
   },
   watch: {
     fields(newFields: string) {
-      // Skip syncing a value we just emitted ourselves, to avoid fighting in-flight edits.
+      // Keep local state in sync if the prop changes after mount (e.g. the
+      // parent round-trips the value through its own v-model chain). Skip
+      // when the incoming value already matches what we just emitted
+      // ourselves, to avoid fighting with in-flight edits.
       if (newFields === JSON.stringify(this.customFields)) {
         return;
       }
@@ -314,18 +296,21 @@ export default defineComponent({
   methods: {
     syncFieldsFromProp(fields: string) {
       if (fields == null || fields === "") {
+        // Clearing the prop must clear the list too, otherwise the previous
+        // fields stay on screen after the parent resets the value.
         this.customFields = [];
         return;
       }
       const customFieldsObject = JSON.parse(fields);
       if (customFieldsObject != null) {
-        this.customFields = Object.keys(customFieldsObject).map((key: any) => {
+        const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
           const value = customFieldsObject[key];
           if (value.desc == null) {
             value.desc = this.$t("message_fieldKeyDescription", [value.key]);
           }
           return value;
         });
+        this.customFields = parsedFields;
       }
     },
     openNewField() {
@@ -346,43 +331,21 @@ export default defineComponent({
         return;
       }
 
+      const typed = this.newFieldDescription;
+      const desc =
+        typed == ""
+          ? this.$t("message_fieldKeyOnlyDescription", [key])
+          : this.$t("message_fieldKeyAppendedDescription", [typed, key]);
+
       if (this.useOptions) {
-        const newField = this.selectedField;
-
-        let description = this.newFieldDescription;
-        if (description == "") {
-          description = this.$t("message_fieldKeyOnlyDescription", [
-            newField.value,
-          ]);
-        } else {
-          description = this.$t("message_fieldKeyAppendedDescription", [
-            description,
-            newField.value,
-          ]);
-        }
-
-        field = {
-          key: newField.value,
-          label: newField.label,
-          desc: description,
-        };
+        field = { key, label: this.selectedField.label, desc };
       } else {
-        let description = this.newFieldDescription;
-        if (description == "") {
-          description = this.$t("message_fieldKeyOnlyDescription", [key]);
-        } else {
-          description = this.$t("message_fieldKeyAppendedDescription", [
-            description,
-            key,
-          ]);
-        }
-
+        // Falls back to the key, per message_fieldLabelHelp.
         field = {
           key,
-          // Falls back to the key, per message_fieldLabelHelp.
-          label: this.newLabelField.trim() !== "" ? this.newLabelField : key,
+          label: this.newLabelField.trim() || key,
           value: "",
-          desc: description,
+          desc,
         };
       }
       let exists = false;

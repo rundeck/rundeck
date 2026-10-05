@@ -75,7 +75,6 @@ const messages = {
   message_fieldKeyOnlyDescription: "Field key {0}",
   message_fieldKeyAppendedDescription: "{0} (Field key: {1})",
   message_fieldFilter: "Type to filter a field",
-  message_empty: "Can be empty",
   message_fieldDescriptionHelp:
     "Optional. Describes this field for your own reference; if left blank, one is generated automatically from the Field Key.",
   message_cancel: "Cancel",
