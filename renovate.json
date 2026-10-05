@@ -200,7 +200,7 @@
     {
       "description": "Digest-only refreshes (same tag rebuilt upstream, usually OS security patches) are batched weekly and automerged once CI is green, so pinned base images do not go stale with known CVEs. minimumReleaseAge still applies",
       "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["digest", "pin", "pinDigest"],
+      "matchUpdateTypes": ["digest", "pinDigest"],
       "groupName": "docker digests",
       "schedule": ["before 6am on monday"],
       "automerge": true
@@ -212,10 +212,18 @@
       "automerge": false
     },
     {
-      "description": "Label updates to base images of images shipped to customers, for visibility. Not held back past the weekly digest batch",
+      "description": "Base images of images shipped to customers: same weekly schedule, but in their own group and never automerged, so a re-pointed upstream digest cannot reach a shipped image without human review",
       "matchDatasources": ["docker"],
       "matchFileNames": ["docker/ubuntu-base/**"],
+      "groupName": "docker digests (shipped images)",
+      "automerge": false,
       "addLabels": ["shipped-image"]
+    },
+    {
+      "description": "rundeck/node-demo only publishes 'latest', which has no release timestamp; without this its digest refreshes would wait on minimumReleaseAge forever",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["rundeck/node-demo"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     }
   ],
   "customManagers": [
