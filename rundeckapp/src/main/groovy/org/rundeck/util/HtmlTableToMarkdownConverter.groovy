@@ -59,6 +59,11 @@ class HtmlTableToMarkdownConverter {
     )
     private static final Pattern ANY_TAG = Pattern.compile('<[^>]*>')
     private static final Pattern WHITESPACE_RUN = Pattern.compile('\\s+')
+    private static final Pattern FENCED_CODE_BLOCK = Pattern.compile(
+        '^[ ]{0,3}(`{3,}|~{3,})[^\\n]*\\n.*?^[ ]{0,3}\\1[ \\t]*$',
+        Pattern.MULTILINE | Pattern.DOTALL
+    )
+    private static final Pattern INLINE_CODE_SPAN = Pattern.compile('(`+).*?\\1')
 
     /**
      * Holds the extracted plain-text cells of a single {@code <tr>} row, and
@@ -74,7 +79,10 @@ class HtmlTableToMarkdownConverter {
      * {@code <table>} blocks and replaces each one, in place, with an
      * equivalent GFM Markdown pipe table built only from the plain-text
      * content of each cell. Text outside of {@code <table>} blocks -- and
-     * any other raw HTML tag -- is left completely untouched.
+     * any other raw HTML tag -- is left completely untouched. A
+     * {@code <table>} written inside a Markdown fenced code block or inline
+     * code span is treated as a documented example, not live HTML, and is
+     * never converted.
      * <p>
      * Fails safe: if the input contains unbalanced {@code <table>} tags, or
      * any table cannot be meaningfully parsed into rows/cells, the original
@@ -115,11 +123,18 @@ class HtmlTableToMarkdownConverter {
     }
 
     private static String replaceTables(String text) {
+        List<int[]> codeRanges = findCodeRanges(text)
         Matcher matcher = TABLE_BLOCK.matcher(text)
         StringBuilder result = new StringBuilder()
         int lastEnd = 0
         boolean convertedAny = false
         while (matcher.find()) {
+            if (overlapsAnyRange(matcher.start(), matcher.end(), codeRanges)) {
+                // A <table> written inside a fenced code block or inline
+                // code span is a documented example, not live HTML -- leave
+                // it exactly as authored.
+                continue
+            }
             String markdownTable = buildMarkdownTable(matcher.group(1))
             if (markdownTable == null) {
                 // A detected table could not be parsed into a meaningful
@@ -137,6 +152,35 @@ class HtmlTableToMarkdownConverter {
         }
         result.append(text, lastEnd, text.length())
         return result.toString()
+    }
+
+    /**
+     * Finds the character ranges of Markdown fenced code blocks and inline
+     * code spans in {@code text}, so {@link #replaceTables} can skip any
+     * {@code <table>} found inside them -- those are documented examples,
+     * not raw HTML meant to be rendered live.
+     */
+    private static List<int[]> findCodeRanges(String text) {
+        List<int[]> ranges = []
+        addMatchRanges(FENCED_CODE_BLOCK, text, ranges)
+        addMatchRanges(INLINE_CODE_SPAN, text, ranges)
+        return ranges
+    }
+
+    private static void addMatchRanges(Pattern pattern, String text, List<int[]> ranges) {
+        Matcher matcher = pattern.matcher(text)
+        while (matcher.find()) {
+            ranges << ([matcher.start(), matcher.end()] as int[])
+        }
+    }
+
+    private static boolean overlapsAnyRange(int start, int end, List<int[]> ranges) {
+        for (int[] range : ranges) {
+            if (start < range[1] && end > range[0]) {
+                return true
+            }
+        }
+        return false
     }
 
     /**
