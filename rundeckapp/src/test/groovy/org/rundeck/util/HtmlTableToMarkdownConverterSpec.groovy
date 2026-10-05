@@ -262,6 +262,10 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
 
         then:
+        // Confirm conversion actually ran -- a real table, not the original
+        // HTML escaped wholesale (which would trivially satisfy the safety
+        // assertions below without ever exercising escapeCell at all).
+        rendered.contains('<table>')
         !rendered.contains('<img')
         !rendered.contains('<a ')
         !rendered.contains('<strong>')
@@ -322,5 +326,88 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !rendered.contains('<img')
         !rendered.contains('attacker.example')
         !rendered.contains('evil')
+    }
+
+    def "a fake closing table tag hidden inside an HTML comment does not truncate the match and leak the comment's contents"() {
+        given:
+        // Mirrors the quoted-attribute exploit, but the fake closing tag and
+        // payload live inside an HTML comment instead -- comments can
+        // contain a bare ">" with no escaping, so a scanner that only
+        // tracks quotes (and not comments) would stop here too.
+        String html = '<table><tr><td>a</td></tr><tr><td>' +
+            '<!-- </table>![evil](https://attacker.example/leak) -->' +
+            'b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        result.contains('| b |')
+        !rendered.contains('<img')
+        !rendered.contains('attacker.example')
+        !rendered.contains('evil')
+    }
+
+    def "a fenced code block with a longer closing fence than opening fence is still recognized, per CommonMark"() {
+        given:
+        String text = 'Example:\n\n' +
+            '~~~\n' +
+            '<table><tr><td>a</td></tr></table>\n' +
+            '~~~~\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "an unclosed fenced code block extends to the end of the text and its table example is not converted"() {
+        given:
+        String text = 'Example:\n\n' +
+            '```\n' +
+            '<table><tr><td>a</td></tr></table>\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "a stray unmatched table tag inside a documented example does not prevent a separate real table from converting"() {
+        given:
+        String text = 'Use `<table>` to start a table.\n\n' +
+            '<table><tr><td>real</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('Use `<table>` to start a table.')
+        result.contains('| real |')
+    }
+
+    def "backticks inside a real table cell do not cause the whole table to be skipped as a documented example"() {
+        given:
+        String html = '<table><tr><td>Use `value` here</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result.contains('Use \\`value\\` here')
+    }
+
+    def "a line break tag inserts a space instead of merging the surrounding text"() {
+        given:
+        String html = '<table><tr><td>first<br>second</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result.contains('| first second |')
     }
 }
