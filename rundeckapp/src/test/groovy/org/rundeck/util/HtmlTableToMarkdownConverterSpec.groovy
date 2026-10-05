@@ -174,4 +174,45 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         then:
         result.contains('a \\| b')
     }
+
+    def "a table documented inside a fenced code block is left untouched"() {
+        given:
+        String text = 'Example:\n\n' +
+            '```\n' +
+            '<table><tr><td>a</td><td>b</td></tr></table>\n' +
+            '```\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "a table documented inside an inline code span is left untouched"() {
+        given:
+        String text = 'Use `<table><tr><td>a</td></tr></table>` for a simple table.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "a real table outside a fenced code block still converts even when a documented example is also present"() {
+        given:
+        String text = 'Example syntax:\n\n' +
+            '```\n' +
+            '<table><tr><td>example</td></tr></table>\n' +
+            '```\n\n' +
+            '<table><tr><td>real</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('<table><tr><td>example</td></tr></table>')
+        result.contains('| real |')
+    }
 }
