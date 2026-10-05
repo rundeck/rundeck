@@ -5,7 +5,11 @@
 import { mkid } from "./types/workflowFuncs";
 import type { EditStepData, JobRefDefinition } from "./types/workflowTypes";
 import { getRundeckContext } from "../../../../library";
-import { ServiceType, type Plugin } from "../../../../library/stores/Plugins";
+import {
+  ServiceType,
+  type Plugin,
+  type PluginOutput,
+} from "../../../../library/stores/Plugins";
 import { validatePluginConfig } from "../../../../library/modules/pluginService";
 
 export interface PluginDetails {
@@ -14,6 +18,8 @@ export interface PluginDetails {
   iconUrl: string;
   tooltip: string;
   providerMetadata?: { glyphicon?: string; faicon?: string; fabicon?: string };
+  /** Values the plugin exposes for conditional logic, if any. */
+  outputs?: PluginOutput[];
 }
 
 /** Field name -> error message, as returned by validatePluginConfig. */
@@ -130,6 +136,7 @@ export function getPluginDetailsForStep(
       ...(plugin.providerMetadata && {
         providerMetadata: plugin.providerMetadata,
       }),
+      ...(plugin.outputs && { outputs: plugin.outputs }),
     };
   }
 
