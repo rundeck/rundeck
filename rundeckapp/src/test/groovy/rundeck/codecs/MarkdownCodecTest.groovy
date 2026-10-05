@@ -65,9 +65,13 @@ class MarkdownCodecTest {
         String converted = HtmlTableToMarkdownConverter.convert(payload)
         String rendered = MarkdownCodec.decodeStr(converted)
 
-        assertFalse('output must not contain a style attribute', rendered.contains('style'))
-        assertFalse('output must not contain the injected CSS', rendered.contains('position:fixed'))
-        assertFalse('output must not contain the injected url()', rendered.contains('url('))
+        // Pattern-based, case-insensitive, whitespace-tolerant checks --
+        // substring checks here could miss variants like "STYLE=" or
+        // "style =", or false-positive on the word "style" appearing
+        // incidentally elsewhere.
+        assertFalse('output must not contain a style attribute', (rendered =~ /(?i)\bstyle\s*=/).find())
+        assertFalse('output must not contain the injected CSS', (rendered =~ /(?i)position\s*:\s*fixed/).find())
+        assertFalse('output must not contain the injected url()', (rendered =~ /(?i)\burl\s*\(/).find())
         // A single-row table has no body rows left once that row becomes the
         // GFM header row (required by pipe-table syntax), so the safe cell
         // text is rendered inside a <th>, not a <td> -- either is a real,

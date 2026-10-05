@@ -483,6 +483,28 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !rendered.contains('<a ')
     }
 
+    def "converting a table already separated by a single newline does not add extra blank lines"() {
+        given:
+        String text = 'Intro.\n<table><tr><td>a</td></tr></table>\nOutro.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == 'Intro.\n\n| a |\n| --- |\n\nOutro.'
+    }
+
+    def "converting a table already separated by a full blank line does not add any extra blank lines"() {
+        given:
+        String text = 'Intro.\n\n<table><tr><td>a</td></tr></table>\n\nOutro.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == 'Intro.\n\n| a |\n| --- |\n\nOutro.'
+    }
+
     def "a line break tag inserts a space instead of merging the surrounding text"() {
         given:
         String html = '<table><tr><td>first<br>second</td></tr></table>'
