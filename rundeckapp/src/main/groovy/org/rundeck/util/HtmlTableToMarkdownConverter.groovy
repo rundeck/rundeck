@@ -59,10 +59,6 @@ import java.util.regex.Pattern
 @CompileStatic
 class HtmlTableToMarkdownConverter {
 
-    private static final Pattern FENCED_CODE_BLOCK = Pattern.compile(
-        '^[ ]{0,3}(`{3,}|~{3,})[^\\n]*\\n.*?^[ ]{0,3}\\1[ \\t]*$',
-        Pattern.MULTILINE | Pattern.DOTALL
-    )
     private static final Pattern INLINE_CODE_SPAN = Pattern.compile('(`+).*?\\1')
     private static final Pattern WHITESPACE_RUN = Pattern.compile('\\s+')
 
@@ -118,11 +114,11 @@ class HtmlTableToMarkdownConverter {
     }
 
     private static String replaceTables(String text) {
-        List<TableSpan> spans = findTopLevelTables(text)
+        List<int[]> codeRanges = findCodeRanges(text)
+        List<TableSpan> spans = findTopLevelTables(text, codeRanges)
         if (spans.isEmpty()) {
             return text
         }
-        List<int[]> codeRanges = findCodeRanges(text)
         StringBuilder result = new StringBuilder()
         int lastEnd = 0
         boolean convertedAny = false
@@ -132,12 +128,6 @@ class HtmlTableToMarkdownConverter {
                 // -- fail safe for the whole text rather than risk an
                 // incomplete or confusing partial conversion.
                 return text
-            }
-            if (overlapsAnyRange(span.start, span.end, codeRanges)) {
-                // A <table> written inside a fenced code block or inline
-                // code span is a documented example, not live HTML -- leave
-                // it exactly as authored.
-                continue
             }
             String markdownTable = buildMarkdownTable(text.substring(span.start, span.end))
             if (markdownTable == null) {
@@ -163,10 +153,16 @@ class HtmlTableToMarkdownConverter {
      * blocks. A quoted attribute value (single- or double-quoted) is skipped
      * as one unit when looking for a tag's closing {@code >}, so a
      * {@code >} -- or a fake {@code </table>} -- hidden inside one can never
-     * be mistaken for real markup. A table is marked {@code nested} if
+     * be mistaken for real markup; an HTML comment is likewise skipped as one
+     * unit up to its real {@code -->}. A table is marked {@code nested} if
      * another {@code <table>} opens before its matching close is found.
+     * Any {@code <} found inside a Markdown fenced code block or inline code
+     * span ({@code codeRanges}) is ignored entirely -- a table documented as
+     * an example never participates in boundary-finding, so a stray,
+     * unmatched tag in such an example cannot corrupt the depth-tracking for
+     * a genuine table elsewhere in the text.
      */
-    private static List<TableSpan> findTopLevelTables(String text) {
+    private static List<TableSpan> findTopLevelTables(String text, List<int[]> codeRanges) {
         List<TableSpan> spans = []
         int length = text.length()
         int i = 0
@@ -176,6 +172,10 @@ class HtmlTableToMarkdownConverter {
         while (i < length) {
             char c = text.charAt(i)
             if (c != '<' as char) {
+                i++
+                continue
+            }
+            if (isPositionInAnyRange(i, codeRanges)) {
                 i++
                 continue
             }
@@ -210,11 +210,24 @@ class HtmlTableToMarkdownConverter {
      * Given the index of a {@code <} character, returns the index just past
      * the tag's matching, quote-aware {@code >} -- a {@code >} inside a
      * single- or double-quoted attribute value does not end the tag.
-     * Returns -1 if the tag is never closed (truncated/malformed input).
+     * An HTML comment ({@code <!--...-->}) is recognized up front and
+     * skipped as one opaque unit up to its real {@code -->}: comments can
+     * contain anything, including quotes and {@code >} characters, with no
+     * escaping, so treating them like an ordinary tag would let a {@code >}
+     * inside a comment end the scan early and leak the rest of the comment
+     * (and whatever follows) as unescaped trailing text.
+     * Returns -1 if the tag/comment is never closed (truncated/malformed
+     * input).
      */
     private static final char NO_QUOTE = (char) 0
+    private static final String COMMENT_START = '<!--'
+    private static final String COMMENT_END = '-->'
 
     private static int skipTag(String text, int ltIndex) {
+        if (text.regionMatches(ltIndex, COMMENT_START, 0, COMMENT_START.length())) {
+            int closeIndex = text.indexOf(COMMENT_END, ltIndex + COMMENT_START.length())
+            return closeIndex < 0 ? -1 : closeIndex + COMMENT_END.length()
+        }
         int length = text.length()
         int i = ltIndex + 1
         char quote = NO_QUOTE
@@ -262,15 +275,105 @@ class HtmlTableToMarkdownConverter {
 
     /**
      * Finds the character ranges of Markdown fenced code blocks and inline
-     * code spans in {@code text}, so {@link #replaceTables} can skip any
-     * {@code <table>} found inside them -- those are documented examples,
-     * not raw HTML meant to be rendered live.
+     * code spans in {@code text}, so {@link #findTopLevelTables} can ignore
+     * any {@code <table>}-like text found inside them -- those are
+     * documented examples, not raw HTML meant to be rendered live.
      */
     private static List<int[]> findCodeRanges(String text) {
-        List<int[]> ranges = []
-        addMatchRanges(FENCED_CODE_BLOCK, text, ranges)
+        List<int[]> ranges = findFencedCodeBlocks(text)
         addMatchRanges(INLINE_CODE_SPAN, text, ranges)
         return ranges
+    }
+
+    /**
+     * Finds fenced code block ranges per the CommonMark spec: an opening
+     * fence of 3+ backticks or tildes (up to 3 leading spaces) at the start
+     * of a line, closed by a line (also up to 3 leading spaces, optionally
+     * followed only by trailing whitespace) of the SAME fence character with
+     * length greater than or equal to the opening fence's length -- not
+     * necessarily equal. An unclosed fence extends to the end of the text.
+     */
+    private static List<int[]> findFencedCodeBlocks(String text) {
+        List<int[]> ranges = []
+        int length = text.length()
+        int lineStart = 0
+        while (lineStart < length) {
+            int lineEnd = text.indexOf('\n', lineStart)
+            if (lineEnd < 0) {
+                lineEnd = length
+            }
+            int[] fence = matchFence(text, lineStart, lineEnd, NO_QUOTE, 0)
+            if (fence != null) {
+                char fenceChar = (char) fence[0]
+                int fenceLen = fence[1]
+                int blockEnd = length
+                int closeLineStart = lineEnd < length ? lineEnd + 1 : length
+                while (closeLineStart < length) {
+                    int closeLineEnd = text.indexOf('\n', closeLineStart)
+                    if (closeLineEnd < 0) {
+                        closeLineEnd = length
+                    }
+                    if (matchFence(text, closeLineStart, closeLineEnd, fenceChar, fenceLen) != null) {
+                        blockEnd = closeLineEnd < length ? closeLineEnd + 1 : length
+                        break
+                    }
+                    closeLineStart = closeLineEnd < length ? closeLineEnd + 1 : length
+                }
+                ranges << ([lineStart, blockEnd] as int[])
+                lineStart = blockEnd
+            } else {
+                lineStart = lineEnd < length ? lineEnd + 1 : length
+            }
+        }
+        return ranges
+    }
+
+    /**
+     * Checks whether the line {@code [lineStart, lineEnd)} is a fence line:
+     * up to 3 leading spaces, then a run of 3+ of the same fence character
+     * (backtick or tilde). When {@code requiredChar} is {@link #NO_QUOTE},
+     * any fence character/length qualifies as an OPENING fence and both are
+     * returned as {@code [char, length]}; otherwise this checks for a
+     * CLOSING fence of exactly {@code requiredChar} with length greater than
+     * or equal to {@code requiredMinLength}, with only whitespace allowed
+     * after the fence run, returning a non-null sentinel on success.
+     */
+    private static int[] matchFence(String text, int lineStart, int lineEnd, char requiredChar, int requiredMinLength) {
+        int i = lineStart
+        int spaces = 0
+        while (i < lineEnd && spaces < 3 && text.charAt(i) == ' ' as char) {
+            i++
+            spaces++
+        }
+        if (i >= lineEnd) {
+            return null
+        }
+        char c = text.charAt(i)
+        if (c != '`' as char && c != '~' as char) {
+            return null
+        }
+        if (requiredChar != NO_QUOTE && c != requiredChar) {
+            return null
+        }
+        int runStart = i
+        while (i < lineEnd && text.charAt(i) == c) {
+            i++
+        }
+        int runLength = i - runStart
+        if (runLength < 3 || (requiredChar != NO_QUOTE && runLength < requiredMinLength)) {
+            return null
+        }
+        if (requiredChar != NO_QUOTE) {
+            // A closing fence line may have nothing but whitespace after the
+            // fence run.
+            while (i < lineEnd) {
+                if (!Character.isWhitespace(text.charAt(i))) {
+                    return null
+                }
+                i++
+            }
+        }
+        return [(int) c, runLength] as int[]
     }
 
     private static void addMatchRanges(Pattern pattern, String text, List<int[]> ranges) {
@@ -280,9 +383,9 @@ class HtmlTableToMarkdownConverter {
         }
     }
 
-    private static boolean overlapsAnyRange(int start, int end, List<int[]> ranges) {
+    private static boolean isPositionInAnyRange(int position, List<int[]> ranges) {
         for (int[] range : ranges) {
-            if (start < range[1] && end > range[0]) {
+            if (position >= range[0] && position < range[1]) {
                 return true
             }
         }
@@ -414,9 +517,9 @@ class HtmlTableToMarkdownConverter {
         void closeDocument() {
         }
 
-        // Any tag other than tr/td/th (e.g. a nested <span>) is ignored here;
-        // its own text content still reaches text() below and is appended to
-        // whatever cell is currently open.
+        // Any tag other than tr/td/th/br (e.g. a nested <span>) is ignored
+        // here; its own text content still reaches text() below and is
+        // appended to whatever cell is currently open.
         @Override
         void openTag(String elementName, List<String> attrs) {
             switch (elementName) {
@@ -427,6 +530,14 @@ class HtmlTableToMarkdownConverter {
                 case 'th':
                     currentCellText = new StringBuilder()
                     currentCellIsHeader = elementName == 'th'
+                    break
+                case 'br':
+                    // A line break has no text content of its own, so without
+                    // this the text before and after it would otherwise be
+                    // concatenated with nothing between them.
+                    if (currentCellText != null) {
+                        currentCellText.append(' ')
+                    }
                     break
             }
         }
