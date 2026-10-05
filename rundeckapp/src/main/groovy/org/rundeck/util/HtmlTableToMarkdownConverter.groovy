@@ -182,6 +182,16 @@ class HtmlTableToMarkdownConverter {
                 i++
                 continue
             }
+            if (!isTagStart(text, i)) {
+                // A literal "<" in ordinary prose (e.g. "1 < 2") is not a
+                // tag at all. Treating it as one would make skipTag consume
+                // everything up to the next unquoted ">" -- which, more
+                // often than not, belongs to a real tag further along --
+                // silently absorbing that tag so it's never recognized on
+                // its own (e.g. a genuinely nested <table> right after it).
+                i++
+                continue
+            }
             if (depth == 0 && isPositionInAnyRange(i, codeRanges)) {
                 // Code-range skipping only applies while deciding whether to
                 // START tracking a table (depth zero): that's the "is this
@@ -250,6 +260,23 @@ class HtmlTableToMarkdownConverter {
     private static final char NO_QUOTE = (char) 0
     private static final String COMMENT_START = '<!--'
     private static final String COMMENT_END = '-->'
+
+    /**
+     * Whether the character after {@code ltIndex} (a {@code <}) is one that
+     * can actually start a tag, comment, or declaration -- a letter (element
+     * name), {@code /} (closing tag), {@code !} (comment/declaration), or
+     * {@code ?} (processing instruction/bogus comment). Anything else means
+     * the {@code <} is just a literal character in ordinary text (e.g. the
+     * "less than" in {@code "1 < 2"}), not the start of markup at all.
+     */
+    private static boolean isTagStart(String text, int ltIndex) {
+        int i = ltIndex + 1
+        if (i >= text.length()) {
+            return false
+        }
+        char next = text.charAt(i)
+        return next == '/' as char || next == '!' as char || next == '?' as char || Character.isLetter(next)
+    }
 
     private static int skipTag(String text, int ltIndex) {
         if (text.regionMatches(ltIndex, COMMENT_START, 0, COMMENT_START.length())) {

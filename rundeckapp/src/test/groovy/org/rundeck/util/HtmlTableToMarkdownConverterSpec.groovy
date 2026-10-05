@@ -449,6 +449,40 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !rendered.contains('<a ')
     }
 
+    def "a literal less-than sign in prose before a real table does not prevent the table from converting"() {
+        given:
+        String text = 'Threshold < 5.\n\n<table><tr><td>a</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('Threshold < 5.')
+        result.contains('| a |')
+    }
+
+    def "a literal less-than sign before a genuinely nested table does not absorb the nested tag and truncate the real close early"() {
+        given:
+        // The literal "1 < 2" must not be treated as a tag that consumes
+        // everything up to the next unquoted ">" -- which would otherwise
+        // absorb the nested "<table>" immediately after it, so it's never
+        // recognized as nesting and the outer close ends up matched to the
+        // INNER table's close instead, truncating early.
+        String html = '<table><tr><td>safe</td></tr><tr><td>1 < 2 ' +
+            '<table><tr><td>inner</td></tr></table>' +
+            '![evil](https://attacker.example/leak)</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        // Falls back to the safe, unchanged-text path (nested table).
+        result == html
+        !rendered.contains('<img')
+        !rendered.contains('<a ')
+    }
+
     def "a line break tag inserts a space instead of merging the surrounding text"() {
         given:
         String html = '<table><tr><td>first<br>second</td></tr></table>'
