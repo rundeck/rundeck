@@ -44,7 +44,10 @@
           :key="key"
           :value="key"
         >
-          <AccordionHeader @click.stop="handleAccordionClick(group, key)">
+          <AccordionHeader
+            v-bind="groupProviderAttrs(group)"
+            @click.stop="handleAccordionClick(group, key)"
+          >
             <div class="accordion-header-content">
               <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
               <div v-if="group.isGroup" class="accordion-title-text text-body">
@@ -97,7 +100,10 @@
           :key="key"
           :value="key"
         >
-          <AccordionHeader @click.stop="handleAccordionClick(group, key)">
+          <AccordionHeader
+            v-bind="groupProviderAttrs(group)"
+            @click.stop="handleAccordionClick(group, key)"
+          >
             <div class="accordion-header-content">
               <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
               <div v-if="group.isGroup" class="accordion-title-text text-body">
@@ -133,7 +139,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import PluginIcon from "./PluginIcon.vue";
 import PluginInfo from "./PluginInfo.vue";
 import Skeleton from "primevue/skeleton";
@@ -174,6 +180,14 @@ export default defineComponent({
       type: String,
       default: "",
     },
+    /**
+     * Optional function returning extra attributes (e.g. data-node-step-type) to bind on
+     * the header of a single provider entry, so it can be located by provider name.
+     */
+    providerAttrs: {
+      type: Function as PropType<(provider: any) => Record<string, string>>,
+      default: null,
+    },
   },
   emits: ["select"],
   computed: {
@@ -205,6 +219,16 @@ export default defineComponent({
     },
   },
   methods: {
+    /**
+     * Attributes for a single-provider entry; group entries get none.
+     * @param group grouped plugin item
+     */
+    groupProviderAttrs(group: any): Record<string, string> {
+      if (!this.providerAttrs || group.isGroup || !group.providers?.length) {
+        return {};
+      }
+      return this.providerAttrs(group.providers[0]);
+    },
     handleAccordionClick(group: any, key: string) {
       this.$emit("select", { group, key });
     },

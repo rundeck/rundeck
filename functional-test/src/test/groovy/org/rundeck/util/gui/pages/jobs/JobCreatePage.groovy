@@ -64,7 +64,8 @@ class JobCreatePage extends BasePage {
     By workflowAlphaUiContainer = By.id("workflowContent") // TODO: delete once out of Alpha
     By workflowContentControlLabelBy = By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]")
     By workflowAlphaUiButton = By.id("addButton")
-    By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
+    // Save button of the step being edited: inside the step modal (OSS editor) or the inline edit card (Pro editor)
+    By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"] | //*[contains(@class, \'edit-step-card\')]//button[@data-testid="save-button"]')
     By loaderClass = By.className("loader")
 
     static class NextUi {

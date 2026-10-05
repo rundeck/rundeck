@@ -35,7 +35,10 @@
         :key="provider.name"
         :value="provider.name"
       >
-        <AccordionHeader @click="selectProvider(provider)">
+        <AccordionHeader
+          v-bind="providerAttrs ? providerAttrs(provider) : {}"
+          @click="selectProvider(provider)"
+        >
           <div class="accordion-header-content">
             <PluginInfo
               :detail="provider"
@@ -62,7 +65,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import PluginIcon from "./PluginIcon.vue";
 import PluginInfo from "./PluginInfo.vue";
 import Breadcrumb from "primevue/breadcrumb";
@@ -104,6 +107,14 @@ export default defineComponent({
     emptyMessage: {
       type: String,
       default: "",
+    },
+    /**
+     * Optional function returning extra attributes (e.g. data-node-step-type) to bind on
+     * each provider header, so it can be located by provider name.
+     */
+    providerAttrs: {
+      type: Function as PropType<(provider: any) => Record<string, string>>,
+      default: null,
     },
   },
   emits: ["select", "back"],
