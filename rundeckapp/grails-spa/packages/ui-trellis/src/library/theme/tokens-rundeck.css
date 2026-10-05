@@ -29,6 +29,9 @@
   --colors-cardNumber: #edf2f7;
   --colors-surface-200: #eeeeee;
 
+  /* Divider (Figma divider/color) */
+  --colors-divider: #dee2e6;
+
   /* Menu colors */
   --colors-menuitem-color: #495057;
 

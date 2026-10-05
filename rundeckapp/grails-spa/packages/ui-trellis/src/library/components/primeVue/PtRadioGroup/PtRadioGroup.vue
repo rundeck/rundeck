@@ -139,22 +139,43 @@ export default defineComponent({
 .pt-radio-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sizes-3);
   font-family: Inter, var(--fonts-body2);
   font-size: 14px;
   line-height: 21px;
   color: var(--colors-gray-800);
 
+  // Radio control per the Figma "Radio / Control" spec (16px control, 6px dot).
+  --p-radiobutton-width: var(--sizes-6);
+  --p-radiobutton-height: var(--sizes-6);
+  --p-radiobutton-icon-size: var(--sizes-2\.5);
+  --p-radiobutton-background: var(--colors-white);
+  --p-radiobutton-border-color: var(--colors-gray-600);
+  --p-radiobutton-hover-border-color: var(--colors-gray-600);
+  --p-radiobutton-checked-background: var(--colors-blue-600);
+  --p-radiobutton-checked-border-color: var(--colors-blue-600);
+  --p-radiobutton-checked-hover-background: var(--colors-blue-600);
+  --p-radiobutton-checked-hover-border-color: var(--colors-blue-600);
+  --p-radiobutton-icon-checked-color: var(--colors-white);
+  --p-radiobutton-icon-checked-hover-color: var(--colors-white);
+  --p-radiobutton-focus-border-color: var(--colors-blue-500);
+  --p-radiobutton-checked-focus-border-color: var(--colors-blue-500);
+  --p-radiobutton-focus-ring-shadow: 0 0 0 2.8px var(--colors-blue-100);
+  --p-radiobutton-invalid-border-color: var(--colors-red-500);
+  --p-radiobutton-disabled-background: var(--colors-gray-400);
+  --p-radiobutton-checked-disabled-border-color: var(--colors-gray-400);
+  --p-radiobutton-icon-disabled-color: var(--colors-gray-600);
+
   &__item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 1.5px 0;
+    gap: var(--sizes-3);
+    padding: var(--sizes-0\.5) 0;
   }
 
   &__label {
     margin: 0;
-    font-weight: 400;
+    font-weight: var(--fontWeights-regular);
     cursor: pointer;
   }
 }
