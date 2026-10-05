@@ -198,24 +198,20 @@
       "pinDigests": true
     },
     {
-      "description": "Digest-only refreshes (same tag rebuilt upstream, usually OS security patches) are batched weekly and automerged once CI is green, so pinned base images do not go stale with known CVEs. minimumReleaseAge still applies",
+      "description": "CI/test-only images: every non-major update (digest refresh, patch, minor) goes into one grouped weekly PR with human review. No automerge: CI does not need to chase the latest upstream image",
       "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["digest", "pinDigest"],
-      "groupName": "docker digests",
+      "matchUpdateTypes": ["digest", "pinDigest", "patch", "minor"],
+      "groupName": "docker images (ci)",
       "schedule": ["before 6am on monday"],
-      "automerge": true
-    },
-    {
-      "description": "Docker image patch/minor version bumps get an individual PR with human review",
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["patch", "minor"],
       "automerge": false
     },
     {
-      "description": "Base images of images shipped to customers: same weekly schedule, but in their own group and never automerged, so a re-pointed upstream digest cannot reach a shipped image without human review",
+      "description": "Base images of images shipped to customers: their own grouped weekly PR, never automerged, so a re-pointed upstream digest cannot reach a shipped image without human review",
       "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest", "pinDigest", "patch", "minor"],
       "matchFileNames": ["docker/ubuntu-base/**"],
-      "groupName": "docker digests (shipped images)",
+      "groupName": "docker images (shipped)",
+      "schedule": ["before 6am on monday"],
       "automerge": false,
       "addLabels": ["shipped-image"]
     },
