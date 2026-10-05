@@ -215,4 +215,112 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result.contains('<table><tr><td>example</td></tr></table>')
         result.contains('| real |')
     }
+
+    def "a table nested inside a cell of another table falls back to the original text unchanged"() {
+        given:
+        String html = '<table><tr><td>before<table><tr><td>inner</td></tr></table>after</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result == html
+    }
+
+    def "a quoted attribute containing a greater-than sign does not leak its value as cell text"() {
+        given:
+        String html = '<table><tr><td title="x>![evil](https://attacker.example/leak)">safe</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result.contains('| safe |')
+        !result.contains('attacker.example')
+        !result.contains('evil')
+    }
+
+    def "a quoted attribute on a nested tag inside a cell does not leak its value as cell text"() {
+        given:
+        String html = '<table><tr><td><span title="x>![evil](https://attacker.example/leak)">safe</span></td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result.contains('| safe |')
+        !result.contains('attacker.example')
+        !result.contains('evil')
+    }
+
+    def "markdown-active characters in plain cell text are escaped so they cannot become a live link, image, or formatting"() {
+        given:
+        String html = '<table><tr><td>![evil](https://attacker.example/leak) and *bold* and `code`</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        !rendered.contains('<img')
+        !rendered.contains('<a ')
+        !rendered.contains('<strong>')
+        !rendered.contains('<code>')
+        rendered.contains('attacker.example')
+    }
+
+    def "a header with fewer cells than a data row (e.g. from colspan) does not drop the data row's extra values"() {
+        given:
+        String html = '<table><tr><th colspan="2">Title</th></tr><tr><td>A</td><td>B</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        List<String> lines = result.trim().readLines()
+
+        then:
+        lines[0] == '| Title |  |'
+        lines[1] == '| --- | --- |'
+        lines[2] == '| A | B |'
+    }
+
+    def "a fake closing table tag hidden inside a quoted attribute is skipped, and the real closing tag is still found"() {
+        given:
+        // The fake "</table>" -- and an exploit payload alongside it -- live
+        // entirely inside a quoted title attribute; the real closing tag is
+        // the one at the very end. A vulnerable scanner would stop at the
+        // fake one, truncate the table there, and leak the rest of the
+        // attribute plus the trailing text verbatim as live Markdown.
+        String html = '<table><tr><td>a</td></tr><tr>' +
+            '<td title="</table>![evil](https://attacker.example/leak)">b</td>' +
+            '</tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        // Attribute content must never surface anywhere -- the cell's real,
+        // visible text is just "b".
+        result.contains('| b |')
+        !rendered.contains('<img')
+        !rendered.contains('attacker.example')
+        !rendered.contains('evil')
+    }
+
+    def "a fake closing row or cell tag hidden inside a nested tag's quoted attribute does not leak its value as cell text"() {
+        given:
+        String html = '<table><tr><td>' +
+            '<span title="</td></tr></table>![evil](https://attacker.example/leak)">safe</span>' +
+            '</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        result.contains('| safe |')
+        !rendered.contains('<img')
+        !rendered.contains('attacker.example')
+        !rendered.contains('evil')
+    }
 }
