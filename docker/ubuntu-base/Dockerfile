@@ -1,6 +1,6 @@
 # Build remco from org fork with CVE fixes applied
 ###################################################
-FROM golang:1.27.1 AS remco
+FROM golang:1.27.1@sha256:e0174e51e81218523251d85d248a90d24c3d5e81543b4f07a5d66229397db190 AS remco
 
 # Pinned to a rundeck/remco commit synced with upstream HeavyHorst/remco.
 # Fixes golang.org/x/crypto 0.52.0, golang.org/x/net 0.55.0, and
@@ -14,7 +14,7 @@ RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
 
 # Build base container
 ######################
-FROM ubuntu:22.04
+FROM ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
 
 ARG TARGETARCH
 

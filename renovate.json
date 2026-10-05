@@ -191,6 +191,41 @@
         "https://m2proxy.atlassian.com/repository/public/",
         "https://repo1.maven.org/maven2/"
       ]
+    },
+    {
+      "description": "Pin every container image (Dockerfiles, compose, CircleCI executors, annotated refs) to tag@sha256 so the same commit always pulls the same image and a re-pointed upstream tag cannot reach CI or shipped images without a reviewed PR",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    },
+    {
+      "description": "Digest-only refreshes (same tag rebuilt upstream, usually OS security patches) are batched weekly and automerged once CI is green, so pinned base images do not go stale with known CVEs. minimumReleaseAge still applies",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest", "pin", "pinDigest"],
+      "groupName": "docker digests",
+      "schedule": ["before 6am on monday"],
+      "automerge": true
+    },
+    {
+      "description": "Docker image patch/minor version bumps get an individual PR with human review",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": false
+    },
+    {
+      "description": "Label updates to base images of images shipped to customers, for visibility. Not held back past the weekly digest batch",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["docker/ubuntu-base/**"],
+      "addLabels": ["shipped-image"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Image refs the built-in managers cannot see (Groovy, Gradle, shell, Makefile, compose build args). Annotate the line above the ref with '# renovate: datasource=docker depName=<image>' (or '//' in Groovy/Gradle); the ref must be '<image>:<tag>@sha256:<digest>'",
+      "managerFilePatterns": ["/\\.(groovy|gradle|sh|ya?ml)$/", "/(^|/)Makefile$/"],
+      "matchStrings": [
+        "(?:#|//)\\s*renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n[^\\n]*?:(?<currentValue>[^\\s@\"'}:]+)@(?<currentDigest>sha256:[a-f0-9]{64})"
+      ]
     }
   ]
 }

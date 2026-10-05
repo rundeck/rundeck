@@ -76,7 +76,7 @@ executors:
   # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
   docker-builder:
     docker:
-      - image: cimg/openjdk:17.0.20
+      - image: cimg/openjdk:17.0.20@sha256:f5468d6ddf3849e811edcf03329f013494549e63cf06037302aa7514c3cf41ff
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -90,7 +90,8 @@ executors:
   # Machine executor (gen2: up to 180% faster multi-threaded CPU vs gen1)
   machine-builder:
     machine:
-      image: ubuntu-2204:current
+      # Dated image: Renovate has no datasource for CircleCI machine images, bump manually.
+      image: ubuntu-2204:2026.05.1
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
