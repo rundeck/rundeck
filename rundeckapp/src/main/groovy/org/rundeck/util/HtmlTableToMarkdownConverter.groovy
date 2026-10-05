@@ -160,7 +160,14 @@ class HtmlTableToMarkdownConverter {
      * span ({@code codeRanges}) is ignored entirely -- a table documented as
      * an example never participates in boundary-finding, so a stray,
      * unmatched tag in such an example cannot corrupt the depth-tracking for
-     * a genuine table elsewhere in the text.
+     * a genuine table elsewhere in the text. An opening
+     * {@code <script>}/{@code <style>}/{@code <textarea>}/{@code <title>}
+     * tag is followed all the way to its real, matching closing tag: HTML
+     * gives these elements "raw text" content -- everything up to that
+     * closing tag is literal text, never markup -- so without this, a
+     * {@code </table>} typed as literal script/style content would be
+     * mistaken for a real closing tag the same way an unguarded quote or
+     * comment was.
      */
     private static List<TableSpan> findTopLevelTables(String text, List<int[]> codeRanges) {
         List<TableSpan> spans = []
@@ -186,6 +193,18 @@ class HtmlTableToMarkdownConverter {
                 // Unterminated tag: stop scanning, nothing further can be
                 // trusted as a complete table.
                 break
+            }
+            if (!isCloseTable) {
+                String rawTextElement = rawTextElementName(text, i)
+                if (rawTextElement != null) {
+                    int rawTextEnd = skipRawTextElement(text, tagEnd, rawTextElement)
+                    if (rawTextEnd < 0) {
+                        // The raw-text element's own closing tag is never
+                        // found: nothing further can be trusted.
+                        break
+                    }
+                    tagEnd = rawTextEnd
+                }
             }
             if (isOpenTable) {
                 if (depth == 0) {
@@ -271,6 +290,68 @@ class HtmlTableToMarkdownConverter {
         }
         char next = text.charAt(after)
         return Character.isWhitespace(next) || next == '>' as char || next == '/' as char
+    }
+
+    private static final Set<String> RAW_TEXT_ELEMENTS = ['script', 'style', 'textarea', 'title'] as Set<String>
+
+    /**
+     * If the opening tag starting at {@code ltIndex} is one of
+     * {@link #RAW_TEXT_ELEMENTS}, returns its lowercase name; otherwise
+     * {@code null}.
+     */
+    private static String rawTextElementName(String text, int ltIndex) {
+        int length = text.length()
+        int i = ltIndex + 1
+        int nameStart = i
+        while (i < length) {
+            char c = text.charAt(i)
+            if (Character.isWhitespace(c) || c == '>' as char || c == '/' as char) {
+                break
+            }
+            i++
+        }
+        String name = text.substring(nameStart, i).toLowerCase(Locale.ROOT)
+        return RAW_TEXT_ELEMENTS.contains(name) ? name : null
+    }
+
+    /**
+     * Given {@code contentStart} (just past a raw-text element's own opening
+     * {@code >}), returns the index just past that element's real, matching
+     * closing tag (e.g. {@code </script>}), found case-insensitively and
+     * confirmed to be followed only by optional whitespace and {@code >} --
+     * not merely the element name appearing as part of a longer word.
+     * Returns -1 if no such closing tag is found.
+     */
+    private static int skipRawTextElement(String text, int contentStart, String elementName) {
+        String closeTag = '</' + elementName
+        int length = text.length()
+        int searchFrom = contentStart
+        while (searchFrom <= length - closeTag.length()) {
+            int idx = indexOfIgnoreCase(text, closeTag, searchFrom)
+            if (idx < 0) {
+                return -1
+            }
+            int j = idx + closeTag.length()
+            while (j < length && Character.isWhitespace(text.charAt(j))) {
+                j++
+            }
+            if (j < length && text.charAt(j) == '>' as char) {
+                return j + 1
+            }
+            searchFrom = idx + 1
+        }
+        return -1
+    }
+
+    private static int indexOfIgnoreCase(String text, String needle, int fromIndex) {
+        int length = text.length()
+        int needleLength = needle.length()
+        for (int i = fromIndex; i <= length - needleLength; i++) {
+            if (text.regionMatches(true, i, needle, 0, needleLength)) {
+                return i
+            }
+        }
+        return -1
     }
 
     /**

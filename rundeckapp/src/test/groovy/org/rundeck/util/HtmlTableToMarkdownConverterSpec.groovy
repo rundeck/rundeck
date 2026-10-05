@@ -400,6 +400,31 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result.contains('Use \\`value\\` here')
     }
 
+    def "a fake closing table tag hidden inside a script element's raw text does not truncate the match and leak it as live markup"() {
+        given:
+        // <script> content is raw text per HTML -- everything up to the real
+        // </script> is literal, never markup. A scanner that doesn't know
+        // this would treat the "</table>" typed here as a real closing tag,
+        // truncating the table before its second row and leaking the rest
+        // of the script body as live trailing Markdown.
+        String html = '<table><tr><td>safe</td></tr>' +
+            '<script>var x = "</table>![evil](https://attacker.example/leak)";</script>' +
+            '<tr><td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
+
+        then:
+        // Both rows must convert -- proving the real closing </table> was
+        // found, not the fake one inside the script body.
+        result.contains('| safe |')
+        result.contains('| b |')
+        !rendered.contains('<img')
+        !rendered.contains('attacker.example')
+        !rendered.contains('evil')
+    }
+
     def "a line break tag inserts a space instead of merging the surrounding text"() {
         given:
         String html = '<table><tr><td>first<br>second</td></tr></table>'
