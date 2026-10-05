@@ -1,5 +1,4 @@
 import { mount, flushPromises, VueWrapper } from "@vue/test-utils";
-import { defineComponent } from "vue";
 import DynamicFormPluginProp from "../DynamicFormPluginProp.vue";
 import { Btn, Modal, Alert } from "uiv";
 import PtSelect from "../../primeVue/PtSelect/PtSelect.vue";
@@ -203,49 +202,51 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(descriptionLabelEl).toBeTruthy();
   });
 
-  it("gives each rendered instance its own unique control/help ids", async () => {
-    // useId() scopes uniqueness to the enclosing app instance, so both
-    // instances must be mounted in the same app to exercise that.
-    const TwoInstances = defineComponent({
-      components: { DynamicFormPluginProp },
-      template: `
-        <DynamicFormPluginProp
-          v-for="n in [0, 1]"
-          :key="n"
-          fields="{}"
-          has-options="false"
-          name="sameName"
-        />
-      `,
-    });
-    const wrapper = mount(TwoInstances, {
-      global: {
-        mocks: { $t: translate },
-        components: { Btn, Modal },
-        stubs: {
-          Modal: {
-            template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
+  describe("ids across independent Vue apps", () => {
+    // Each entry point mounts one Vue app per element, and useId() is only
+    // unique within a single app, so the entry points give each app its own
+    // app.config.idPrefix. Mount the component as two separate apps, like the
+    // entry points do.
+    const mountInOwnApp = async (idPrefix?: string) => {
+      const wrapper = mount(DynamicFormPluginProp, {
+        props: { fields: "{}", hasOptions: "false", name: "sameName" },
+        global: {
+          mocks: { $t: translate },
+          components: { Btn, Modal },
+          plugins: [
+            (app: any) => {
+              if (idPrefix) app.config.idPrefix = idPrefix;
+            },
+          ],
+          stubs: {
+            Modal: {
+              template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
+            },
           },
         },
-      },
+      });
+      await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+      await flushPromises();
+      return wrapper.find('[data-testid="field-key-input"]').attributes("id");
+    };
+
+    it("generates different ids when each app has a distinct idPrefix", async () => {
+      const idA = await mountInOwnApp("dynamic-form-0");
+      const idB = await mountInOwnApp("dynamic-form-1");
+
+      expect(idA).toContain("dynamic-form-0");
+      expect(idB).toContain("dynamic-form-1");
+      expect(idA).not.toBe(idB);
     });
-    const [instanceA, instanceB] = wrapper.findAllComponents(
-      DynamicFormPluginProp,
-    );
-    await instanceA.find('[data-testid="add-field-button"]').trigger("click");
-    await instanceB.find('[data-testid="add-field-button"]').trigger("click");
-    await flushPromises();
 
-    const idA = instanceA
-      .find('[data-testid="field-key-input"]')
-      .attributes("id");
-    const idB = instanceB
-      .find('[data-testid="field-key-input"]')
-      .attributes("id");
+    it("collides when two apps share the default idPrefix", async () => {
+      // Guards the premise: without the per-app prefix the ids are identical.
+      const idA = await mountInOwnApp();
+      const idB = await mountInOwnApp();
 
-    expect(idA).toBeTruthy();
-    expect(idB).toBeTruthy();
-    expect(idA).not.toBe(idB);
+      expect(idA).toBeTruthy();
+      expect(idA).toBe(idB);
+    });
   });
 
   it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
