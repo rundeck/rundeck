@@ -16,6 +16,7 @@ import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -46,6 +47,11 @@ class JobsSpec extends SeleniumBase {
         go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
+    /**
+     * Excluded from the Enterprise run: it asserts the OSS strategy editor (native select and
+     * strategy description panel), while Enterprise renders its own strategy editor by default.
+     */
+    @ExcludePro
     def "change workflow strategy"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT

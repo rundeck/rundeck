@@ -86,7 +86,7 @@ class JobEditSpec extends SeleniumBase{
             jobShowPage.closeDefinitionModalButton.click()
             jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
-            jobCreatePage.waitForNumberOfElementsToBeMoreThan(jobCreatePage.duplicateWfStepBy, 0)
+            jobCreatePage.waitForWorkflowStepsLoaded()
             jobCreatePage.removeStepByIndex(0)
             hold(2)
             jobCreatePage.expectNumberOfStepsToBe(1)

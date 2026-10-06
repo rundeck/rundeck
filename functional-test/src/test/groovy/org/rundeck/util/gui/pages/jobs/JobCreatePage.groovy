@@ -90,7 +90,8 @@ class JobCreatePage extends BasePage {
         static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
         static By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
         static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
-        static By numberOfStepsBy = By.cssSelector("[data-testid='edit-step-item']")
+        // Top-level steps in the OSS editor, or in the Enterprise editor (step cards under wfitem_N)
+        static By numberOfStepsBy = By.cssSelector("[data-testid='edit-step-item'], .step-list-item.ea > [id^='wfitem_']")
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
         static By stepEditModalCancelBy = By.cssSelector('.modal.in [data-testid="cancel-button"]')
         static By stepEditModalSaveBy = By.cssSelector('.modal.in [data-testid="save-button"]')
@@ -1036,8 +1037,17 @@ class JobCreatePage extends BasePage {
         if(legacyUi) {
             (els deleteStepBy).get(stepIndex).click()
         } else {
-            (el By.cssSelector("#wfitem_${stepIndex} + .step-item-controls button[data-test='remove-step']")).click()
+            // OSS editor remove button, or the Enterprise editor step card delete button
+            (el By.cssSelector("#wfitem_${stepIndex} + .step-item-controls button[data-test='remove-step'], " +
+                    "#wfitem_${stepIndex} [data-testid='step-card-header-delete-btn']")).click()
         }
+    }
+
+    /**
+     * Waits until the workflow tab has rendered at least one existing step, in any editor.
+     */
+    void waitForWorkflowStepsLoaded() {
+        waitForNumberOfElementsToBeMoreThan(legacyUi ? duplicateWfStepBy : NextUi.numberOfStepsBy, 0)
     }
 
     def expectNumberOfStepsToBe(int numberSteps){
