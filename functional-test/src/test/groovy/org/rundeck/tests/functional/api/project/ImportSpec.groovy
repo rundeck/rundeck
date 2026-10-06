@@ -12,6 +12,7 @@ import org.rundeck.util.container.RdClient
 class ImportSpec extends BaseContainer {
     public static final String RESOURCE_ARCHIVE_TEST_README_DIR = "/projects-import/archive-test-readme"
     public static final String RESOURCE_ARCHIVE_TEST_DIR = "/projects-import/archive-test"
+    public static final String RESOURCE_CROSS_PROJECT_LOG_POC_DIR = "/projects-import/cross-project-log-poc"
 
     def "test-project-import-readme-motd"(){
         given:
@@ -168,6 +169,52 @@ class ImportSpec extends BaseContainer {
         cleanup:
         deleteProject(projectName)
         deleteProject(projectName1)
+    }
+
+    /**
+     * Regression test for RUN-4950 / HackerOne #3960872: reproduces the reported PoC - a
+     * project-import archive whose execution XML forges an outputfilepath ("/etc/passwd") that
+     * is not backed by any file actually present in the archive. Import must still report
+     * success (matching the original report), but the imported execution's output must never
+     * disclose the forged file's content.
+     */
+    def "test-project-import-forged-outputfilepath-not-disclosed"(){
+        given:
+        String projectName = "crosslogpoc"
+        File tmpjar = createArchiveJarFile(
+                projectName,
+                new File(getClass().getResource(RESOURCE_CROSS_PROJECT_LOG_POC_DIR).getPath())
+        )
+        Object projectJsonMap = ["name": projectName]
+        post("/projects", projectJsonMap, Map)
+
+        when: "we import an archive whose execution XML references a log file absent from the archive"
+        Map parsedResponse = client.put(
+                "/project/${projectName}/import?importExecutions=true&jobUuidOption=remove",
+                tmpjar,
+                'application/zip')
+
+        then: "import still reports success, matching the original report"
+        parsedResponse.successful
+
+        when: "we look up the imported execution and read its output"
+        def mapper = new ObjectMapper()
+        def execsResponse = client.doGetAcceptAll("/project/${projectName}/executions")
+        assert execsResponse.successful
+        JobExecutionsResponse execsParsed = mapper.readValue(execsResponse.body().string(), JobExecutionsResponse.class)
+        execsResponse.close()
+        String execId = execsParsed.executions[0].id
+
+        def outputResponse = doRequest("/execution/${execId}/output?format=text") {
+            it.header 'Accept', 'text/plain'
+        }
+        String outputBody = outputResponse.body()?.string()
+
+        then: "the forged file's content is never disclosed through the output API"
+        !(outputBody?.contains('root:'))
+
+        cleanup:
+        deleteProject(projectName)
     }
 
     def assertJobCountForProject(

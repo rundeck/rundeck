@@ -1,0 +1,23 @@
+<executions>
+  <execution id='9001'>
+    <dateStarted>2014-03-06T18:45:25Z</dateStarted>
+    <dateCompleted>2014-03-06T18:45:27Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath>/etc/passwd</outputfilepath>
+    <failedNodeList />
+    <succeededNodeList>dignan</succeededNodeList>
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString />
+    <loglevel>INFO</loglevel>
+    <doNodedispatch>false</doNodedispatch>
+    <executionType>user</executionType>
+    <project>crosslogpoc</project>
+    <user>admin</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo hi this is a test project</exec>
+      </command>
+    </workflow>
+  </execution>
+</executions>
