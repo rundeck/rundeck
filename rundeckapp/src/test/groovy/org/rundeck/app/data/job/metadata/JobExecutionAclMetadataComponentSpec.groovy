@@ -12,7 +12,9 @@ import rundeck.services.data.IScheduledExecutionDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import java.util.regex.Pattern
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.ValidationSet
+import com.dtolabs.rundeck.core.authorization.providers.YamlProvider
 
 class JobExecutionAclMetadataComponentSpec extends Specification implements DataTest {
 
@@ -184,7 +186,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
     }
 
     @Unroll
-    def "buildRunGrantPolicy emits parseable YAML granting only this job to the saved user (#scenario)"() {
+    def "buildRunGrantPolicy grants run to exactly the saved user (#scenario)"() {
         given:
             def sut = newComponent()
             def se = new ScheduledExecution(
@@ -192,29 +194,44 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
                 scheduled: true, executionEnabled: true, scheduleEnabled: true,
             )
         when:
-            def parsed = new org.yaml.snakeyaml.Yaml().load(sut.buildRunGrantPolicy(se))
+            def policyText = sut.buildRunGrantPolicy(se)
+            def parsed = new org.yaml.snakeyaml.Yaml().load(policyText)
         then:
             // project-level policy files must not carry a context block
             !parsed.containsKey('context')
             parsed['for']['job'][0]['equals']['uuid'] == 'job-1'
             parsed['for']['job'][0]['allow'] == ['run']
             parsed['description'].contains(jobName)
-        and: "least privilege: granted to the user, not to their roles"
-            parsed['by'].keySet() == ['username'].toSet()
-        and: "by.username is matched as a regex, so it must grant this user and no other"
-            Pattern.compile(parsed['by']['username'] as String).matcher(user).matches()
-            !Pattern.compile(parsed['by']['username'] as String).matcher(impostor).matches()
+        and: "an exact user urn, never a username: username rules also match as a regex"
+            parsed['by'].keySet() == ['urn'].toSet()
+            parsed['by']['urn'] == "user:${user}".toString()
+
+        when: "the real parser reads it, so a key it would ignore cannot pass unnoticed"
+            def validation = new ValidationSet()
+            def policies = YamlProvider.policiesFromSource(
+                YamlProvider.sourceFromString('generated', policyText, new Date(), validation),
+                AuthorizationUtil.projectContext('AProject'),
+                validation
+            )
+            validation.complete()
+            def rules = policies.ruleSet.rules
+        then: "it yields one rule whose subject is that urn and nothing else"
+            validation.valid
+            rules.size() == 1
+            rules[0].urn == "user:${user}".toString()
+            // RuleEvaluator only compares urns with equals, so no other identity can match
+            rules[0].username == null
+            rules[0].group == null
         where:
-            scenario                     | jobName              | user          | impostor
-            'plain values'               | 'nightly'            | 'devread'     | 'devreadX'
-            'job name with a colon'      | 'backup: nightly'    | 'devread'     | 'devreadX'
-            'job name with a hash'       | 'nightly #2'         | 'devread'     | 'devreadX'
-            'username with a hash'       | 'nightly'            | 'dev#read'    | 'devXread'
-            // unquoted, '$' anchors and would also match the name without it
-            'username with a dollar'     | 'nightly'            | 'HOST$'       | 'HOST'
-            // unquoted, '.' is any character and '*' a repeat
-            'username with a dot'        | 'nightly'            | 'dev.admin'   | 'devXadmin'
-            'username with a wildcard'   | 'nightly'            | 'dev.*'       | 'devops'
+            scenario                     | jobName              | user
+            'plain values'               | 'nightly'            | 'devread'
+            'job name with a colon'      | 'backup: nightly'    | 'devread'
+            'job name with a hash'       | 'nightly #2'         | 'devread'
+            'username with a hash'       | 'nightly'            | 'dev#read'
+            'username with a dollar'     | 'nightly'            | 'HOST$'
+            'username with a dot'        | 'nightly'            | 'dev.admin'
+            'username with a wildcard'   | 'nightly'            | 'dev.*'
+            'username with a backslash'  | 'nightly'            | '\\Qdev.admin\\E'
     }
 
     def "getMetadataForJobIds returns executionAclValid meta for a requested at-risk job"() {
