@@ -230,4 +230,15 @@ export default defineComponent({
   font-size: 10.5px !important;
   line-height: var(--line-height-sm);
 }
+
+*[data-color-theme="dark"] {
+  .breadcrumb-current {
+    color: var(--white, #fff);
+  }
+
+  .group-count,
+  .no-results {
+    color: var(--grey-200);
+  }
+}
 </style>

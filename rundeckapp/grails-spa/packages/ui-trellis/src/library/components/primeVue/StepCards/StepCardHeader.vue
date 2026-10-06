@@ -309,6 +309,39 @@ export default defineComponent({
   color: var(--colors-gray-900);
 }
 
+/* Dark mode (Figma: Dark Mode/Grey scale) */
+*[data-color-theme="dark"] .stepCardHeader {
+  background-color: var(--grey-600);
+  border-bottom: 1px solid var(--grey-400);
+  color: var(--white, #fff);
+
+  p,
+  .pi-info-circle {
+    color: var(--white, #fff);
+  }
+
+  .link-title,
+  .link-title + .pi,
+  .link-title .pi {
+    color: #50b776;
+  }
+
+  .tag-node {
+    background-color: #7086af;
+    color: var(--white, #fff);
+  }
+
+  .p-button-secondary {
+    background: var(--grey-900);
+    border: 1px solid var(--grey-300);
+    color: var(--white, #fff);
+
+    .p-button-icon {
+      color: var(--white, #fff);
+    }
+  }
+}
+
 /* Link title styles with hover behavior for pencil icon */
 .link-title {
   all: unset;

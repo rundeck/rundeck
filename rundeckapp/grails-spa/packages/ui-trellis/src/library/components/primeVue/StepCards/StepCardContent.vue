@@ -308,6 +308,16 @@ export default defineComponent({
   }
 }
 
+/* Dark mode (Figma: label grey-200, value white) */
+*[data-color-theme="dark"] .configpair {
+  color: var(--grey-200);
+
+  .text-success,
+  .copy-icon {
+    color: var(--white, #fff);
+  }
+}
+
 .configprop {
   display: block;
   margin-bottom: var(--sizes-2);

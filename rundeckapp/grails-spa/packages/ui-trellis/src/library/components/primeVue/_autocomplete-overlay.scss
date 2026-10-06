@@ -106,3 +106,49 @@
     }
   }
 }
+
+// Dark mode
+*[data-color-theme="dark"] {
+  .p-autocomplete .p-inputtext {
+    @include form-input-dark;
+
+    &.p-invalid {
+      @include form-input-dark-invalid;
+    }
+
+    &[readonly],
+    &:disabled {
+      background: var(--grey-700);
+      color: var(--grey-300);
+    }
+  }
+
+  // Figma (Dropdown menu/prior steps): grey-900 panel, light menu border
+  .p-autocomplete-list-container {
+    background-color: var(--grey-900);
+    border-color: #dee2e6;
+    box-shadow: 0px 2px 10px 0px rgba(0, 0, 0, 0.1);
+  }
+
+  .p-autocomplete-option-group {
+    background-color: var(--grey-900);
+    color: var(--white, #fff);
+    font-weight: var(--fontWeights-bold, 700);
+  }
+
+  .p-autocomplete-option {
+    color: var(--white, #fff);
+
+    &:hover:not(.p-disabled),
+    &.p-focus:not(.p-disabled) {
+      background-color: var(--grey-600);
+      color: var(--white, #fff);
+    }
+  }
+
+  .p-autocomplete-option-selected,
+  .p-autocomplete-option-selected.p-focus {
+    background-color: var(--grey-600);
+    color: var(--white, #fff);
+  }
+}

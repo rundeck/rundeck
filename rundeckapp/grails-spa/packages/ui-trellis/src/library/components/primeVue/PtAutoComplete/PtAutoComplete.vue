@@ -742,6 +742,46 @@ export default defineComponent({
   color: var(--colors-red-500);
 }
 
+*[data-color-theme="dark"] {
+  .pt-autocomplete__error {
+    color: #e55b5b;
+  }
+
+  .p-autocomplete-option .autocomplete-option-title {
+    color: var(--white, #fff);
+  }
+
+  .p-autocomplete-option .autocomplete-option-name {
+    color: var(--grey-200);
+  }
+
+  // Tabs (Figma: grey-900 strip, grey-100 bold labels, white + red underline when active)
+  .autocomplete-tabs {
+    background: var(--grey-900);
+    border-bottom-color: #cbd5e0;
+  }
+
+  // Inactive tabs keep the continuous strip border (their own bg would hide it)
+  .autocomplete-tab {
+    background: var(--grey-900);
+    border-bottom-color: #cbd5e0;
+    color: var(--grey-100);
+
+    &:not(.autocomplete-tab-active):hover {
+      color: var(--white, #fff);
+    }
+
+    .autocomplete-tab-label {
+      font-weight: var(--fontWeights-bold, 700);
+    }
+  }
+
+  .autocomplete-tab-active {
+    color: var(--white, #fff);
+    border-bottom-color: #de3434;
+  }
+}
+
 .p-autocomplete-option .autocomplete-option-content {
   display: flex !important;
   flex-direction: row !important;
