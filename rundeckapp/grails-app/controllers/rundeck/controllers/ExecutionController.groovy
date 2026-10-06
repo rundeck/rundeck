@@ -3213,14 +3213,7 @@ if executed in cluster mode.""",
             //ignore
             query.executionTypeFilter = null
         }
-        //Ad hoc steps have their own page and are left out of the generic execution list, unless
-        //the caller said something about execution types itself. Exclusion only, and NULL-safe,
-        //so nothing that predates the type is affected.
-        if (request.api_version >= ApiVersions.V60 &&
-            !query.executionTypeFilter &&
-            !query.excludeExecutionTypeFilter) {
-            query.excludeExecutionTypeFilter = [ExecutionTypes.ADHOC_STEP]
-        }
+
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 

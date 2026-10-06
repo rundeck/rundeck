@@ -17,6 +17,7 @@
 package org.rundeck.app.authorization
 
 
+import com.dtolabs.rundeck.core.authorization.ExecutionAuthResourceResolver
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
@@ -24,6 +25,8 @@ import com.dtolabs.rundeck.core.common.IFrameworkNodes
 import com.dtolabs.rundeck.core.common.INodeSet
 import grails.compiler.GrailsCompileStatic
 import org.rundeck.core.auth.AuthConstants
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -33,9 +36,42 @@ import java.util.function.Function
  * Implements AppAuthContextEvaluator for checking authorization for common resources using AuthContext
  */
 @GrailsCompileStatic
-class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
+class BaseAuthContextEvaluator implements AppAuthContextEvaluator, ApplicationContextAware {
     AuthCache authContextEvaluatorCacheManager
     IFrameworkNodes nodeSupport
+    ApplicationContext applicationContext
+    private Collection<ExecutionAuthResourceResolver> executionAuthResourceResolvers
+
+    /**
+     * Resolve the ACL resource used to authorize read/view of a job-less execution, by its
+     * execution type. Consults any registered {@link ExecutionAuthResourceResolver} beans; the
+     * first non-null result wins, otherwise the built-in adhoc resource is used. This lets a
+     * feature gate its own execution type behind its own ACL kind in the generic execution and
+     * activity lists without this open source class knowing that kind.
+     * @param execution job-less execution
+     * @return ACL resource map
+     */
+    protected Map<String, String> authResourceForExecution(Execution execution) {
+        String executionType = execution?.executionType
+        for (ExecutionAuthResourceResolver resolver : getExecutionAuthResourceResolvers()) {
+            Map<String, String> resource = resolver.authResourceForExecutionType(executionType)
+            if (null != resource) {
+                return resource
+            }
+        }
+        return AuthConstants.RESOURCE_ADHOC
+    }
+
+    private Collection<ExecutionAuthResourceResolver> getExecutionAuthResourceResolvers() {
+        if (null == executionAuthResourceResolvers) {
+            if (null != applicationContext) {
+                executionAuthResourceResolvers = applicationContext.getBeansOfType(ExecutionAuthResourceResolver).values()
+            } else {
+                executionAuthResourceResolvers = Collections.<ExecutionAuthResourceResolver> emptyList()
+            }
+        }
+        return executionAuthResourceResolvers
+    }
 
     @Override
     boolean authorizeApplicationResourceTypeAll(
@@ -247,7 +283,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAll(authContext, se, actions, se.project) :
-               authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
+               authorizeProjectResourceAll(authContext, authResourceForExecution(exec), actions, exec.project)
 
     }
     /**
@@ -262,7 +298,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAny(authContext, se, actions, se.project) :
-               authorizeProjectResourceAny(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
+               authorizeProjectResourceAny(authContext, authResourceForExecution(exec), actions, exec.project)
 
     }
     /**
@@ -279,20 +315,30 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         List<Execution> execs,
         Collection<String> actions
     ) {
-        def semap = [:]
-        def adhocauth = null
+        Map<Long, Boolean> semap = [:]
+        Map<String, Boolean> adhocauth = [:]
         List<Execution> results = []
         execs.each { Execution exec ->
-            def ScheduledExecution se = exec.scheduledExecution
-            if (se && null == semap[se.id]) {
-                semap[se.id] = authorizeProjectJobAll(authContext, se, actions, se.project)
-            } else if (!se && null == adhocauth) {
-                adhocauth = authorizeProjectResourceAll(
-                    authContext, AuthConstants.RESOURCE_ADHOC, actions,
-                    exec.project
-                )
+            ScheduledExecution se = exec.scheduledExecution
+            boolean authorized
+            if (se) {
+                Boolean cached = semap[se.id]
+                if (null == cached) {
+                    cached = authorizeProjectJobAll(authContext, se, actions, se.project)
+                    semap[se.id] = cached
+                }
+                authorized = cached
+            } else {
+                Map<String, String> resource = authResourceForExecution(exec)
+                String cacheKey = resource.toString()
+                Boolean cached = adhocauth[cacheKey]
+                if (null == cached) {
+                    cached = authorizeProjectResourceAll(authContext, resource, actions, exec.project)
+                    adhocauth[cacheKey] = cached
+                }
+                authorized = cached
             }
-            if (se ? semap[se.id] : adhocauth) {
+            if (authorized) {
                 results << exec
             }
         }
@@ -312,20 +358,30 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         List<Execution> execs,
         Collection<String> actions
     ) {
-        def semap = [:]
-        def adhocauth = null
+        Map<Long, Boolean> semap = [:]
+        Map<String, Boolean> adhocauth = [:]
         List<Execution> results = []
         execs.each { Execution exec ->
-            def ScheduledExecution se = exec.scheduledExecution
-            if (se && null == semap[se.id]) {
-                semap[se.id] = authorizeProjectJobAny(authContext, se, actions, se.project)
-            } else if (!se && null == adhocauth) {
-                adhocauth = authorizeProjectResourceAny(
-                    authContext, AuthConstants.RESOURCE_ADHOC, actions,
-                    exec.project
-                )
+            ScheduledExecution se = exec.scheduledExecution
+            boolean authorized
+            if (se) {
+                Boolean cached = semap[se.id]
+                if (null == cached) {
+                    cached = authorizeProjectJobAny(authContext, se, actions, se.project)
+                    semap[se.id] = cached
+                }
+                authorized = cached
+            } else {
+                Map<String, String> resource = authResourceForExecution(exec)
+                String cacheKey = resource.toString()
+                Boolean cached = adhocauth[cacheKey]
+                if (null == cached) {
+                    cached = authorizeProjectResourceAny(authContext, resource, actions, exec.project)
+                    adhocauth[cacheKey] = cached
+                }
+                authorized = cached
             }
-            if (se ? semap[se.id] : adhocauth) {
+            if (authorized) {
                 results << exec
             }
         }

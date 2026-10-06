@@ -1099,50 +1099,21 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         }
     }
 
-    def "api execution query excludes adhoc-step by default"() {
+    def "api execution query no longer excludes adhoc-step by default"() {
         given:
         def query = new ExecutionQuery()
         wireQueryCollaborators()
 
-        when:
+        when: 'ad-hoc-step executions are listed like any other type and gated per-row by the authorization filter'
         params.project = 'test'
         request.api_version = 60
         controller.apiExecutionsQueryv14(query)
 
-        then:
-        query.excludeExecutionTypeFilter == [ExecutionTypes.ADHOC_STEP]
-    }
-
-    def "api execution query leaves the default off below the version that introduced it"() {
-        given:
-        def query = new ExecutionQuery()
-        wireQueryCollaborators()
-
-        when:
-        params.project = 'test'
-        request.api_version = 59
-        controller.apiExecutionsQueryv14(query)
-
-        then: 'older clients keep the behavior they were written against'
+        then: 'nothing is excluded by type'
         query.excludeExecutionTypeFilter == null
     }
 
-    def "a caller asking for a type by name is not overridden by the default"() {
-        given:
-        def query = new ExecutionQuery(executionTypeFilter: ExecutionTypes.ADHOC_STEP)
-        wireQueryCollaborators()
-
-        when:
-        params.project = 'test'
-        request.api_version = 60
-        controller.apiExecutionsQueryv14(query)
-
-        then: 'otherwise asking for adhoc-step would return nothing'
-        query.excludeExecutionTypeFilter == null
-        query.executionTypeFilter == ExecutionTypes.ADHOC_STEP
-    }
-
-    def "a caller supplying its own exclusion is not overridden by the default"() {
+    def "api execution query leaves a caller-supplied exclusion untouched"() {
         given:
         def query = new ExecutionQuery(excludeExecutionTypeFilter: [ExecutionTypes.USER])
         wireQueryCollaborators()
