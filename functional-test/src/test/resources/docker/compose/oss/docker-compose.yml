@@ -4,6 +4,8 @@ services:
       context: "."
       args:
         IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
+        # In CI the tools layer (apt installs) is prebuilt by the Build job, see rundeck_pull_oss_image
+        TOOLS_IMAGE: ${TEST_OSS_TOOLS_IMAGE:-tools}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     hostname: rundeck-oss-server-node
     environment:
@@ -68,7 +70,7 @@ services:
       - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
   rundeck-db:
-    image: mysql:8.4
+    image: mysql:8.4.11@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=rundeck
@@ -81,7 +83,8 @@ services:
     build:
       context: gitea
       args:
-        IMAGE: gitea/gitea
+        # renovate: datasource=docker depName=gitea/gitea
+        IMAGE: gitea/gitea:28.0.0@sha256:a9dc25679ebdd33356242d2e0667cc220043745e8339922879f187c20329a42e
     environment:
       USER_UID: 1000
       USER_GID: 1000
@@ -108,7 +111,7 @@ services:
       - ./mock-scripts:/mock-scripts:rw
 
   mock-server:
-    image: nginx:latest
+    image: nginx:1.31.6@sha256:908dc23e643a1447dbfb2e189ed268bfde6a51a5bf9a34d3dd3440a24f58ccf7
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/html:/usr/share/nginx/html:ro

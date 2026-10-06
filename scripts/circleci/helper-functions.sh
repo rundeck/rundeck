@@ -63,6 +63,39 @@ rundeck_pull_image() {
     fi
 }
 
+# Pulls the rdtest image built by the Build job and tags it with the name the test/docker scripts
+# expect (build_rdtest_docker skips the build when rdtest:latest exists).
+rundeck_pull_rdtest_images() {
+    docker_login
+    local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    docker pull "${baseTag}-rdtest"
+    docker tag "${baseTag}-rdtest" rdtest:latest
+}
+
+# Pulls the rundeckansible image built by the Build job (only the ansible tests use it) and tags it
+# with the name docker-compose-ansible-test.yaml expects.
+rundeck_pull_ansible_image() {
+    docker_login
+    local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    docker pull "${baseTag}-rundeckansible"
+    docker tag "${baseTag}-rundeckansible" rundeckansible:latest
+}
+
+# Pulls the functional-test "oss" tools image built by the Build job (jre 25 variant when requested)
+# and tags it as rundeck-functional-oss-tools:latest, picked up by rundeck_gradle_functional_tests
+# (TEST_OSS_TOOLS_IMAGE) as the base of functional-test/.../compose/oss.
+rundeck_pull_oss_image() {
+    docker_login
+    local jreVersion=${1:-}
+    local JRE_SUFFIX=""
+    if [[ "${jreVersion}" == *"25"* ]]; then
+        JRE_SUFFIX="-j25"
+    fi
+    local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${JRE_SUFFIX}-oss"
+    docker pull "${sourceTag}"
+    docker tag "${sourceTag}" "rundeck-functional-oss-tools:latest"
+}
+
 fetch_ci_shared_resources() {
     # Get ci resources.
     aws s3 sync --delete "${S3_CI_SHARED_RESOURCES}" ci-resources
