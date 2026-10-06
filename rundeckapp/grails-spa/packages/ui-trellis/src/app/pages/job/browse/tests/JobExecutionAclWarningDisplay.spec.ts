@@ -9,6 +9,8 @@ const mountWidget = (itemData: Record<string, unknown>) =>
   mount(JobExecutionAclWarningDisplay, {
     props: { itemData },
     global: {
+      // the host app registers PrimeVue's tooltip; stubbed so the directive resolves
+      directives: { tooltip: {} },
       mocks: {
         // Mirrors vue-i18n named interpolation so the test asserts the user is passed through
         $t: (key: string, args?: Record<string, unknown>) =>
@@ -34,7 +36,10 @@ describe("JobExecutionAclWarningDisplay", () => {
   it("uses the missing-owner message when the job has no saved user", () => {
     // there is nobody to grant access to, so the grant-or-re-save wording
     // would be telling the viewer to do something impossible
-    const wrapper = mountWidget({ job: { id: "job-1" }, meta: { valid: false } });
+    const wrapper = mountWidget({
+      job: { id: "job-1" },
+      meta: { valid: false },
+    });
 
     const warning = wrapper.find(WARNING);
     expect(warning.exists()).toBe(true);
@@ -60,7 +65,10 @@ describe("JobExecutionAclWarningDisplay", () => {
 
   it("renders nothing when no item data is supplied at all", () => {
     const wrapper = mount(JobExecutionAclWarningDisplay, {
-      global: { mocks: { $t: (key: string) => key } },
+      global: {
+        directives: { tooltip: {} },
+        mocks: { $t: (key: string) => key },
+      },
     });
 
     expect(wrapper.find(WARNING).exists()).toBe(false);

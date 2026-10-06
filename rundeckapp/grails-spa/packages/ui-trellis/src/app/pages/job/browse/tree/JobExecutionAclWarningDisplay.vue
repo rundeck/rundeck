@@ -2,15 +2,13 @@
   <!-- icon-only, so the warning must be reachable without a mouse -->
   <span
     v-if="isAtRisk"
-    class="has_tooltip text-warning execution-acl-warning"
+    v-tooltip.focus="warningTitle"
+    class="text-warning execution-acl-warning"
     data-testid="execution-acl-warning"
     tabindex="0"
     role="img"
     :aria-label="warningTitle"
     :title="warningTitle"
-    data-toggle="tooltip"
-    data-container="#section-content"
-    data-placement="auto bottom"
   >
     <i class="glyphicon glyphicon-warning-sign" aria-hidden="true"></i>
   </span>
