@@ -74,4 +74,48 @@ class SanitizedHTMLCodecTest {
             SanitizedHTMLCodec.encode('<td style="color:red;font-weight:bold;text-align:center">ok</td>')
         )
     }
+
+    // RUN-5000: WorkflowStrategy plugins (e.g. node-first) declare a STATIC_TEXT/text-html
+    // "info" property whose value is a help table. A prior bug (RUN-4866) could persist that
+    // table into saved job config, and the read-only Job Definition view had no STATIC_TEXT
+    // handling, so it fell through to plain HTML-escaping instead of rendering a table. The
+    // fix routes STATIC_TEXT/text-html values through this same sanitizer rather than through
+    // plain escaping or raw/unescaped output -- these tests cover that codec usage directly.
+
+    @Test
+    void testNodeFirstWorkflowStrategyInfoTableIsPreserved(){
+        // Verbatim defaultValue of NodeFirstWorkflowStrategy#info
+        String info = '<table>\n' +
+                      '    <tr><td>1.</td><td class="text-info">NodeA</td> <td>step 1</td></tr>\n' +
+                      '    <tr><td>2.</td><td class="text-info">"</td> <td>step 2</td></tr>\n' +
+                      '    <tr><td>3.</td><td class="text-info">"</td> <td>step 3</td></tr>\n' +
+                      '    <tr><td>4.</td><td class="text-muted">NodeB</td> <td>step 1</td></tr>\n' +
+                      '    <tr><td>5.</td><td class="text-muted">"</td> <td>step 2</td></tr>\n' +
+                      '    <tr><td>6.</td><td class="text-muted">"</td> <td>step 3</td></tr>\n' +
+                      '</table>'
+
+        String result = SanitizedHTMLCodec.encode(info)
+
+        assertTrue('table structure must survive sanitization, not be escaped', result.contains('<table>'))
+        assertFalse('output must not be HTML-escaped literal tag text', result.contains('&lt;table&gt;'))
+        assertEquals('all 18 data cells must survive', 18, (result =~ /<td[ >]/).count)
+        assertTrue('cell text content must survive', result.contains('NodeA'))
+        assertTrue('cell text content must survive', result.contains('step 1'))
+        assertTrue('td class attribute must survive (already-allowed per testTdStyleNormalCssStillWorks)', result.contains('class="text-info"'))
+    }
+
+    @Test
+    void testStaticTextValueWithInjectedScriptTagIsStripped(){
+        // Simulates a persisted STATIC_TEXT value that is no longer the pristine plugin
+        // default (the actual data this codepath renders is persisted job config, not a
+        // trusted plugin descriptor default -- see RUN-5000), containing an injected script.
+        String tampered = '<table><tr><td>1.</td><td class="text-info">NodeA<script>alert(document.cookie)</script></td></tr></table>'
+
+        String result = SanitizedHTMLCodec.encode(tampered)
+
+        assertFalse('script tag must be stripped, not passed through raw', result.toLowerCase().contains('<script'))
+        assertFalse('script tag must be stripped, not passed through raw', result.toLowerCase().contains('alert('))
+        assertTrue('safe surrounding content must still render as a live table', result.contains('<table>'))
+        assertTrue('safe cell text must survive', result.contains('NodeA'))
+    }
 }
