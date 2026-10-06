@@ -41,8 +41,10 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.http.HttpConnectionFactory
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory
 import org.eclipse.jgit.transport.SshTransport
+import org.eclipse.jgit.transport.TransportHttp
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.transport.Transport
@@ -277,7 +279,12 @@ class BaseGitPlugin {
         fetchCommand.setRemote(REMOTE_NAME)
         fetchCommand.setTimeout(commonConfig.getFetchTimeoutSeconds())
         setupTransportAuthentication(sshConfig, context, fetchCommand)
-        def fetchResult = fetchCommand.call()
+        def fetchResult
+        try {
+            fetchResult = fetchCommand.call()
+        } catch (Exception e) {
+            throw remoteAccessFailure('Failed fetch from the repository', e)
+        }
 
         def update = fetchResult.getTrackingRefUpdate("refs/remotes/${REMOTE_NAME}/${this.branch}")
 
@@ -323,7 +330,11 @@ class BaseGitPlugin {
         def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
         pullCommand.setTimeout(commonConfig.getFetchTimeoutSeconds())
         setupTransportAuthentication(sshConfig, context, pullCommand)
-        pullCommand.call()
+        try {
+            return pullCommand.call()
+        } catch (Exception e) {
+            throw remoteAccessFailure('Failed pull from the repository', e)
+        }
     }
 
     ScmExportResult gitResolve(
@@ -336,7 +347,12 @@ class BaseGitPlugin {
             def pullCommand = git.pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
             pullCommand.setRebase(true)
             setupTransportAuthentication(sshConfig, context, pullCommand)
-            def pullResult = pullCommand.call()
+            def pullResult
+            try {
+                pullResult = pullCommand.call()
+            } catch (Exception e) {
+                throw remoteAccessFailure('Failed pull from the repository', e)
+            }
 
             def result = new ScmExportResultImpl()
             result.success = pullResult.successful
@@ -672,28 +688,16 @@ class BaseGitPlugin {
 
             try {
                 fetchFromRemote(context, agit)
+            } catch (ScmPluginException e) {
+                throw e
             } catch (Exception e) {
-                logger.debug("Failed fetch from the repository: ${e.message}", e)
-                String msg = collectCauseMessages(e)
-                throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
+                throw remoteAccessFailure('Failed fetch from the repository', e)
             }
             git = agit
             repo = arepo
         } else {
             performClone(base, url, context, integration)
         }
-    }
-
-    private static String collectCauseMessages(Exception e) {
-        List<String> msgs = [e.message]
-        def cause = e.cause
-        while (cause) {
-            if (cause.message != msgs.last() && !msgs.last().endsWith(cause.message)) {
-                msgs << cause.message
-            }
-            cause = cause.cause
-        }
-        return msgs.join("; ")
     }
 
     private void performClone(File base, String url, ScmOperationContext context, String branch=this.branch, String integration) {
@@ -707,8 +711,7 @@ class BaseGitPlugin {
         try {
             git = cloneCommand.call()
         } catch (Exception e) {
-            logger.debug("Failed cloning the repository from ${url}: ${e.message}", e)
-            throw new ScmPluginException("Failed cloning the repository from ${url}: ${e.message}", e)
+            throw remoteAccessFailure("Failed cloning the repository from ${url}", e, branch)
         }
         git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
         git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
@@ -739,8 +742,7 @@ class BaseGitPlugin {
         try {
             return command.call().any { it.name == Constants.R_HEADS + branchName }
         } catch (Exception e) {
-            logger.debug("Failed checking remote branch ${branchName}: ${e.message}", e)
-            throw new ScmPluginException("Failed checking remote branch ${branchName}: ${e.message}", e)
+            throw remoteAccessFailure("Failed checking remote branch ${branchName}", e, branchName)
         }
     }
 
@@ -798,8 +800,7 @@ class BaseGitPlugin {
         try {
             push = pushb.call()
         } catch (Exception e) {
-            logger.debug("Failed push to remote: ${e.message}", e)
-            throw new ScmPluginException("Failed push to remote: ${e.message}", e)
+            throw remoteAccessFailure('Failed push to remote', e, newBranch)
         }
         def updates = (push*.remoteUpdates).flatten()
         def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
@@ -839,14 +840,16 @@ class BaseGitPlugin {
         }
 
         URIish u = new URIish(url);
+        GitScmSecurityConfig security = enforceUrlPolicy(context, u)
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
+        TransportConfigCallback authCallback = null
         if ((u.scheme == null || u.scheme == 'ssh') && u.user && commonConfig.sshPrivateKeyPath) {
             logger.debug("using ssh private key path ${commonConfig.sshPrivateKeyPath}")
             //setup ssh key authentication
             def expandedPath = expandContextVarsInPath(context, commonConfig.sshPrivateKeyPath)
             def keyData = loadStoragePathData(context, expandedPath)
 
-            command.setTransportConfigCallback(new TransportConfigCallback() {
+            authCallback = new TransportConfigCallback() {
                 @Override
                 void configure(final Transport transport) {
                     if (transport instanceof SshTransport) {
@@ -854,14 +857,14 @@ class BaseGitPlugin {
                         sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig))
                     }
                 }
-            })
+            }
         } else if (u.user && commonConfig.gitPasswordPath) {
             //setup password authentication
             logger.debug("using password path ${commonConfig.gitPasswordPath}")
             def expandedPath = expandContextVarsInPath(context, commonConfig.gitPasswordPath)
 
             def data = loadStoragePathData(context, expandedPath)
-            command.setTransportConfigCallback(new TransportConfigCallback() {
+            authCallback = new TransportConfigCallback() {
                 @Override
                 void configure(final Transport transport) {
                     if (transport instanceof SshTransport) {
@@ -876,7 +879,7 @@ class BaseGitPlugin {
                         })
                     }
                 }
-            })
+            }
 
             if (null != data && data.length > 0) {
 
@@ -884,6 +887,83 @@ class BaseGitPlugin {
                 command.setCredentialsProvider(new UsernamePasswordCredentialsProvider(u.user, pass))
             }
         }
+        applyTransportCallback(command, authCallback, security)
+    }
+
+    /**
+     * Applies the scheme allowlist and, when enabled, the internal-address block before a remote call.
+     *
+     * @param context SCM operation context; its property retriever supplies framework.properties
+     * @param uri parsed Git remote
+     * @return the config that was enforced
+     */
+    private GitScmSecurityConfig enforceUrlPolicy(ScmOperationContext context, URIish uri) {
+        GitScmSecurityConfig security = GitScmSecurityConfig.resolve(context?.runtimePropertyRetriever)
+        GitUrlPolicy.assertAllowed(uri, security)
+        if (security.blockInternalAddresses && uri.host) {
+            try {
+                InternalAddressGuard.assertPublicHost(uri.host)
+            } catch (UnknownHostException e) {
+                logger.warn("Git host could not be resolved: ${uri.host}", e)
+                throw new ScmPluginException(GitTransportErrors.GENERIC_ACCESS_MESSAGE, e)
+            } catch (IOException e) {
+                logger.warn("Git host blocked: ${uri.host}", e)
+                throw new ScmPluginException(InternalAddressGuard.HOST_NOT_ALLOWED, e)
+            }
+        }
+        return security
+    }
+
+    private static void applyTransportCallback(
+            TransportCommand command,
+            TransportConfigCallback authCallback,
+            GitScmSecurityConfig security
+    ) {
+        if (security.blockInternalAddresses) {
+            HttpConnectionFactory blockingFactory = new BlockingHttpConnectionFactory()
+            command.setTransportConfigCallback(new TransportConfigCallback() {
+                @Override
+                void configure(final Transport transport) {
+                    if (authCallback != null) {
+                        authCallback.configure(transport)
+                    }
+                    if (transport instanceof TransportHttp) {
+                        ((TransportHttp) transport).setHttpConnectionFactory(blockingFactory)
+                    }
+                }
+            })
+        } else if (authCallback != null) {
+            command.setTransportConfigCallback(authCallback)
+        }
+    }
+
+    /**
+     * Builds the exception returned to the UI and API for a failed remote Git call.
+     * Transport failures that would disclose a response body or a port-scan result are replaced
+     * with a generic message. The original exception is written to the server log.
+     *
+     * @param action short description of the operation, without the remote error text
+     * @param error the failure
+     * @param branchName branch used to recognize a missing-remote-branch error
+     * @return exception safe to surface to the caller
+     */
+    /**
+     * @param error failure shown in SCM status
+     * @return message safe for the UI and API
+     */
+    protected String visibleRemoteMessage(Exception error) {
+        String safe = GitTransportErrors.userFacing(error, branch)
+        return safe != null ? safe : error.message
+    }
+
+    ScmPluginException remoteAccessFailure(String action, Exception error, String branchName = branch) {
+        String safe = GitTransportErrors.userFacing(error, branchName)
+        if (safe != null) {
+            logger.warn("${action}: ${error.message}", error)
+            return new ScmPluginException(safe, error)
+        }
+        logger.debug("${action}: ${error.message}", error)
+        return new ScmPluginException("${action}: ${error.message}", error)
     }
 
     /**

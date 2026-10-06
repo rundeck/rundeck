@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobFileMapper
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
+import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
@@ -65,6 +66,8 @@ class BaseGitPluginSpec extends Specification {
     }
 
     def cleanup() {
+        System.clearProperty(GitScmSecurityConfig.ALLOWED_SCHEMES)
+        System.clearProperty(GitScmSecurityConfig.BLOCK_INTERNAL)
         if (tempdir.exists()) {
             FileUtils.delete(tempdir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
         }
@@ -632,6 +635,68 @@ class BaseGitPluginSpec extends Specification {
         'keys/grantedAccess'  | null                    | 'keys/notGrantedAccess' | false
         'keys/grantedAccess'  | 'keys/notGrantedAccess' | null                    | false
 
+    }
+
+    def "local path is rejected when the scheme allowlist excludes file"() {
+        given:
+        System.setProperty(GitScmSecurityConfig.ALLOWED_SCHEMES, 'https,http,ssh')
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        def command = new TransportCommandMock(Mock(RepositoryMock))
+
+        when:
+        plugin.setupTransportAuthentication([:], Mock(ScmOperationContext), command, '/tmp/repo.git')
+
+        then:
+        def error = thrown(ScmPluginException)
+        error.message == "Git URL scheme 'file' is not allowed."
+    }
+
+    def "https url is unchanged when no security properties are set"() {
+        given:
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        def command = new TransportCommandMock(Mock(RepositoryMock))
+
+        when:
+        plugin.setupTransportAuthentication([:], Mock(ScmOperationContext), command, 'https://example.com/repo.git')
+
+        then:
+        notThrown(ScmPluginException)
+        command.callback == null
+    }
+
+    def "loopback is rejected when blockInternalAddresses comes from the operation context"() {
+        given:
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        def command = new TransportCommandMock(Mock(RepositoryMock))
+        def context = Mock(ScmOperationContext) {
+            getRuntimePropertyRetriever() >> new PropertyRetriever() {
+                @Override
+                String getProperty(String name) {
+                    return name == GitScmSecurityConfig.BLOCK_INTERNAL ? 'true' : null
+                }
+            }
+        }
+
+        when:
+        plugin.setupTransportAuthentication([:], context, command, 'https://127.0.0.1/repo.git')
+
+        then:
+        def error = thrown(ScmPluginException)
+        error.message == InternalAddressGuard.HOST_NOT_ALLOWED
+    }
+
+    def "remote transport errors are not returned to the caller"() {
+        given:
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new org.eclipse.jgit.errors.TransportException('invalid advertisement of secret-line')
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository from http://127.0.0.1/repo.git', leaked)
+
+        then:
+        failure.message == GitTransportErrors.GENERIC_ACCESS_MESSAGE
+        !failure.message.contains('secret-line')
     }
 
     //Signed Jar classes cannot be directly mocked. Hence.....

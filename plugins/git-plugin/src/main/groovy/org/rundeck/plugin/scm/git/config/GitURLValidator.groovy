@@ -18,13 +18,27 @@ package org.rundeck.plugin.scm.git.config
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import groovy.transform.CompileStatic
+import org.rundeck.plugin.scm.git.GitScmSecurityConfig
+import org.rundeck.plugin.scm.git.GitUrlPolicy
 
+/**
+ * Rejects whitespace and, when {@code rundeck.scm.git.allowedSchemes} is set, schemes outside that list.
+ * Framework properties are enforced again when the remote connection is opened.
+ */
+@CompileStatic
 class GitURLValidator implements PropertyValidator {
     @Override
     boolean isValid(String value) throws ValidationException {
         if (value.trim() != value) {
             throw new ValidationException("Leading/trailing whitespace must be removed.")
         }
-        return true;
+        try {
+            GitUrlPolicy.assertAllowed(value, GitScmSecurityConfig.resolve(null))
+        } catch (ScmPluginException e) {
+            throw new ValidationException(e.message)
+        }
+        return true
     }
 }
