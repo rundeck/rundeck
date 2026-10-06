@@ -56,6 +56,12 @@ public class Notification implements NotificationData {
     static constraints={
         importFrom SharedNotificationConstraints
         content(nullable:true,blank:true)
+        // nullable:false was previously implicit for the belongsTo owner. Under Grails 8 that
+        // default is gone, so saving a Notification before it is attached to its ScheduledExecution
+        // now validates cleanly and the insert reaches the database, which rejects it because
+        // notification.scheduled_execution_id is declared NOT NULL. Stated explicitly to restore
+        // the intended check. No migration needed: the column is already NOT NULL.
+        scheduledExecution(nullable:false)
     }
     static mapping = {
         content type: 'text'

@@ -44,9 +44,16 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean exportAcls
     Boolean exportScm
     Map<String, Boolean> importComponents
-    Map<String, Map<String, String>> importOpts
     Map<String, Boolean> exportComponents
-    Map<String, Map<String, String>> exportOpts
+    // Deliberately raw. Grails 8.0.0-M6 hands these fields both forms of a dotted request
+    // parameter -- the flat 'testcomponent.someoption': 'avalue' and the nested
+    // 'testcomponent': [someoption: 'avalue'] -- and a declared value type makes the binder try to
+    // convert the flat entry's String into it. That conversion fails, the whole field is rejected
+    // with a typeMismatch, and the action returns a validation error before doing any work.
+    // cleanMapData() below already drops dotted keys and non-Map values, so the declared type was
+    // buying nothing the normalisation does not already guarantee.
+    Map importOpts
+    Map exportOpts
     String stripJobRef
     /*  used by "promote" action */
     String targetproject
@@ -109,7 +116,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         nexportComponents
     }
 
-    public Map<String, Map<String, String>> cleanMapData(Map<String, Map<String, String>> opts) {
+    public Map<String, Map> cleanMapData(Map opts) {
         Map<String, Map<String, String>> nexportOpts = [:]
         opts.each { k, v ->
             if (!k.contains('.') && v instanceof Map) {

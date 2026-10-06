@@ -78,10 +78,28 @@ import javax.security.auth.Subject
 import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
+import org.springframework.web.multipart.MultipartFile
 
 @Controller
 @Transactional
 class MenuController extends ControllerBase implements ApplicationContextAware{
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * params first: on Grails 8 the request a controller holds is Spring Security's wrapper and
+     * DispatcherServlet adds the multipart request around it afterwards, so an instanceof check on
+     * the request is false for a real upload. The request is still consulted as a fallback, because
+     * controller unit tests drive a mock request that genuinely is one and does not fill params.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ? ((MultipartHttpServletRequest) request).getFile(name) : null
+    }
+
 
     FrameworkService frameworkService
     MenuService menuService
@@ -119,7 +137,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ajaxSystemAclMeta              : 'POST',
     ]
 
-    static final enum ConfigAccess{
+    static enum ConfigAccess{
         app_admin,
         ops_admin
     }
@@ -1208,8 +1226,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
         if (input.upload) {
-            if(request instanceof MultipartHttpServletRequest){
-                def file = request.getFile('uploadFile')
+            if(uploadedFile('uploadFile')){
+                MultipartFile file = uploadedFile('uploadFile')
                 input.fileText = new String(file.bytes)
             }
             else {
@@ -1493,8 +1511,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         if (input.upload) {
-            if(request instanceof MultipartHttpServletRequest){
-                def file = request.getFile('uploadFile')
+            if(uploadedFile('uploadFile')){
+                MultipartFile file = uploadedFile('uploadFile')
                 input.fileText = new String(file.bytes)
             }
             else {
@@ -1648,7 +1666,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         Date nowDate = new Date();
         String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
-        String appVersion = grailsApplication.metadata['info.app.version']
+        String appVersion = grailsApplication.metadata.getProperty('info.app.version', String, null)
         double load = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
         int processorsCount = ManagementFactory.getOperatingSystemMXBean().availableProcessors
         String osName = ManagementFactory.getOperatingSystemMXBean().name
@@ -1662,8 +1680,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long durationTime = ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime() - durationTime)
         int threadActiveCount = Thread.activeCount()
-        def build = grailsApplication.metadata['build.ident']
-        def buildGit = grailsApplication.metadata['build.core.git.description']
+        def build = grailsApplication.metadata.getProperty('build.ident', String, null)
+        def buildGit = grailsApplication.metadata.getProperty('build.core.git.description', String, null)
         def base = servletContext.getAttribute("RDECK_BASE")
         boolean executionModeActive=configurationService.executionModeActive
         String apiVersion = ApiVersions.API_CURRENT_VERSION
@@ -2403,10 +2421,10 @@ Fields:
         withFormat {
             '*' {
                 apiService.renderSuccessJson(response) {
-                    enabled = data.pluginName ? true : false
-                    pluginName = data.pluginName
+                    enabled(data.pluginName ? true : false)
+                    pluginName(data.pluginName)
                     for (String name : propnames) {
-                        delegate.setProperty(name, data[name])
+                        delegate."$name"(data[name])
                     }
                 }
             }
@@ -2541,10 +2559,10 @@ Since: V17''',
         withFormat {
             '*' {
                 apiService.renderSuccessJson(response) {
-                    delegate.'total' = total
-                    max = query.max ?: 20
-                    offset = query.offset ?: 0
-                    executions = list.collect { LogFileStorageRequest req ->
+                    delegate.total(total)
+                    max(query.max ?: 20)
+                    offset(query.offset ?: 0)
+                    executions(list.collect { LogFileStorageRequest req ->
                         def data=exportRequestMap(
                                 req,
                                 retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
@@ -2565,7 +2583,7 @@ Since: V17''',
                                 ],
                                 errors:data.messages
                         ]
-                    }
+                    })
                 }
             }
             if(controller.isAllowXml()) {
@@ -2645,7 +2663,7 @@ Since: V17''',
         withFormat {
             '*'  {
                 apiService.renderSuccessJson(response) {
-                    resumed=true
+                    resumed(true)
                 }
             }
             if(controller.isAllowXml()) {
@@ -3076,27 +3094,26 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                 }
             }
             '*'  {
-                return apiService.renderSuccessJson(response) {
-                    results.each { ScheduledExecution se ->
-                        def jobparams = [id         : se.extid,
-                                         name       : (se.jobName),
-                                         group      : (se.groupPath),
-                                         project    : (se.project),
-                                         description: (se.description),
-                                         href       : apiService.apiHrefForJob(se),
-                                         permalink  : apiService.guiHrefForJob(se)]
-                        if (request.api_version >= ApiVersions.V17) {
-                            jobparams.scheduled = se.scheduled
-                            jobparams.scheduleEnabled = se.scheduleEnabled
-                            jobparams.enabled = se.executionEnabled
-                            if (clusterModeEnabled && se.scheduled) {
-                                jobparams.serverNodeUUID = se.serverNodeUUID
-                                jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
-                            }
+                def jobList = results.collect { ScheduledExecution se ->
+                    def jobparams = [id         : se.extid,
+                                     name       : (se.jobName),
+                                     group      : (se.groupPath),
+                                     project    : (se.project),
+                                     description: (se.description),
+                                     href       : apiService.apiHrefForJob(se),
+                                     permalink  : apiService.guiHrefForJob(se)]
+                    if (request.api_version >= ApiVersions.V17) {
+                        jobparams.scheduled = se.scheduled
+                        jobparams.scheduleEnabled = se.scheduleEnabled
+                        jobparams.enabled = se.executionEnabled
+                        if (clusterModeEnabled && se.scheduled) {
+                            jobparams.serverNodeUUID = se.serverNodeUUID
+                            jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
                         }
-                        element(jobparams)
                     }
+                    jobparams
                 }
+                return apiService.renderSuccessJsonArray(response, jobList)
             }
             if(controller.isAllowXml()) {
                 xml xmlresponse

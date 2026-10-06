@@ -12,9 +12,12 @@ RUN apt-get -y update && \
         
 
 
-## Install OpenJDK 17 (Grails 7 requirement)
+## Install OpenJDK 21 (Grails 8 requirement)
+## NOTE: unbuildable until the base image moves off ubuntu:16.04, whose repositories carry no JDK
+## newer than 8 (verified with apt-cache policy). The previously declared openjdk-17 was not
+## available there either.
 RUN apt-get update && \
-  apt-get install -y openjdk-17-jdk-headless
+  apt-get install -y openjdk-21-jdk-headless
 
 ## DEBUG ENV VARS AT THIS POINT
 #RUN echo "**** ENV VARS START ****" && printenv > /env_at_build_time && cat /env_at_build_time && echo "**** ENV VARS END ****"
