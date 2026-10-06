@@ -585,6 +585,26 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !result.contains('    | a |')
     }
 
+    def "a wide row followed by many narrow rows does not cause quadratic padding blow-up"() {
+        given:
+        // One 101-cell row plus 100 single-cell rows pads out to
+        // 101 * 101 = 10201 cells, just over the budget -- exercises the
+        // guard without needing a slow, huge input.
+        StringBuilder html = new StringBuilder('<table><tr>')
+        101.times { html.append('<td>w</td>') }
+        html.append('</tr>')
+        100.times { html.append('<tr><td>n</td></tr>') }
+        html.append('</table>')
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html.toString())
+
+        then:
+        // Falls back to the safe, unchanged-text path rather than padding
+        // every narrow row out to 101 columns.
+        result == html.toString()
+    }
+
     def "a line break tag inserts a space instead of merging the surrounding text"() {
         given:
         String html = '<table><tr><td>first<br>second</td></tr></table>'
