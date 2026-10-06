@@ -49,7 +49,7 @@ class Config {
      * @throws ScmPluginInvalidInput
      */
     static void configure(Config config, final Map<String, String> input) throws ScmPluginInvalidInput {
-        Map<String,Object> unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input as Map<String,Object>)
+        Map<String, Object> unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input as Map<String, Object>)
         listProperties(config.class).findAll { it.required }.each { prop ->
             //verify required input
             if (!input[prop.name]) {
@@ -91,12 +91,11 @@ class Config {
         }
     }
 
-
     @Override
     public String toString() {
         return "${this.class.name}{" +
                 "otherInput=" + otherInput +
                 ", rawInput=" + rawInput +
-                '}';
+                '}'
     }
 }
