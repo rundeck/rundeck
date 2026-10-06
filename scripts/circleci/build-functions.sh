@@ -85,14 +85,15 @@ rundeck_docker_push() {
 # Builds the test images once per pipeline and pushes them with per-pipeline tags, so the test
 # jobs pull them instead of running "docker build" (and apt) on every job. Images are built with
 # --no-cache so no layer from another pipeline can influence test results.
-#   <repo>:ci-build-N-rdtest            (jre independent, built only when jreVersion is not 25)
-#   <repo>:ci-build-N-rundeckansible    (jre independent, built only when jreVersion is not 25)
-#   <repo>:ci-build-N[-j25]-oss         (functional-test image on top of the rundeck CI image)
+#   <repo>:ci-build-N-rdtest            (jre independent, built only when jreVersion is not 21)
+#   <repo>:ci-build-N-rundeckansible    (jre independent, built only when jreVersion is not 21)
+#   <repo>:ci-build-N[-j21]-oss         (functional-test image on top of the rundeck CI image)
+# The suffix must match rundeck_docker_build: JRE 25 is the main image and carries no suffix.
 rundeck_test_images_build_push() {
     local jreVersion=${1:-}
     local TAG_SUFFIX=""
-    if [[ "${jreVersion}" == *"25"* ]]; then
-        TAG_SUFFIX="-j25"
+    if [[ "${jreVersion}" == *"21"* ]]; then
+        TAG_SUFFIX="-j21"
     fi
     local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
 
