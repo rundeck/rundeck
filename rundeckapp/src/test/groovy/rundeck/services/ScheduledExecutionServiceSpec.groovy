@@ -609,6 +609,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             createExecutionItemForWorkflow(workflow) >> Mock(WorkflowExecutionItem)
         }
         service.frameworkService = Mock(FrameworkService) {
+            existsFrameworkProject('AProject') >> true
             getFrameworkProject('AProject') >> Mock(IRundeckProject) {
                 getProperties() >> [:]
             }
@@ -634,6 +635,65 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         strategy     | supported
         'sequential' | true
         'parallel'   | false
+    }
+
+    def "validateWorkflow reports a validation error when the conditional workflow cannot be built"() {
+        given: "a workflow with a conditional step"
+        def conditionSet = new ConditionalSetImpl()
+        conditionSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])]]
+        def conditionalStep = new ConditionalStep(
+                conditionSet: conditionSet,
+                subSteps: [new CommandExec(adhocRemoteString: 'echo sub')]
+        )
+        def workflow = new WorkflowDataImpl(strategy: 'sequential', steps: [conditionalStep])
+        def scheduledExecution = new ScheduledExecution(jobName: 'conditional', project: 'AProject')
+
+        and: "building the execution item fails, e.g. conditional nesting is too deep"
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(workflow) >> {
+                throw new IllegalArgumentException("Conditional steps cannot be nested more than one level deep.")
+            }
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            existsFrameworkProject('AProject') >> true
+            getRundeckFramework() >> Mock(Framework) {
+                getWorkflowStrategyService() >> Mock(WorkflowStrategyService)
+            }
+        }
+
+        when:
+        def valid = service.validateWorkflow(workflow, scheduledExecution)
+
+        then: "a field error is reported instead of an exception"
+        !valid
+        workflow.errors.hasFieldErrors('strategy')
+        scheduledExecution.errors.hasFieldErrors('workflow')
+        scheduledExecution.errors.getFieldError('workflow').code == 'Workflow.strategy.conditionalSteps.invalid'
+        scheduledExecution.errors.getFieldError('workflow').arguments.toList().contains("Conditional steps cannot be nested more than one level deep.")
+    }
+
+    def "validateWorkflow skips the conditional check when the project does not exist"() {
+        given: "a workflow with a conditional step in a missing project"
+        def conditionSet = new ConditionalSetImpl()
+        conditionSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])]]
+        def conditionalStep = new ConditionalStep(
+                conditionSet: conditionSet,
+                subSteps: [new CommandExec(adhocRemoteString: 'echo sub')]
+        )
+        def workflow = new WorkflowDataImpl(strategy: 'sequential', steps: [conditionalStep])
+        def scheduledExecution = new ScheduledExecution(jobName: 'conditional', project: 'MissingProject')
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.frameworkService = Mock(FrameworkService) {
+            existsFrameworkProject('MissingProject') >> false
+        }
+
+        when:
+        def valid = service.validateWorkflow(workflow, scheduledExecution)
+
+        then: "no strategy lookup happens and the missing project is left to the project validation"
+        valid
+        0 * service.executionUtilService.createExecutionItemForWorkflow(_)
+        !scheduledExecution.errors.hasFieldErrors('workflow')
     }
 
     def "validate workflow step missing plugin type"() {

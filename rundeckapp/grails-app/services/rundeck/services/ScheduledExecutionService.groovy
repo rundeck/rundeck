@@ -4114,15 +4114,24 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
 
-//    @CompileStatic
-    boolean validateWorkflow(WorkflowData workflow, ScheduledExecution scheduledExecution){
-        def valid=true
-        //validate error handler types
-        if(workflow?.hasConditionalSteps()){
+    /**
+     * Validate that the workflow strategy supports the conditional steps in the workflow.
+     * Errors building the execution item or resolving the strategy (e.g. conditional nesting
+     * too deep, unknown strategy) are reported as validation errors instead of propagating.
+     * The check is skipped when the project does not exist, which is reported elsewhere.
+     * @param workflow workflow with conditional steps
+     * @param scheduledExecution job being validated
+     * @return true if valid
+     */
+    private boolean validateConditionalStepSupport(WorkflowData workflow, ScheduledExecution scheduledExecution) {
+        if (!scheduledExecution.project || !frameworkService.existsFrameworkProject(scheduledExecution.project)) {
+            return true
+        }
+        String error
+        try {
             def workflowStrategyService = frameworkService.rundeckFramework.workflowStrategyService
             def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
-            def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
-            def projectProps = frameworkProject.getProperties()
+            def projectProps = frameworkService.getFrameworkProject(scheduledExecution.project).getProperties()
             def strategyConfig = workflow.pluginConfigMap?.get(ServiceNameConstants.WorkflowStrategy)?.get(workflow.strategy) ?: [:]
 
             PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
@@ -4130,12 +4139,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     strategyConfig
             )
             def workflowStrategy = workflowStrategyService.getStrategyForWorkflow(workflowItem, resolver)
-
-            if (!workflowStrategy.supportsConditionalSteps()) {
-                workflow.errors.rejectValue('strategy', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
-                scheduledExecution.errors.rejectValue('workflow', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
-                valid = false
+            if (workflowStrategy.supportsConditionalSteps()) {
+                return true
             }
+        } catch (Exception e) {
+            log.debug("Conditional workflow validation failed: ${e.message}", e)
+            error = e.message
+        }
+        if (error) {
+            workflow.errors.rejectValue('strategy', 'Workflow.strategy.conditionalSteps.invalid', [workflow.strategy, error] as Object[], "Workflow strategy {0} cannot run the conditional steps: {1}")
+            scheduledExecution.errors.rejectValue('workflow', 'Workflow.strategy.conditionalSteps.invalid', [workflow.strategy, error] as Object[], "Workflow strategy {0} cannot run the conditional steps: {1}")
+        } else {
+            workflow.errors.rejectValue('strategy', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
+            scheduledExecution.errors.rejectValue('workflow', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
+        }
+        return false
+    }
+
+//    @CompileStatic
+    boolean validateWorkflow(WorkflowData workflow, ScheduledExecution scheduledExecution){
+        def valid=true
+        //validate error handler types
+        if(workflow?.hasConditionalSteps()){
+            valid = validateConditionalStepSupport(workflow, scheduledExecution)
         }else if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
             def cmdi = 1
