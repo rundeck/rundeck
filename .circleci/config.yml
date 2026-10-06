@@ -993,7 +993,7 @@ workflows:
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           parallelism: 2
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec}.groovy"
           <<: *require-api-integration
           <<: *slack-defaults
       - test-gradle-functional:
@@ -1132,7 +1132,7 @@ workflows:
           name: T Selenium - Jobs Core (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec}.groovy"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:

@@ -645,6 +645,15 @@ class JobCreatePage extends BasePage {
         el createJobBy
     }
 
+    /**
+     * Submit a new job, waiting for the button to be interactable first. The schedule
+     * editor is Vue-driven, so the form can still be settling when the caller is ready.
+     */
+    void clickCreateJob() {
+        byAndWaitClickable createJobBy
+        createJobButton.click()
+    }
+
     void clickTimeZone(){
         (el timeZoneBy).click()
     }

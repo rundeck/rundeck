@@ -51,7 +51,7 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             def jobCreatePage = go JobCreatePage, PROJECT_NAME
             jobCreatePage.fillBasicJob 'job scheduled by a user who cannot run it'
             jobCreatePage.enableDailySchedule()
-            jobCreatePage.createJobButton.click()
+            jobCreatePage.clickCreateJob()
             jobCreatePage.waitForUrlToContain('/job/show')
 
         and: "the uuid is read off the job page the save lands on"
