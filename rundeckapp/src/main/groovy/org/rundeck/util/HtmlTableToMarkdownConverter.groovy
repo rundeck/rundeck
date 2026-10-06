@@ -647,11 +647,20 @@ class HtmlTableToMarkdownConverter {
     }
 
     /**
+     * Upper bound on rows x columns (after padding) for a single generated
+     * table. Far beyond anything a hand-written documentation table would
+     * ever need, but small enough to keep the generated Markdown bounded
+     * regardless of how adversarially an attacker shapes the input HTML.
+     */
+    private static final long MAX_PADDED_CELLS = 10_000L
+
+    /**
      * Builds a GFM Markdown pipe table from a correctly-bounded
      * {@code <table>...</table>} substring, or returns {@code null} if no
-     * rows/cells could be found (malformed table). Row/cell structure and
-     * text content are extracted via {@link TableExtractionPolicy}, which
-     * never reads tag attributes at all.
+     * rows/cells could be found (malformed table) or the table would exceed
+     * {@link #MAX_PADDED_CELLS} once padded. Row/cell structure and text
+     * content are extracted via {@link TableExtractionPolicy}, which never
+     * reads tag attributes at all.
      */
     private static String buildMarkdownTable(String tableHtml) {
         TableExtractionPolicy policy = new TableExtractionPolicy()
@@ -669,6 +678,15 @@ class HtmlTableToMarkdownConverter {
         // narrower header fixes the table's width and GFM silently drops
         // any extra cells in wider rows.
         int columnCount = rows*.cells*.size().max()
+        // Padding every row to the widest row is quadratic in the worst
+        // case: one very wide row forces every other row to be padded out
+        // to that same width, so a modest amount of attacker-controlled
+        // HTML (one wide row plus many single-cell rows) can demand an
+        // unbounded amount of generated Markdown. Both operands are cast to
+        // long before multiplying so the check itself can't overflow.
+        if ((long) rows.size() * (long) columnCount > MAX_PADDED_CELLS) {
+            return null
+        }
         StringBuilder sb = new StringBuilder()
         sb.append(rowLine(padCells(header.cells, columnCount))).append('\n')
         sb.append(delimiterLine(columnCount)).append('\n')
