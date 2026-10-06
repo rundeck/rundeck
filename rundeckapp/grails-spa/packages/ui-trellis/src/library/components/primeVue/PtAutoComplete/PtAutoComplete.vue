@@ -329,14 +329,20 @@ export default defineComponent({
       if (!this.reopenOnClear || !this.showOptionsOnFocus) {
         return;
       }
-      this.applySuggestionFilter("");
       if (this.reopenTimer) {
         clearTimeout(this.reopenTimer);
       }
       // AutoComplete hides via setTimeout(0); re-show once that has run.
       this.reopenTimer = setTimeout(() => {
-        (this.$refs.autoInput as { show?: () => void } | undefined)?.show?.();
         this.reopenTimer = null;
+        const auto = this.$refs.autoInput as
+          | { show?: () => void; $refs?: { focusInput?: { $el?: Element } } }
+          | undefined;
+        if (document.activeElement !== auto?.$refs?.focusInput?.$el) {
+          return;
+        }
+        this.applySuggestionFilter("");
+        auto?.show?.();
       }, 0);
     },
 

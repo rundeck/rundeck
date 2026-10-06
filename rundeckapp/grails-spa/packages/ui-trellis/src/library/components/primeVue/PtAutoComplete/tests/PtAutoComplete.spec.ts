@@ -9,8 +9,9 @@ const SUGGESTIONS = [
   { name: "${job.id}", title: "Job ID", type: "job" },
 ];
 
-const createWrapper = async (props = {}): Promise<any> => {
+const createWrapper = async (props = {}, mountOptions = {}): Promise<any> => {
   const wrapper = mount(PtAutoComplete, {
+    ...mountOptions,
     props: {
       modelValue: "",
       suggestions: SUGGESTIONS,
@@ -287,19 +288,38 @@ describe("PtAutoComplete", () => {
       jest.useRealTimers();
     });
 
-    it("re-shows the full option list when the input is emptied and reopenOnClear is set", async () => {
+    it("re-shows the full option list when the focused input is emptied and reopenOnClear is set", async () => {
       jest.useFakeTimers();
-      const wrapper = await createWrapper({
-        showOptionsOnFocus: true,
-        reopenOnClear: true,
-      });
+      const wrapper = await createWrapper(
+        { showOptionsOnFocus: true, reopenOnClear: true },
+        { attachTo: document.body },
+      );
       const inner = wrapper.findComponent(AutoComplete);
       const show = jest.spyOn(inner.vm as any, "show");
+      wrapper.find("input").element.focus();
 
       await inner.vm.$emit("clear");
       jest.runAllTimers();
 
       expect(show).toHaveBeenCalled();
+      wrapper.unmount();
+    });
+
+    it("does not reopen when the input was cleared as it lost focus, so an option click is not swallowed", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper(
+        { showOptionsOnFocus: true, reopenOnClear: true },
+        { attachTo: document.body },
+      );
+      const inner = wrapper.findComponent(AutoComplete);
+      const show = jest.spyOn(inner.vm as any, "show");
+      wrapper.find("input").element.blur();
+
+      await inner.vm.$emit("clear");
+      jest.runAllTimers();
+
+      expect(show).not.toHaveBeenCalled();
+      wrapper.unmount();
     });
 
     it("leaves the panel closed when the input is emptied without reopenOnClear, even with showOptionsOnFocus", async () => {
