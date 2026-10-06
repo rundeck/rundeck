@@ -46,6 +46,7 @@
         >
           <AccordionHeader
             v-bind="groupProviderAttrs(group)"
+            data-testid="plugin-accordion-header"
             @click.stop="handleAccordionClick(group, key)"
           >
             <div class="accordion-header-content">
@@ -102,6 +103,7 @@
         >
           <AccordionHeader
             v-bind="groupProviderAttrs(group)"
+            data-testid="plugin-accordion-header"
             @click.stop="handleAccordionClick(group, key)"
           >
             <div class="accordion-header-content">

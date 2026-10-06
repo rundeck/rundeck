@@ -37,6 +37,7 @@
       >
         <AccordionHeader
           v-bind="providerAttrs ? providerAttrs(provider) : {}"
+          data-testid="grouped-provider-header"
           @click="selectProvider(provider)"
         >
           <div class="accordion-header-content">
