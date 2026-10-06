@@ -137,7 +137,10 @@
             <b class="glyphicon glyphicon-warning-sign"></b>
             %{-- no saved user means there is nobody to grant access to; re-saving is the only way out --}%
             <g:if test="${scheduledExecution.user}">
-                <g:message code="job.execution.acl.invalid.warning.title" args="${[scheduledExecution.user]}"/>
+                %{-- taglib output is not encoded (grails.views.gsp.codecs.taglib: none) and a
+                     username has no format constraint, so encode this one explicitly --}%
+                <g:message code="job.execution.acl.invalid.warning.title"
+                           args="${[scheduledExecution.user]}" encodeAs="HTML"/>
             </g:if>
             <g:else>
                 <g:message code="job.execution.acl.missing.owner.warning.title"/>

@@ -95,7 +95,7 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             adminView.executionAclFixLink.click()
 
         then: "it opens the project ACL editor, pre-filled with the granting policy"
-            adminView.waitForUrlToContain('createProjectAclFile')
+            adminView.waitForUrlToContain('/admin/acls/create')
 
         cleanup:
             def topMenuPage = page TopMenuPage
