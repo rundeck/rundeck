@@ -74,12 +74,10 @@ describe("DetailsEditor.vue", () => {
     // window.markdeep.format is a global method added from application.js, that calls another third party method,
     // to sanitize the data and calls a callbacks once data is formatted (none of the methods are exported)
     // therefore this test just checks that the preview tab gets rendered once wrapper.vm.preview isn't null anymore
-    // @ts-ignore
-    window.markdeep = {
+    (window as any).markdeep = {
       format: jest.fn().mockImplementation(() =>
         Promise.resolve().then(
           () =>
-            //@ts-ignore
             (wrapper.vm.preview = `<section class="md"><p></p><p>
 first line
 </p><hr>

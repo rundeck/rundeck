@@ -36,7 +36,8 @@ export default {
     updatedData: {
       handler() {
         this.eventBus.emit("job-edit-schedules-changed", this.updatedData);
-        const { timeZones, ...other } = this.updatedData;
+        const other = { ...this.updatedData };
+        delete other.timeZones;
         this.outputData = other;
         this.eventBus.emit("jobedit.page.confirm", true);
       },
@@ -51,7 +52,8 @@ export default {
       if (rundeck && rundeck.data) {
         this.schedulesData = rundeck.data.schedulesData;
         this.updatedData = Object.assign({}, this.schedulesData);
-        const { timeZones, ...other } = this.updatedData;
+        const other = { ...this.updatedData };
+        delete other.timeZones;
         this.outputData = other;
       }
     }

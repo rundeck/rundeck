@@ -94,8 +94,7 @@ export default defineComponent({
       this.remoteEditExpect = true;
       this.remoteSite = this.remoteUrl as string;
       this.remoteEditStarted = false;
-      //@ts-ignore
-      Event.observe(window, "message", this._rdeckNodeEditOnmessage);
+      (Event as any).observe(window, "message", this._rdeckNodeEditOnmessage);
     },
     remoteEditCompleted() {
       this.remoteEditClear();
@@ -110,8 +109,7 @@ export default defineComponent({
     remoteEditStop() {
       this.remoteEditExpect = false;
       this.remoteSite = null;
-      //@ts-ignore
-      Event.observe(window, "message", this._rdeckNodeEditOnmessage);
+      (Event as any).observe(window, "message", this._rdeckNodeEditOnmessage);
 
       this.$emit("remoteEditStop");
     },

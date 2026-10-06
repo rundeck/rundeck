@@ -19,25 +19,28 @@ package testhelpers
 import io.minio.MinioClient
 import org.testcontainers.containers.GenericContainer
 
-class MinioContainer extends GenericContainer<MinioContainer> {
+/**
+ * Testcontainers wrapper for an S3-compatible server (RustFS) used by object-store tests.
+ */
+class S3Container extends GenericContainer<S3Container> {
 
     private static final Integer DEFAULT_PORT = 9000;
     private String accessKey
     private String secretKey
 
-    MinioContainer() {
-        this("quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z")
+    S3Container() {
+        // renovate: datasource=docker depName=rustfs/rustfs
+        this("rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff")
     }
 
-    MinioContainer(String dockerImageName) {
+    S3Container(String dockerImageName) {
         super(dockerImageName);
         withExposedPorts(DEFAULT_PORT)
-        withCommand('server /data')
         withAccess 'TEST_KEY', UUID.randomUUID().toString()
     }
 
-    MinioContainer withAccess(String accessKey, String secretKey) {
-        withEnv MINIO_ROOT_USER: accessKey, MINIO_ROOT_PASSWORD: secretKey
+    S3Container withAccess(String accessKey, String secretKey) {
+        withEnv RUSTFS_ACCESS_KEY: accessKey, RUSTFS_SECRET_KEY: secretKey
         this.accessKey = accessKey
         this.secretKey = secretKey
         return self()
@@ -51,8 +54,8 @@ class MinioContainer extends GenericContainer<MinioContainer> {
 
         // Waiting a little gives time for the container to start and become ready to accept requests.
         // Invoking operations on the container that is not ready results in:
-        // 503's with ErrorResponse (code = XMinioServerNotInitialized, message = Server not initialized, please try again.)
-        MinioTestUtils.ensureMinioServerInitialized(c)
+        // errors such as 503 Server not initialized.
+        S3TestUtils.ensureS3ServerInitialized(c)
 
         return c
     }

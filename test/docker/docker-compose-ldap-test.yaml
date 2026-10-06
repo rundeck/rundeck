@@ -33,7 +33,7 @@ services:
 
   ldap:
     hostname: ldap
-    image: osixia/openldap:1.5.0
+    image: osixia/openldap:1.5.0@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28
     environment:
       - LDAP_ORGANISATION=RD Test
       - LDAP_DOMAIN=rdtest.com

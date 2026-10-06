@@ -125,7 +125,7 @@ export default defineComponent({
     };
   },
   watch: {
-    filterValue(newValue: string) {
+    filterValue() {
       // Only apply live search with debounce in EA mode
       if (!this.ea) {
         return;

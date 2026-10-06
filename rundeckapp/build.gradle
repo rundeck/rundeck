@@ -247,7 +247,7 @@ dependencies {
     implementation ("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:${owaspHtmlSanitizerVersion}") { // CVE-2025-66021
         exclude(group:'com.google.guava',module:'guava')
     }
-    implementation 'org.owasp.encoder:encoder:1.4.0'
+    implementation 'org.owasp.encoder:encoder:1.4.1'
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
@@ -488,7 +488,9 @@ bootRun {
             '-noverify',
             '-XX:TieredStopAtLevel=1',
             '-Xmx4096m',
-            '-XX:MaxMetaspaceSize=1024m')
+            '-XX:MaxMetaspaceSize=1024m',
+            // Keep asset URLs pointing to live files during bootRun.
+            '-Dgrails.assets.bundle=false')
     systemProperties(System.properties)
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
@@ -890,6 +892,13 @@ task copyAssetManifest(type: Copy) {
     from "$buildDir/assets/manifest.properties"
     into "$buildDir/resources/main/META-INF/assets"
 }
+
+// Remove the manifest only for bootRun to prevent stale UI assets without affecting packaged builds.
+task removeDevManifestForBootRun(type: Delete) {
+    dependsOn copyAssetManifest
+    delete "$buildDir/resources/main/META-INF/assets/manifest.properties"
+}
+bootRun.dependsOn removeDevManifestForBootRun
 
 // Copy compiled assets to classpath:/assets/ for bootRun only.
 //
