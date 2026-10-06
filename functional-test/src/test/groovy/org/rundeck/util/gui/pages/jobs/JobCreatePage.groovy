@@ -36,6 +36,7 @@ class JobCreatePage extends BasePage {
     By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
+    By scheduleTabPaneBy = By.id('tab_schedule')
     By scheduleRunYesBy = By.id('scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
@@ -550,9 +551,15 @@ class JobCreatePage extends BasePage {
      * shown, so each one is waited for rather than read straight after the click.
      */
     void enableDailySchedule() {
+        // the step editor's modal can still be open when the caller gets here, because
+        // saveStep waits only for the new step row, and its backdrop swallows the tab
+        // click: the pane stays inactive and its controls stay present but hidden
+        waitForModal(0)
         WebElement scheduleTab = tab(JobTab.SCHEDULE)
         waitForElementToBeClickable scheduleTab
         scheduleTab.click()
+        // fail on the pane rather than 30s later on a control inside it
+        waitForElementVisible scheduleTabPaneBy
         byAndWaitClickable scheduleRunYesBy
         scheduleRunYesField.click()
         byAndWaitClickable scheduleEveryDayCheckboxBy
