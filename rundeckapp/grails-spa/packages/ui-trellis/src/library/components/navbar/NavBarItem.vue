@@ -58,6 +58,11 @@ export default defineComponent({
   &.navbar__item--active * {
     color: var(--sidebar-item-state-color);
   }
+
+  // PrimeIcons are thinner than the Font Awesome solid icons of the other items.
+  i.pi {
+    font-weight: 900;
+  }
 }
 
 .navbar__item--icon {
