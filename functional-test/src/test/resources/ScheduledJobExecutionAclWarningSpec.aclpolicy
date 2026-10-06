@@ -18,12 +18,14 @@ description: Create and edit jobs, but no run access
 context:
   project: ScheduledJobExecutionAclWarningSpec
 for:
+  # saving a job is authorized twice: once generically, to create jobs at all, and
+  # again against the specific job being saved. Both must allow create.
   resource:
     - equals:
         kind: job
       allow: [create]
   job:
-    - allow: [read, update, delete]
+    - allow: [create, read, update, delete]
   node:
     - allow: [read]
 by:
