@@ -37,6 +37,8 @@ class JobCreatePage extends BasePage {
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
     By scheduleTabPaneBy = By.id('tab_schedule')
+    By scheduleRunYesLabelBy = By.cssSelector("label[for='scheduledTrue']")
+    By scheduleEveryDayLabelBy = By.cssSelector("label[for='everyDay']")
     By scheduleRunYesBy = By.id('scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
@@ -551,24 +553,22 @@ class JobCreatePage extends BasePage {
      * shown, so each one is waited for rather than read straight after the click.
      */
     void enableDailySchedule() {
-        // the step editor's modal can still be open when the caller gets here, because
-        // saveStep waits only for the new step row, and its backdrop swallows the tab
-        // click: the pane stays inactive and its controls stay present but hidden
+        // saveStep returns as soon as the new step row appears, so the step editor's
+        // modal can still be open and over the tabs
         waitForModal(0)
         WebElement scheduleTab = tab(JobTab.SCHEDULE)
         waitForElementToBeClickable scheduleTab
         scheduleTab.click()
         // fail on the pane rather than 30s later on a control inside it
         waitForElementVisible scheduleTabPaneBy
-        byAndWaitClickable scheduleRunYesBy
-        scheduleRunYesField.click()
-        byAndWaitClickable scheduleEveryDayCheckboxBy
-        if (!scheduleEveryDayCheckboxField.isSelected()) {
-            scheduleEveryDayCheckboxField.click()
-        }
-        // the day-of-week panel appearing is the reactive model having caught up, so the
-        // caller does not submit the form mid-update
+        // the theme gives these inputs opacity:0 and draws the control on the label, so
+        // the label is both what a user clicks and the only part Selenium sees as visible
+        byAndWaitClickable(scheduleRunYesLabelBy).click()
+        // the day-of-week panel appearing is the reactive model having caught up
         waitForElementVisible scheduleDaysCheckboxDivBy
+        if (!scheduleEveryDayCheckboxField.isSelected()) {
+            byAndWaitClickable(scheduleEveryDayLabelBy).click()
+        }
     }
 
     List<WebElement> getExecutionPluginsRows() {
