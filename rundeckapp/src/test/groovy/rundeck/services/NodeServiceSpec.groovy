@@ -161,7 +161,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         1 * cache.getIfPresent('test1') >> cached
         1 * cache.refresh('test1')
         0 * cache.invalidate(_)
-        cached.reloadRequested
+        service.reloadRequestCount('test1') == 1
     }
 
     def "refresh project nodes in background invalidates when nothing cached, to avoid synchronous load"() {
@@ -194,7 +194,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.refreshProjectNodesInBackground('test1')
 
         then: "the old nodes are still served"
-        old.reloadRequested
+        service.reloadRequestCount('test1') == 1
         service.nodeCache.getIfPresent('test1').is(old)
         service.nodeCache.get('test1').is(old)
 
@@ -205,7 +205,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.nodeCache.getIfPresent('test1').is(replacement)
     }
 
-    def "reload request is cleared once the reload starts so a failed reload does not retry forever"() {
+    def "reload request is marked as handled once the reload starts so a failed reload does not retry forever"() {
         given:
         service.configurationService = Mock(ConfigurationService)
         service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
@@ -230,25 +230,28 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
         then:
         1 * service.nodeTaskExecutor.execute(_)
-        !old.reloadRequested
+        old.reloadRequestCount == 1
     }
 
-    def "needs reload when reload was requested even if config is unchanged and cache is fresh"(boolean requested) {
+    def "needs reload when a reload was requested after the cached nodes were loaded, even if config is unchanged and cache is fresh"(boolean requested) {
         given:
-        def projConfig = new PropsConfig(
-                projectProperties: [:],
-                properties: [:],
-                name: 'test1',
-                configLastModifiedTime: new Date(System.currentTimeMillis() - 60000)
-        )
+        service.nodeCache = Mock(LoadingCache)
         service.frameworkService = Mock(FrameworkService) {
             getRundeckFramework() >> Mock(Framework) {
                 getProjectManager() >> Mock(ProjectManager) {
-                    loadProjectConfig('test1') >> projConfig
+                    loadProjectConfig('test1') >> new PropsConfig(
+                            projectProperties: [:],
+                            properties: [:],
+                            name: 'test1',
+                            configLastModifiedTime: new Date(System.currentTimeMillis() - 60000)
+                    )
                 }
             }
         }
-        def cached = new CachedProjectNodes(cacheTime: new Date(), reloadRequested: requested)
+        def cached = new CachedProjectNodes(cacheTime: new Date())
+        if (requested) {
+            service.refreshProjectNodesInBackground('test1')
+        }
 
         expect:
         service.needsReload('test1', cached) == requested
@@ -257,6 +260,42 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         requested | _
         true      | _
         false     | _
+    }
+
+    def "a reload requested while another reload is running is not lost"() {
+        given:
+        def pending = SettableFuture.<CachedProjectNodes> create()
+        service.nodeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, CachedProjectNodes>() {
+            CachedProjectNodes load(String key) { throw new IllegalStateException('should not load synchronously') }
+
+            ListenableFuture<CachedProjectNodes> reload(String key, CachedProjectNodes oldValue) { pending }
+        })
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager) {
+                    loadProjectConfig('test1') >> new PropsConfig(
+                            projectProperties: [:],
+                            properties: [:],
+                            name: 'test1',
+                            // same coarse timestamp for both config saves, so timestamps cannot tell them apart
+                            configLastModifiedTime: new Date(System.currentTimeMillis() - 60000)
+                    )
+                }
+            }
+        }
+        service.nodeCache.put('test1', new CachedProjectNodes(cacheTime: new Date()))
+
+        when: "the first save starts a reload, and a second save arrives before it finishes"
+        service.refreshProjectNodesInBackground('test1')
+        // the running reload loaded its nodes after the first request but before the second
+        def reloaded = new CachedProjectNodes(cacheTime: new Date(), reloadRequestCount: 1)
+        service.refreshProjectNodesInBackground('test1')
+        pending.set(reloaded)
+
+        then: "the completed reload is known to be stale, so the next check reloads again"
+        service.nodeCache.getIfPresent('test1').is(reloaded)
+        service.needsReload('test1', reloaded)
+        !service.needsReload('test1', new CachedProjectNodes(cacheTime: new Date(), reloadRequestCount: 2))
     }
 
     def "project load threads config is exposed as a project property"() {
