@@ -29,6 +29,7 @@ import spock.lang.Stepwise
 import java.util.stream.Collectors
 
 @SeleniumCoreTest
+@ExcludePro
 @Stepwise
 @UiModeFlag(
     featureName = "jobs-options-workflow",
@@ -47,7 +48,6 @@ class JobsSpec extends SeleniumBase {
         go(LoginPage).login(TEST_USER, TEST_PASS)
     }
 
-    @ExcludePro
     def "change workflow strategy"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
