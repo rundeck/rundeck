@@ -367,8 +367,6 @@ class UrlMappings {
         "/helplink/name"(controller:'helplink',action:'helplinkName')
         "/workflowgraph/show"(controller:'WorkflowGraph',action:'WorkflowGraph')
 
-        // Direct requests to /error (e.g. scanners) have no default action; treat as not found
-        "/error"(controller:"error",action:"notFound")
         "404"(controller:"error",action:"notFound")
         "405"(controller:"error",action:"notAllowed")
         "500"(controller:"error",action:"fiveHundred")
