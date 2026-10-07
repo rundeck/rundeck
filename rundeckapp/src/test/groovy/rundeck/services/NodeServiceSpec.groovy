@@ -40,7 +40,10 @@ import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.services.nodes.CachedProjectNodes
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 import spock.lang.Unroll
+
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Created by greg on 2/3/16.
@@ -260,6 +263,62 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         requested | _
         true      | _
         false     | _
+    }
+
+    def "needs reload when the project config is newer than the cached nodes, without any reload request"() {
+        given:
+        service.nodeCache = Mock(LoadingCache)
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager) {
+                    loadProjectConfig('test1') >> new PropsConfig(
+                            projectProperties: [:],
+                            properties: [:],
+                            name: 'test1',
+                            configLastModifiedTime: new Date()
+                    )
+                }
+            }
+        }
+        def cached = new CachedProjectNodes(cacheTime: new Date(System.currentTimeMillis() - 60000))
+
+        expect: "changes made outside this service, such as on disk or by another cluster node, are still picked up"
+        service.lastReloadRequest('test1') == 0
+        service.needsReload('test1', cached)
+    }
+
+    def "a stale reload result is reloaded again by the next cache access after the refresh interval"() {
+        given:
+        def reloads = new AtomicInteger()
+        service.configurationService = Mock(ConfigurationService) {
+            getString('nodeService.nodeCache.spec', _) >> 'refreshInterval=1s'
+        }
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor) {
+            execute(_) >> { reloads.incrementAndGet() }
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager) {
+                    loadProjectConfig('test1') >> new PropsConfig(
+                            projectProperties: [:],
+                            properties: [:],
+                            name: 'test1',
+                            configLastModifiedTime: new Date(System.currentTimeMillis() - 60000)
+                    )
+                }
+            }
+        }
+        service.afterPropertiesSet()
+        //a request was made after the cached nodes were loaded, as when a second save arrives during a reload
+        service.refreshProjectNodesInBackground('test1')
+        def stale = new CachedProjectNodes(cacheTime: new Date(), reloadRequestSequence: 0)
+        service.nodeCache.put('test1', stale)
+
+        expect: "the stale nodes are served, and accessing them past the refresh interval starts another reload"
+        new PollingConditions(timeout: 10).eventually {
+            assert service.nodeCache.get('test1').is(stale)
+            assert reloads.get() == 1
+        }
     }
 
     def "a reload requested while another reload is running is not lost"() {

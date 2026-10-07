@@ -171,10 +171,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final List<SourceResult> results = querySources(sources);
         for (int i = 0; i < results.size(); i++) {
             final SourceResult result = results.get(i);
-            ResourceModelSourceException error = result.error;
-            if (result.nodes != null) {
+            ResourceModelSourceException error = result.error();
+            if (result.nodes() != null) {
                 try {
-                    list.addNodeSet(result.nodes);
+                    list.addNodeSet(result.nodes());
                 } catch (RuntimeException e) {
                     logger.error("Cannot merge nodes from source #" + (i + 1) + ": " + e.getMessage());
                     logger.debug("Cannot merge nodes from source #" + (i + 1) + ": " + e.getMessage(), e);
@@ -195,14 +195,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * Result of querying a single node source
      */
-    private static final class SourceResult {
-        final INodeSet nodes;
-        final ResourceModelSourceException error;
-
-        SourceResult(final INodeSet nodes, final ResourceModelSourceException error) {
-            this.nodes = nodes;
-            this.error = error;
-        }
+    private record SourceResult(INodeSet nodes, ResourceModelSourceException error) {
     }
 
     /**
@@ -270,9 +263,9 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return failedAll(sources, e);
+            return withFailures(results, e);
         } catch (ExecutionException e) {
-            return failedAll(sources, e);
+            return withFailures(results, e);
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             submitted.forEach(f -> f.cancel(true));
@@ -280,11 +273,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return Arrays.asList(results);
     }
 
-    private static List<SourceResult> failedAll(final List<LoadedResourceModelSource> sources, final Exception e) {
-        return Collections.nCopies(
-                sources.size(),
-                new SourceResult(null, new ResourceModelSourceException("Failed loading nodes: " + e, e))
+    /**
+     * Keeps the results already collected, and reports the failure for sources that did not complete
+     */
+    private static List<SourceResult> withFailures(final SourceResult[] results, final Exception e) {
+        final SourceResult failed = new SourceResult(
+                null,
+                new ResourceModelSourceException("Failed loading nodes: " + e, e)
         );
+        return Arrays.stream(results).map(r -> r != null ? r : failed).collect(Collectors.toList());
     }
 
     /**

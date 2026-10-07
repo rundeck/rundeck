@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -447,34 +448,46 @@ class ProjectNodeSupportSpec extends Specification {
         def total = ProjectNodeSupport.MAX_LOAD_THREADS + 10
         def active = new AtomicInteger()
         def maxActive = new AtomicInteger()
+        // sources block until released, so the cap is reached and held without relying on timing
+        def release = new CountDownLatch(1)
         def loaders = (1..total).collect { int n ->
             { ->
                 maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
-                sleep(30)
+                release.await(10, TimeUnit.SECONDS)
                 active.decrementAndGet()
                 nodes("n${n}", 'v')
             } as Closure<INodeSet>
         }
         def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '1000'], loaders)
+        def results = []
 
         when:
-        def result = support.getNodeSet()
+        def loading = Thread.start { results << support.getNodeSet() }
 
         then:
-        result.nodeNames.size() == total
-        maxActive.get() > 1
-        maxActive.get() <= ProjectNodeSupport.MAX_LOAD_THREADS
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+        }
+
+        when:
+        release.countDown()
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames.size() == total
+        maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
     }
 
     def "serial loads from many projects share the global concurrency cap"() {
         given:
         def active = new AtomicInteger()
         def maxActive = new AtomicInteger()
+        def release = new CountDownLatch(1)
         def projects = ProjectNodeSupport.MAX_LOAD_THREADS + 10
         def supports = (1..projects).collect {
             supportWithSources([:], [{ ->
                 maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
-                sleep(100)
+                release.await(10, TimeUnit.SECONDS)
                 active.decrementAndGet()
                 nodes("n", 'v')
             } as Closure<INodeSet>])
@@ -482,11 +495,39 @@ class ProjectNodeSupportSpec extends Specification {
 
         when:
         def threads = supports.collect { s -> Thread.start { s.getNodeSet() } }
-        threads*.join()
 
         then:
-        maxActive.get() > 1
-        maxActive.get() <= ProjectNodeSupport.MAX_LOAD_THREADS
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+        }
+
+        when:
+        release.countDown()
+        threads*.join(10000)
+
+        then:
+        maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+    }
+
+    def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
+        given:
+        def secondStarted = new CountDownLatch(1)
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> secondStarted.countDown(); new CountDownLatch(1).await(10, TimeUnit.SECONDS); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        secondStarted.await(10, TimeUnit.SECONDS)
+        loading.interrupt()
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames as List == ['a']
+        support.getResourceModelSourceExceptionsMap().keySet() == ['2.source'] as Set
     }
 
     def "failure merging one source is reported by source index and later sources still load"() {
