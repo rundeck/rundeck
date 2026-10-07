@@ -141,6 +141,9 @@ export default defineComponent({
         ServiceType.LogFilter,
         this.model.type,
         this.model.config,
+        // Project/Framework scoped properties are not editable here; they are
+        // only validated at execution time (matches the legacy editor).
+        "Project",
       );
 
       if (response.valid && Object.keys(response.errors || {}).length === 0) {

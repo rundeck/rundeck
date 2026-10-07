@@ -38,6 +38,7 @@ jest.mock("../stepEditorUtils", () => ({
 }));
 
 import { resetValidation } from "../stepEditorUtils";
+import { validatePluginConfig } from "../../../../../library/modules/pluginService";
 
 const createMockEventBus = () => ({
   on: jest.fn(),
@@ -122,6 +123,53 @@ describe("LogFilterControls", () => {
       const result = (resetValidation as jest.Mock).mock.results[0]?.value;
       expect(result).toEqual({ errors: {}, valid: true });
       expect(Array.isArray(result.errors)).toBe(false);
+    });
+  });
+
+  describe("saveEditFilter (RUN-5055)", () => {
+    const filterModel = { type: "key-value-data", config: { regex: "a" } };
+
+    it("ignores Project/Framework scoped properties when validating", async () => {
+      const wrapper = await createWrapper();
+      (wrapper.vm as any).model = filterModel;
+
+      await (wrapper.vm as any).saveEditFilter();
+
+      expect(validatePluginConfig).toHaveBeenCalledWith(
+        "LogFilter",
+        "key-value-data",
+        { regex: "a" },
+        "Project",
+      );
+    });
+
+    it("emits update:modelValue and closes the modal when valid", async () => {
+      const wrapper = await createWrapper();
+      (wrapper.vm as any).model = filterModel;
+      (wrapper.vm as any).editFilterModal = true;
+
+      await (wrapper.vm as any).saveEditFilter();
+
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([filterModel]);
+      expect((wrapper.vm as any).editFilterModal).toBe(false);
+    });
+
+    it("keeps the modal open and records errors when validation fails", async () => {
+      (validatePluginConfig as jest.Mock).mockResolvedValueOnce({
+        valid: false,
+        errors: { regex: "required" },
+      });
+      const wrapper = await createWrapper();
+      (wrapper.vm as any).model = filterModel;
+      (wrapper.vm as any).editFilterModal = true;
+
+      await (wrapper.vm as any).saveEditFilter();
+
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+      expect((wrapper.vm as any).editFilterModal).toBe(true);
+      expect((wrapper.vm as any).editModelValidation.errors).toEqual({
+        regex: "required",
+      });
     });
   });
 });
