@@ -110,7 +110,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 PropertyBuilder.builder().with {
                     integer 'loadThreads'
                     title 'Load Threads'
-                    description 'Number of Node Sources queried concurrently when loading nodes.\n\nThe default of 1 queries Node Sources one at a time. Higher values reduce load time for projects with many Node Sources, but increase concurrent requests to the systems behind them, which may throttle.'
+                    description 'Number of Node Sources queried concurrently when loading nodes.\n\nThe default of 1 queries Node Sources one at a time. Higher values reduce load time for projects with many Node Sources, but increase concurrent requests to the systems behind them, which may throttle. At most 20 Node Sources are queried at once across all projects.'
                     required(false)
                     defaultValue '1'
                     renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')

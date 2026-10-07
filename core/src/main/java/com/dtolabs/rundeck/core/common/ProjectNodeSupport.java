@@ -32,11 +32,13 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,10 +55,19 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final  String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
     /**
      * Project property: number of node sources queried concurrently. The default of 1 (or less) queries sources
-     * serially.
+     * serially. Limited by {@link #MAX_LOAD_THREADS}.
      */
     public static final  String PROJECT_RESOURCES_LOAD_THREADS          = "project.resources.loadThreads";
     private static final int    DEFAULT_LOAD_THREADS                    = 1;
+    /**
+     * Upper bound on node source queries running at once, shared by all projects
+     */
+    static final         int    MAX_LOAD_THREADS                        = 20;
+    private static final AtomicInteger LOAD_THREAD_COUNT                = new AtomicInteger();
+    /**
+     * Shared by all projects so concurrency is bounded across them. Idle threads time out.
+     */
+    private static final ThreadPoolExecutor LOAD_POOL                   = createLoadPool();
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -155,11 +166,18 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final List<SourceResult> results = querySources(sources);
         for (int i = 0; i < results.size(); i++) {
             final SourceResult result = results.get(i);
+            ResourceModelSourceException error = result.error;
             if (result.nodes != null) {
-                list.addNodeSet(result.nodes);
+                try {
+                    list.addNodeSet(result.nodes);
+                } catch (RuntimeException e) {
+                    logger.error("Cannot merge nodes from source #" + (i + 1) + ": " + e.getMessage());
+                    logger.debug("Cannot merge nodes from source #" + (i + 1) + ": " + e.getMessage(), e);
+                    error = new ResourceModelSourceException(e.getMessage(), e);
+                }
             }
-            if (result.error != null) {
-                exceptions.put((i + 1) + ".source", result.error);
+            if (error != null) {
+                exceptions.put((i + 1) + ".source", error);
             }
         }
         synchronized (nodesSourceExceptions){
@@ -196,43 +214,65 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return DEFAULT_LOAD_THREADS;
     }
 
+    private static ThreadPoolExecutor createLoadPool() {
+        final ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                MAX_LOAD_THREADS,
+                MAX_LOAD_THREADS,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                r -> {
+                    Thread t = new Thread(r, "ProjectNodeSupport-load-" + LOAD_THREAD_COUNT.incrementAndGet());
+                    t.setDaemon(true);
+                    return t;
+                }
+        );
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
+
     /**
-     * Query all sources, in parallel if more than one thread is configured.
+     * Query all sources, in parallel if more than one thread is configured. At most the configured number of this
+     * project's sources are submitted to the shared pool at a time, so one project cannot occupy the whole pool.
      *
      * @param sources sources to query
      *
      * @return one result per source, in the same order as the sources
      */
     private List<SourceResult> querySources(final List<LoadedResourceModelSource> sources) {
-        final int threads = Math.min(getLoadThreads(), sources.size());
+        final int total = sources.size();
+        final int threads = Math.min(Math.min(getLoadThreads(), MAX_LOAD_THREADS), total);
         if (threads <= 1) {
             return sources.stream().map(ProjectNodeSupport::querySource).collect(Collectors.toList());
         }
-        final String name = "ProjectNodeSupport-" + projectConfig.getName() + "-load";
-        final AtomicInteger count = new AtomicInteger();
-        final ExecutorService pool = Executors.newFixedThreadPool(threads, r -> {
-            Thread t = new Thread(r, name + "-" + count.incrementAndGet());
-            t.setDaemon(true);
-            return t;
-        });
+        final SourceResult[] results = new SourceResult[total];
+        final CompletionService<Void> completion = new ExecutorCompletionService<>(LOAD_POOL);
+        final List<Future<Void>> submitted = new ArrayList<>();
+        int next = 0;
+        int running = 0;
         try {
-            final List<Callable<SourceResult>> tasks = new ArrayList<>();
-            for (final LoadedResourceModelSource source : sources) {
-                tasks.add(() -> querySource(source));
+            while (next < total || running > 0) {
+                while (next < total && running < threads) {
+                    final int index = next++;
+                    submitted.add(completion.submit(() -> {
+                        results[index] = querySource(sources.get(index));
+                        return null;
+                    }));
+                    running++;
+                }
+                completion.take().get();
+                running--;
             }
-            final List<SourceResult> results = new ArrayList<>();
-            for (final Future<SourceResult> future : pool.invokeAll(tasks)) {
-                results.add(future.get());
-            }
-            return results;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return failedAll(sources, e);
         } catch (ExecutionException e) {
             return failedAll(sources, e);
         } finally {
-            pool.shutdownNow();
+            //no-op for completed tasks, stops queued or running ones if the load was abandoned
+            submitted.forEach(f -> f.cancel(true));
         }
+        return Arrays.asList(results);
     }
 
     private static List<SourceResult> failedAll(final List<LoadedResourceModelSource> sources, final Exception e) {

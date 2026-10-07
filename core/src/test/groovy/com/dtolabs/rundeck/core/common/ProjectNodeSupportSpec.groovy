@@ -442,6 +442,52 @@ class ProjectNodeSupportSpec extends Specification {
         threads << [null, '1', '0', 'not-a-number']
     }
 
+    def "concurrency is capped at the shared maximum even if loadThreads is higher"() {
+        given:
+        def total = ProjectNodeSupport.MAX_LOAD_THREADS + 10
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def loaders = (1..total).collect { int n ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                sleep(30)
+                active.decrementAndGet()
+                nodes("n${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '1000'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        result.nodeNames.size() == total
+        maxActive.get() > 1
+        maxActive.get() <= ProjectNodeSupport.MAX_LOAD_THREADS
+    }
+
+    def "failure merging one source is reported by source index and later sources still load"() {
+        given:
+        def broken = Mock(INodeSet) {
+            iterator() >> { throw new IllegalStateException('bad node data') }
+        }
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> broken } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '3'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+        def errors = support.getResourceModelSourceExceptionsMap()
+
+        then:
+        result.nodeNames as List == ['a', 'c']
+        errors.keySet() == ['2.source'] as Set
+        errors['2.source'].message == 'bad node data'
+    }
+
     def "failure of one source is reported by source index and others still load"() {
         given:
         def loaders = [
