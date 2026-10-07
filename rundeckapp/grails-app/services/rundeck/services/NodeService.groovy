@@ -139,10 +139,17 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
 
     /**
-     * Number of background reloads requested per project. Tracked outside the cached nodes, because a reload
-     * replaces them and a request made while a reload is running must not be lost.
+     * Source of increasing numbers for background reload requests. Never reset, so a request made after a project's
+     * tracking was removed is still newer than any node set loaded before.
      */
-    private final ConcurrentMap<String, AtomicLong> reloadRequestCounts = new ConcurrentHashMap<>()
+    private final AtomicLong reloadRequestSequence = new AtomicLong()
+
+    /**
+     * Number of the latest background reload request per project. Tracked outside the cached nodes, because a reload
+     * replaces them and a request made while a reload is running must not be lost. Removed when the project's
+     * nodes are forcibly refreshed, such as when the project is deleted.
+     */
+    private final ConcurrentMap<String, Long> lastReloadRequests = new ConcurrentHashMap<>()
 
     private File _frameworkVarDir
 
@@ -182,7 +189,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     {
                         if (needsReload(key, oldValue)) {
                             //a failed reload must not retry forever because of the requests it handles
-                            oldValue.reloadRequestCount = reloadRequestCount(key)
+                            oldValue.reloadRequestSequence = lastReloadRequest(key)
                             ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key,oldValue) }
                             nodeTaskExecutor.execute(task);
                             return task;
@@ -211,7 +218,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
-        if (reloadRequestCount(project) > oldNodes.reloadRequestCount) {
+        if (lastReloadRequest(project) > oldNodes.reloadRequestSequence) {
             log.debug("reload requested, forcing node reload for ${project}")
             return true
         }
@@ -259,7 +266,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
      */
     CachedProjectNodes loadNodes(final String project, final CachedProjectNodes oldValue) {
         //read before loading the config, so a request made after this point triggers another reload
-        long requestCount = reloadRequestCount(project)
+        long requestSequence = lastReloadRequest(project)
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
         def enabled = isCacheEnabled(rdprojectconfig)
@@ -314,7 +321,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
          */
         def cachedNodes = new CachedProjectNodes(
                 cacheTime: new Date(),
-                reloadRequestCount: requestCount,
+                reloadRequestSequence: requestSequence,
                 nodeSupport: nodeSupport,
                 doCache: enabled,
                 nodes: preloadedNodes,
@@ -354,15 +361,17 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     void refreshProjectNodes(final String name) {
+        //the forced reload covers any pending request, and this stops tracking projects that no longer exist
+        lastReloadRequests.remove(name)
         nodeCache.invalidate(name)
     }
 
     /**
      * @param project project name
-     * @return the number of background reloads requested so far for the project
+     * @return the number of the latest background reload requested for the project, 0 if none is tracked
      */
-    long reloadRequestCount(final String project) {
-        reloadRequestCounts.get(project)?.get() ?: 0L
+    long lastReloadRequest(final String project) {
+        lastReloadRequests.get(project) ?: 0L
     }
 
     /**
@@ -373,9 +382,9 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
      */
     @Override
     void refreshProjectNodesInBackground(final String name) {
-        reloadRequestCounts.computeIfAbsent(name, { new AtomicLong() }).incrementAndGet()
+        lastReloadRequests.compute(name, { String k, Long v -> reloadRequestSequence.incrementAndGet() })
         if (nodeCache.getIfPresent(name) != null) {
-            //ignored by the cache while a reload is already running, the request count makes the next check reload again
+            //ignored by the cache while a reload is already running, the request number makes the next check reload again
             nodeCache.refresh(name)
         } else {
             //nothing to keep serving, and refresh of an absent key would load synchronously on this thread

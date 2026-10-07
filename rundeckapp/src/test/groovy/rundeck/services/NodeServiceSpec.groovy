@@ -161,7 +161,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         1 * cache.getIfPresent('test1') >> cached
         1 * cache.refresh('test1')
         0 * cache.invalidate(_)
-        service.reloadRequestCount('test1') == 1
+        service.lastReloadRequest('test1') == 1
     }
 
     def "refresh project nodes in background invalidates when nothing cached, to avoid synchronous load"() {
@@ -194,7 +194,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.refreshProjectNodesInBackground('test1')
 
         then: "the old nodes are still served"
-        service.reloadRequestCount('test1') == 1
+        service.lastReloadRequest('test1') == 1
         service.nodeCache.getIfPresent('test1').is(old)
         service.nodeCache.get('test1').is(old)
 
@@ -230,7 +230,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
         then:
         1 * service.nodeTaskExecutor.execute(_)
-        old.reloadRequestCount == 1
+        old.reloadRequestSequence == 1
     }
 
     def "needs reload when a reload was requested after the cached nodes were loaded, even if config is unchanged and cache is fresh"(boolean requested) {
@@ -288,14 +288,33 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         when: "the first save starts a reload, and a second save arrives before it finishes"
         service.refreshProjectNodesInBackground('test1')
         // the running reload loaded its nodes after the first request but before the second
-        def reloaded = new CachedProjectNodes(cacheTime: new Date(), reloadRequestCount: 1)
+        def reloaded = new CachedProjectNodes(cacheTime: new Date(), reloadRequestSequence: 1)
         service.refreshProjectNodesInBackground('test1')
         pending.set(reloaded)
 
         then: "the completed reload is known to be stale, so the next check reloads again"
         service.nodeCache.getIfPresent('test1').is(reloaded)
         service.needsReload('test1', reloaded)
-        !service.needsReload('test1', new CachedProjectNodes(cacheTime: new Date(), reloadRequestCount: 2))
+        !service.needsReload('test1', new CachedProjectNodes(cacheTime: new Date(), reloadRequestSequence: 2))
+    }
+
+    def "forced refresh stops tracking reload requests, and later requests are still newer than earlier node sets"() {
+        given:
+        service.nodeCache = Mock(LoadingCache)
+        service.refreshProjectNodesInBackground('test1')
+        def loadedBefore = new CachedProjectNodes(cacheTime: new Date(), reloadRequestSequence: service.lastReloadRequest('test1'))
+
+        when:
+        service.refreshProjectNodes('test1')
+
+        then:
+        service.lastReloadRequest('test1') == 0
+
+        when: "the project is saved again, for example after being re-created with the same name"
+        service.refreshProjectNodesInBackground('test1')
+
+        then:
+        service.lastReloadRequest('test1') > loadedBefore.reloadRequestSequence
     }
 
     def "project load threads config is exposed as a project property"() {

@@ -32,10 +32,10 @@ class CachedProjectNodes implements IProjectNodes {
     boolean doCache
     Date cacheTime
     /**
-     * Number of background reload requests for the project that these nodes already reflect. The next cache refresh
-     * reloads regardless of cache age when more requests than this have been made.
+     * Number of the latest background reload request for the project that these nodes already reflect. The next cache
+     * refresh reloads regardless of cache age when a later request has been made.
      */
-    volatile long reloadRequestCount
+    volatile long reloadRequestSequence
 
     List<ReadableProjectNodes> getResourceModelSources() {
         nodeSupport.resourceModelSources
