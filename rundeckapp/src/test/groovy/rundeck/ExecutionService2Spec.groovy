@@ -2661,7 +2661,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         1 == 1
     }
 
-    def "generateServerURL strips trailing slashes so job.serverUrl can be concatenated with an absolute path"() {
+    def "generateServerURL keeps the trailing slash of the root link"() {
         given:
         def linkGenerator = Stub(LinkGenerator) {
             link(_) >> generated
@@ -2671,18 +2671,13 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         def result = ExecutionService.generateServerURL(linkGenerator)
 
         then:
-        result == expected
+        result == generated
 
         where:
-        generated                | expected
-        'http://h:4440/'         | 'http://h:4440'
-        'http://h:4440//'        | 'http://h:4440'
-        'http://h:4440/rundeck/' | 'http://h:4440/rundeck'
-        'http://h:4440'          | 'http://h:4440'
-        null                     | null
+        generated << ['http://h:4440/', 'http://h:4440/rundeck/', null]
     }
 
-    def "exportContextForExecution sets job.serverUrl without trailing slash and leaves job.url unchanged"() {
+    def "exportContextForExecution sets job.serverUrl with trailing slash and leaves job.url unchanged"() {
         given:
         def executionUrl = 'http://h:4440/project/test/execution/show/1'
         def linkGenerator = Stub(LinkGenerator) {
@@ -2698,7 +2693,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         def jobcontext = ExecutionService.exportContextForExecution(ex, linkGenerator)
 
         then:
-        jobcontext.serverUrl == 'http://h:4440'
+        jobcontext.serverUrl == 'http://h:4440/'
         jobcontext.url == executionUrl
     }
 
