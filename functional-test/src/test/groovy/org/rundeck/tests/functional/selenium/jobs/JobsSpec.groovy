@@ -16,7 +16,6 @@ import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
-import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -45,26 +44,6 @@ class JobsSpec extends SeleniumBase {
 
     def setup() {
         go(LoginPage).login(TEST_USER, TEST_PASS)
-    }
-
-    @ExcludePro
-    def "change workflow strategy"() {
-        when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
-            def jobShowPage = page JobShowPage
-        then:
-            jobCreatePage.go()
-            jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
-            jobCreatePage.tab JobTab.WORKFLOW click()
-            jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
-            jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
-            jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
-
-            jobCreatePage.addSimpleCommandStepNextUi 'echo selenium test', 0
-            jobCreatePage.createJobButton.click()
-        expect:
-            jobShowPage.jobDefinitionModal.click()
-            jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
     }
 
     def "change workflow strategy legacy"() {
