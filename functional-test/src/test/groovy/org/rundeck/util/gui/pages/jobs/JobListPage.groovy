@@ -23,6 +23,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     String loadPath = "/jobs"
     By createJobLink = By.partialLinkText('New Job')
+    By executionAclWarningBadgeBy = By.cssSelector("[data-testid='execution-acl-warning-badge']")
     By jobsActionsButtonBy = By.cssSelector('#project_job_actions')
 
     // Bulk modal elements
@@ -233,6 +234,17 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     List<WebElement> getJobList(){
         els jobListBy
+    }
+
+    /**
+     * The warning badges marking listed jobs whose saved owner is not authorized to
+     * run them. Waits for the first one, since the list renders asynchronously, so
+     * this is for asserting presence rather than absence.
+     * @return one element per warned job in the list
+     */
+    List<WebElement> getExecutionAclWarningBadges() {
+        waitForElementVisible executionAclWarningBadgeBy
+        els executionAclWarningBadgeBy
     }
 
     WebElement getAlertInfo(){
