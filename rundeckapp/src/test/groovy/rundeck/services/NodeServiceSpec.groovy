@@ -30,7 +30,11 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncTaskExecutor
@@ -172,6 +176,61 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         1 * cache.getIfPresent('test1') >> null
         1 * cache.invalidate('test1')
         0 * cache.refresh(_)
+    }
+
+    def "cached nodes keep being served while a background refresh is still loading, then are replaced"() {
+        given:
+        def pending = SettableFuture.<CachedProjectNodes> create()
+        service.nodeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, CachedProjectNodes>() {
+            CachedProjectNodes load(String key) { throw new IllegalStateException('should not load synchronously') }
+
+            ListenableFuture<CachedProjectNodes> reload(String key, CachedProjectNodes oldValue) { pending }
+        })
+        def old = new CachedProjectNodes(cacheTime: new Date())
+        def replacement = new CachedProjectNodes(cacheTime: new Date())
+        service.nodeCache.put('test1', old)
+
+        when: "a background refresh starts and has not completed"
+        service.refreshProjectNodesInBackground('test1')
+
+        then: "the old nodes are still served"
+        old.reloadRequested
+        service.nodeCache.getIfPresent('test1').is(old)
+        service.nodeCache.get('test1').is(old)
+
+        when: "the reload completes"
+        pending.set(replacement)
+
+        then: "the new nodes replace the old"
+        service.nodeCache.getIfPresent('test1').is(replacement)
+    }
+
+    def "reload request is cleared once the reload starts so a failed reload does not retry forever"() {
+        given:
+        service.configurationService = Mock(ConfigurationService)
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager) {
+                    loadProjectConfig('test1') >> new PropsConfig(
+                            projectProperties: [:],
+                            properties: [:],
+                            name: 'test1',
+                            configLastModifiedTime: new Date(System.currentTimeMillis() - 60000)
+                    )
+                }
+            }
+        }
+        service.afterPropertiesSet()
+        def old = new CachedProjectNodes(cacheTime: new Date())
+        service.nodeCache.put('test1', old)
+
+        when:
+        service.refreshProjectNodesInBackground('test1')
+
+        then:
+        1 * service.nodeTaskExecutor.execute(_)
+        !old.reloadRequested
     }
 
     def "needs reload when reload was requested even if config is unchanged and cache is fresh"(boolean requested) {

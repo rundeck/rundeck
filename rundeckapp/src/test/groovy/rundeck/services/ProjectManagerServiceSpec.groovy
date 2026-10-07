@@ -1191,8 +1191,8 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         when:
         def result=service.loadProject('test1')
 
-        then:
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        then: "loading the project object must not drop the cached nodes, which would make them unavailable during reload"
+        0*service.rundeckNodeService._
         result!=null
     }
 

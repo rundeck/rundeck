@@ -225,17 +225,21 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 results.add(future.get());
             }
             return results;
-        } catch (InterruptedException | ExecutionException e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            return Collections.nCopies(
-                    sources.size(),
-                    new SourceResult(null, new ResourceModelSourceException("Failed loading nodes: " + e, e))
-            );
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return failedAll(sources, e);
+        } catch (ExecutionException e) {
+            return failedAll(sources, e);
         } finally {
             pool.shutdownNow();
         }
+    }
+
+    private static List<SourceResult> failedAll(final List<LoadedResourceModelSource> sources, final Exception e) {
+        return Collections.nCopies(
+                sources.size(),
+                new SourceResult(null, new ResourceModelSourceException("Failed loading nodes: " + e, e))
+        );
     }
 
     /**

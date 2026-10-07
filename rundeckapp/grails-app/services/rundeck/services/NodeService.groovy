@@ -172,6 +172,8 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                             throws Exception
                     {
                         if (needsReload(key, oldValue)) {
+                            //a failed reload must not retry forever because of the request, config age still applies
+                            oldValue.reloadRequested = false
                             ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key,oldValue) }
                             nodeTaskExecutor.execute(task);
                             return task;
@@ -349,6 +351,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
      * should not make the nodes unavailable (e.g. after a project config change).
      * @param name project name
      */
+    @Override
     void refreshProjectNodesInBackground(final String name) {
         CachedProjectNodes current = nodeCache.getIfPresent(name)
         if (current != null) {

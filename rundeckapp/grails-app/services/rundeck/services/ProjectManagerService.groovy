@@ -786,7 +786,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rdproject.nodesFactory = rundeckNodeService
         log.info("Loaded project ${project} in ${System.currentTimeMillis()-start}ms")
 
-        rundeckNodeService.refreshProjectNodes(project)
+        //the node cache is not dropped here: loading the project object happens routinely (cache expiry, right after
+        //a config save), and dropping the nodes would make them unavailable while node sources reload.
+        //The node cache reloads itself when the project config is newer than the cached nodes.
         return rdproject
     }
 
