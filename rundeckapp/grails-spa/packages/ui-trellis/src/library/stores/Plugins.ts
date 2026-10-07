@@ -127,6 +127,18 @@ export class PluginStore {
   }
 }
 
+/**
+ * A value a step plugin computes and exposes for reference by a Conditional
+ * Logic step (declared with `@PluginOutput`). `name` is what a condition
+ * references as `"<Step Label> - <name>"`.
+ */
+export interface PluginOutput {
+  name: string;
+  group: string;
+  description?: string;
+  title?: string;
+}
+
 export interface Plugin {
   id: string;
   name: string;
@@ -147,6 +159,7 @@ export interface Plugin {
   };
   isHighlighted?: boolean;
   highlightedOrder?: number;
+  outputs?: PluginOutput[];
 }
 
 export enum ServiceType {
