@@ -169,6 +169,8 @@ class JobCreatePage extends BasePage {
     By jobOptionMultivaluedDelimiterBy = By.name("delimiter")
     By jobOptionMultiValuedAllSelectedBy = By.name("multivalueAllSelected")
     By duplicateWfStepBy = By.cssSelector(".glyphicon.glyphicon-duplicate")
+    // Steps that can be duplicated: OSS editor duplicate buttons, or Enterprise editor step cards
+    By duplicableWfStepBy = By.cssSelector(".glyphicon.glyphicon-duplicate, .step-list-item.ea > [id^='wfitem_']")
     By urlOptionInput = By.xpath("//input[@name='valuesType' and @value='url']")
     By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
     By wfItemEditFormBy = By.className("wfitemEditForm")
@@ -1015,6 +1017,31 @@ class JobCreatePage extends BasePage {
 
     WebElement getDuplicateWfStepButton(){
         el duplicateWfStepBy
+    }
+
+    /**
+     * Waits until the rendered workflow editor shows at least one step that can be duplicated.
+     * Detects the editor from the page, since editing from the job page always opens the default editor.
+     */
+    void waitForDuplicableSteps() {
+        waitForNumberOfElementsToBeMoreThan(duplicableWfStepBy, 0)
+    }
+
+    /**
+     * Duplicates the step at the given index using the OSS editor duplicate button, or the
+     * Enterprise editor step card "more actions" menu when that editor is rendered.
+     * @param stepIndex 0-based index of the top-level step
+     */
+    void duplicateStepByIndex(int stepIndex) {
+        def ossButtons = els(duplicateWfStepBy)
+        if (ossButtons) {
+            ossButtons.get(stepIndex).click()
+            return
+        }
+        WebElement moreButton = waitIgnoringForElementToBeClickable(By.cssSelector("#wfitem_${stepIndex} [data-testid='step-card-header-more-btn']"))
+        executeScript "arguments[0].scrollIntoView(true);", moreButton
+        moreButton.click()
+        waitIgnoringForElementToBeClickable(By.cssSelector("#overlay_menu [role='menuitem']")).click()
     }
 
     WebElement getWfStepByListPosition(int position){
