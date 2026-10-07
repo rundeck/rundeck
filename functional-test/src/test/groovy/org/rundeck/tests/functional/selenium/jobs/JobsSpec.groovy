@@ -16,7 +16,6 @@ import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
-import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -29,7 +28,6 @@ import spock.lang.Stepwise
 import java.util.stream.Collectors
 
 @SeleniumCoreTest
-@ExcludePro
 @Stepwise
 @UiModeFlag(
     featureName = "jobs-options-workflow",

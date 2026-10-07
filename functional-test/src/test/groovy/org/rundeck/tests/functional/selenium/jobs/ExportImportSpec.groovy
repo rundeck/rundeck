@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -70,7 +69,6 @@ class ExportImportSpec extends SeleniumBase {
      *
      * Note: SELENIUM_EXPORT_IMPORT_PROJECT is the project used for testing.
      */
-    @ExcludePro
     def "export import job with options"() {
         setup:
         def jobCreatePage = go(JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT, [legacyUi: legacyUi])
@@ -124,7 +122,6 @@ class ExportImportSpec extends SeleniumBase {
         where:
         [legacyUi] << UI_MODES
     }
-    @ExcludePro
     def "import job with skip should show skip message"() {
         setup:
         def jobCreatePage = go JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT

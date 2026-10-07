@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.jobs
 
-import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -34,7 +33,6 @@ class JobTabsSpec extends SeleniumBase {
         deleteProject(PROJECT_NAME)
     }
 
-    @ExcludePro
     void "job nodes tab"() {
         when:
         final String option = 'nodes'
@@ -66,7 +64,6 @@ class JobTabsSpec extends SeleniumBase {
         [legacyUi] << UI_MODES
     }
 
-    @ExcludePro
     void "job log output tab"() {
         when:
         def jobShowPage = page(JobShowPage)
@@ -97,7 +94,6 @@ class JobTabsSpec extends SeleniumBase {
         [legacyUi] << UI_MODES
     }
 
-    @ExcludePro
     void "job log html tab"() {
         when:
         def commandArg = "hello world"

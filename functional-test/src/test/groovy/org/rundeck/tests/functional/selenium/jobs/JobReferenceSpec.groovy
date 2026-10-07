@@ -1,7 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 
-import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -62,7 +61,6 @@ class JobReferenceSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
-    @ExcludePro
     def "create a job with referenced execution node step by uuid and run it successfully"(){
         setup:
         String projectName = 'JobReferenceUUIDTest'
@@ -94,7 +92,6 @@ class JobReferenceSpec extends SeleniumBase {
         [legacyUi] << UI_MODES
     }
 
-    @ExcludePro
     def "create a job with referenced execution node step by name and run it successfully"(){
         setup:
         String projectName = 'JobReferenceByNameTest'
@@ -133,7 +130,6 @@ class JobReferenceSpec extends SeleniumBase {
         [legacyUi] << UI_MODES
     }
 
-    @ExcludePro
     def "create a job with referenced execution node step picked from the job name autocomplete and run it successfully"(){
         setup:
         String projectName = 'JobReferenceNameAutocompleteTest'
