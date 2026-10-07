@@ -384,8 +384,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     void refreshProjectNodesInBackground(final String name) {
         lastReloadRequests.compute(name, { String k, Long v -> reloadRequestSequence.incrementAndGet() })
         if (nodeCache.getIfPresent(name) != null) {
-            //ignored by the cache while a reload is already running, the request number makes the next check reload again
-            nodeCache.refresh(name)
+            //run on the executor: if the entry is evicted before the refresh starts, the cache loads it synchronously,
+            //which must not happen on the calling thread. Ignored by the cache while a reload is already running, the
+            //request number makes the next check reload again
+            nodeTaskExecutor.execute { nodeCache.refresh(name) }
         } else {
             //nothing to keep serving, and refresh of an absent key would load synchronously on this thread
             nodeCache.invalidate(name)

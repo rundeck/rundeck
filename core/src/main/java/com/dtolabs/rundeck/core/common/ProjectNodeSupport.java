@@ -231,7 +231,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     /**
      * Query all sources, in parallel if more than one thread is configured. At most the configured number of this
-     * project's sources are submitted to the shared pool at a time, so one project cannot occupy the whole pool.
+     * project's sources are submitted to the shared pool at a time, which limits how much of the pool one project
+     * uses unless its limit is as high as the pool size.
      *
      * @param sources sources to query
      *

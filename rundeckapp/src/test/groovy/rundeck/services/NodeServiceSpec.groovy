@@ -151,11 +151,21 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         0 * cache.refresh(_)
     }
 
+    /**
+     * Executor that runs tasks on the calling thread
+     */
+    private AsyncTaskExecutor inlineExecutor() {
+        Mock(AsyncTaskExecutor) {
+            execute(_) >> { Runnable r -> r.run() }
+        }
+    }
+
     def "refresh project nodes in background refreshes cached entry so old nodes keep being served"() {
         given:
         def cache = Mock(LoadingCache)
         def cached = new CachedProjectNodes()
         service.nodeCache = cache
+        service.nodeTaskExecutor = inlineExecutor()
 
         when:
         service.refreshProjectNodesInBackground('test1')
@@ -165,6 +175,30 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         1 * cache.refresh('test1')
         0 * cache.invalidate(_)
         service.lastReloadRequest('test1') == 1
+    }
+
+    def "refresh project nodes in background runs the refresh on the task executor, not on the calling thread"() {
+        given:
+        def cache = Mock(LoadingCache)
+        def tasks = []
+        service.nodeCache = cache
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor) {
+            execute(_) >> { Runnable r -> tasks << r }
+        }
+
+        when: "the entry could be evicted before the refresh starts, which would load it synchronously"
+        service.refreshProjectNodesInBackground('test1')
+
+        then:
+        1 * cache.getIfPresent('test1') >> new CachedProjectNodes()
+        0 * cache.refresh(_)
+        tasks.size() == 1
+
+        when:
+        tasks[0].run()
+
+        then:
+        1 * cache.refresh('test1')
     }
 
     def "refresh project nodes in background invalidates when nothing cached, to avoid synchronous load"() {
@@ -189,6 +223,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
             ListenableFuture<CachedProjectNodes> reload(String key, CachedProjectNodes oldValue) { pending }
         })
+        service.nodeTaskExecutor = inlineExecutor()
         def old = new CachedProjectNodes(cacheTime: new Date())
         def replacement = new CachedProjectNodes(cacheTime: new Date())
         service.nodeCache.put('test1', old)
@@ -211,7 +246,10 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     def "reload request is marked as handled once the reload starts so a failed reload does not retry forever"() {
         given:
         service.configurationService = Mock(ConfigurationService)
-        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
+        def tasks = []
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor) {
+            execute(_) >> { Runnable r -> tasks << r }
+        }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckFramework() >> Mock(Framework) {
                 getProjectManager() >> Mock(ProjectManager) {
@@ -228,11 +266,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         def old = new CachedProjectNodes(cacheTime: new Date())
         service.nodeCache.put('test1', old)
 
-        when:
+        when: "the refresh task runs, and the cache starts the reload on the executor"
         service.refreshProjectNodesInBackground('test1')
+        tasks[0].run()
 
-        then:
-        1 * service.nodeTaskExecutor.execute(_)
+        then: "the reload task was queued, not run, and the request is already marked as handled"
+        tasks.size() == 2
         old.reloadRequestSequence == 1
     }
 
@@ -342,6 +381,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 }
             }
         }
+        service.nodeTaskExecutor = inlineExecutor()
         service.nodeCache.put('test1', new CachedProjectNodes(cacheTime: new Date()))
 
         when: "the first save starts a reload, and a second save arrives before it finishes"
