@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProjectNodeSupportSpec extends Specification {
@@ -391,22 +393,28 @@ class ProjectNodeSupportSpec extends Specification {
 
     def "sources are queried in parallel and merged in source order"() {
         given:
+        // every source waits for all the others to start, which can only complete if they run concurrently
+        def allStarted = new CountDownLatch(4)
         def loaders = (1..4).collect { int n ->
-            { -> sleep(300); nodes('a', "v${n}") } as Closure<INodeSet>
+            { ->
+                allStarted.countDown()
+                if (!allStarted.await(10, TimeUnit.SECONDS)) {
+                    throw new ResourceModelSourceException('sources did not run concurrently')
+                }
+                nodes('a', "v${n}")
+            } as Closure<INodeSet>
         }
-        def support = supportWithSources([:], loaders)
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '4'], loaders)
 
         when:
-        def start = System.currentTimeMillis()
         def result = support.getNodeSet()
-        def elapsed = System.currentTimeMillis() - start
 
         then:
-        elapsed < 1000 // serial load would take at least 1200ms
+        support.getResourceModelSourceExceptionsMap().isEmpty()
         result.getNode('a').getAttributes().x == 'v4'
     }
 
-    def "sources are queried serially when loadThreads is 1"() {
+    def "sources are queried serially by default and when loadThreads is #threads"() {
         given:
         def active = new AtomicInteger()
         def maxActive = new AtomicInteger()
@@ -418,7 +426,10 @@ class ProjectNodeSupportSpec extends Specification {
                 nodes("n${n}", 'v')
             } as Closure<INodeSet>
         }
-        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '1'], loaders)
+        def support = supportWithSources(
+                threads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): threads],
+                loaders
+        )
 
         when:
         def result = support.getNodeSet()
@@ -426,6 +437,9 @@ class ProjectNodeSupportSpec extends Specification {
         then:
         maxActive.get() == 1
         result.nodeNames as List == ['n1', 'n2', 'n3', 'n4']
+
+        where:
+        threads << [null, '1', '0', 'not-a-number']
     }
 
     def "failure of one source is reported by source index and others still load"() {

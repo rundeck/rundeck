@@ -32,10 +32,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,10 +52,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final  String NODE_ENHANCER_PROP_PREFIX               = "nodes.plugin";
     public static final  String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
     /**
-     * Project property: number of node sources queried concurrently, 1 or less queries sources serially
+     * Project property: number of node sources queried concurrently. The default of 1 (or less) queries sources
+     * serially.
      */
     public static final  String PROJECT_RESOURCES_LOAD_THREADS          = "project.resources.loadThreads";
-    private static final int    DEFAULT_LOAD_THREADS                    = 10;
+    private static final int    DEFAULT_LOAD_THREADS                    = 1;
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -136,8 +139,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * Returns the set of nodes for the project. Sources are queried in parallel (see
-     * {@link #PROJECT_RESOURCES_LOAD_THREADS}), but results are merged in source order so attribute
+     * Returns the set of nodes for the project. Sources can be queried in parallel (see
+     * {@link #PROJECT_RESOURCES_LOAD_THREADS}), but results are always merged in source order so attribute
      * merging behaves the same as a serial load.
      *
      * @return an instance of {@link INodeSet}
@@ -149,7 +152,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         nodesSourceExceptions.clear();
         final List<LoadedResourceModelSource> sources = new ArrayList<>(getResourceModelSourcesInternal());
-        final List<SourceResult> results = loadSourceNodes(sources);
+        final List<SourceResult> results = querySources(sources);
         for (int i = 0; i < results.size(); i++) {
             final SourceResult result = results.get(i);
             if (result.nodes != null) {
@@ -200,35 +203,36 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return one result per source, in the same order as the sources
      */
-    private List<SourceResult> loadSourceNodes(final List<LoadedResourceModelSource> sources) {
+    private List<SourceResult> querySources(final List<LoadedResourceModelSource> sources) {
         final int threads = Math.min(getLoadThreads(), sources.size());
         if (threads <= 1) {
-            return sources.stream().map(ProjectNodeSupport::loadSourceNodes).collect(Collectors.toList());
+            return sources.stream().map(ProjectNodeSupport::querySource).collect(Collectors.toList());
         }
         final String name = "ProjectNodeSupport-" + projectConfig.getName() + "-load";
-        final java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger();
+        final AtomicInteger count = new AtomicInteger();
         final ExecutorService pool = Executors.newFixedThreadPool(threads, r -> {
             Thread t = new Thread(r, name + "-" + count.incrementAndGet());
             t.setDaemon(true);
             return t;
         });
         try {
-            final List<Future<SourceResult>> futures = new ArrayList<>();
+            final List<Callable<SourceResult>> tasks = new ArrayList<>();
             for (final LoadedResourceModelSource source : sources) {
-                futures.add(pool.submit(() -> loadSourceNodes(source)));
+                tasks.add(() -> querySource(source));
             }
             final List<SourceResult> results = new ArrayList<>();
-            for (final Future<SourceResult> future : futures) {
-                try {
-                    results.add(future.get());
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    results.add(new SourceResult(null, new ResourceModelSourceException("Interrupted loading nodes", e)));
-                } catch (ExecutionException e) {
-                    results.add(new SourceResult(null, new ResourceModelSourceException(e.getMessage(), e)));
-                }
+            for (final Future<SourceResult> future : pool.invokeAll(tasks)) {
+                results.add(future.get());
             }
             return results;
+        } catch (InterruptedException | ExecutionException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            return Collections.nCopies(
+                    sources.size(),
+                    new SourceResult(null, new ResourceModelSourceException("Failed loading nodes: " + e, e))
+            );
         } finally {
             pool.shutdownNow();
         }
@@ -241,7 +245,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private static SourceResult loadSourceNodes(final ResourceModelSource nodesSource) {
+    private static SourceResult querySource(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         try {

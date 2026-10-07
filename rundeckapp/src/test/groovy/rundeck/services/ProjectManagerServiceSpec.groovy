@@ -310,7 +310,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         0*service.rundeckNodeService.getNodes('test1')
         1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
@@ -374,7 +374,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         0*service.rundeckNodeService.getNodes('test1')
         1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
@@ -437,7 +437,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         0*service.rundeckNodeService.getNodes('test1')
         1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
@@ -517,7 +517,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         0*service.rundeckNodeService.getNodes('test1')
 
         0*service.rundeckNodeService._(*_)
@@ -612,7 +612,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
             it.props==[abc:abcval,def:'ghi','project.name':'test1']
@@ -665,7 +665,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         1 * service.projectCache.invalidate('test1')
-        1 * service.rundeckNodeService.refreshProjectNodes('test1')
+        1 * service.rundeckNodeService.refreshProjectNodesInBackground('test1')
 
         res != null
         res.config.size() == 2
@@ -712,7 +712,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         then:
 
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
             it.props==[def:'ghi','project.name':'test1']
@@ -762,7 +762,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         then:
 
         1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.rundeckNodeService.refreshProjectNodesInBackground('test1')
         res!=null
         res.config.size()==2
         null==res.config['abc']

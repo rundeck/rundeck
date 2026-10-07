@@ -31,6 +31,10 @@ class CachedProjectNodes implements IProjectNodes {
     INodeSet nodes
     boolean doCache
     Date cacheTime
+    /**
+     * Set when a reload has been explicitly requested, so the next cache refresh reloads regardless of cache age
+     */
+    volatile boolean reloadRequested
 
     List<ReadableProjectNodes> getResourceModelSources() {
         nodeSupport.resourceModelSources

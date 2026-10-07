@@ -131,7 +131,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         nodes1.nodeNames as List == ['anode']
     }
 
-    def "refresh project nodes refreshes cached entry so old nodes keep being served"() {
+    def "refresh project nodes invalidates the cached entry"() {
         given:
         def cache = Mock(LoadingCache)
         service.nodeCache = cache
@@ -140,23 +140,70 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.refreshProjectNodes('test1')
 
         then:
-        1 * cache.getIfPresent('test1') >> Mock(CachedProjectNodes)
-        1 * cache.refresh('test1')
-        0 * cache.invalidate(_)
+        1 * cache.invalidate('test1')
+        0 * cache.refresh(_)
     }
 
-    def "refresh project nodes invalidates when nothing cached, to avoid synchronous load"() {
+    def "refresh project nodes in background refreshes cached entry so old nodes keep being served"() {
+        given:
+        def cache = Mock(LoadingCache)
+        def cached = new CachedProjectNodes()
+        service.nodeCache = cache
+
+        when:
+        service.refreshProjectNodesInBackground('test1')
+
+        then:
+        1 * cache.getIfPresent('test1') >> cached
+        1 * cache.refresh('test1')
+        0 * cache.invalidate(_)
+        cached.reloadRequested
+    }
+
+    def "refresh project nodes in background invalidates when nothing cached, to avoid synchronous load"() {
         given:
         def cache = Mock(LoadingCache)
         service.nodeCache = cache
 
         when:
-        service.refreshProjectNodes('test1')
+        service.refreshProjectNodesInBackground('test1')
 
         then:
         1 * cache.getIfPresent('test1') >> null
         1 * cache.invalidate('test1')
         0 * cache.refresh(_)
+    }
+
+    def "needs reload when reload was requested even if config is unchanged and cache is fresh"(boolean requested) {
+        given:
+        def projConfig = new PropsConfig(
+                projectProperties: [:],
+                properties: [:],
+                name: 'test1',
+                configLastModifiedTime: new Date(System.currentTimeMillis() - 60000)
+        )
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager) {
+                    loadProjectConfig('test1') >> projConfig
+                }
+            }
+        }
+        def cached = new CachedProjectNodes(cacheTime: new Date(), reloadRequested: requested)
+
+        expect:
+        service.needsReload('test1', cached) == requested
+
+        where:
+        requested | _
+        true      | _
+        false     | _
+    }
+
+    def "project load threads config is exposed as a project property"() {
+        expect:
+        service.propertiesMapping['loadThreads'] == 'project.resources.loadThreads'
+        service.projectConfigProperties.find { it.name == 'loadThreads' }.defaultValue == '1'
     }
 
     class PropsConfig implements IRundeckProjectConfig {

@@ -75,7 +75,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getCategories() {
-        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource']
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource', loadThreads: 'resourceModelSource']
     }
     @Override
     List<Property> getProjectConfigProperties() {
@@ -103,6 +103,14 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     required(false)
                     defaultValue 'true'
                     renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
+                }.build(),
+                PropertyBuilder.builder().with {
+                    integer 'loadThreads'
+                    title 'Load Threads'
+                    description 'Number of Node Sources queried concurrently when loading nodes.\n\nThe default of 1 queries Node Sources one at a time. Higher values reduce load time for projects with many Node Sources, but increase concurrent requests to the systems behind them, which may throttle.'
+                    required(false)
+                    defaultValue '1'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build()
         ]
     }
@@ -111,7 +119,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getPropertiesMapping() {
-        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH]
+        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH, 'loadThreads': ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS]
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
@@ -192,6 +200,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
+        if (oldNodes.reloadRequested) {
+            log.debug("reload requested, forcing node reload for ${project}")
+            return true
+        }
         def delay = projectNodeCacheDelayConfig(rdprojectconfig)
         log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - oldNodes.cacheTime.time}...")
         if(rdprojectconfig.configLastModifiedTime > oldNodes.cacheTime){
@@ -328,11 +340,22 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     void refreshProjectNodes(final String name) {
-        if (nodeCache.getIfPresent(name) != null) {
-            //refresh asynchronously, existing nodes keep being served until the new load completes
+        nodeCache.invalidate(name)
+    }
+
+    /**
+     * Reload the nodes for a project in the background. Unlike {@link #refreshProjectNodes(String)}, the cached
+     * nodes keep being served until the new node set has finished loading, so use this when a slow reload
+     * should not make the nodes unavailable (e.g. after a project config change).
+     * @param name project name
+     */
+    void refreshProjectNodesInBackground(final String name) {
+        CachedProjectNodes current = nodeCache.getIfPresent(name)
+        if (current != null) {
+            current.reloadRequested = true
             nodeCache.refresh(name)
         } else {
-            //nothing to serve, and refresh of an absent key would load synchronously on this thread
+            //nothing to keep serving, and refresh of an absent key would load synchronously on this thread
             nodeCache.invalidate(name)
         }
     }

@@ -152,6 +152,17 @@ class EnhancedNodeService
         nodeService.refreshProjectNodes(name)
     }
 
+    /**
+     * Reload the nodes in the background, the previously loaded nodes keep being served until the reload completes
+     * @param name project name
+     */
+    void refreshProjectNodesInBackground(final String name) {
+        if (enabled) {
+            loadedPlugins.remove(name)
+        }
+        nodeService.refreshProjectNodesInBackground(name)
+    }
+
     @Override
     INodeSet getNodeSet(final String name) {
         if (!enabled) {

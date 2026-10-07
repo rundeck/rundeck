@@ -495,7 +495,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
         projectCache.invalidate(projectName)
-        rundeckNodeService.refreshProjectNodes(projectName)
+        //keep serving the current nodes while node sources reload with the new config
+        rundeckNodeService.refreshProjectNodesInBackground(projectName)
 
         eventBus.notify(
             AppEvents.PROJECT_CONFIG_CHANGED,
