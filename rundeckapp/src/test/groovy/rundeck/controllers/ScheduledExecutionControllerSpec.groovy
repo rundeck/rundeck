@@ -49,6 +49,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.workflow.ConditionalDefinitionImpl
 import org.rundeck.app.data.workflow.ConditionalSetImpl
@@ -104,6 +105,9 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
         controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
+        controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
+            _ * validateExecutionAcl(_) >> true
+        }
         controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             validateJobForExport(_,_)>>Mock(Validator.Report){
                 isValid()>>true
@@ -5523,8 +5527,178 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         true           | false     | null
         false          | true      | null
         false          | false     | null
+    }
+
+    @Unroll
+    def "show job exposes executionAclValid=#aclValid in the model"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: false,
+                scheduled: true,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        ).save(failOnError: true)
+
+        // Overrides the permissive stub installed in setup()
+        controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
+            1 * validateExecutionAcl(se) >> aclValid
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> null
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+            isClusterModeEnabled() >> false
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'admin'
+            }
+            _ * authorizeProjectJobAny(_, _, _, _) >> true
+            _ * filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            isScheduled(se) >> true
+            _ * calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService) {
+            listPlugins() >> []
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) {
+                isValid() >> true
+            }
+        }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_) >> null
+        }
+
+        params.id = se.id.toString()
+        params.project = 'project1'
+
+        when:
+        def model = controller.show()
+
+        then:
+        response.redirectedUrl == null
+        model != null
+        model.executionAclValid == aclValid
+
+        where:
+        aclValid << [true, false]
         // Note: the show action does not filter by serverNodeUUID == localServerUUID,
         // so a job scheduled on a different cluster member always gets its UUID surfaced.
+    }
+
+    @Unroll
+    def "show job builds the ACL fix policy only for an authorized viewer of a job with a saved user (#scenario)"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                user: savedUser,
+                doNodedispatch: false,
+                scheduled: true,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        ).save(failOnError: true)
+
+        controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
+            1 * validateExecutionAcl(se) >> false
+            _ * buildRunGrantPolicy(se) >> 'the-policy'
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> null
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+            isClusterModeEnabled() >> false
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'admin'
+            }
+            _ * authorizeProjectJobAny(_, _, _, _) >> true
+            _ * filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+            _ * authResourceForProjectAcl('project1') >> [:]
+            // the viewer must pass the same check that saving a project ACL requires
+            _ * authorizeApplicationResourceAny(_, _, _) >> aclAuthorized
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            isScheduled(se) >> true
+            _ * calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService) {
+            listPlugins() >> []
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) {
+                isValid() >> true
+            }
+        }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_) >> null
+        }
+
+        params.id = se.id.toString()
+        params.project = 'project1'
+
+        when:
+        def model = controller.show()
+
+        then:
+        model.executionAclValid == false
+        model.executionAclFixPolicy == expectedPolicy
+
+        where:
+        scenario                                  | savedUser | aclAuthorized | expectedPolicy
+        'authorized viewer, job has a saved user' | 'devread' | true          | 'the-policy'
+        'viewer cannot create project ACLs'       | 'devread' | false         | null
+        'job has no saved user to grant'          | null      | true          | null
     }
 
     // ===================================================================================
