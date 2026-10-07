@@ -1,5 +1,6 @@
 import { shallowMount, flushPromises } from "@vue/test-utils";
 import LogFilterControls from "../LogFilterControls.vue";
+import EditPluginModal from "../../../../../library/components/plugins/EditPluginModal.vue";
 
 jest.mock("@/library/modules/pluginService", () => ({
   validatePluginConfig: jest
@@ -56,6 +57,7 @@ const createWrapper = async (props = {}) => {
       eventBus: createMockEventBus(),
       ...props,
     },
+    global: { stubs: { teleport: true } },
   });
   await flushPromises();
   return wrapper;
@@ -126,14 +128,18 @@ describe("LogFilterControls", () => {
     });
   });
 
-  describe("saveEditFilter (RUN-5055)", () => {
-    const filterModel = { type: "key-value-data", config: { regex: "a" } };
+  describe("saving a filter (RUN-5055)", () => {
+    const createEditWrapper = () =>
+      createWrapper({
+        modelValue: { type: "key-value-data", config: { regex: "a" } },
+      });
 
-    it("ignores Project/Framework scoped properties when validating", async () => {
-      const wrapper = await createWrapper();
-      (wrapper.vm as any).model = filterModel;
+    it("validates ignoring Project/Framework scoped properties", async () => {
+      const wrapper = await createEditWrapper();
 
-      await (wrapper.vm as any).saveEditFilter();
+      wrapper.findComponent(EditPluginModal).vm.$emit("save");
+      await flushPromises();
+      await wrapper.vm.$nextTick();
 
       expect(validatePluginConfig).toHaveBeenCalledWith(
         "LogFilter",
@@ -143,33 +149,34 @@ describe("LogFilterControls", () => {
       );
     });
 
-    it("emits update:modelValue and closes the modal when valid", async () => {
-      const wrapper = await createWrapper();
-      (wrapper.vm as any).model = filterModel;
-      (wrapper.vm as any).editFilterModal = true;
+    it("emits update:modelValue with the filter when validation passes", async () => {
+      const wrapper = await createEditWrapper();
 
-      await (wrapper.vm as any).saveEditFilter();
+      wrapper.findComponent(EditPluginModal).vm.$emit("save");
+      await flushPromises();
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.emitted("update:modelValue")![0]).toEqual([filterModel]);
-      expect((wrapper.vm as any).editFilterModal).toBe(false);
+      expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+        { type: "key-value-data", config: { regex: "a" } },
+      ]);
     });
 
-    it("keeps the modal open and records errors when validation fails", async () => {
-      (validatePluginConfig as jest.Mock).mockResolvedValueOnce({
+    it("does not emit and passes errors to the modal when validation fails", async () => {
+      jest.mocked(validatePluginConfig).mockResolvedValueOnce({
         valid: false,
         errors: { regex: "required" },
       });
-      const wrapper = await createWrapper();
-      (wrapper.vm as any).model = filterModel;
-      (wrapper.vm as any).editFilterModal = true;
+      const wrapper = await createEditWrapper();
 
-      await (wrapper.vm as any).saveEditFilter();
+      wrapper.findComponent(EditPluginModal).vm.$emit("save");
+      await flushPromises();
+      await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")).toBeUndefined();
-      expect((wrapper.vm as any).editFilterModal).toBe(true);
-      expect((wrapper.vm as any).editModelValidation.errors).toEqual({
-        regex: "required",
-      });
+      expect(
+        wrapper.findComponent(EditPluginModal).props("validation"),
+      ).toEqual({ valid: false, errors: { regex: "required" } });
     });
   });
 });
