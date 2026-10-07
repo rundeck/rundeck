@@ -425,6 +425,21 @@ class JobCreatePage extends BasePage {
     }
 
     /**
+     * Clicks the "+" filter-add icon for the given tag/tab name, then waits for the
+     * async matched-nodes reload that the filter change triggers (NodeFilterResults.vue
+     * re-queries and re-renders the whole node list on every filter change) to finish.
+     * Without this, interacting with a different node right after this click races the
+     * reload: the node table can be mid-replacement when the next locator is resolved,
+     * so it never finds the element rather than finding it late.
+     */
+    void addNodeFilterAndWaitForReload(String tabName) {
+        def matchedCountEl = waitForElementVisible(nodeMatchedCountBy)
+        selectTabAddFilterByName(tabName).click()
+        waitForStaleness(matchedCountEl)
+        waitForElementVisible(nodeMatchedCountBy)
+    }
+
+    /**
      * Opens the details popover of a node in the matched nodes list.
      * Waits for any previously open node popover to close first, because clicking a node
      * while another popover is still hiding (or while the list is re-rendering) is ignored.
