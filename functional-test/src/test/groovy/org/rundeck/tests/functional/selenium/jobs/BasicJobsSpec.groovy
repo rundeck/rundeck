@@ -75,6 +75,19 @@ class BasicJobsSpec extends SeleniumBase {
             validationMsg.contains('Workflow must have at least one step')
     }
 
+    @ExcludePro
+    def "create valid job basic workflow"() {
+        when:
+            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.fillBasicJob 'a valid job with basic workflow'
+            jobCreatePage.createJobButton.click()
+        expect:
+            jobShowPage.validatePage()
+            jobShowPage.jobLinkTitleLabel.getText() == 'a valid job with basic workflow'
+    }
+
     def "create valid job basic options"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
