@@ -63,11 +63,9 @@ class HtmlTableToMarkdownConverter {
     private static final Pattern WHITESPACE_RUN = Pattern.compile('\\s+')
 
     /**
-     * Holds the extracted plain-text cells of a single {@code <tr>} row, and
-     * whether the row used {@code <th>} cells (i.e. is a header row).
+     * Holds the extracted plain-text cells of a single {@code <tr>} row.
      */
     private static class RowData {
-        boolean header
         List<String> cells = []
     }
 
@@ -308,6 +306,7 @@ class HtmlTableToMarkdownConverter {
      */
     private static List<TableSpan> findTopLevelTables(String text, List<int[]> codeRanges) {
         List<TableSpan> spans = []
+        RangeCursor codeRangeCursor = new RangeCursor(codeRanges)
         int length = text.length()
         int i = 0
         int depth = 0
@@ -329,7 +328,7 @@ class HtmlTableToMarkdownConverter {
                 i++
                 continue
             }
-            if (depth == 0 && isPositionInAnyRange(i, codeRanges)) {
+            if (depth == 0 && codeRangeCursor.contains(i)) {
                 // Code-range skipping only applies while deciding whether to
                 // START tracking a table (depth zero): that's the "is this
                 // whole table just a documented example" question. Once
@@ -536,7 +535,36 @@ class HtmlTableToMarkdownConverter {
     private static List<int[]> findCodeRanges(String text) {
         List<int[]> ranges = findFencedCodeBlocks(text)
         addMatchRanges(INLINE_CODE_SPAN, text, ranges)
-        return ranges
+        return mergeRanges(ranges)
+    }
+
+    /**
+     * Sorts {@code ranges} by start and merges any that overlap or touch
+     * into a minimal set of disjoint ranges. Fenced-block ranges and
+     * inline-code-span ranges are found independently and can overlap (an
+     * inline span regex can match text inside an already-fenced block), so
+     * this normalization is what lets {@link RangeCursor} check membership
+     * with a single forward-only pass instead of rescanning every range for
+     * every position checked.
+     */
+    private static List<int[]> mergeRanges(List<int[]> ranges) {
+        if (ranges.size() <= 1) {
+            return ranges
+        }
+        List<int[]> sorted = ranges.sort(false) { int[] a, int[] b -> a[0] <=> b[0] }
+        List<int[]> merged = []
+        int[] current = sorted[0]
+        for (int i = 1; i < sorted.size(); i++) {
+            int[] next = sorted[i]
+            if (next[0] <= current[1]) {
+                current = [current[0], Math.max(current[1], next[1])] as int[]
+            } else {
+                merged << current
+                current = next
+            }
+        }
+        merged << current
+        return merged
     }
 
     /**
@@ -637,13 +665,30 @@ class HtmlTableToMarkdownConverter {
         }
     }
 
-    private static boolean isPositionInAnyRange(int position, List<int[]> ranges) {
-        for (int[] range : ranges) {
-            if (position >= range[0] && position < range[1]) {
-                return true
-            }
+    /**
+     * Checks membership of a strictly increasing sequence of positions
+     * against a sorted, disjoint list of ranges (as produced by
+     * {@link #mergeRanges}) in amortized O(1) per check: the internal index
+     * only ever moves forward, past ranges that have already fully ended,
+     * so the whole scan costs O(number of positions checked + number of
+     * ranges) instead of O(positions x ranges) from rechecking every range
+     * on every call.
+     */
+    private static class RangeCursor {
+        private final List<int[]> ranges
+        private int index = 0
+
+        RangeCursor(List<int[]> ranges) {
+            this.ranges = ranges
         }
-        return false
+
+        boolean contains(int position) {
+            while (index < ranges.size() && position >= ranges.get(index)[1]) {
+                index++
+            }
+            return index < ranges.size() &&
+                position >= ranges.get(index)[0] && position < ranges.get(index)[1]
+        }
     }
 
     /**
@@ -669,7 +714,13 @@ class HtmlTableToMarkdownConverter {
         if (rows.isEmpty()) {
             return null
         }
-        RowData header = findHeaderRow(rows)
+        // Always the first row, regardless of whether it (or some later row)
+        // used <th> cells: GFM pipe-table syntax structurally requires the
+        // first line to be the header, and searching for a <th> row
+        // anywhere in the table previously let one appearing after the
+        // first row get silently promoted to the top, reordering the
+        // author's rows.
+        RowData header = rows.get(0)
         if (header.cells.isEmpty()) {
             return null
         }
@@ -707,21 +758,6 @@ class HtmlTableToMarkdownConverter {
             padded << ''
         }
         return padded
-    }
-
-    /**
-     * The first row using {@code <th>} cells becomes the Markdown header
-     * row. If no row uses {@code <th>}, the first row is used as the header,
-     * since GFM pipe table syntax structurally requires one -- no additional
-     * header styling is applied beyond what that syntax implies.
-     */
-    private static RowData findHeaderRow(List<RowData> rows) {
-        for (RowData row : rows) {
-            if (row.header) {
-                return row
-            }
-        }
-        return rows.get(0)
     }
 
     private static String rowLine(List<String> cells) {
@@ -779,7 +815,6 @@ class HtmlTableToMarkdownConverter {
         List<RowData> rows = []
         private RowData currentRow
         private StringBuilder currentCellText
-        private boolean currentCellIsHeader
 
         @Override
         void openDocument() {
@@ -801,7 +836,6 @@ class HtmlTableToMarkdownConverter {
                 case 'td':
                 case 'th':
                     currentCellText = new StringBuilder()
-                    currentCellIsHeader = elementName == 'th'
                     break
                 case 'br':
                     // A line break has no text content of its own, so without
@@ -834,9 +868,6 @@ class HtmlTableToMarkdownConverter {
             if (currentCellText != null && currentRow != null) {
                 String cellText = WHITESPACE_RUN.matcher(currentCellText.toString()).replaceAll(' ').trim()
                 currentRow.cells << cellText
-                if (currentCellIsHeader) {
-                    currentRow.header = true
-                }
             }
             currentCellText = null
         }
