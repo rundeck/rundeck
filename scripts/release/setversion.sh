@@ -13,7 +13,7 @@ function usage {
     echo "  setversion.sh --tag <version> GA [--push] [--dry-run] [--debug]                     - Re-tag the highest existing v<version>-rcN tag as GA (no commit argument)"
     echo "  setversion.sh --tag <version> rc1 <commit> [--push] [--dry-run] [--debug]           - Tag rc1 at an explicit commit (no release branch exists yet)"
     echo "  setversion.sh --tag <version> alpha# <commit> [--push] [--dry-run] [--debug]         - Tag other pre-releases at an explicit commit"
-    echo "  (rc2+ is NOT handled by setversion.sh - it is owned by external release tooling, for rc2+ (check rdcore))"
+    echo "  (rc2+ is NOT handled by setversion.sh - use scripts/release/release-rc.sh <version> <rc#> instead)"
     echo "  setversion.sh --create-release-branch <version> [<commit>] [--push] [--dry-run] [--debug]     - Create release branch for patch releases (branches from GA tag or specified commit)"
     echo ""
     echo "Flags:"
@@ -57,6 +57,8 @@ set -- "${ARGS[@]}"  # Reset positional parameters without flags
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=release-tag.sh
 source "$SCRIPT_DIR/release-tag.sh"  # provides create_and_push_tag() and the dry-run git() wrapper
+# shellcheck source=release-version.sh
+source "$SCRIPT_DIR/release-version.sh"  # provides validate_version_format, parse_rc_number, version_tag_name
 
 # Handle tag creation directly on main
 if [ "$1" == "--tag" ]; then
@@ -67,20 +69,17 @@ if [ "$1" == "--tag" ]; then
         usage
     fi
     VNUM="$1"
-    if [[ ! "$VNUM" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format (e.g., 5.19.1)"
-        exit 3
-    fi
+    validate_version_format "$VNUM" || exit 3
     shift
     VTAG="${1:-GA}"
     [ $# -gt 0 ] && shift
 
-    # rc2+ is not handled here - checking out an existing release branch and tagging its HEAD
-    # is owned by external release tooling, for rc2+ (check rdcore), which calls release-tag.sh
-    # directly once it has resolved the branch and commit itself.
-    if [[ "$VTAG" =~ ^rc([0-9]+)$ ]] && [ "${BASH_REMATCH[1]}" -ge 2 ]; then
+    # rc2+ is not handled here - resolving the previous RC tag, cherry-picking
+    # backports, and tagging is owned by scripts/release/release-rc.sh, which
+    # calls release-tag.sh directly once it has resolved the commit itself.
+    if RC_NUM="$(parse_rc_number "$VTAG")" && [ "$RC_NUM" -ge 2 ]; then
         echo "Error: rc2+ releases are not created by setversion.sh."
-        echo "That flow is owned by external release tooling, for rc2+ (check rdcore)."
+        echo "Use scripts/release/release-rc.sh <version> <rc#> instead."
         exit 13
     fi
 
@@ -115,7 +114,7 @@ if [ "$1" == "--tag" ]; then
         echo "Re-tagging highest RC $HIGHEST_RC as GA"
     elif [[ "$VTAG" =~ ^[a-z]+[0-9]+$ ]]; then
         # rc1, alpha3, etc. - always tag an explicit commit, never a bare HEAD
-        TAG_NAME="v$VNUM-$VTAG"
+        TAG_NAME="$(version_tag_name "$VNUM" "$VTAG")"
         COMMIT_ARG="$1"
         if [ -z "$COMMIT_ARG" ]; then
             echo "Error: '$VTAG' requires an explicit commit to tag."

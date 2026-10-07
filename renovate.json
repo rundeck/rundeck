@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": ["**/node_modules/**", "**/bower_components/**", "**/vendor/**", "**/examples/**"],
   "minimumReleaseAge": "4 days",
   "commitMessagePrefix": "[RUN-0000]",
   "dependencyDashboard": true,
@@ -190,6 +191,63 @@
       "registryUrls": [
         "https://m2proxy.atlassian.com/repository/public/",
         "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "Pin every container image (Dockerfiles, compose, CircleCI executors, annotated refs) to tag@sha256 so the same commit always pulls the same image and a re-pointed upstream tag cannot reach CI or shipped images without a reviewed PR",
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    },
+    {
+      "description": "CI/test-only images: every non-major update (digest refresh, patch, minor) goes into one grouped weekly PR with human review. No automerge: CI does not need to chase the latest upstream image",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest", "pinDigest", "patch", "minor"],
+      "groupName": "docker images (ci)",
+      "schedule": ["before 6am on monday"],
+      "automerge": false
+    },
+    {
+      "description": "Base images of images shipped to customers: their own grouped weekly PR, never automerged, so a re-pointed upstream digest cannot reach a shipped image without human review",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest", "pinDigest", "patch", "minor"],
+      "matchFileNames": ["docker/ubuntu-base/**"],
+      "groupName": "docker images (shipped)",
+      "schedule": ["before 6am on monday"],
+      "automerge": false,
+      "addLabels": ["shipped-image"]
+    },
+    {
+      "description": "Documented exceptions: legacy Dockerfiles on EOL bases that CI does not use stay untouched (no pin, no updates)",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["docker/centos7systemd/**", "docker/debinstall/**", "docker/installcommon/**", "docker/package/**", "docker/rpminstall/**", "docker/yuminstall/**", "docker/yuminstall-centos7/**", "test/docker/dockers/testnode/**", "test/docker/dockers/hostnode/**", "test/docker/dockers/ubuntudeb/**"],
+      "enabled": false
+    },
+    {
+      "description": "Documented exceptions: internal images built in the same pipeline are never pinned or updated by Renovate",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["rundeck/ubuntu-base", "rdtest", "rundeckansible", "rundeck/testdeck", "local/c7-systemd", "/^rd.*-util$/"],
+      "enabled": false
+    },
+    {
+      "description": "Documented exceptions: SNAPSHOT tags are per-pipeline builds of our own images",
+      "matchDatasources": ["docker"],
+      "matchCurrentValue": "/SNAPSHOT/",
+      "enabled": false
+    },
+    {
+      "description": "rundeck/node-demo only publishes 'latest', which has no release timestamp; without this its digest refreshes would wait on minimumReleaseAge forever",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["rundeck/node-demo"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Image refs the built-in managers cannot see (Groovy, Gradle, shell, Makefile, compose build args). Annotate the line above the ref with '# renovate: datasource=docker depName=<image>' (or '//' in Groovy/Gradle); the ref must be '<image>:<tag>@sha256:<digest>'",
+      "managerFilePatterns": ["/\\.(groovy|gradle|sh|ya?ml)$/", "/(^|/)Makefile$/"],
+      "matchStrings": [
+        "(?:#|//)\\s*renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n[^\\n]*?:(?<currentValue>[^\\s@\"'}:]+)@(?<currentDigest>sha256:[a-f0-9]{64})"
       ]
     }
   ]

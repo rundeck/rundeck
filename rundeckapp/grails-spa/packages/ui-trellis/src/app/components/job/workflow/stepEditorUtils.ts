@@ -189,6 +189,13 @@ export function getPluginDetailsForStep(
 }
 
 /**
+ * Property scope ignored when validating a step at save time. Project and
+ * Framework scoped properties are not editable in the step form, so they are
+ * only validated when the plugin executes (matches the legacy editor).
+ */
+const SAVE_IGNORED_SCOPE = "Project";
+
+/**
  * Validates a step for save.
  *
  * - Job references: validates that name or uuid is present.
@@ -216,6 +223,7 @@ export async function validateStepForSave(
       serviceName,
       step.type!,
       step.config || {},
+      SAVE_IGNORED_SCOPE,
     );
 
     if (!response.valid || Object.keys(response.errors || {}).length > 0) {
@@ -245,6 +253,7 @@ export async function validateStepForSave(
       errorHandlerService,
       step.errorhandler.type,
       step.errorhandler.config || {},
+      SAVE_IGNORED_SCOPE,
     );
 
     if (
