@@ -57,6 +57,29 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         lines[2] == '| x | 1 |'
     }
 
+    def "a th row that is not the first row does not get promoted to the top, reordering the author's rows"() {
+        given:
+        // <th> appears on the THIRD row here, not the first -- the first
+        // row ("Jan"/"10") must stay the header/first line, in its original
+        // position, rather than being pushed down because some later row
+        // happens to use <th> cells.
+        String html = '<table>' +
+            '<tr><td>Jan</td><td>10</td></tr>' +
+            '<tr><td>Feb</td><td>20</td></tr>' +
+            '<tr><th>Month</th><th>Value</th></tr>' +
+            '</table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        List<String> lines = result.trim().readLines()
+
+        then:
+        lines[0] == '| Jan | 10 |'
+        lines[1] == '| --- | --- |'
+        lines[2] == '| Feb | 20 |'
+        lines[3] == '| Month | Value |'
+    }
+
     def "extra whitespace and newlines inside tags do not break parsing"() {
         given:
         String html = '''<table>
