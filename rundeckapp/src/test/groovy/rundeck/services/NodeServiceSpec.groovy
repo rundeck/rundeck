@@ -30,9 +30,11 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.google.common.cache.LoadingCache
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncTaskExecutor
+import rundeck.services.nodes.CachedProjectNodes
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -127,6 +129,34 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
         nodes1.nodeNames as List == ['anode']
+    }
+
+    def "refresh project nodes refreshes cached entry so old nodes keep being served"() {
+        given:
+        def cache = Mock(LoadingCache)
+        service.nodeCache = cache
+
+        when:
+        service.refreshProjectNodes('test1')
+
+        then:
+        1 * cache.getIfPresent('test1') >> Mock(CachedProjectNodes)
+        1 * cache.refresh('test1')
+        0 * cache.invalidate(_)
+    }
+
+    def "refresh project nodes invalidates when nothing cached, to avoid synchronous load"() {
+        given:
+        def cache = Mock(LoadingCache)
+        service.nodeCache = cache
+
+        when:
+        service.refreshProjectNodes('test1')
+
+        then:
+        1 * cache.getIfPresent('test1') >> null
+        1 * cache.invalidate('test1')
+        0 * cache.refresh(_)
     }
 
     class PropsConfig implements IRundeckProjectConfig {

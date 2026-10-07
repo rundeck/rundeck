@@ -328,7 +328,13 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     void refreshProjectNodes(final String name) {
-        nodeCache.invalidate(name)
+        if (nodeCache.getIfPresent(name) != null) {
+            //refresh asynchronously, existing nodes keep being served until the new load completes
+            nodeCache.refresh(name)
+        } else {
+            //nothing to serve, and refresh of an absent key would load synchronously on this thread
+            nodeCache.invalidate(name)
+        }
     }
 
     INodeSet getNodeSet(final String name) {

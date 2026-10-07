@@ -19,11 +19,16 @@ package com.dtolabs.rundeck.core.common
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
 import spock.lang.Specification
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class ProjectNodeSupportSpec extends Specification {
     static final String PROJECT_NAME = 'ProjectNodeSupportSpec'
@@ -341,4 +346,104 @@ class ProjectNodeSupportSpec extends Specification {
         result[1].extraProps == [:]
     }
 
+
+    /**
+     * Create a support whose n sources are the given closures, each invoked by getNodes()
+     */
+    private ProjectNodeSupport supportWithSources(Map extraProps, List<Closure<INodeSet>> loaders) {
+        def props = new Properties()
+        loaders.eachWithIndex { c, i ->
+            props["resources.source.${i + 1}.type".toString()] = 'file'
+            props["resources.source.${i + 1}.config.file".toString()] = "/tmp/file${i}".toString()
+        }
+        extraProps.each { k, v -> props[k] = v }
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> PROJECT_NAME
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> { String type, Properties p ->
+                int idx = (p.getProperty('file') - '/tmp/file') as int
+                // not a Spock Mock: mock invocations are serialized, which would defeat parallel loading
+                def source = new ResourceModelSource() {
+                    @Override
+                    INodeSet getNodes() throws ResourceModelSourceException {
+                        loaders[idx].call()
+                    }
+                }
+                Closeables.closeableProvider(source)
+            }
+        }
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
+        new ProjectNodeSupport(File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"), config, generatorService, sourceService)
+    }
+
+    private static INodeSet nodes(String name, String value) {
+        def set = new NodeSetImpl()
+        def node = new NodeEntryImpl(name)
+        node.setAttribute('x', value)
+        set.putNode(node)
+        set
+    }
+
+    def "sources are queried in parallel and merged in source order"() {
+        given:
+        def loaders = (1..4).collect { int n ->
+            { -> sleep(300); nodes('a', "v${n}") } as Closure<INodeSet>
+        }
+        def support = supportWithSources([:], loaders)
+
+        when:
+        def start = System.currentTimeMillis()
+        def result = support.getNodeSet()
+        def elapsed = System.currentTimeMillis() - start
+
+        then:
+        elapsed < 1000 // serial load would take at least 1200ms
+        result.getNode('a').getAttributes().x == 'v4'
+    }
+
+    def "sources are queried serially when loadThreads is 1"() {
+        given:
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def loaders = (1..4).collect { int n ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                sleep(50)
+                active.decrementAndGet()
+                nodes("n${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '1'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        maxActive.get() == 1
+        result.nodeNames as List == ['n1', 'n2', 'n3', 'n4']
+    }
+
+    def "failure of one source is reported by source index and others still load"() {
+        given:
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> throw new ResourceModelSourceException('boom') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([:], loaders)
+
+        when:
+        def result = support.getNodeSet()
+        def errors = support.getResourceModelSourceExceptionsMap()
+
+        then:
+        result.nodeNames as List == ['a', 'c']
+        errors.keySet() == ['2.source'] as Set
+        errors['2.source'].message == 'boom'
+    }
 }
