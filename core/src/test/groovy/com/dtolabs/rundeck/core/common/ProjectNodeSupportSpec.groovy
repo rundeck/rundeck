@@ -466,6 +466,29 @@ class ProjectNodeSupportSpec extends Specification {
         maxActive.get() <= ProjectNodeSupport.MAX_LOAD_THREADS
     }
 
+    def "serial loads from many projects share the global concurrency cap"() {
+        given:
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def projects = ProjectNodeSupport.MAX_LOAD_THREADS + 10
+        def supports = (1..projects).collect {
+            supportWithSources([:], [{ ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                sleep(100)
+                active.decrementAndGet()
+                nodes("n", 'v')
+            } as Closure<INodeSet>])
+        }
+
+        when:
+        def threads = supports.collect { s -> Thread.start { s.getNodeSet() } }
+        threads*.join()
+
+        then:
+        maxActive.get() > 1
+        maxActive.get() <= ProjectNodeSupport.MAX_LOAD_THREADS
+    }
+
     def "failure merging one source is reported by source index and later sources still load"() {
         given:
         def broken = Mock(INodeSet) {

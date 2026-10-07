@@ -37,6 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,6 +64,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * Upper bound on node source queries running at once, shared by all projects
      */
     static final         int    MAX_LOAD_THREADS                        = 20;
+    /**
+     * Limits source queries running at once across all projects, including serial loads on caller threads
+     */
+    private static final Semaphore LOAD_PERMITS                         = new Semaphore(MAX_LOAD_THREADS);
     private static final AtomicInteger LOAD_THREAD_COUNT                = new AtomicInteger();
     /**
      * Shared by all projects so concurrency is bounded across them. Idle threads time out.
@@ -290,6 +295,20 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return result with nodes and/or error
      */
     private static SourceResult querySource(final ResourceModelSource nodesSource) {
+        try {
+            LOAD_PERMITS.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new SourceResult(null, new ResourceModelSourceException("Interrupted loading nodes: " + e, e));
+        }
+        try {
+            return queryUnbounded(nodesSource);
+        } finally {
+            LOAD_PERMITS.release();
+        }
+    }
+
+    private static SourceResult queryUnbounded(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         try {
