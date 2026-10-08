@@ -39,16 +39,37 @@ class InternalAddressGuard {
      * @throws UnknownHostException when the name cannot be resolved
      */
     static void assertPublicHost(String host) throws IOException {
+        pinPublic(host)
+    }
+
+    /**
+     * Resolves {@code host} once and returns an address the caller must connect to.
+     * Rejects the host when any resolved address is internal.
+     *
+     * @param host DNS name or literal address
+     * @return the address to open the socket against
+     * @throws IOException when a resolved address is blocked
+     * @throws UnknownHostException when the name cannot be resolved
+     */
+    static InetAddress pinPublic(String host) throws IOException {
         if (host == null || host.isEmpty()) {
             throw new IOException(HOST_NOT_ALLOWED)
         }
         InetAddress[] addresses = InetAddress.getAllByName(host)
+        InetAddress selected = null
         for (InetAddress address : addresses) {
             if (isBlocked(address)) {
                 LOG.warn("Blocked Git host {} resolved to {}", host, address.hostAddress)
                 throw new IOException(HOST_NOT_ALLOWED)
             }
+            if (selected == null) {
+                selected = address
+            }
         }
+        if (selected == null) {
+            throw new UnknownHostException(host)
+        }
+        return selected
     }
 
     /**

@@ -663,7 +663,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     /**
      * Pulls remote commits during cluster alignment.
-     * A Git transport failure is recorded and the alignment continues.
+     * A Git API failure or an internal Git failure is recorded and the alignment continues,
+     * which is the same set the previous cluster handler accepted.
      * Any other failure is rethrown.
      *
      * @param context operation context
@@ -678,7 +679,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     /**
-     * Records a Git failure from the cluster pull and lets alignment continue.
+     * Records a Git API or internal Git failure from the cluster pull and lets alignment continue.
      *
      * @param retSt cluster alignment result
      * @param error failure from the pull, possibly wrapped for the UI

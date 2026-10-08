@@ -27,11 +27,27 @@ class SshjSession implements RemoteSession {
     Map<String, String> sshConfig
     private OpenSshConfig config
 
+    private final InetAddress pinnedAddress
+
     SshjSession(URIish uri, Map<String, String> sshConfig, OpenSshConfig config, String privateKey) {
+        this(uri, sshConfig, config, privateKey, null)
+    }
+
+    /**
+     * @param pinnedAddress address to open, or {@code null} to resolve {@code uri.host}
+     */
+    SshjSession(
+            URIish uri,
+            Map<String, String> sshConfig,
+            OpenSshConfig config,
+            String privateKey,
+            InetAddress pinnedAddress
+    ) {
         this.sshConfig = sshConfig
         this.config = config
         this.privateKey = privateKey
         this.uri = uri
+        this.pinnedAddress = pinnedAddress
 
         this.sshClient = createConnection()
 
@@ -71,6 +87,9 @@ class SshjSession implements RemoteSession {
             ssh.loadKnownHosts()
         }else{
             ssh.addHostKeyVerifier(new PromiscuousVerifier())
+        }
+        if (pinnedAddress != null) {
+            ssh.setSocketFactory(new PinningSocketFactory(pinnedAddress))
         }
 
         try{

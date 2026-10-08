@@ -118,6 +118,49 @@ class GitScmSecuritySpec extends Specification {
         InternalAddressGuard.isBlocked(InetAddress.getByAddress(mapped))
     }
 
+    def "pinPublic returns a literal public address and rejects a private one"() {
+        expect:
+        InternalAddressGuard.pinPublic('1.1.1.1').hostAddress == '1.1.1.1'
+
+        when:
+        InternalAddressGuard.pinPublic('10.1.2.3')
+
+        then:
+        def error = thrown(IOException)
+        error.message == InternalAddressGuard.HOST_NOT_ALLOWED
+        !error.message.contains('10.1.2.3')
+    }
+
+    def "pinned http connects to the checked address"() {
+        given:
+        ServerSocket server = new ServerSocket(0)
+        InetAddress pinned = InetAddress.getByAddress('example.test', [127, 0, 0, 1] as byte[])
+        URL original = new URL("http://example.test:${server.localPort}/info/refs")
+        URL bound = PinnedHttp.bind(original, pinned)
+        Socket accepted = null
+        Thread listener = Thread.start {
+            accepted = server.accept()
+        }
+
+        when:
+        URLConnection connection = bound.openConnection()
+        connection.connectTimeout = 1000
+        connection.readTimeout = 1000
+        try {
+            connection.connect()
+        } catch (IOException ignored) {
+        }
+        listener.join(2000)
+
+        then:
+        accepted != null
+        accepted.localAddress.isLoopbackAddress()
+
+        cleanup:
+        accepted?.close()
+        server.close()
+    }
+
     def "assertPublicHost does not include the resolved address"() {
         when:
         InternalAddressGuard.assertPublicHost('127.0.0.1')

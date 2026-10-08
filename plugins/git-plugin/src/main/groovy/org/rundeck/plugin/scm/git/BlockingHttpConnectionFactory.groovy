@@ -22,7 +22,8 @@ import org.eclipse.jgit.transport.http.HttpConnectionFactory
 import org.eclipse.jgit.transport.http.JDKHttpConnectionFactory
 
 /**
- * JGit HTTP factory that rejects internal addresses on every connection, including redirect targets.
+ * JGit HTTP factory that rejects internal addresses on every connection, including redirect targets,
+ * and opens the socket to the address from that check.
  * Installed per {@code TransportHttp}, not as the JVM-wide factory.
  */
 @CompileStatic
@@ -40,19 +41,18 @@ class BlockingHttpConnectionFactory implements HttpConnectionFactory {
 
     @Override
     HttpConnection create(URL url) throws IOException {
-        String host = checkedHost(url)
-        return new GuardingHttpConnection(delegate.create(url), host)
+        return open(url, null)
     }
 
     @Override
     HttpConnection create(URL url, Proxy proxy) throws IOException {
-        String host = checkedHost(url)
-        return new GuardingHttpConnection(delegate.create(url, proxy), host)
+        return open(url, proxy)
     }
 
-    private static String checkedHost(URL url) throws IOException {
-        String host = url?.host
-        InternalAddressGuard.assertPublicHost(host)
-        return host
+    private HttpConnection open(URL url, Proxy proxy) throws IOException {
+        InetAddress pinned = InternalAddressGuard.pinPublic(url?.host)
+        URL bound = PinnedHttp.bind(url, pinned)
+        HttpConnection created = proxy == null ? delegate.create(bound) : delegate.create(bound, proxy)
+        return new GuardingHttpConnection(created, pinned)
     }
 }

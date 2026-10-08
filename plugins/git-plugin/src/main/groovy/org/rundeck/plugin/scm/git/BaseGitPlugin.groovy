@@ -53,6 +53,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
+import org.rundeck.plugin.scm.git.ssh.JschPinnedSocketFactory
 import org.rundeck.plugin.scm.git.ssh.SshjSessionFactory
 import org.rundeck.storage.api.StorageException
 import org.slf4j.Logger
@@ -840,7 +841,9 @@ class BaseGitPlugin {
         }
 
         URIish u = new URIish(url);
-        GitScmSecurityConfig security = enforceUrlPolicy(context, u)
+        EnforcedGitRemote enforced = enforceUrlPolicy(context, u)
+        GitScmSecurityConfig security = enforced.security
+        InetAddress pinned = enforced.pinned
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
         TransportConfigCallback authCallback = null
         if ((u.scheme == null || u.scheme == 'ssh') && u.user && commonConfig.sshPrivateKeyPath) {
@@ -854,7 +857,7 @@ class BaseGitPlugin {
                 void configure(final Transport transport) {
                     if (transport instanceof SshTransport) {
                         SshTransport sshTransport = (SshTransport) transport
-                        sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig))
+                        sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig, pinned))
                     }
                 }
             }
@@ -874,6 +877,9 @@ class BaseGitPlugin {
                             protected void configure(final OpenSshConfig.Host hc, final Session session) {
                                 sshConfig.each { k, v ->
                                     session.setConfig(k,v)
+                                }
+                                if (pinned != null) {
+                                    session.setSocketFactory(new JschPinnedSocketFactory(pinned))
                                 }
                             }
                         })
@@ -897,12 +903,26 @@ class BaseGitPlugin {
      * @param uri parsed Git remote
      * @return the config that was enforced
      */
-    private GitScmSecurityConfig enforceUrlPolicy(ScmOperationContext context, URIish uri) {
+    /**
+     * Scheme decision and, when the address block is on, the address later connections must use.
+     */
+    private static class EnforcedGitRemote {
+        final GitScmSecurityConfig security
+        final InetAddress pinned
+
+        EnforcedGitRemote(GitScmSecurityConfig security, InetAddress pinned) {
+            this.security = security
+            this.pinned = pinned
+        }
+    }
+
+    private EnforcedGitRemote enforceUrlPolicy(ScmOperationContext context, URIish uri) {
         GitScmSecurityConfig security = GitScmSecurityConfig.resolve(context?.runtimePropertyRetriever)
         GitUrlPolicy.assertAllowed(uri, security)
+        InetAddress pinned = null
         if (security.blockInternalAddresses && uri.host) {
             try {
-                InternalAddressGuard.assertPublicHost(uri.host)
+                pinned = InternalAddressGuard.pinPublic(uri.host)
             } catch (UnknownHostException e) {
                 logger.warn("Git host could not be resolved: ${uri.host}", e)
                 throw new ScmPluginException(GitTransportErrors.GENERIC_ACCESS_MESSAGE, e)
@@ -911,7 +931,7 @@ class BaseGitPlugin {
                 throw new ScmPluginException(InternalAddressGuard.HOST_NOT_ALLOWED, e)
             }
         }
-        return security
+        return new EnforcedGitRemote(security, pinned)
     }
 
     private static void applyTransportCallback(

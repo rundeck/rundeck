@@ -19,9 +19,21 @@ class SshjSessionFactory extends SshSessionFactory {
     private OpenSshConfig config
     //private String privateKeyFile
 
+    private final InetAddress pinnedAddress
+
     SshjSessionFactory(byte[] privateKey, Map<String, String> sshConfig) {
+        this(privateKey, sshConfig, null)
+    }
+
+    /**
+     * @param privateKey SSH private key material
+     * @param sshConfig session options
+     * @param pinnedAddress address to open, or {@code null} to let the session resolve the host
+     */
+    SshjSessionFactory(byte[] privateKey, Map<String, String> sshConfig, InetAddress pinnedAddress) {
         this.privateKey = privateKey
         this.sshConfig = sshConfig
+        this.pinnedAddress = pinnedAddress
     }
 
     @Override
@@ -30,7 +42,7 @@ class SshjSessionFactory extends SshSessionFactory {
             config = OpenSshConfig.get(fs)
 
         String keyContent = new String(privateKey, StandardCharsets.UTF_8)
-        return new SshjSession(uri, sshConfig, config, keyContent )
+        return new SshjSession(uri, sshConfig, config, keyContent, pinnedAddress)
     }
 
     @Override
