@@ -236,6 +236,44 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             result.outputMetadata == null
     }
 
+    def "pluginOutputsAsList includes output-only and configurable outputs, without duplicates"() {
+        given:
+            service.uiPluginService = Mock(UiPluginService)
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+            def configurable = PropertyBuilder.builder()
+                                               .name("incidentId")
+                                               .title("Incident Id")
+                                               .type(Property.Type.String)
+                                               .outputMetadata([
+                                                   new PluginOutputMetadata("data", "incidentNumber", "Created incident")
+                                               ])
+                                               .build()
+            def outputOnly = PropertyBuilder.builder()
+                                             .name("outputResult")
+                                             .title("outputResult")
+                                             .type(Property.Type.String)
+                                             .outputMetadata([
+                                                 new PluginOutputMetadata("data", "outputResult", "Computed result"),
+                                                 new PluginOutputMetadata("data", "incidentNumber", "Duplicate")
+                                             ])
+                                             .outputOnly(true)
+                                             .build()
+            def plain = PropertyBuilder.builder()
+                                        .name("plain")
+                                        .type(Property.Type.String)
+                                        .build()
+
+        when:
+            def result = service.pluginOutputsAsList('svc', 'provider', [configurable, outputOnly, plain])
+
+        then:
+            service.uiPluginService.getPluginMessage(*_) >> { args -> args[3] }
+            result == [
+                [name: "incidentNumber", group: "data", description: "Created incident", title: "Incident Id"],
+                [name: "outputResult", group: "data", description: "Computed result", title: "outputResult"]
+            ]
+    }
+
     def "pluginPropertiesAsMap excludes output-only properties from GUI rendering"() {
         given:
             service.uiPluginService = Mock(UiPluginService)

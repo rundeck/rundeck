@@ -345,6 +345,13 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
+                if (service in [ServiceNameConstants.WorkflowStep, ServiceNameConstants.WorkflowNodeStep]) {
+                    def outputs = pluginOutputsAsList(service, provider.name, provider.properties)
+                    if (outputs) {
+                        pluginDesc.outputs = outputs
+                    }
+                }
+
                 // Get groupBy from provider metadata (v57+ feature)
                 def groupBy = includeGroupMetadata ?
                     provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY) : null
@@ -447,6 +454,37 @@ class PluginApiService {
         }.collect { Property prop ->
             pluginPropertyMap(service, pluginName, prop)
         }
+    }
+
+    /**
+     * @param properties the plugin's full property list
+     * @return every output exposed by the properties with required features present, including
+     * those of {@link Property#isOutputOnly()} properties that {@link #pluginPropertiesAsMap} omits,
+     * without duplicates (same group and name)
+     */
+    List<Map<String, String>> pluginOutputsAsList(String service, String pluginName, List<Property> properties) {
+        Map<String, Map<String, String>> outputs = [:]
+        properties.findAll { hasRequiredFeatures(it) && it.outputMetadata }.each { Property prop ->
+            String title = uiPluginService.getPluginMessage(
+                service,
+                pluginName,
+                "property.${prop.name}.title",
+                prop.title ?: prop.name,
+                locale
+            )
+            prop.outputMetadata.each { PluginOutputMetadata metadata ->
+                outputs.putIfAbsent(
+                    "${metadata.group}.${metadata.name}".toString(),
+                    [
+                        name       : metadata.name,
+                        group      : metadata.group,
+                        description: metadata.description,
+                        title      : title
+                    ]
+                )
+            }
+        }
+        return new ArrayList<Map<String, String>>(outputs.values())
     }
 
     /**

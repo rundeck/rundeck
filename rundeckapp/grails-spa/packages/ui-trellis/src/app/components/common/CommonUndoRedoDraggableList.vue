@@ -67,7 +67,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
 import { getRundeckContext } from "../../../library";
@@ -126,6 +126,17 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    /**
+     * Optional guard run after a drag-and-drop reorder, before it is
+     * recorded. Receives the reordered list; resolving to false reverts the
+     * move without touching the undo history or the model.
+     */
+    beforeMove: {
+      type: Function as PropType<
+        (proposed: any[]) => boolean | Promise<boolean>
+      >,
+      default: null,
+    },
   },
   emits: ["addButtonClick", "update:modelValue"],
   data() {
@@ -165,7 +176,14 @@ export default defineComponent({
       this.$emit("addButtonClick");
     },
     cloneDeep,
-    dragUpdated(change: { oldIndex: number; newIndex: number }) {
+    async dragUpdated(change: { oldIndex: number; newIndex: number }) {
+      if (this.beforeMove && this.internalData) {
+        const allowed = await this.beforeMove(this.internalData);
+        if (!allowed) {
+          this.operationMove(change.newIndex, change.oldIndex);
+          return;
+        }
+      }
       this.changeEvent({
         index: change.oldIndex,
         dest: change.newIndex,

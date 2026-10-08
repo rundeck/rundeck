@@ -149,6 +149,8 @@
             height="200"
             width="100%"
             :read-only="true"
+            :min-lines="12"
+            :max-lines="Infinity"
           />
         </expandable>
       </template>
@@ -171,6 +173,8 @@
             height="200"
             width="100%"
             :read-only="true"
+            :min-lines="12"
+            :max-lines="Infinity"
           />
         </expandable>
       </template>
