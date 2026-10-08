@@ -647,14 +647,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             }
 
             retSt.pull = true
-            try{
-                gitPull(context)
-            }catch (JGitInternalException e){
-                retSt.error=e
-            }catch(GitAPIException e){
-                retSt.error = e
-                log.info("Git error",e)
-            }
+            pullDuringClusterFix(context, retSt)
         }
 
         try{
@@ -666,6 +659,41 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         retSt
+    }
+
+    /**
+     * Pulls remote commits during cluster alignment.
+     * A Git transport failure is recorded and the alignment continues.
+     * Any other failure is rethrown.
+     *
+     * @param context operation context
+     * @param retSt cluster alignment result
+     */
+    private void pullDuringClusterFix(ScmOperationContext context, Map retSt) {
+        try {
+            gitPull(context)
+        } catch (Exception e) {
+            keepClusterPullFailure(retSt, e)
+        }
+    }
+
+    /**
+     * Records a Git failure from the cluster pull and lets alignment continue.
+     *
+     * @param retSt cluster alignment result
+     * @param error failure from the pull, possibly wrapped for the UI
+     */
+    private void keepClusterPullFailure(Map retSt, Exception error) {
+        if (causedBy(error, JGitInternalException)) {
+            retSt.error = error
+            return
+        }
+        if (causedBy(error, GitAPIException)) {
+            retSt.error = error
+            log.info("Git error", error)
+            return
+        }
+        throw error
     }
 
     def cleanJobStatusCache(Set<JobExportReference> jobs){

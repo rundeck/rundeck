@@ -956,6 +956,22 @@ class BaseGitPlugin {
         return safe != null ? safe : error.message
     }
 
+    /**
+     * @param error a failure, possibly wrapped for the UI
+     * @param type expected failure type
+     * @return {@code true} when {@code error} or one of its causes is an instance of {@code type}
+     */
+    protected static boolean causedBy(Throwable error, Class<? extends Throwable> type) {
+        Throwable current = error
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
+    }
+
     ScmPluginException remoteAccessFailure(String action, Exception error, String branchName = branch) {
         String safe = GitTransportErrors.userFacing(error, branchName)
         if (safe != null) {

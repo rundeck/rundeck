@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -1593,6 +1595,78 @@ class GitExportPluginSpec extends Specification {
         status.deleted.size() == 0
         status.restored.size() == 1
 
+    }
+
+    def "cluster fix continues when the automatic pull fails"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
+        git.close()
+        def failure = new ScmPluginException(
+                'Could not access the Git repository. See the server log for details.',
+                new TransportException('https', new IOException('config'))
+        )
+        def plugin = new GitExportPlugin(config) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw failure
+            }
+        }
+        plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'abc'
+            getScmImportMetadata() >> [:]
+        }
+
+        when:
+        def status = plugin.clusterFixJobs(context, [jobref])
+
+        then:
+        status.pull
+        status.error == failure
+    }
+
+    def "cluster fix still fails when the automatic pull fails for another reason"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
+        git.close()
+        def failure = new ScmPluginException('other', new IllegalStateException('nope'))
+        def plugin = new GitExportPlugin(config) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw failure
+            }
+        }
+        plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        when:
+        plugin.clusterFixJobs(context, [])
+
+        then:
+        def thrown = thrown(ScmPluginException)
+        thrown.is(failure)
     }
 
 

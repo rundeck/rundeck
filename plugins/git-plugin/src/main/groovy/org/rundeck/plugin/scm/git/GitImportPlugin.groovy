@@ -798,7 +798,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (bstat && bstat.behindCount > 0) {
             try {
                 pullResult = gitPull(context)
-            } catch (TransportException e) {
+            } catch (Exception e) {
+                if (!causedBy(e, TransportException)) {
+                    throw e
+                }
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
         }
