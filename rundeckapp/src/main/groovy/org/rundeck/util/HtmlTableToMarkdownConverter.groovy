@@ -753,6 +753,18 @@ class HtmlTableToMarkdownConverter {
         return merged
     }
 
+    private static final Pattern BLOCKQUOTE_LINE_PREFIX = Pattern.compile('^(?:[ \\t]*>[ \\t]?)+')
+
+    /**
+     * The blockquote marker prefix (one or more {@code >}, each with
+     * optional surrounding whitespace) at the very start of
+     * {@code [lineStart, lineEnd)}, or {@code ""} if the line has none.
+     */
+    private static String blockquotePrefix(String text, int lineStart, int lineEnd) {
+        Matcher matcher = BLOCKQUOTE_LINE_PREFIX.matcher(text.substring(lineStart, lineEnd))
+        return matcher.lookingAt() ? matcher.group() : ''
+    }
+
     /**
      * Finds fenced code block ranges per the CommonMark spec: an opening
      * fence of 3+ backticks or tildes (up to 3 leading spaces) at the start
@@ -760,6 +772,13 @@ class HtmlTableToMarkdownConverter {
      * followed only by trailing whitespace) of the SAME fence character with
      * length greater than or equal to the opening fence's length -- not
      * necessarily equal. An unclosed fence extends to the end of the text.
+     * <p>
+     * A fence may also start right after a blockquote marker (e.g.
+     * {@code "> ~~~"}); the closing fence must then repeat the exact same
+     * marker text. List-item-continuation fences are not handled -- the
+     * indentation needed to stay inside the same list item varies with the
+     * marker, so an unrecognized one safely just falls back to ordinary
+     * conversion rather than a guess.
      */
     private static List<int[]> findFencedCodeBlocks(String text) {
         List<int[]> ranges = []
@@ -770,7 +789,8 @@ class HtmlTableToMarkdownConverter {
             if (lineEnd < 0) {
                 lineEnd = length
             }
-            int[] fence = matchFence(text, lineStart, lineEnd, NO_QUOTE, 0)
+            String quotePrefix = blockquotePrefix(text, lineStart, lineEnd)
+            int[] fence = matchFence(text, lineStart + quotePrefix.length(), lineEnd, NO_QUOTE, 0)
             if (fence != null) {
                 char fenceChar = (char) fence[0]
                 int fenceLen = fence[1]
@@ -781,7 +801,10 @@ class HtmlTableToMarkdownConverter {
                     if (closeLineEnd < 0) {
                         closeLineEnd = length
                     }
-                    if (matchFence(text, closeLineStart, closeLineEnd, fenceChar, fenceLen) != null) {
+                    if (text.regionMatches(closeLineStart, quotePrefix, 0, quotePrefix.length()) &&
+                        matchFence(
+                            text, closeLineStart + quotePrefix.length(), closeLineEnd, fenceChar, fenceLen
+                        ) != null) {
                         blockEnd = closeLineEnd < length ? closeLineEnd + 1 : length
                         break
                     }
