@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.jobs
 
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
@@ -41,6 +42,11 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
         deleteSystemAcl(ACLPOLICY_FILE)
     }
 
+    /**
+     * Excluded from Pro: it builds the job through the workflow editor, which Pro replaces
+     * with the early-access editor. Pro runs its own copy, {@code ScheduledJobExecutionAclWarningProSpec}.
+     */
+    @ExcludePro
     def "scheduled job saved by a user without run access warns on the job page"() {
         given: "a user who may author jobs but not run them schedules one"
             def login = page LoginPage
