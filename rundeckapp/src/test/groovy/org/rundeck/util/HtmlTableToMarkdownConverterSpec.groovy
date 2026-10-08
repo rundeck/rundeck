@@ -162,7 +162,7 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !result.toLowerCase().contains('<table')
     }
 
-    def "non-table raw html such as a bare bold tag is left untouched"() {
+    def "a bare bold tag is converted to Markdown bold"() {
         given:
         String text = 'some text <b>bold</b> more text'
 
@@ -170,7 +170,66 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         String result = HtmlTableToMarkdownConverter.convert(text)
 
         then:
+        result == 'some text **bold** more text'
+    }
+
+    def "strong, italic and em tags are converted to their Markdown equivalents"() {
+        expect:
+        HtmlTableToMarkdownConverter.convert(html) == markdown
+
+        where:
+        html                     | markdown
+        '<strong>bold</strong>'  | '**bold**'
+        '<i>italic</i>'          | '*italic*'
+        '<em>italic</em>'        | '*italic*'
+    }
+
+    def "attributes on an inline style tag are dropped, not copied"() {
+        given:
+        String text = '<b title="x" onclick="evil()">bold</b>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == '**bold**'
+    }
+
+    def "an inline style tag containing a nested tag is left untouched"() {
+        given:
+        // Fail-safe: nested emphasis combinations are not supported, rather
+        // than guess at how to render them.
+        String text = '<b>bold and <i>nested</i></b>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
         result == text
+    }
+
+    def "a bold tag inside a fenced code example is left untouched"() {
+        given:
+        String text = 'Example:\n```\n<b>bold</b>\n```\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "bold text before and after a table is converted alongside it"() {
+        given:
+        String text = '<b>before</b>\n\n<table><tr><td>a</td></tr></table>\n\n<b>after</b>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('**before**')
+        result.contains('| a |')
+        result.contains('**after**')
     }
 
     def "a row with no th cells still produces a valid header via the first row"() {

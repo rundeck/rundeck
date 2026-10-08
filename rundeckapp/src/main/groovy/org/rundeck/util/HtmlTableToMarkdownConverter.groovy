@@ -104,18 +104,22 @@ class HtmlTableToMarkdownConverter {
             return text
         }
         try {
-            return replaceTables(text)
+            return replaceConvertibleElements(text)
         } catch (Exception ignored) {
             // Fail safe: never throw, never emit partial output.
             return text
         }
     }
 
-    private static String replaceTables(String text) {
+    private static String replaceConvertibleElements(String text) {
         List<int[]> codeRanges = findCodeRanges(text)
         List<TableSpan> spans = findTopLevelTables(text, codeRanges)
+        RangeCursor inlineStyleCodeRangeCursor = new RangeCursor(codeRanges)
         if (spans.isEmpty()) {
-            return text
+            String styled = replaceInlineStyles(text, 0, text.length(), inlineStyleCodeRangeCursor)
+            // Preserve reference identity when nothing was actually
+            // converted, matching every other true no-op path in this class.
+            return styled == text ? text : styled
         }
         StringBuilder result = new StringBuilder()
         int lastEnd = 0
@@ -134,7 +138,7 @@ class HtmlTableToMarkdownConverter {
                 // emit a partially-converted result.
                 return text
             }
-            result.append(text, lastEnd, span.start)
+            result.append(replaceInlineStyles(text, lastEnd, span.start, inlineStyleCodeRangeCursor))
             int markerLineStart = text.lastIndexOf('\n', span.start - 1) + 1
             boolean markerLineStartsFreshBlock = markerLineStart == 0 ||
                 countNewlinesBefore(text, markerLineStart) >= BLOCK_SEPARATION
@@ -169,8 +173,140 @@ class HtmlTableToMarkdownConverter {
         if (!convertedAny) {
             return text
         }
-        result.append(text, lastEnd, text.length())
+        result.append(replaceInlineStyles(text, lastEnd, text.length(), inlineStyleCodeRangeCursor))
         return result.toString()
+    }
+
+    private static final Set<String> INLINE_STYLE_TAGS = ['b', 'strong', 'i', 'em'] as Set<String>
+
+    /**
+     * Converts standalone bold ({@code <b>}/{@code <strong>}) and italic
+     * ({@code <i>}/{@code <em>}) spans found in {@code text[regionStart,
+     * regionEnd)} into their Markdown equivalents ({@code **text**}/
+     * {@code *text*}) -- the "text styles" the ticket asks for, alongside
+     * tables. A span already covered by {@code codeRangeCursor} (a
+     * documented example) or containing any further tag of its own is left
+     * untouched rather than guessed at: this only handles the simple,
+     * unnested case, the same fail-safe philosophy used everywhere else in
+     * this class.
+     */
+    private static String replaceInlineStyles(
+        String text, int regionStart, int regionEnd, RangeCursor codeRangeCursor
+    ) {
+        StringBuilder result = new StringBuilder(regionEnd - regionStart)
+        int lastEnd = regionStart
+        int i = regionStart
+        while (i < regionEnd) {
+            if (text.charAt(i) != '<' as char || !isTagStart(text, i) || codeRangeCursor.contains(i)) {
+                i++
+                continue
+            }
+            String tagName = INLINE_STYLE_TAGS.find { String candidate -> isTagNamed(text, i, candidate, false) }
+            int openTagEnd = tagName == null ? -1 : skipTag(text, i)
+            if (tagName == null || openTagEnd < 0 || openTagEnd > regionEnd) {
+                i++
+                continue
+            }
+            int closeIndex = findClosingTag(text, openTagEnd, regionEnd, tagName)
+            if (closeIndex < 0) {
+                i++
+                continue
+            }
+            int closeTagEnd = skipTag(text, closeIndex)
+            if (closeTagEnd < 0 || closeTagEnd > regionEnd) {
+                i++
+                continue
+            }
+            String inner = extractTextIfNoNestedTags(text.substring(i, closeTagEnd))
+            if (inner == null) {
+                // Contains further markup of its own -- skip past the WHOLE
+                // span (not just this tag) so a tag nested inside it is not
+                // independently matched and converted on its own; leave it
+                // untouched rather than guess at nested emphasis.
+                i = closeTagEnd
+                continue
+            }
+            result.append(text, lastEnd, i)
+            String marker = (tagName == 'b' || tagName == 'strong') ? '**' : '*'
+            result.append(marker).append(escapeCell(inner)).append(marker)
+            lastEnd = closeTagEnd
+            i = closeTagEnd
+        }
+        result.append(text, lastEnd, regionEnd)
+        return result.toString()
+    }
+
+    /**
+     * Finds the next {@code </tagName>} at or after {@code fromIndex}
+     * (strictly before {@code regionEnd}), skipping past any substring match
+     * that is only a prefix of a longer tag name (e.g. {@code </bold>} when
+     * looking for {@code </b>}) rather than treating it as a real match --
+     * the same false-positive guard {@link #skipRawTextElement} uses.
+     */
+    private static int findClosingTag(String text, int fromIndex, int regionEnd, String tagName) {
+        String closeTagPrefix = '</' + tagName
+        int searchFrom = fromIndex
+        while (true) {
+            int idx = indexOfIgnoreCase(text, closeTagPrefix, searchFrom)
+            if (idx < 0 || idx >= regionEnd) {
+                return -1
+            }
+            if (isTagNamed(text, idx, tagName, true)) {
+                return idx
+            }
+            searchFrom = idx + 1
+        }
+    }
+
+    /**
+     * Streams {@code html} (a single element's full {@code <tag>...</tag>})
+     * through the OWASP HTML Sanitizer to collect its entity-decoded plain
+     * text, the same way {@link #buildMarkdownTable} does for table cells.
+     * Returns {@code null} if any tag other than the outermost one is found
+     * -- nested markup inside a bold/italic span is not supported, so the
+     * caller leaves it untouched rather than risk misrendering it.
+     */
+    private static String extractTextIfNoNestedTags(String html) {
+        InlineTextPolicy policy = new InlineTextPolicy()
+        HtmlSanitizer.sanitize(html, policy)
+        return policy.hasNestedTag ? null : policy.text.toString()
+    }
+
+    /**
+     * Collects plain text from a single, non-nested element, flagging
+     * {@link #hasNestedTag} the moment any tag opens while already inside
+     * the outermost one. Tag attributes are never read here either.
+     */
+    private static class InlineTextPolicy implements HtmlSanitizer.Policy {
+        StringBuilder text = new StringBuilder()
+        boolean hasNestedTag = false
+        private int depth = 0
+
+        @Override
+        void openDocument() {
+        }
+
+        @Override
+        void closeDocument() {
+        }
+
+        @Override
+        void openTag(String elementName, List<String> attrs) {
+            if (depth > 0) {
+                hasNestedTag = true
+            }
+            depth++
+        }
+
+        @Override
+        void closeTag(String elementName) {
+            depth--
+        }
+
+        @Override
+        void text(String textChunk) {
+            text.append(textChunk)
+        }
     }
 
     private static final Pattern BLOCKQUOTE_PREFIX = Pattern.compile('^(?:[ \\t]*>[ \\t]?)+$')
