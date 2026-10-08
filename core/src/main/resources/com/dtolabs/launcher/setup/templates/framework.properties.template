@@ -49,16 +49,3 @@ rundeck.server.uuid = @rundeck.server.uuid@
 # Expands to ${globals.var2}
 #framework.globals.var2 = value2
 
-# ----------------------------------------------------------------
-# Git SCM remote URL controls. Both are unset by default so existing
-# Git import/export configuration keeps working.
-# The same keys in System Configuration apply without a restart and override
-# a value set here. A blank System Configuration value leaves this file in effect.
-#
-# Comma-separated schemes. ssh includes ssh:// and git@host:path.
-# file includes file:// and local paths.
-# rundeck.scm.git.allowedSchemes=https,http,ssh
-#
-# Reject loopback, link-local, and private addresses, including HTTP redirects.
-# rundeck.scm.git.blockInternalAddresses=false
-
