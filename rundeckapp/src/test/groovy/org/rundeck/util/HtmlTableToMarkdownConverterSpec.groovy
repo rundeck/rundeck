@@ -232,6 +232,47 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result.contains('**after**')
     }
 
+    def "a closing tag hidden inside an html comment does not truncate the match early"() {
+        given:
+        // If the comment-hidden "</b>" were mistaken for the real close, the
+        // match would end there, leaving the image syntax after it outside
+        // the replaced (and therefore inert) span.
+        String text = '<b>safe<!-- </b>![probe](https://example.invalid/pixel) -->after</b>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == '**safeafter**'
+        !result.contains('![probe]')
+    }
+
+    def "many unmatched opening tags do not cause quadratic scanning"() {
+        given:
+        // None of these ever close, so nothing should convert -- this
+        // exercises the per-tag-name "no closing tag remaining" cache rather
+        // than re-scanning the rest of the text for every occurrence.
+        String text = ('<b>x' * 2000) + 'end'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "an empty or whitespace-only inline style tag does not produce a bare run of emphasis markers"() {
+        expect:
+        HtmlTableToMarkdownConverter.convert(html) == expected
+
+        where:
+        html                | expected
+        '<b></b>'           | ''
+        '<strong></strong>' | ''
+        '<b>   </b>'        | '   '
+        '<i></i>'           | ''
+    }
+
     def "a row with no th cells still produces a valid header via the first row"() {
         given:
         String html = '<table><tr><td>a</td><td>b</td></tr></table>'
