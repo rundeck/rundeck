@@ -585,7 +585,7 @@ class GitExportPluginSpec extends Specification {
         // A fetch failure signals the remote is unreachable — throw so the caller can surface a
         // clear "Git server unavailable" message instead of a misleading local-state status.
         ScmPluginException e = thrown()
-        e.message == 'Fetch from the repository failed: Invalid remote: origin'
+        e.message == 'Fetch from the repository failed: Could not access the Git repository. See the server log for details.'
     }
 
     static RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {
@@ -1800,7 +1800,7 @@ class GitExportPluginSpec extends Specification {
         then:
         status!=null
         status.state==SynchState.CLEAN
-        status.message=='Automatic pull from the repository failed: Remote origin did not advertise Ref for branch master. This Ref may not exist in the remote or may be hidden by permission settings.'
+        status.message=='Automatic pull from the repository failed: Failed pull from the repository: Remote origin did not advertise Ref for branch master. This Ref may not exist in the remote or may be hidden by permission settings.'
     }
 
     def "initialize plugin with unknown branch without create config"() {
@@ -1841,7 +1841,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
+        e.message=="Failed cloning the repository: Remote branch 'dev2' not found in upstream origin"
     }
 
     def "initialize plugin creates branch when branch does not exist on remote"() {
