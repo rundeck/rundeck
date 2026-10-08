@@ -16,70 +16,65 @@
 
 package rundeck.codecs
 
-import org.junit.Test
 import org.rundeck.util.HtmlTableToMarkdownConverter
-
-import static org.junit.Assert.*
+import spock.lang.Specification
 
 /**
- * MarkdownCodecTest covers PS-1683: raw inline HTML in markdown must be
+ * MarkdownCodecSpec covers PS-1683: raw inline HTML in markdown must be
  * escaped rather than passed through as live markup, while normal
  * markdown syntax keeps rendering.
  */
-class MarkdownCodecTest {
-    @Test
-    void testNormalMarkdownStillRenders(){
-        assertEquals(
-            '<article class="markdown-body"><p><strong>bold</strong></p>\n</article>',
-            MarkdownCodec.decodeStr('**bold**')
-        )
+class MarkdownCodecSpec extends Specification {
+
+    def "normal markdown still renders"() {
+        expect:
+        MarkdownCodec.decodeStr('**bold**') ==
+            '<article class="markdown-body"><p><strong>bold</strong></p>\n</article>'
     }
 
-    @Test
-    void testRawHtmlInMarkdownIsEscaped(){
-        assertEquals(
+    def "raw HTML in markdown is escaped"() {
+        expect:
+        MarkdownCodec.decodeStr(
+            'some text\n\n<td style="position:fixed;inset:0;background:url(\'//attacker/leak\')">x</td>'
+        ) ==
             '<article class="markdown-body"><p>some text</p>\n' +
-            '<p>&lt;td style&#61;&#34;position:fixed;inset:0;background:url(&#39;//attacker/leak&#39;)&#34;&gt;x&lt;/td&gt;</p>\n</article>',
-            MarkdownCodec.decodeStr(
-                'some text\n\n<td style="position:fixed;inset:0;background:url(\'//attacker/leak\')">x</td>'
-            )
-        )
+            '<p>&lt;td style&#61;&#34;position:fixed;inset:0;background:url(&#39;//attacker/leak&#39;)&#34;&gt;x&lt;/td&gt;</p>\n</article>'
     }
 
     /**
      * A CSS-injection payload (a style attribute with position:fixed and a
      * background url()), placed inside an HTML table, must come out of the
-     * full HtmlTableToMarkdownConverter -&gt; MarkdownCodec -&gt;
-     * SanitizedHTMLCodec pipeline with no live "style" attribute and no
-     * trace of the injected CSS/URL anywhere -- proving the table-to-markdown
-     * conversion does not reintroduce that vector. This passes with zero
-     * changes to MarkdownCodec.groovy or SanitizedHTMLCodec.groovy: the
-     * style attribute is discarded by the converter itself, long before
-     * either codec sees the text.
+     * full HtmlTableToMarkdownConverter -> MarkdownCodec -> SanitizedHTMLCodec
+     * pipeline with no live "style" attribute and no trace of the injected
+     * CSS/URL anywhere -- proving the table-to-markdown conversion does not
+     * reintroduce that vector. This passes with zero changes to
+     * MarkdownCodec.groovy or SanitizedHTMLCodec.groovy: the style attribute
+     * is discarded by the converter itself, long before either codec sees
+     * the text.
      */
-    @Test
-    void testCssInjectionPayloadInsideTableIsNeutralizedByConverter(){
+    def "CSS-injection payload inside a table is neutralized by the converter"() {
+        given:
         String payload = '<table><tr><td style="position:fixed;inset:0;width:100vw;height:100vh;' +
             'background:url(\'//attacker/leak\')">x</td></tr></table>'
 
+        when:
         String converted = HtmlTableToMarkdownConverter.convert(payload)
         String rendered = MarkdownCodec.decodeStr(converted)
 
+        then:
         // Pattern-based, case-insensitive, whitespace-tolerant checks --
         // substring checks here could miss variants like "STYLE=" or
         // "style =", or false-positive on the word "style" appearing
         // incidentally elsewhere.
-        assertFalse('output must not contain a style attribute', (rendered =~ /(?i)\bstyle\s*=/).find())
-        assertFalse('output must not contain the injected CSS', (rendered =~ /(?i)position\s*:\s*fixed/).find())
-        assertFalse('output must not contain the injected url()', (rendered =~ /(?i)\burl\s*\(/).find())
+        !(rendered =~ /(?i)\bstyle\s*=/).find()
+        !(rendered =~ /(?i)position\s*:\s*fixed/).find()
+        !(rendered =~ /(?i)\burl\s*\(/).find()
         // A single-row table has no body rows left once that row becomes the
         // GFM header row (required by pipe-table syntax), so the safe cell
         // text is rendered inside a <th>, not a <td> -- either is a real,
         // live table cell, as opposed to escaped literal tag text.
-        assertTrue(
-            'the safe cell text must still render in a real table cell',
-            rendered ==~ /(?s).*<t[hd]>x<\/t[hd]>.*/
-        )
-        assertTrue('converter must produce a real table, not raw HTML text', rendered.contains('<table>'))
+        rendered ==~ /(?s).*<t[hd]>x<\/t[hd]>.*/
+        // Converter must produce a real table, not raw HTML text.
+        rendered.contains('<table>')
     }
 }
