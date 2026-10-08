@@ -17,7 +17,7 @@
     </span>
     <div
       v-for="(option, index) in options"
-      :key="String(getValue(option))"
+      :key="`${baseId}-${index}`"
       class="pt-radio-group__item"
       data-testid="pt-radio-group-item"
     >
@@ -108,6 +108,13 @@ export default defineComponent({
     legendId(): string {
       return `${this.baseId}-legend`;
     },
+  },
+  mounted() {
+    if (!this.legend && !this.ariaLabel) {
+      console.warn(
+        "PtRadioGroup: provide a legend or ariaLabel so the radiogroup has an accessible name.",
+      );
+    }
   },
   methods: {
     resolve(option: any, field: string | ((option: any) => any)) {

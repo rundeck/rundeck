@@ -167,14 +167,17 @@ export default defineComponent({
   //  opacity: 1;
   //}
 }
+</style>
 
-// Vertical timeline (all steps and their content visible at once)
+<style scoped lang="scss">
+// Vertical timeline (all steps and their content visible at once). Scoped so
+// these rules only reach the PrimeVue markup rendered by this component.
 .pt-stepper-vertical {
-  .p-stepitem {
+  :deep(.p-stepitem) {
     flex: initial;
   }
 
-  .p-step {
+  :deep(.p-step) {
     padding: 0;
 
     &.p-disabled {
@@ -182,7 +185,7 @@ export default defineComponent({
     }
   }
 
-  .p-step-header {
+  :deep(.p-step-header) {
     padding: 0;
     font-family: Inter, var(--fonts-body2);
     gap: 8px;
@@ -214,7 +217,7 @@ export default defineComponent({
     border-left: 1px solid var(--colors-gray-400);
   }
 
-  .p-stepitem:last-of-type .pt-stepper-content {
+  :deep(.p-stepitem:last-of-type) .pt-stepper-content {
     border-left-color: transparent;
   }
 }

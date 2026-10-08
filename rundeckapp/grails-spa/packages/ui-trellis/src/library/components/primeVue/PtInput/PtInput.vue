@@ -30,6 +30,7 @@
       :name="name"
       :readonly="readonly"
       :maxlength="maxlength"
+      :autocomplete="autocomplete"
       :aria-label="ariaLabel"
       :aria-labelledby="ariaLabelledby"
       @focus="onFocus"
