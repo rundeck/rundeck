@@ -35,11 +35,13 @@ const meta: Meta<typeof PtRadioGroup> = {
     },
     legend: {
       control: { type: "text" },
-      description: "Text that names the group, shown above the options.",
+      description:
+        "Text that names the group (its accessible name), shown above the options. Required.",
     },
-    ariaLabel: {
-      control: { type: "text" },
-      description: "Accessible name for the group when no legend is shown.",
+    hideLegend: {
+      control: { type: "boolean" },
+      description:
+        "Hides the legend visually while keeping it as the group's accessible name.",
     },
     name: {
       control: { type: "text" },
@@ -83,9 +85,9 @@ export const Default: Story = {
   args: { options, legend: "Select Target Nodes:" },
 };
 
-export const WithoutLegend: Story = {
+export const HiddenLegend: Story = {
   render,
-  args: { options, ariaLabel: "Select Target Nodes" },
+  args: { options, legend: "Select Target Nodes", hideLegend: true },
 };
 
 export const Disabled: Story = {

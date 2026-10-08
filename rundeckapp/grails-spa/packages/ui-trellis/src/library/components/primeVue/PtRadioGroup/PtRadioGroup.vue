@@ -3,14 +3,13 @@
     class="pt-radio-group"
     role="radiogroup"
     data-testid="pt-radio-group"
-    :aria-labelledby="legend ? legendId : undefined"
-    :aria-label="legend ? undefined : ariaLabel"
+    :aria-labelledby="legendId"
     :aria-invalid="invalid || undefined"
   >
     <span
-      v-if="legend"
       :id="legendId"
       class="pt-radio-group__legend"
+      :class="{ 'pt-radio-group__legend--hidden': hideLegend }"
       data-testid="pt-radio-group-legend"
     >
       {{ legend }}
@@ -76,15 +75,15 @@ export default defineComponent({
       type: [String, Function] as PropType<string | ((option: any) => boolean)>,
       default: "disabled",
     },
-    /** Text that names the group, shown above the options. */
+    /** Text that names the group (its accessible name), shown above the options. */
     legend: {
       type: String,
-      default: undefined,
+      required: true,
     },
-    /** Accessible name for the group when no legend is shown. */
-    ariaLabel: {
-      type: String,
-      default: undefined,
+    /** Hides the legend visually while keeping it as the group's accessible name. */
+    hideLegend: {
+      type: Boolean,
+      default: false,
     },
     /** Native name shared by the radios; generated when omitted. */
     name: {
@@ -108,13 +107,6 @@ export default defineComponent({
     legendId(): string {
       return `${this.baseId}-legend`;
     },
-  },
-  mounted() {
-    if (!this.legend && !this.ariaLabel) {
-      console.warn(
-        "PtRadioGroup: provide a legend or ariaLabel so the radiogroup has an accessible name.",
-      );
-    }
   },
   methods: {
     resolve(option: any, field: string | ((option: any) => any)) {
@@ -172,6 +164,18 @@ export default defineComponent({
   --p-radiobutton-disabled-background: var(--colors-gray-400);
   --p-radiobutton-checked-disabled-border-color: var(--colors-gray-400);
   --p-radiobutton-icon-disabled-color: var(--colors-gray-600);
+
+  &__legend--hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   &__item {
     display: flex;

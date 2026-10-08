@@ -8,7 +8,12 @@ const OPTIONS = [
 
 const createWrapper = (props = {}) =>
   mount(PtRadioGroup, {
-    props: { modelValue: "all", options: OPTIONS, ...props },
+    props: {
+      modelValue: "all",
+      options: OPTIONS,
+      legend: "Select Target Nodes:",
+      ...props,
+    },
   });
 
 const findByTestId = (wrapper: ReturnType<typeof mount>, testId: string) =>
@@ -104,32 +109,22 @@ describe("PtRadioGroup", () => {
       });
     });
 
-    it("uses aria-label when there is no legend", () => {
-      const wrapper = createWrapper({ ariaLabel: "Target" });
+    it("keeps a hidden legend as the group's accessible name", () => {
+      const wrapper = createWrapper({ hideLegend: true });
 
-      const group = findByTestId(wrapper, "pt-radio-group");
-      expect(group.attributes("aria-label")).toBe("Target");
-      expect(group.attributes("aria-labelledby")).toBeUndefined();
+      const legend = findByTestId(wrapper, "pt-radio-group-legend");
+      expect(legend.classes()).toContain("pt-radio-group__legend--hidden");
+      expect(
+        findByTestId(wrapper, "pt-radio-group").attributes("aria-labelledby"),
+      ).toBe(legend.attributes("id"));
     });
 
-    it("warns when the group has neither a legend nor an aria-label", () => {
-      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    it("shows the legend by default", () => {
+      const wrapper = createWrapper();
 
-      createWrapper();
-
-      expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining("accessible name"),
-      );
-      warn.mockRestore();
-    });
-
-    it("does not warn when the group is named", () => {
-      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
-
-      createWrapper({ ariaLabel: "Target" });
-
-      expect(warn).not.toHaveBeenCalled();
-      warn.mockRestore();
+      expect(
+        findByTestId(wrapper, "pt-radio-group-legend").classes(),
+      ).not.toContain("pt-radio-group__legend--hidden");
     });
 
     it("links each label to its radio", () => {
