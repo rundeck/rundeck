@@ -27,24 +27,21 @@ import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 
 /**
- * Rejects a blocked address before the HTTP connection performs network IO.
- * The address is the one the socket will use. This check does not resolve a name.
+ * Re-checks the Git host immediately before the HTTP connection performs network IO.
  */
 @CompileStatic
 class GuardingHttpConnection implements HttpConnection {
 
     private final HttpConnection delegate
-    private final InetAddress address
+    private final String host
 
-    GuardingHttpConnection(HttpConnection delegate, InetAddress address) {
+    GuardingHttpConnection(HttpConnection delegate, String host) {
         this.delegate = delegate
-        this.address = address
+        this.host = host
     }
 
     private void check() throws IOException {
-        if (address != null && InternalAddressGuard.isBlocked(address)) {
-            throw new IOException(InternalAddressGuard.HOST_NOT_ALLOWED)
-        }
+        InternalAddressGuard.assertPublicHost(host)
     }
 
     @Override

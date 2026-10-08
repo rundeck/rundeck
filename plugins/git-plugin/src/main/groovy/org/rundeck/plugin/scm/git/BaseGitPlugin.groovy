@@ -53,7 +53,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
-import org.rundeck.plugin.scm.git.ssh.JschPinnedSocketFactory
 import org.rundeck.plugin.scm.git.ssh.SshjSessionFactory
 import org.rundeck.storage.api.StorageException
 import org.slf4j.Logger
@@ -712,7 +711,7 @@ class BaseGitPlugin {
         try {
             git = cloneCommand.call()
         } catch (Exception e) {
-            throw remoteAccessFailure("Failed cloning the repository from ${url}", e, branch)
+            throw remoteAccessFailure('Failed cloning the repository', e, branch)
         }
         git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
         git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
@@ -841,9 +840,7 @@ class BaseGitPlugin {
         }
 
         URIish u = new URIish(url);
-        EnforcedGitRemote enforced = enforceUrlPolicy(context, u)
-        GitScmSecurityConfig security = enforced.security
-        InetAddress pinned = enforced.pinned
+        GitScmSecurityConfig security = enforceUrlPolicy(context, u)
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
         TransportConfigCallback authCallback = null
         if ((u.scheme == null || u.scheme == 'ssh') && u.user && commonConfig.sshPrivateKeyPath) {
@@ -857,7 +854,7 @@ class BaseGitPlugin {
                 void configure(final Transport transport) {
                     if (transport instanceof SshTransport) {
                         SshTransport sshTransport = (SshTransport) transport
-                        sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig, pinned))
+                        sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig))
                     }
                 }
             }
@@ -877,9 +874,6 @@ class BaseGitPlugin {
                             protected void configure(final OpenSshConfig.Host hc, final Session session) {
                                 sshConfig.each { k, v ->
                                     session.setConfig(k,v)
-                                }
-                                if (pinned != null) {
-                                    session.setSocketFactory(new JschPinnedSocketFactory(pinned))
                                 }
                             }
                         })
@@ -903,26 +897,12 @@ class BaseGitPlugin {
      * @param uri parsed Git remote
      * @return the config that was enforced
      */
-    /**
-     * Scheme decision and, when the address block is on, the address later connections must use.
-     */
-    private static class EnforcedGitRemote {
-        final GitScmSecurityConfig security
-        final InetAddress pinned
-
-        EnforcedGitRemote(GitScmSecurityConfig security, InetAddress pinned) {
-            this.security = security
-            this.pinned = pinned
-        }
-    }
-
-    private EnforcedGitRemote enforceUrlPolicy(ScmOperationContext context, URIish uri) {
+    private GitScmSecurityConfig enforceUrlPolicy(ScmOperationContext context, URIish uri) {
         GitScmSecurityConfig security = GitScmSecurityConfig.resolve(context?.runtimePropertyRetriever)
         GitUrlPolicy.assertAllowed(uri, security)
-        InetAddress pinned = null
         if (security.blockInternalAddresses && uri.host) {
             try {
-                pinned = InternalAddressGuard.pinPublic(uri.host)
+                InternalAddressGuard.assertPublicHost(uri.host)
             } catch (UnknownHostException e) {
                 logger.warn("Git host could not be resolved: ${uri.host}", e)
                 throw new ScmPluginException(GitTransportErrors.GENERIC_ACCESS_MESSAGE, e)
@@ -931,7 +911,7 @@ class BaseGitPlugin {
                 throw new ScmPluginException(InternalAddressGuard.HOST_NOT_ALLOWED, e)
             }
         }
-        return new EnforcedGitRemote(security, pinned)
+        return security
     }
 
     private static void applyTransportCallback(
@@ -992,14 +972,36 @@ class BaseGitPlugin {
         return false
     }
 
+    /**
+     * Removes URL user information so a password embedded in a Git URL is not written to the log.
+     */
+    private static String redactUserInfo(String text) {
+        if (!text) {
+            return text
+        }
+        return text.replaceAll('://[^/\\s@]*@', '://')
+    }
+
     ScmPluginException remoteAccessFailure(String action, Exception error, String branchName = branch) {
         String safe = GitTransportErrors.userFacing(error, branchName)
+        String actionText = redactUserInfo(action)
+        String detail = redactUserInfo(error?.message)
+        String line = "${actionText}: ${detail}"
+        boolean redacted = actionText != action || detail != error?.message
         if (safe != null) {
-            logger.warn("${action}: ${error.message}", error)
+            if (redacted) {
+                logger.warn(line)
+            } else {
+                logger.warn(line, error)
+            }
             return new ScmPluginException(safe, error)
         }
-        logger.debug("${action}: ${error.message}", error)
-        return new ScmPluginException("${action}: ${error.message}", error)
+        if (redacted) {
+            logger.debug(line)
+        } else {
+            logger.debug(line, error)
+        }
+        return new ScmPluginException("${actionText}: ${detail}", error)
     }
 
     /**
