@@ -35,6 +35,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -82,6 +83,9 @@ class ScheduledExecutionController2Spec extends Specification implements Control
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
         controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
+        controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
+            _ * validateExecutionAcl(_) >> true
+        }
 
         defineBeans {
             configurationService(ConfigurationService) {

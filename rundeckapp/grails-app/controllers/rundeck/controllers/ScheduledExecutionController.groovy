@@ -78,6 +78,7 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
@@ -131,6 +132,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ConfigurationService configurationService
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
+    JobExecutionAclMetadataComponent jobExecutionAclMetadataComponent
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -561,9 +563,24 @@ Since: v53''',
             defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
         }
 
+        def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution)
+        // Offer the pre-filled ACL editor only to someone who could actually save it
+        def executionAclFixPolicy = null
+        // with no saved user there is nobody to grant access to: re-saving the job is the
+        // only way out, so offering an ACL policy would be a dead end
+        if (!executionAclValid && scheduledExecution.user && rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForProjectAcl(scheduledExecution.project),
+                [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        )) {
+            executionAclFixPolicy = jobExecutionAclMetadataComponent.buildRunGrantPolicy(scheduledExecution)
+        }
+
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
+                executionAclValid: executionAclValid,
+                executionAclFixPolicy: executionAclFixPolicy,
                 isReferenced: isReferenced,
                 parentList: parentList,
                 crontab: crontab,

@@ -179,12 +179,10 @@ export default defineComponent({
       type: String as PropType<string>,
       default: "text",
     },
-    /** Renders a multi-line textarea instead of a single-line input; icons are ignored. */
     multiline: {
       type: Boolean,
       default: false,
     },
-    /** Number of visible text lines when `multiline` is set. */
     rows: {
       type: Number,
       default: 3,
@@ -300,7 +298,6 @@ export default defineComponent({
   color: var(--colors-gray-300-original);
 }
 
-// InputText and Textarea styles (Figma input: 10.5px padding, 6px radius)
 .p-inputtext,
 .p-textarea {
   width: 100%;
@@ -339,8 +336,31 @@ export default defineComponent({
   }
 }
 
-// The Figma textarea has a fixed size and no resize handle
 .p-textarea {
   resize: none;
+}
+
+// Dark mode
+*[data-color-theme="dark"] {
+  .p-inputtext {
+    @include form-input-dark;
+
+    &.p-invalid {
+      @include form-input-dark-invalid;
+    }
+
+    &:disabled {
+      background: var(--grey-700);
+      color: var(--grey-300);
+    }
+  }
+
+  .p-inputicon {
+    color: var(--grey-300);
+  }
+
+  .pt-input__error {
+    color: #e55b5b;
+  }
 }
 </style>

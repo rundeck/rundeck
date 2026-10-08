@@ -209,4 +209,48 @@ export default defineComponent({
 .p-button-link:hover {
   background-color: transparent;
 }
+
+// Dark mode (Figma: secondary = grey-900 fill, grey-300 border, white label)
+*[data-color-theme="dark"] {
+  .p-button-secondary,
+  .p-button-secondary.p-button-outlined {
+    background-color: var(--grey-900);
+    border-color: var(--grey-300);
+    color: var(--white, #fff);
+
+    .p-button-icon,
+    .p-button-label {
+      color: var(--white, #fff);
+    }
+
+    &:hover {
+      background-color: var(--grey-800);
+      border-color: var(--white, #fff);
+    }
+
+    &:active {
+      background-color: var(--grey-700);
+      border-color: var(--white, #fff);
+    }
+
+    &:focus-visible,
+    &:focus {
+      outline-color: var(--grey-300);
+    }
+  }
+
+  .p-button-text.p-button-secondary,
+  .p-button-link.p-button-secondary {
+    background: transparent;
+    border-color: transparent;
+    color: var(--white, #fff);
+
+    &:hover,
+    &:active {
+      background-color: var(--grey-600);
+      border-color: transparent;
+      color: var(--white, #fff);
+    }
+  }
+}
 </style>

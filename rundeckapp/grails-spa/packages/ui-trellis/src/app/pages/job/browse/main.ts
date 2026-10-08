@@ -15,6 +15,7 @@ import JobsPageHeader from "./JobsPageHeader.vue";
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from "./tree/JobActionsMenu.vue";
 import JobRunButton from "./tree/JobRunButton.vue";
+import JobExecutionAclWarningDisplay from "./tree/JobExecutionAclWarningDisplay.vue";
 import JobScheduleInfo from "./tree/JobScheduleInfo.vue";
 import JobScmStatus from "./tree/JobScmStatus.vue";
 
@@ -114,6 +115,12 @@ function init() {
       location: "after-job-name:meta:schedule",
       visible: true,
       widget: markRaw(JobScheduleInfo),
+    },
+    {
+      section: "job-browse-item",
+      location: "after-job-name:meta:executionAclValid",
+      visible: true,
+      widget: markRaw(JobExecutionAclWarningDisplay),
     },
     {
       section: "job-browse-item",

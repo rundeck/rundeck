@@ -58,6 +58,7 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -96,6 +97,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
+    JobExecutionAclMetadataComponent jobExecutionAclMetadataComponent
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     StorageService storageService
 
@@ -416,7 +418,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         } else {
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
-        def results=listWorkflows(query,authContext,session.user)
+        def results=listWorkflows(query,authContext,session.user, true)
 
         if (scmFlags == JobsScmInfo.MINIMAL) {
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
@@ -518,7 +520,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
-    private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
+    /**
+     * @param includeExecutionAclValid resolve the execution ACL flag for the listed jobs.
+     * Opt-in: it costs an authorization evaluation per scheduled job, and only the job
+     * list renders the warning -- the picker and the export do not.
+     */
+    private def listWorkflows(
+        ScheduledExecutionQuery query,
+        AuthContext authContext,
+        String user,
+        boolean includeExecutionAclValid = false
+    ) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
@@ -626,9 +638,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         log.debug("listWorkflows(last): "+(System.currentTimeMillis()-last));
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
 
+        // evaluated only here, once schedlist holds the jobs the viewer may actually
+        // see: a narrowly authorized viewer would otherwise pay a saved-owner context
+        // build and an ACL check for every scheduled job on the page, hidden ones too
+        def executionAclValid = includeExecutionAclValid ?
+                jobExecutionAclMetadataComponent.validateExecutionAcl(
+                        allScheduled.findAll { authorizemap[it.id.toString()] }
+                ) : [:]
+
         return [
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+        executionAclValid: executionAclValid,
         scheduledJobs: allScheduled,
         nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,

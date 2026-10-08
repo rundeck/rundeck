@@ -308,6 +308,16 @@ export default defineComponent({
   }
 }
 
+/* Dark mode (Figma: label grey-200, value white) */
+*[data-color-theme="dark"] .configpair {
+  color: var(--grey-200);
+
+  .text-success,
+  .copy-icon {
+    color: var(--white, #fff);
+  }
+}
+
 .configprop {
   display: block;
   margin-bottom: var(--sizes-2);
@@ -319,5 +329,18 @@ export default defineComponent({
   + .col-sm-12 {
     display: none;
   }
+}
+
+// pluginConfig.vue's show-mode template always renders a
+// `.col-sm-12` wrapper for its `extraProperties` slot, even when the
+// caller (StepCardContent, here) never fills it — an always-empty,
+// full-width floated Bootstrap column nested directly inside another
+// `.col-*` (no intermediate `.row`), which squeezes/skews the real
+// property content next to it. The `.configprop + .col-sm-12` rule
+// above only hid it when it rendered *after* the props loop; pluginConfig.vue
+// now renders it *before* instead (property display order fix), so it needs
+// hiding by its own emptiness, not by sibling position.
+.plugin-config-section .col-sm-12:empty {
+  display: none;
 }
 </style>

@@ -2,6 +2,7 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -30,6 +31,7 @@ class JobEditSpec extends SeleniumBase{
     /**
      * It add and remove steps from a job and verifies
      */
+    @ExcludePro
     def "add and remove steps"(){
         given:
             def projectName = "addRemoveStepsProject_${legacyUi}"

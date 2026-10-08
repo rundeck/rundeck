@@ -36,6 +36,23 @@
   }
 }
 
+// Dark mode (Figma: Dark Mode/Grey scale). Use inside a
+// `*[data-color-theme="dark"]` block so every PrimeVue form wrapper shares
+// one set of values. The error colour must stay red in dark mode.
+@mixin form-input-dark {
+  background: var(--grey-800);
+  border-color: var(--grey-900);
+  color: var(--white, #fff);
+
+  &::placeholder {
+    color: var(--grey-300);
+  }
+}
+
+@mixin form-input-dark-invalid {
+  border-color: #e55b5b;
+}
+
 // Shared label styles for form input components
 .pt-form-label {
 }
