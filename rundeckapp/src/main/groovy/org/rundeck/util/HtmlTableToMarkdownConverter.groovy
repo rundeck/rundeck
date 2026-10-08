@@ -115,8 +115,9 @@ class HtmlTableToMarkdownConverter {
         List<int[]> codeRanges = findCodeRanges(text)
         List<TableSpan> spans = findTopLevelTables(text, codeRanges)
         RangeCursor inlineStyleCodeRangeCursor = new RangeCursor(codeRanges)
+        RangeCursor commentRangeCursor = new RangeCursor(findCommentRanges(text))
         if (spans.isEmpty()) {
-            String styled = replaceInlineStyles(text, 0, text.length(), inlineStyleCodeRangeCursor)
+            String styled = replaceInlineStyles(text, 0, text.length(), inlineStyleCodeRangeCursor, commentRangeCursor)
             // Preserve reference identity when nothing was actually
             // converted, matching every other true no-op path in this class.
             return styled == text ? text : styled
@@ -138,7 +139,7 @@ class HtmlTableToMarkdownConverter {
                 // emit a partially-converted result.
                 return text
             }
-            result.append(replaceInlineStyles(text, lastEnd, span.start, inlineStyleCodeRangeCursor))
+            result.append(replaceInlineStyles(text, lastEnd, span.start, inlineStyleCodeRangeCursor, commentRangeCursor))
             int markerLineStart = text.lastIndexOf('\n', span.start - 1) + 1
             boolean markerLineStartsFreshBlock = markerLineStart == 0 ||
                 countNewlinesBefore(text, markerLineStart) >= BLOCK_SEPARATION
@@ -173,7 +174,7 @@ class HtmlTableToMarkdownConverter {
         if (!convertedAny) {
             return text
         }
-        result.append(replaceInlineStyles(text, lastEnd, text.length(), inlineStyleCodeRangeCursor))
+        result.append(replaceInlineStyles(text, lastEnd, text.length(), inlineStyleCodeRangeCursor, commentRangeCursor))
         return result.toString()
     }
 
@@ -191,11 +192,17 @@ class HtmlTableToMarkdownConverter {
      * this class.
      */
     private static String replaceInlineStyles(
-        String text, int regionStart, int regionEnd, RangeCursor codeRangeCursor
+        String text, int regionStart, int regionEnd, RangeCursor codeRangeCursor, RangeCursor commentRangeCursor
     ) {
         StringBuilder result = new StringBuilder(regionEnd - regionStart)
         int lastEnd = regionStart
         int i = regionStart
+        // Once a tag name is confirmed to have no closing tag anywhere in
+        // this region, it never will for any later occurrence either (the
+        // search window only shrinks) -- caching that avoids re-scanning the
+        // rest of the region from scratch for every repeated unmatched
+        // opening tag, which would otherwise be quadratic.
+        Set<String> tagsWithNoRemainingClose = [] as Set<String>
         while (i < regionEnd) {
             if (text.charAt(i) != '<' as char || !isTagStart(text, i) || codeRangeCursor.contains(i)) {
                 i++
@@ -203,12 +210,14 @@ class HtmlTableToMarkdownConverter {
             }
             String tagName = INLINE_STYLE_TAGS.find { String candidate -> isTagNamed(text, i, candidate, false) }
             int openTagEnd = tagName == null ? -1 : skipTag(text, i)
-            if (tagName == null || openTagEnd < 0 || openTagEnd > regionEnd) {
+            if (tagName == null || openTagEnd < 0 || openTagEnd > regionEnd ||
+                tagsWithNoRemainingClose.contains(tagName)) {
                 i++
                 continue
             }
-            int closeIndex = findClosingTag(text, openTagEnd, regionEnd, tagName)
+            int closeIndex = findClosingTag(text, openTagEnd, regionEnd, tagName, commentRangeCursor)
             if (closeIndex < 0) {
+                tagsWithNoRemainingClose << tagName
                 i++
                 continue
             }
@@ -227,8 +236,16 @@ class HtmlTableToMarkdownConverter {
                 continue
             }
             result.append(text, lastEnd, i)
-            String marker = (tagName == 'b' || tagName == 'strong') ? '**' : '*'
-            result.append(marker).append(escapeCell(inner)).append(marker)
+            String escaped = escapeCell(inner)
+            if (inner.trim()) {
+                String marker = (tagName == 'b' || tagName == 'strong') ? '**' : '*'
+                result.append(marker).append(escaped).append(marker)
+            } else {
+                // An empty or whitespace-only element must not become a bare
+                // "****"/"**" -- on its own line, CommonMark reads 3+ `*`
+                // characters as a thematic break (<hr>), not empty emphasis.
+                result.append(escaped)
+            }
             lastEnd = closeTagEnd
             i = closeTagEnd
         }
@@ -240,10 +257,15 @@ class HtmlTableToMarkdownConverter {
      * Finds the next {@code </tagName>} at or after {@code fromIndex}
      * (strictly before {@code regionEnd}), skipping past any substring match
      * that is only a prefix of a longer tag name (e.g. {@code </bold>} when
-     * looking for {@code </b>}) rather than treating it as a real match --
-     * the same false-positive guard {@link #skipRawTextElement} uses.
+     * looking for {@code </b>}) or that falls inside an HTML comment -- in
+     * either case treating it as a non-match and continuing the search,
+     * rather than letting a hidden {@code </tagName>} truncate the match
+     * early and leave the remainder of a crafted payload outside the
+     * replaced (and therefore inert) span.
      */
-    private static int findClosingTag(String text, int fromIndex, int regionEnd, String tagName) {
+    private static int findClosingTag(
+        String text, int fromIndex, int regionEnd, String tagName, RangeCursor commentRangeCursor
+    ) {
         String closeTagPrefix = '</' + tagName
         int searchFrom = fromIndex
         while (true) {
@@ -251,11 +273,35 @@ class HtmlTableToMarkdownConverter {
             if (idx < 0 || idx >= regionEnd) {
                 return -1
             }
-            if (isTagNamed(text, idx, tagName, true)) {
+            if (!commentRangeCursor.contains(idx) && isTagNamed(text, idx, tagName, true)) {
                 return idx
             }
             searchFrom = idx + 1
         }
+    }
+
+    /**
+     * Finds the character ranges of HTML comments in {@code text}, so a
+     * {@code </tagName>}-shaped substring hidden inside one (e.g.
+     * {@code <!-- </b> -->}) is never mistaken for a real closing tag.
+     */
+    private static List<int[]> findCommentRanges(String text) {
+        List<int[]> ranges = []
+        int length = text.length()
+        int i = 0
+        while (i < length) {
+            int commentStart = text.indexOf(COMMENT_START, i)
+            if (commentStart < 0) {
+                break
+            }
+            int commentEnd = skipTag(text, commentStart)
+            if (commentEnd < 0) {
+                break
+            }
+            ranges << ([commentStart, commentEnd] as int[])
+            i = commentEnd
+        }
+        return ranges
     }
 
     /**
