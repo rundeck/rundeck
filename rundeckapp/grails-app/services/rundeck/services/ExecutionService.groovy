@@ -750,6 +750,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      }
                  }
 
+                 //Execution types to leave out, NULL-safe for rows predating the column
+                 if (query.excludeExecutionTypeFilter) {
+                     or {
+                         isNull('executionType')
+                         not { inList('executionType', query.excludeExecutionTypeFilter) }
+                     }
+                 }
+
                  //running status filter.
                  if (query.runningFilter) {
                      Date now = new Date()

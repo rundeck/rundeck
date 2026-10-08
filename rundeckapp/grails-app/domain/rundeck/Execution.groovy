@@ -94,7 +94,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         extraMetadata(nullable: true)
         uuid(nullable: true)
         jobUuid(nullable: true)
-        note(nullable: true)
+        note(nullable: true, maxSize: 1024)
     }
 
     static mapping = {

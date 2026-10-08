@@ -3213,7 +3213,8 @@ if executed in cluster mode.""",
             //ignore
             query.executionTypeFilter = null
         }
-
+        //Internal-only filter: not part of the API contract, so ignore any value bound from the request
+        query.excludeExecutionTypeFilter = null
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
@@ -3677,6 +3678,8 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
         if (null != query) {
+            //Internal-only filter: not part of the API contract, so ignore any value bound from the request
+            query.excludeExecutionTypeFilter = null
             query.configureFilter()
 
             if (params.recentFilter && !query.recentFilter) {

@@ -1076,8 +1076,8 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
 
 
     /**
-     * Ad hoc steps have their own page, so the generic execution list leaves them out by default.
-     * It is an exclusion the caller can always override, never a filter that hides data outright.
+     * The generic execution list does not exclude ad hoc steps; the type exclusion is an internal-only
+     * filter, so a value bound from the request is ignored.
      */
     private void wireQueryCollaborators() {
         controller.apiService = Mock(ApiService) {
@@ -1113,7 +1113,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         query.excludeExecutionTypeFilter == null
     }
 
-    def "api execution query leaves a caller-supplied exclusion untouched"() {
+    def "api execution query ignores a caller-supplied exclusion"() {
         given:
         def query = new ExecutionQuery(excludeExecutionTypeFilter: [ExecutionTypes.USER])
         wireQueryCollaborators()
@@ -1123,7 +1123,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         request.api_version = 60
         controller.apiExecutionsQueryv14(query)
 
-        then:
-        query.excludeExecutionTypeFilter == [ExecutionTypes.USER]
+        then: 'the filter is not part of the API contract'
+        query.excludeExecutionTypeFilter == null
     }
 }
