@@ -648,6 +648,19 @@ class EngineWorkflowExecutorSpec extends Specification {
         result.stepFailures[0].failureData.resultCode == 1
     }
 
+    def "updateStateWithStepResultData skips null failure data values"() {
+        given:
+        def state = States.mutable()
+
+        when:
+        EngineWorkflowExecutor.updateStateWithStepResultData(state, 1, [resultCode: 1, nullValue: null])
+
+        then:
+        noExceptionThrown()
+        state.getState().get('step.1.result.resultCode') == '1'
+        !state.getState().containsKey('step.1.result.nullValue')
+    }
+
     def "basic failure"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
