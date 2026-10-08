@@ -45,6 +45,22 @@ describe("PtRadioGroup", () => {
       expect(wrapper.text()).toContain("a");
     });
 
+    it("renders every option when values stringify to the same text", () => {
+      const wrapper = createWrapper({
+        modelValue: "true",
+        options: [
+          { label: "Boolean", value: true },
+          { label: "String", value: "true" },
+        ],
+      });
+
+      const labels = wrapper
+        .findAll('[data-testid="pt-radio-group-label"]')
+        .map((label) => label.text());
+      expect(labels).toEqual(["Boolean", "String"]);
+      expect(findRadio(wrapper, 1).element.checked).toBe(true);
+    });
+
     it("supports boolean option values", () => {
       const wrapper = createWrapper({
         modelValue: false,
@@ -94,6 +110,26 @@ describe("PtRadioGroup", () => {
       const group = findByTestId(wrapper, "pt-radio-group");
       expect(group.attributes("aria-label")).toBe("Target");
       expect(group.attributes("aria-labelledby")).toBeUndefined();
+    });
+
+    it("warns when the group has neither a legend nor an aria-label", () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+      createWrapper();
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("accessible name"),
+      );
+      warn.mockRestore();
+    });
+
+    it("does not warn when the group is named", () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+      createWrapper({ ariaLabel: "Target" });
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
 
     it("links each label to its radio", () => {

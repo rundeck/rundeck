@@ -187,6 +187,19 @@ describe("PtInput", () => {
       );
     });
 
+    it("forwards autocomplete to the textarea", async () => {
+      const wrapper = await createWrapper({
+        multiline: true,
+        autocomplete: "off",
+      });
+
+      expect(
+        wrapper
+          .find('[data-testid="pt-input-textarea"]')
+          .attributes("autocomplete"),
+      ).toBe("off");
+    });
+
     it("shows 3 lines by default and the given number of rows otherwise", async () => {
       const defaults = await createWrapper({ multiline: true });
       const custom = await createWrapper({ multiline: true, rows: 5 });
