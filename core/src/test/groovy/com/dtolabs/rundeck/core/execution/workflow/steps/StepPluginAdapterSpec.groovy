@@ -9,6 +9,8 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -320,6 +322,38 @@ class StepPluginAdapterSpec extends Specification {
         // nothing should have been captured into the output context
         wrap.outputResult == 'SET_BEFORE_FAILURE'
         outputContext.getSharedContext().getData(ContextView.step(4)) == null
+    }
+
+    def "failed step result keeps the StepException failure data"() {
+        given:
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> new BaseDataContext([option: [:]])
+            getFrameworkProject() >> PROJECT_NAME
+            getExecutionListener() >> Mock(ExecutionListener)
+        }
+        def adapter = new StepPluginAdapter(new Test7Plugin())
+        def item = new TestExecItem(type: 'atype', stepConfiguration: [:], label: 'a label')
+
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        !result.isSuccess()
+        result.failureReason == NodeStepFailureReason.NonZeroResultCode
+        result.failureData[NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE] == 1
+    }
+
+    @Plugin(name = "test7", service = ServiceNameConstants.WorkflowStep)
+    static class Test7Plugin implements StepPlugin {
+        @Override
+        void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
+            throw new StepException(
+                    "Script result code was: 1",
+                    NodeStepFailureReason.NonZeroResultCode,
+                    [(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE): 1]
+            )
+        }
     }
 
     @Plugin(name = "test5", service = ServiceNameConstants.WorkflowNodeStep)
