@@ -486,6 +486,19 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result == text
     }
 
+    def "a fenced code block inside a blockquote protects its documented table example"() {
+        given:
+        String text = '> ~~~\n' +
+            '> <table><tr><td>a</td></tr></table>\n' +
+            '> ~~~\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
     def "an unclosed fenced code block extends to the end of the text and its table example is not converted"() {
         given:
         String text = 'Example:\n\n' +
