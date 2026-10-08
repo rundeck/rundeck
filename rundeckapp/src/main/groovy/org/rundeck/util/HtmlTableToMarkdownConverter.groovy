@@ -651,15 +651,17 @@ class HtmlTableToMarkdownConverter {
         return -1
     }
 
+    /**
+     * Finds the next occurrence of {@code needle} at or after
+     * {@code fromIndex}, case-insensitively. Delegates to Java's regex
+     * engine (a tested, optimized implementation) rather than a hand-written
+     * character-by-character scan; {@code needle} is always one of this
+     * class's own fixed, short tag-closing strings, never attacker-supplied,
+     * so {@link Pattern#quote} is purely defensive.
+     */
     private static int indexOfIgnoreCase(String text, String needle, int fromIndex) {
-        int length = text.length()
-        int needleLength = needle.length()
-        for (int i = fromIndex; i <= length - needleLength; i++) {
-            if (text.regionMatches(true, i, needle, 0, needleLength)) {
-                return i
-            }
-        }
-        return -1
+        Matcher matcher = Pattern.compile(Pattern.quote(needle), Pattern.CASE_INSENSITIVE).matcher(text)
+        return matcher.find(fromIndex) ? matcher.start() : -1
     }
 
     /**
