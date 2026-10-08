@@ -527,13 +527,15 @@ class HtmlTableToMarkdownConverter {
     }
 
     /**
-     * Finds the character ranges of Markdown fenced code blocks and inline
-     * code spans in {@code text}, so {@link #findTopLevelTables} can ignore
-     * any {@code <table>}-like text found inside them -- those are
-     * documented examples, not raw HTML meant to be rendered live.
+     * Finds the character ranges of Markdown fenced code blocks, indented
+     * code blocks, and inline code spans in {@code text}, so
+     * {@link #findTopLevelTables} can ignore any {@code <table>}-like text
+     * found inside them -- those are documented examples, not raw HTML meant
+     * to be rendered live.
      */
     private static List<int[]> findCodeRanges(String text) {
         List<int[]> ranges = findFencedCodeBlocks(text)
+        ranges.addAll(findIndentedCodeBlocks(text))
         addMatchRanges(INLINE_CODE_SPAN, text, ranges)
         return mergeRanges(ranges)
     }
@@ -656,6 +658,82 @@ class HtmlTableToMarkdownConverter {
             }
         }
         return [(int) c, runLength] as int[]
+    }
+
+    /**
+     * Finds CommonMark indented code block ranges: one or more lines
+     * indented by 4+ columns (a tab counts as reaching the next 4-column
+     * stop), separated only by blank lines. An indented block can never
+     * interrupt a paragraph, so it must start right after a blank line or at
+     * the very start of the text. Trailing blank lines are not part of the
+     * range, so a table right after them is still eligible for conversion.
+     */
+    private static List<int[]> findIndentedCodeBlocks(String text) {
+        List<int[]> ranges = []
+        int length = text.length()
+        int lineStart = 0
+        boolean previousLineBlank = true
+        while (lineStart < length) {
+            int lineEnd = text.indexOf('\n', lineStart)
+            if (lineEnd < 0) {
+                lineEnd = length
+            }
+            boolean blank = isBlankLine(text, lineStart, lineEnd)
+            if (!blank && previousLineBlank && isIndentedLine(text, lineStart, lineEnd)) {
+                int blockEnd = lineEnd < length ? lineEnd + 1 : length
+                int lastContentEnd = blockEnd
+                int scanStart = blockEnd
+                while (scanStart < length) {
+                    int scanLineEnd = text.indexOf('\n', scanStart)
+                    if (scanLineEnd < 0) {
+                        scanLineEnd = length
+                    }
+                    if (isBlankLine(text, scanStart, scanLineEnd)) {
+                        scanStart = scanLineEnd < length ? scanLineEnd + 1 : length
+                        continue
+                    }
+                    if (!isIndentedLine(text, scanStart, scanLineEnd)) {
+                        break
+                    }
+                    lastContentEnd = scanLineEnd < length ? scanLineEnd + 1 : length
+                    scanStart = lastContentEnd
+                }
+                ranges << ([lineStart, lastContentEnd] as int[])
+                lineStart = lastContentEnd
+                previousLineBlank = false
+                continue
+            }
+            previousLineBlank = blank
+            lineStart = lineEnd < length ? lineEnd + 1 : length
+        }
+        return ranges
+    }
+
+    private static boolean isBlankLine(String text, int lineStart, int lineEnd) {
+        for (int i = lineStart; i < lineEnd; i++) {
+            if (!Character.isWhitespace(text.charAt(i))) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private static boolean isIndentedLine(String text, int lineStart, int lineEnd) {
+        int i = lineStart
+        int column = 0
+        while (i < lineEnd && column < 4) {
+            char c = text.charAt(i)
+            if (c == ' ' as char) {
+                column++
+                i++
+            } else if (c == '\t' as char) {
+                column += 4
+                i++
+            } else {
+                break
+            }
+        }
+        return column >= 4
     }
 
     private static void addMatchRanges(Pattern pattern, String text, List<int[]> ranges) {
@@ -822,6 +900,12 @@ class HtmlTableToMarkdownConverter {
 
         @Override
         void closeDocument() {
+            // HTML lets a table's final td/th and tr omit their end tags
+            // entirely -- the table's own close implies them. Without this,
+            // a table ending in e.g. "<td>last" would silently drop that
+            // last cell instead of finalizing it.
+            closeCell()
+            closeRow()
         }
 
         // Any tag other than tr/td/th/br (e.g. a nested <span>) is ignored
@@ -831,10 +915,19 @@ class HtmlTableToMarkdownConverter {
         void openTag(String elementName, List<String> attrs) {
             switch (elementName) {
                 case 'tr':
+                    // HTML lets a tr's end tag be omitted before the next tr --
+                    // finalize whatever row (and pending cell) is still open
+                    // first, or its cells are silently lost.
+                    closeCell()
+                    closeRow()
                     currentRow = new RowData()
                     break
                 case 'td':
                 case 'th':
+                    // HTML lets a td/th's end tag be omitted before the next
+                    // cell -- without closing the pending cell first, it gets
+                    // overwritten below and its text is silently lost.
+                    closeCell()
                     currentCellText = new StringBuilder()
                     break
                 case 'br':
@@ -852,10 +945,8 @@ class HtmlTableToMarkdownConverter {
         void closeTag(String elementName) {
             switch (elementName) {
                 case 'tr':
-                    if (currentRow != null && !currentRow.cells.isEmpty()) {
-                        rows << currentRow
-                    }
-                    currentRow = null
+                    closeCell()
+                    closeRow()
                     break
                 case 'td':
                 case 'th':
@@ -870,6 +961,13 @@ class HtmlTableToMarkdownConverter {
                 currentRow.cells << cellText
             }
             currentCellText = null
+        }
+
+        private void closeRow() {
+            if (currentRow != null && !currentRow.cells.isEmpty()) {
+                rows << currentRow
+            }
+            currentRow = null
         }
 
         @Override

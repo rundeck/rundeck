@@ -597,15 +597,32 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
     def "a table NOT directly after a recognizable marker falls back to ordinary top-level formatting"() {
         given:
         // Plain indentation alone (no marker) is deliberately not treated as
-        // a continuation context -- too ambiguous to guess at safely.
-        String text = '    <table><tr><td>a</td></tr></table>'
+        // a continuation context -- too ambiguous to guess at safely. Two
+        // spaces stay below the 4-column indented-code-block threshold, so
+        // this exercises the "no marker" fallback, not code-block protection.
+        String text = '  <table><tr><td>a</td></tr></table>'
 
         when:
         String result = HtmlTableToMarkdownConverter.convert(text)
 
         then:
         result.contains('| a |')
-        !result.contains('    | a |')
+        !result.contains('  | a |')
+    }
+
+    def "a table indented 4+ spaces at the start of a block is a CommonMark indented code block, not a live table"() {
+        given:
+        // Per CommonMark, 4+ columns of indentation at the start of a block
+        // is an indented code block -- the exact documented-example case
+        // this protection exists for, so it must render as code, unchanged.
+        String text = '    <table><tr><td>a</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+        !result.contains('| a |')
     }
 
     def "a wide row followed by many narrow rows does not cause quadratic padding blow-up"() {
@@ -637,5 +654,51 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
 
         then:
         result.contains('| first second |')
+    }
+
+    def "a td with an omitted end tag before the next td does not lose its text"() {
+        given:
+        // Valid HTML: a td's end tag may be omitted immediately before the
+        // next td -- it is implicitly closed, not overwritten.
+        String html = '<table><tr><td>a<td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result.contains('| a | b |')
+    }
+
+    def "a tr with an omitted end tag before the next tr does not lose its row"() {
+        given:
+        // Valid HTML: a tr's end tag may be omitted immediately before the
+        // next tr -- the row (and its still-open cell) must still be
+        // finalized, not discarded.
+        String html = '<table><tr><td>a<tr><td>b</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        List<String> lines = result.trim().readLines()
+
+        then:
+        lines[0] == '| a |'
+        lines[1] == '| --- |'
+        lines[2] == '| b |'
+    }
+
+    def "a table whose final cell and row omit their end tags entirely does not lose that content"() {
+        given:
+        // Valid HTML: the table's own close implies the still-open tr/td's
+        // close -- nothing explicitly closes them before </table>.
+        String html = '<table><tr><td>a</td></tr><tr><td>last</table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+        List<String> lines = result.trim().readLines()
+
+        then:
+        lines[0] == '| a |'
+        lines[1] == '| --- |'
+        lines[2] == '| last |'
     }
 }
