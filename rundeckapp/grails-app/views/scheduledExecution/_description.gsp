@@ -27,12 +27,18 @@
      through as "remainingLine" and there is no separate first line. Every
      other description keeps its existing first-line/remaining-lines split
      unchanged -- see HtmlTableToMarkdownConverter javadoc. --}%
+%{-- The check must see the very same text the converter will get: only
+     what precedes the cutoff marker. Otherwise an unsupported table in the
+     cut-off section after the marker would make the check fail for a
+     perfectly good table on line one. --}%
+<g:set var="renderableDescription"
+       value="${cutoffMarker ? g.textBeforeLine(text: description, marker: cutoffMarker) : description}"/>
 <g:set var="descriptionFirstLineHasTable"
-       value="${allowHTML && !firstLineOnly && HtmlTableToMarkdownConverter.firstLineContainsTable(description?.toString())}"/>
+       value="${allowHTML && !firstLineOnly && HtmlTableToMarkdownConverter.firstLineContainsTable(renderableDescription?.toString())}"/>
 <g:set var="firstline" value="${descriptionFirstLineHasTable ? '' : g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
     <g:set var="remainingLine"
-           value="${descriptionFirstLineHasTable ? description : g.textRemainingLines(text: description)}"/>
+           value="${descriptionFirstLineHasTable ? renderableDescription : g.textRemainingLines(text: description)}"/>
     <g:if test="${cutoffMarker}">
         <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
     </g:if>

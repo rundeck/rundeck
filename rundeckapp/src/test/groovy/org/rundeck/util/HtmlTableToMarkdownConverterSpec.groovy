@@ -59,10 +59,11 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
 
     def "a th row that is not the first row does not get promoted to the top, reordering the author's rows"() {
         given:
-        // <th> appears on the THIRD row here, not the first -- the first
-        // row ("Jan"/"10") must stay the header/first line, in its original
-        // position, rather than being pushed down because some later row
-        // happens to use <th> cells.
+        // <th> appears on the THIRD row here, not the first -- the rows must
+        // stay in their original order, rather than that row being pushed
+        // to the top because it happens to use <th> cells. And since the
+        // first row is ordinary data, it must not become the header either:
+        // the table gets an empty synthetic header instead.
         String html = '<table>' +
             '<tr><td>Jan</td><td>10</td></tr>' +
             '<tr><td>Feb</td><td>20</td></tr>' +
@@ -74,10 +75,27 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         List<String> lines = result.trim().readLines()
 
         then:
-        lines[0] == '| Jan | 10 |'
+        lines[0] == '|  |  |'
         lines[1] == '| --- | --- |'
-        lines[2] == '| Feb | 20 |'
-        lines[3] == '| Month | Value |'
+        lines[2] == '| Jan | 10 |'
+        lines[3] == '| Feb | 20 |'
+        lines[4] == '| Month | Value |'
+    }
+
+    def "a first row authored with th cells becomes the header, while td-only data is never promoted"() {
+        when:
+        String rendered = rundeck.codecs.MarkdownCodec.decodeStr(HtmlTableToMarkdownConverter.convert(html))
+
+        then:
+        rendered.contains('<table>')
+        rendered.contains(expectedCell)
+        !rendered.contains(forbiddenCell)
+
+        where:
+        html                                                        | expectedCell       | forbiddenCell
+        '<table><tr><th>Month</th></tr><tr><td>Jan</td></tr></table>' | '<th>Month</th>'   | '<td>Month</td>'
+        '<table><tr><td>Jan</td></tr><tr><td>Feb</td></tr></table>'   | '<td>Jan</td>'     | '<th>Jan</th>'
+        '<table><tr><td>only</td></tr></table>'                       | '<td>only</td>'    | '<th>only</th>'
     }
 
     def "extra whitespace and newlines inside tags do not break parsing"() {
@@ -309,7 +327,7 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         '<i></i>'           | ''
     }
 
-    def "a row with no th cells still produces a valid header via the first row"() {
+    def "a table with no th cells gets an empty synthetic header so its data row stays a data row"() {
         given:
         String html = '<table><tr><td>a</td><td>b</td></tr></table>'
 
@@ -318,9 +336,10 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         List<String> lines = result.trim().readLines()
 
         then:
-        lines[0] == '| a | b |'
+        lines[0] == '|  |  |'
         lines[1] == '| --- | --- |'
-        lines.size() == 2
+        lines[2] == '| a | b |'
+        lines.size() == 3
     }
 
     def "pipe characters in cell text are escaped so they cannot break the table structure"() {
@@ -802,7 +821,7 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         String result = HtmlTableToMarkdownConverter.convert(text)
 
         then:
-        result == 'Intro.\n\n| a |\n| --- |\n\nOutro.'
+        result == 'Intro.\n\n|  |\n| --- |\n| a |\n\nOutro.'
     }
 
     def "converting a table already separated by a full blank line does not add any extra blank lines"() {
@@ -813,7 +832,7 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         String result = HtmlTableToMarkdownConverter.convert(text)
 
         then:
-        result == 'Intro.\n\n| a |\n| --- |\n\nOutro.'
+        result == 'Intro.\n\n|  |\n| --- |\n| a |\n\nOutro.'
     }
 
     def "a table as the only content of a blockquote stays inside the blockquote when rendered"() {
@@ -825,7 +844,7 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
 
         then:
-        result == '> | a | b |\n> | --- | --- |'
+        result == '> |  |  |\n> | --- | --- |\n> | a | b |'
         int blockquoteStart = rendered.indexOf('<blockquote>')
         int tableStart = rendered.indexOf('<table>')
         int blockquoteEnd = rendered.indexOf('</blockquote>')
@@ -861,7 +880,7 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         String rendered = rundeck.codecs.MarkdownCodec.decodeStr(result)
 
         then:
-        result == '- | a | b |\n  | --- | --- |'
+        result == '- |  |  |\n  | --- | --- |\n  | a | b |'
         int listStart = rendered.indexOf('<li>')
         int tableStart = rendered.indexOf('<table>')
         int listEnd = rendered.indexOf('</li>')
@@ -969,9 +988,10 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         List<String> lines = result.trim().readLines()
 
         then:
-        lines[0] == '| a |'
+        lines[0] == '|  |'
         lines[1] == '| --- |'
-        lines[2] == '| b |'
+        lines[2] == '| a |'
+        lines[3] == '| b |'
     }
 
     def "a table whose final cell and row omit their end tags entirely does not lose that content"() {
@@ -985,8 +1005,9 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         List<String> lines = result.trim().readLines()
 
         then:
-        lines[0] == '| a |'
+        lines[0] == '|  |'
         lines[1] == '| --- |'
-        lines[2] == '| last |'
+        lines[2] == '| a |'
+        lines[3] == '| last |'
     }
 }

@@ -68,6 +68,12 @@ class HtmlTableToMarkdownConverter {
      */
     private static class RowData {
         List<String> cells = []
+        int headerCells = 0
+
+        /** Whether every cell of this row was authored as a {@code <th>}. */
+        boolean isHeaderRow() {
+            return !cells.isEmpty() && headerCells == cells.size()
+        }
     }
 
     /**
@@ -1243,16 +1249,20 @@ class HtmlTableToMarkdownConverter {
         if (rows.isEmpty()) {
             return null
         }
-        // Always the first row, regardless of whether it (or some later row)
-        // used <th> cells: GFM pipe-table syntax structurally requires the
-        // first line to be the header, and searching for a <th> row
-        // anywhere in the table previously let one appearing after the
-        // first row get silently promoted to the top, reordering the
-        // author's rows.
-        RowData header = rows.get(0)
-        if (header.cells.isEmpty()) {
+        if (rows.get(0).cells.isEmpty()) {
             return null
         }
+        // GFM pipe-table syntax structurally requires a header line. Only
+        // the FIRST row may fill that role, and only if the author actually
+        // wrote it as a header (every cell a <th>): a <th>-only row that
+        // appears later is a data row with row headings, and searching for
+        // one anywhere previously let it get promoted to the top, reordering
+        // the author's rows. A table whose first row is ordinary <td> data
+        // gets an empty synthetic header instead, so none of its data rows
+        // is silently turned into column headings (which also hands
+        // assistive technology the wrong header associations).
+        boolean firstRowIsHeader = rows.get(0).isHeaderRow()
+        List<RowData> bodyRows = firstRowIsHeader ? rows.subList(1, rows.size()) : rows
         // Use the widest row (e.g. a colspan'd header next to wider data
         // rows) as the column count and pad every row to it -- otherwise a
         // narrower header fixes the table's width and GFM silently drops
@@ -1264,16 +1274,15 @@ class HtmlTableToMarkdownConverter {
         // HTML (one wide row plus many single-cell rows) can demand an
         // unbounded amount of generated Markdown. Both operands are cast to
         // long before multiplying so the check itself can't overflow.
-        if ((long) rows.size() * (long) columnCount > MAX_PADDED_CELLS) {
+        if ((long) (bodyRows.size() + 1) * (long) columnCount > MAX_PADDED_CELLS) {
             return null
         }
+        List<String> headerCells = firstRowIsHeader ? rows.get(0).cells : Collections.nCopies(columnCount, '')
         StringBuilder sb = new StringBuilder()
-        sb.append(rowLine(padCells(header.cells, columnCount))).append('\n')
+        sb.append(rowLine(padCells(headerCells, columnCount))).append('\n')
         sb.append(delimiterLine(columnCount)).append('\n')
-        for (RowData row : rows) {
-            if (!row.is(header)) {
-                sb.append(rowLine(padCells(row.cells, columnCount))).append('\n')
-            }
+        for (RowData row : bodyRows) {
+            sb.append(rowLine(padCells(row.cells, columnCount))).append('\n')
         }
         return sb.toString().trim()
     }
@@ -1344,6 +1353,7 @@ class HtmlTableToMarkdownConverter {
         List<RowData> rows = []
         private RowData currentRow
         private StringBuilder currentCellText
+        private boolean currentCellIsHeader
 
         @Override
         void openDocument() {
@@ -1379,6 +1389,7 @@ class HtmlTableToMarkdownConverter {
                     // cell -- without closing the pending cell first, it gets
                     // overwritten below and its text is silently lost.
                     closeCell()
+                    currentCellIsHeader = elementName == 'th'
                     currentCellText = new StringBuilder()
                     break
                 case 'br':
@@ -1410,6 +1421,9 @@ class HtmlTableToMarkdownConverter {
             if (currentCellText != null && currentRow != null) {
                 String cellText = WHITESPACE_RUN.matcher(currentCellText.toString()).replaceAll(' ').trim()
                 currentRow.cells << cellText
+                if (currentCellIsHeader) {
+                    currentRow.headerCells++
+                }
             }
             currentCellText = null
         }
