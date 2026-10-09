@@ -82,6 +82,17 @@ class HtmlTableToMarkdownConverter {
     }
 
     /**
+     * Signals that {@link #findTopLevelTables} reached the end of the text
+     * (or an unterminated tag) with a {@code <table>} still open -- caught
+     * by {@link #convert}'s existing fail-safe handling so an unclosed table
+     * aborts ALL conversion, per this class's documented contract, rather
+     * than leaving the tables that happened to close earlier partially
+     * converted alongside the broken one left as raw text.
+     */
+    private static class UnbalancedTableException extends RuntimeException {
+    }
+
+    /**
      * Pre-processes raw description text: detects well-formed HTML
      * {@code <table>} blocks and replaces each one, in place, with an
      * equivalent GFM Markdown pipe table built only from the plain-text
@@ -117,16 +128,25 @@ class HtmlTableToMarkdownConverter {
     }
 
     /**
-     * Whether a {@code <table} tag starts anywhere within the first physical
-     * line of {@code text} (up to the first newline, or the whole text if it
-     * has none) -- whether or not anything else (prose, other tags) shares
-     * that line with it. {@code _description.gsp} uses this to decide
-     * whether the description has a separate first line that can stand on
-     * its own as a short, plain-text summary, or whether splitting one off
-     * would cut a table in two: either leaving nothing behind it to convert
-     * (a single-line table) or stripping off its own opening tag (a
-     * multi-line table starting on line one) -- {@link #convert} can only
-     * turn a table into valid Markdown when fed the whole thing at once.
+     * Whether a genuinely convertible {@code <table>} starts anywhere within
+     * the first physical line of {@code text} (up to the first newline, or
+     * the whole text if it has none) -- whether or not anything else (prose,
+     * other tags) shares that line with it. {@code _description.gsp} uses
+     * this to decide whether the description has a separate first line that
+     * can stand on its own as a short, plain-text summary, or whether
+     * splitting one off would cut a table in two: either leaving nothing
+     * behind it to convert (a single-line table) or stripping off its own
+     * opening tag (a multi-line table starting on line one) -- {@link
+     * #convert} can only turn a table into valid Markdown when fed the whole
+     * thing at once.
+     * <p>
+     * Reuses {@link #findTopLevelTables}'s own code-span/comment/quoted-
+     * attribute-aware scanning rather than a raw substring search, so a
+     * documented example (e.g. a backtick-quoted {@code `<table>`} mention)
+     * never blanks the summary line for a table that will not actually be
+     * converted. An unbalanced table also returns {@code false}: {@link
+     * #convert} will fail safe and return the text unchanged in that case,
+     * so there is nothing for the summary line to be protected from.
      */
     static boolean firstLineContainsTable(String text) {
         if (!text) {
@@ -136,10 +156,14 @@ class HtmlTableToMarkdownConverter {
         if (firstLineEnd < 0) {
             firstLineEnd = text.length()
         }
-        for (int i = 0; i < firstLineEnd; i++) {
-            if (text.charAt(i) == '<' as char && isTagNamed(text, i, 'table', false)) {
-                return true
+        try {
+            for (TableSpan span : findTopLevelTables(text, findCodeRanges(text))) {
+                if (span.start < firstLineEnd) {
+                    return true
+                }
             }
+        } catch (UnbalancedTableException ignored) {
+            return false
         }
         return false
     }
@@ -591,6 +615,14 @@ class HtmlTableToMarkdownConverter {
                 }
             }
             i = tagEnd
+        }
+        if (depth > 0) {
+            // An opening <table> was never matched by a closing tag anywhere
+            // in the text (including because scanning stopped early on an
+            // unterminated descendant tag) -- abort ALL conversion rather
+            // than partially convert only the tables that happened to close
+            // before this broken one.
+            throw new UnbalancedTableException()
         }
         return spans
     }
