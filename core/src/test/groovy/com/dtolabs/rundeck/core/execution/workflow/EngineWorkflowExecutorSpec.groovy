@@ -594,6 +594,73 @@ class EngineWorkflowExecutorSpec extends Specification {
             new StepExecutionResultImpl(null, new MyReason("test failure"), "a failure")
         }
     }
+    static class TestStepExceptionStepExecutor implements StepExecutor {
+        @Override
+        boolean isNodeDispatchStep(final StepExecutionItem item) {
+            return false
+        }
+
+        @Override
+        StepExecutionResult executeWorkflowStep(
+            final StepExecutionContext executionContext,
+            final StepExecutionItem item
+        ) throws StepException {
+            throw new StepException("Script result code was: 1", new MyReason("NonZeroResultCode"), [resultCode: 1])
+        }
+    }
+
+    def "step failure keeps failure data from a thrown StepException"() {
+        given:
+        def engine = new EngineWorkflowExecutor(framework)
+        executionServiceImpl.setExecutionProviders(Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type=='blah' }, _) >> new TestStepExceptionStepExecutor()
+        })
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
+
+        def context = Mock(StepExecutionContext) {
+            getExecutionListener() >> Stub(ExecutionListener)
+            getNodes() >> Mock(INodeSet){
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
+            getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
+        }
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                getCommands() >> [
+                        Mock(StepExecutionItem) {
+                            getType() >> 'blah'
+                        }
+                ]
+                getStrategy() >> 'test-strategy'
+            }
+        }
+
+        when:
+        def result = engine.executeWorkflowImpl(context, item)
+
+        then:
+        !result.success
+        result.stepFailures[0].failureMessage == 'Script result code was: 1'
+        result.stepFailures[0].failureData.resultCode == 1
+    }
+
+    def "updateStateWithStepResultData skips null failure data values"() {
+        given:
+        def state = States.mutable()
+
+        when:
+        EngineWorkflowExecutor.updateStateWithStepResultData(state, 1, [resultCode: 1, nullValue: null])
+
+        then:
+        noExceptionThrown()
+        state.getState().get('step.1.result.resultCode') == '1'
+        !state.getState().containsKey('step.1.result.nullValue')
+    }
+
     def "basic failure"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
