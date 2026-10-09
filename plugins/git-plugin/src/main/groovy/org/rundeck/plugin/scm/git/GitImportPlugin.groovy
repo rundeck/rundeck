@@ -218,9 +218,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     actions[ACTION_PULL].performAction(context,this,null,null,null)
                 }
             } catch (Exception e) {
-                msgs << "Fetch from the repository failed: ${e.message}"
-                logger.error("Failed fetch from the repository: ${e.message}")
-                logger.debug("Failed fetch from the repository: ${e.message}", e)
+                msgs << "Fetch from the repository failed: ${visibleRemoteMessage(e)}"
+                logger.error("Failed fetch from the repository: ${e.message}", e)
                 // Short-circuit: skip expensive tree walk when the remote is unreachable.
                 throw new ScmPluginException(msgs.join(', '))
             }
@@ -799,7 +798,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (bstat && bstat.behindCount > 0) {
             try {
                 pullResult = gitPull(context)
-            } catch (TransportException e) {
+            } catch (Exception e) {
+                if (!causedBy(e, TransportException)) {
+                    throw e
+                }
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
         }

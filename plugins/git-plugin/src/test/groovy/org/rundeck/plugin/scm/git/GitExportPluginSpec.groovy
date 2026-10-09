@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -583,7 +585,7 @@ class GitExportPluginSpec extends Specification {
         // A fetch failure signals the remote is unreachable — throw so the caller can surface a
         // clear "Git server unavailable" message instead of a misleading local-state status.
         ScmPluginException e = thrown()
-        e.message == 'Fetch from the repository failed: Invalid remote: origin'
+        e.message == 'Fetch from the repository failed: Could not access the Git repository. See the server log for details.'
     }
 
     static RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {
@@ -1595,6 +1597,78 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "cluster fix continues when the automatic pull fails"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
+        git.close()
+        def failure = new ScmPluginException(
+                'Could not access the Git repository. See the server log for details.',
+                new TransportException('https', new IOException('config'))
+        )
+        def plugin = new GitExportPlugin(config) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw failure
+            }
+        }
+        plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'abc'
+            getScmImportMetadata() >> [:]
+        }
+
+        when:
+        def status = plugin.clusterFixJobs(context, [jobref])
+
+        then:
+        status.pull
+        status.error == failure
+    }
+
+    def "cluster fix still fails when the automatic pull fails for another reason"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
+        git.close()
+        def failure = new ScmPluginException('other', new IllegalStateException('nope'))
+        def plugin = new GitExportPlugin(config) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw failure
+            }
+        }
+        plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        when:
+        plugin.clusterFixJobs(context, [])
+
+        then:
+        def thrown = thrown(ScmPluginException)
+        thrown.is(failure)
+    }
+
 
     def "get job status, does not exist in repo, respect serialize true"() {
         given:
@@ -1726,7 +1800,7 @@ class GitExportPluginSpec extends Specification {
         then:
         status!=null
         status.state==SynchState.CLEAN
-        status.message=='Automatic pull from the repository failed: Remote origin did not advertise Ref for branch master. This Ref may not exist in the remote or may be hidden by permission settings.'
+        status.message=='Automatic pull from the repository failed: Failed pull from the repository: Remote origin did not advertise Ref for branch master. This Ref may not exist in the remote or may be hidden by permission settings.'
     }
 
     def "initialize plugin with unknown branch without create config"() {
@@ -1767,7 +1841,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
+        e.message=="Failed cloning the repository: Remote branch 'dev2' not found in upstream origin"
     }
 
     def "initialize plugin creates branch when branch does not exist on remote"() {
