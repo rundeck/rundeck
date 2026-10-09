@@ -1303,10 +1303,10 @@ class LogFileStorageService
             logsRoot = getLocalLogsDir().canonicalFile
         } catch (Exception e) {
             //the local logs root can't be resolved here (e.g. frameworkService/framework.logs.dir
-            //not available in this context): cross-project containment can't be evaluated, so fall
-            //back to the pre-existing behavior of trusting the stored path rather than failing the read
-            log.debug("Unable to resolve local logs directory to validate stored outputfilepath \"${storedFile}\": ${e.message}")
-            return true
+            //not available): cross-project containment can't be evaluated, so fail closed rather
+            //than risk trusting a path that was never actually validated
+            log.warn("Unable to resolve local logs directory to validate stored outputfilepath \"${storedFile}\": ${e.message}")
+            return false
         }
         try {
             File canonicalStored = storedFile.canonicalFile
