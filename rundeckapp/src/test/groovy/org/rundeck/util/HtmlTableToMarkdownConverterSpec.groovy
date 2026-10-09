@@ -592,6 +592,23 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result == text
     }
 
+    def "fenced and indented code scanning recognizes CR and CRLF line endings"() {
+        expect:
+        // The closed fence protects its example, and the real table after
+        // it still converts -- with only "\n" recognized, CR-only text was
+        // one giant unclosed fence line that swallowed the table.
+        String result = HtmlTableToMarkdownConverter.convert(text)
+        result.contains('<table><tr><td>example</td></tr></table>')
+        result.contains('| real |')
+
+        where:
+        text << [
+            '~~~\r<table><tr><td>example</td></tr></table>\r~~~\r\r<table><tr><td>real</td></tr></table>\r',
+            '~~~\r\n<table><tr><td>example</td></tr></table>\r\n~~~\r\n\r\n<table><tr><td>real</td></tr></table>\r\n',
+            '    <table><tr><td>example</td></tr></table>\r\r<table><tr><td>real</td></tr></table>\r',
+        ]
+    }
+
     def "a fenced code block indented inside a list item protects its documented table example"() {
         given:
         // 2 columns of list-content indent + 2 of fence indent: valid

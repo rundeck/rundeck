@@ -929,6 +929,44 @@ class HtmlTableToMarkdownConverter {
     private static final Pattern LIST_MARKER_LINE_PREFIX = Pattern.compile('^[ \\t]*(?:[-*+]|\\d+[.)])[ \\t]+')
 
     /**
+     * The index of the line terminator ({@code \r} or {@code \n}) that ends
+     * the line starting at {@code lineStart}, or the text length if it is
+     * the last line. Together with {@link #nextLineStart} this treats
+     * {@code \r\n}, {@code \r} and {@code \n} alike -- the same line
+     * boundaries CommonMark and {@code UtilityTagLib} recognize -- so a
+     * CR-only description is not seen as one giant line (which would turn a
+     * closed fence into an unclosed one swallowing everything after it).
+     */
+    private static int lineEndAt(String text, int lineStart) {
+        int length = text.length()
+        int i = lineStart
+        while (i < length) {
+            char c = text.charAt(i)
+            if (c == '\n' as char || c == '\r' as char) {
+                return i
+            }
+            i++
+        }
+        return length
+    }
+
+    /**
+     * The index just past the line terminator at {@code lineEnd} -- two
+     * characters for {@code \r\n}, one otherwise -- or the text length if
+     * {@code lineEnd} is already at the end.
+     */
+    private static int nextLineStart(String text, int lineEnd) {
+        int length = text.length()
+        if (lineEnd >= length) {
+            return length
+        }
+        if (text.charAt(lineEnd) == '\r' as char && lineEnd + 1 < length && text.charAt(lineEnd + 1) == '\n' as char) {
+            return lineEnd + 2
+        }
+        return lineEnd + 1
+    }
+
+    /**
      * How many {@code >} markers {@code prefix} (as returned by
      * {@link #blockquotePrefix}) contains -- the blockquote nesting depth.
      */
@@ -975,10 +1013,7 @@ class HtmlTableToMarkdownConverter {
         int lineStart = 0
         int listContentIndent = 0
         while (lineStart < length) {
-            int lineEnd = text.indexOf('\n', lineStart)
-            if (lineEnd < 0) {
-                lineEnd = length
-            }
+            int lineEnd = lineEndAt(text, lineStart)
             String quotePrefix = blockquotePrefix(text, lineStart, lineEnd)
             int containerOffset = quotePrefix.length()
             if (quotePrefix.isEmpty()) {
@@ -996,19 +1031,16 @@ class HtmlTableToMarkdownConverter {
             }
             int[] fence = matchFence(text, lineStart + containerOffset, lineEnd, NO_QUOTE, 0)
             if (fence == null) {
-                lineStart = lineEnd < length ? lineEnd + 1 : length
+                lineStart = nextLineStart(text, lineEnd)
                 continue
             }
             char fenceChar = (char) fence[0]
             int fenceLen = fence[1]
             int quoteDepth = blockquoteDepth(quotePrefix)
             int blockEnd = length
-            int closeLineStart = lineEnd < length ? lineEnd + 1 : length
+            int closeLineStart = nextLineStart(text, lineEnd)
             while (closeLineStart < length) {
-                int closeLineEnd = text.indexOf('\n', closeLineStart)
-                if (closeLineEnd < 0) {
-                    closeLineEnd = length
-                }
+                int closeLineEnd = lineEndAt(text, closeLineStart)
                 int closeOffset
                 if (quoteDepth > 0) {
                     String linePrefix = blockquotePrefix(text, closeLineStart, closeLineEnd)
@@ -1033,10 +1065,10 @@ class HtmlTableToMarkdownConverter {
                 }
                 if (closeOffset >= 0 &&
                     matchFence(text, closeLineStart + closeOffset, closeLineEnd, fenceChar, fenceLen) != null) {
-                    blockEnd = closeLineEnd < length ? closeLineEnd + 1 : length
+                    blockEnd = nextLineStart(text, closeLineEnd)
                     break
                 }
-                closeLineStart = closeLineEnd < length ? closeLineEnd + 1 : length
+                closeLineStart = nextLineStart(text, closeLineEnd)
             }
             ranges << ([lineStart, blockEnd] as int[])
             lineStart = blockEnd
@@ -1106,28 +1138,22 @@ class HtmlTableToMarkdownConverter {
         int lineStart = 0
         boolean previousLineBlank = true
         while (lineStart < length) {
-            int lineEnd = text.indexOf('\n', lineStart)
-            if (lineEnd < 0) {
-                lineEnd = length
-            }
+            int lineEnd = lineEndAt(text, lineStart)
             boolean blank = isBlankLine(text, lineStart, lineEnd)
             if (!blank && previousLineBlank && isIndentedLine(text, lineStart, lineEnd)) {
-                int blockEnd = lineEnd < length ? lineEnd + 1 : length
+                int blockEnd = nextLineStart(text, lineEnd)
                 int lastContentEnd = blockEnd
                 int scanStart = blockEnd
                 while (scanStart < length) {
-                    int scanLineEnd = text.indexOf('\n', scanStart)
-                    if (scanLineEnd < 0) {
-                        scanLineEnd = length
-                    }
+                    int scanLineEnd = lineEndAt(text, scanStart)
                     if (isBlankLine(text, scanStart, scanLineEnd)) {
-                        scanStart = scanLineEnd < length ? scanLineEnd + 1 : length
+                        scanStart = nextLineStart(text, scanLineEnd)
                         continue
                     }
                     if (!isIndentedLine(text, scanStart, scanLineEnd)) {
                         break
                     }
-                    lastContentEnd = scanLineEnd < length ? scanLineEnd + 1 : length
+                    lastContentEnd = nextLineStart(text, scanLineEnd)
                     scanStart = lastContentEnd
                 }
                 ranges << ([lineStart, lastContentEnd] as int[])
@@ -1136,7 +1162,7 @@ class HtmlTableToMarkdownConverter {
                 continue
             }
             previousLineBlank = blank
-            lineStart = lineEnd < length ? lineEnd + 1 : length
+            lineStart = nextLineStart(text, lineEnd)
         }
         return ranges
     }
