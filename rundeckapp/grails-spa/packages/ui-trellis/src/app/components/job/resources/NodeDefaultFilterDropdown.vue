@@ -30,7 +30,7 @@
         </template>
       </dropdown>
     </li>
-    <li v-for="i in nodeSummary.filters">
+    <li v-for="i in nodeSummary.filters" :key="i.filterName">
       <dropdown>
         <a
           class="nodefilterlink btn btn-default btn-xs"

@@ -2,16 +2,27 @@
   <div class="row">
     <div class="col-xs-12 col-sm-8">
       <span v-if="isInstalled || installed">
-        <span class="btn btn-sm btn-danger" @click="uninstall">Uninstall</span>
+        <span
+          class="btn btn-sm btn-danger"
+          data-testid="install-button-uninstall"
+          @click="uninstall"
+          >Uninstall</span
+        >
         <span
           v-if="updateAvailable"
           class="btn btn-sm btn-warning"
+          data-testid="install-button-update"
           @click="install"
           >Update Available</span
         >
       </span>
       <span v-else>
-        <span class="btn btn-sm btn-info" @click="install">Install</span>
+        <span
+          class="btn btn-sm btn-info"
+          data-testid="install-button-install"
+          @click="install"
+          >Install</span
+        >
       </span>
     </div>
     <div class="col-xs-12 col-sm-4">
@@ -58,6 +69,7 @@ export default {
           return false;
         }
       }
+      return false;
     },
     pluginUrl() {
       return `https://online.rundeck.com/plugins/${this.plugin.post_slug}`;

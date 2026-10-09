@@ -8,7 +8,7 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "Tab",
+  name: "RdTab",
   inject: ["selectedIndex"],
   props: {
     index: {

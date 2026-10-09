@@ -50,7 +50,7 @@
     append-to-body
   >
     <key-storage-edit
-      :upload-setting="uploadSetting"
+      v-model:upload-setting="uploadSetting"
       :root-path="rootPath"
       @cancel-editing="handleCancelEditing"
       @finish-editing="handleFinishEditing"

@@ -386,6 +386,7 @@ export default defineComponent({
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style>
 .p-chip-icon.fa {
   width: auto !important;

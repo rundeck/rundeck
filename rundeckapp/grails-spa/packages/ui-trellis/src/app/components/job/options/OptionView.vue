@@ -46,7 +46,7 @@
           <div class="info note">
             {{ $t("option.view.allowedValues.label") }}
           </div>
-          <span v-for="(val, i) in option.values">
+          <span v-for="(val, i) in option.values" :key="i">
             {{ 0 != i ? ", " : "" }}
             <span class="valueItem">{{ val }}</span>
           </span>

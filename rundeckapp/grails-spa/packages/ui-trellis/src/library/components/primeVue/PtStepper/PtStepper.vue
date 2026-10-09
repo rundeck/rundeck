@@ -57,6 +57,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
 .p-step {
   &-header {

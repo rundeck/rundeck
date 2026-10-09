@@ -285,6 +285,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 .plugin-config-section {
   border-bottom: 1px solid var(--p-accordion-panel-border-color);

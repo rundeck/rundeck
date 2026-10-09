@@ -216,11 +216,11 @@ describe("KeyStorageSelector", () => {
       await wrapper.find('[data-testid="open-selector-btn"]').trigger("click");
       await wrapper.vm.$nextTick();
       //find and click "key2" to select it
-      let keys = await wrapper.findAll(
+      const keys = await wrapper.findAll(
         'tr.action span[data-testid="created-key"]',
       );
       expect(keys.length).toBe(2);
-      let found = keys.find((e) => e.text() === keyName);
+      const found = keys.find((e) => e.text() === keyName);
       expect(found).not.toBeNull();
       await found!.trigger("click");
       await wrapper.vm.$nextTick();
@@ -325,11 +325,11 @@ describe("KeyStorageSelector", () => {
       await wrapper.vm.$nextTick();
       expect(wrapper.get("#storage-file").isVisible()).toBe(true);
       //find and click "key2" to select it
-      let keys = await wrapper.findAll(
+      const keys = await wrapper.findAll(
         'tr.action span[data-testid="created-key"]',
       );
       expect(keys.length).toBe(2);
-      let found = keys.find((e) => e.text() === keyName);
+      const found = keys.find((e) => e.text() === keyName);
       expect(found).not.toBeNull();
       await found!.trigger("click");
       await wrapper.vm.$nextTick();

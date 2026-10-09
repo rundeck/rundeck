@@ -231,6 +231,7 @@
                 v-for="plugin in pluginProviders"
                 :key="plugin.name"
                 href="#"
+                :aria-label="plugin.title"
                 class="list-group-item"
                 :data-testid="`provider-${String(plugin.name)
                   .toLowerCase()
@@ -282,7 +283,6 @@ import axios from "axios";
 import { defineComponent, PropType } from "vue";
 import { Notification } from "uiv";
 import { EventBus, getRundeckContext, RundeckContext } from "../../../library";
-import Expandable from "../../../library/components/utils/Expandable.vue";
 import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
@@ -316,7 +316,6 @@ export default defineComponent({
   components: {
     PluginInfo,
     PluginConfig,
-    Expandable,
     UiSocket,
   },
   props: {
@@ -657,5 +656,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style></style>

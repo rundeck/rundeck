@@ -111,6 +111,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles teleported overlay content -->
 <style lang="scss">
 .popover.node-embed-popover {
   max-width: 500px;

@@ -1148,6 +1148,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles D3-generated graph markup -->
 <style lang="scss">
 [rundeck-interactive="true"] {
   * {

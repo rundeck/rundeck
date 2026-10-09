@@ -16,11 +16,7 @@
   </div>
 </template>
 <script lang="ts">
-import NodeDetailsSimple from "../../job/resources/NodeDetailsSimple.vue";
-import NodeFilterLink from "../../job/resources/NodeFilterLink.vue";
-import NodeIcon from "../../job/resources/NodeIcon.vue";
 import NodeShowEmbed from "../../job/resources/NodeShowEmbed.vue";
-import NodeStatus from "../../job/resources/NodeStatus.vue";
 
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
@@ -30,10 +26,6 @@ export default defineComponent({
   name: "NodeListEmbed",
   components: {
     NodeShowEmbed,
-    NodeStatus,
-    NodeIcon,
-    NodeDetailsSimple,
-    NodeFilterLink,
   },
   props: {
     nodes: {

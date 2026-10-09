@@ -5,7 +5,7 @@
     }}
   </div>
   <div v-if="executionLifecyclePlugins" class="list-group">
-    <template v-for="plugin in executionLifecyclePlugins">
+    <template v-for="plugin in executionLifecyclePlugins" :key="plugin.name">
       <div class="list-group-item">
         <plugin-config
           v-model="plugin.extra"

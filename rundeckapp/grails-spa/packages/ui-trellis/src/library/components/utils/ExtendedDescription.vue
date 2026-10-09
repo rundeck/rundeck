@@ -66,6 +66,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- imports global stylesheet -->
 <style>
 @import "~vue3-markdown/dist/vue3-markdown.css";
 </style>
