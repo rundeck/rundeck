@@ -475,4 +475,83 @@ export default defineComponent({
     padding: 10px 17px;
   }
 }
+
+// Dark mode
+*[data-color-theme="dark"] {
+  .p-select {
+    @include form-input-dark;
+
+    &.p-invalid,
+    &.p-select-invalid {
+      @include form-input-dark-invalid;
+    }
+
+    &.p-disabled {
+      background: var(--grey-700);
+    }
+
+    .p-select-label {
+      color: var(--white, #fff);
+
+      &.p-placeholder {
+        color: var(--grey-300);
+      }
+    }
+
+    .p-select-dropdown-icon,
+    .p-select-clear-icon,
+    .p-select-loading-icon {
+      color: var(--white, #fff);
+    }
+  }
+
+  .pt-select__error {
+    color: #e55b5b;
+  }
+
+  // Same panel treatment as the autocomplete dropdown (Figma: Dropdown menu)
+  .p-select-overlay {
+    background: var(--grey-900);
+    border: 1px solid #dee2e6;
+    box-shadow: 0px 2px 10px 0px rgba(0, 0, 0, 0.1);
+
+    .p-select-header {
+      background: var(--grey-900);
+      border-bottom-color: var(--grey-600);
+
+      .p-select-filter {
+        @include form-input-dark;
+      }
+    }
+
+    .p-select-option {
+      color: var(--white, #fff);
+
+      &:hover:not(.p-disabled):not(.p-select-option-selected),
+      &.p-focus:not(.p-disabled) {
+        background: var(--grey-600);
+        color: var(--white, #fff);
+      }
+
+      &.p-select-option-selected,
+      &.p-select-option-selected.p-focus {
+        background: var(--grey-600);
+        color: var(--white, #fff);
+
+        * {
+          color: var(--white, #fff);
+        }
+      }
+    }
+
+    .p-select-option-group-label {
+      background: var(--grey-900);
+      color: var(--white, #fff);
+    }
+
+    .p-select-empty-message {
+      color: var(--grey-200);
+    }
+  }
+}
 </style>

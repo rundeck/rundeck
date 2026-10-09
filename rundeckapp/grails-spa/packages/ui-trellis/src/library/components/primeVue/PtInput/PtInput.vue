@@ -305,4 +305,28 @@ export default defineComponent({
     cursor: not-allowed;
   }
 }
+
+// Dark mode
+*[data-color-theme="dark"] {
+  .p-inputtext {
+    @include form-input-dark;
+
+    &.p-invalid {
+      @include form-input-dark-invalid;
+    }
+
+    &:disabled {
+      background: var(--grey-700);
+      color: var(--grey-300);
+    }
+  }
+
+  .p-inputicon {
+    color: var(--grey-300);
+  }
+
+  .pt-input__error {
+    color: #e55b5b;
+  }
+}
 </style>

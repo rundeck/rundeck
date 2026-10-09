@@ -165,6 +165,36 @@ describe("StepCardHeader", () => {
     });
   });
 
+  describe("invalid condition error tag", () => {
+    const conditionErrors = {
+      valid: false,
+      errors: { conditions: { c1: { field: "invalid" } } },
+    };
+
+    it("shows the invalid-condition tag outside edit mode when showInvalidCondition is set", async () => {
+      const wrapper = await createWrapper({
+        editing: false,
+        showInvalidCondition: true,
+        validationErrors: conditionErrors,
+      });
+      const tag = wrapper.find('[data-testid="step-card-header-error-tag"]');
+      expect(tag.exists()).toBe(true);
+      expect(tag.text()).toContain(
+        "Workflow.validation.invalidConditionCriteria",
+      );
+    });
+
+    it("still hides the tag outside edit mode when showInvalidCondition is not set", async () => {
+      const wrapper = await createWrapper({
+        editing: false,
+        validationErrors: conditionErrors,
+      });
+      expect(
+        wrapper.find('[data-testid="step-card-header-error-tag"]').exists(),
+      ).toBe(false);
+    });
+  });
+
   describe("plugin description", () => {
     it("shows the plugin description when in editing mode", async () => {
       const wrapper = await createWrapper({

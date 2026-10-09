@@ -121,6 +121,30 @@
 }
 
 /* ============================================
+   DARK MODE (Figma: Dark Mode/Grey scale)
+   The base classes above use light-theme colors; flip them so any
+   component using the typography system reads correctly on dark surfaces.
+   ============================================ */
+
+*[data-color-theme="dark"] .text-display,
+*[data-color-theme="dark"] .text-heading--lg,
+*[data-color-theme="dark"] .text-heading--md,
+*[data-color-theme="dark"] .text-heading--sm,
+*[data-color-theme="dark"] .text-body,
+*[data-color-theme="dark"] .text-body--sm {
+  color: var(--white, #fff);
+}
+
+*[data-color-theme="dark"] .text-body--lg,
+*[data-color-theme="dark"] .text-body--secondary {
+  color: var(--grey-200);
+}
+
+*[data-color-theme="dark"] .text-body--muted {
+  color: var(--grey-300);
+}
+
+/* ============================================
    USAGE EXAMPLES
    ============================================
 
