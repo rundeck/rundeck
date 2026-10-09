@@ -136,4 +136,39 @@ export default defineComponent({
     line-height: 17px;
   }
 }
+
+// Dark mode (Figma: selectbutton): unselected #27272a, selected green-600
+*[data-color-theme="dark"] .p-selectbutton .p-togglebutton {
+  border-color: var(--grey-300);
+  color: var(--white, #fff);
+
+  .p-togglebutton-content,
+  .p-togglebutton-label {
+    color: inherit;
+  }
+
+  &:not(.p-togglebutton-checked) {
+    background: #27272a;
+
+    &:hover {
+      background: var(--grey-800);
+    }
+
+    &:active {
+      background: var(--grey-700);
+    }
+  }
+
+  &.p-togglebutton-checked {
+    background: #16a34a;
+
+    &:hover {
+      background: #15803d;
+    }
+
+    &:active {
+      background: #166534;
+    }
+  }
+}
 </style>

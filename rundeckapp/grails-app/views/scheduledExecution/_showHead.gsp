@@ -72,6 +72,19 @@
               <span class="detail"><g:message code="disabled" /></span>
           </span>
       </g:if>
+      <g:if test="${executionAclValid == false}">
+          <%-- label-style() leaves label text to the ambient font colour, which is white in
+               the dark theme and would sit on the orange badge at 2.6:1. This token is dark
+               in both themes, as .label-muted already relies on. The icon inherits it. --%>
+          <span class="label label-warning has_tooltip" style="color: var(--grey-900)"
+                data-testid="execution-acl-warning-badge" data-toggle="tooltip"
+                data-placement="auto bottom" title="${scheduledExecution.user
+                        ? message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])
+                        : message(code: 'job.execution.acl.missing.owner.warning.title')}">
+              <i class="glyphicon glyphicon-warning-sign"></i>
+              <span class="detail"><g:message code="job.execution.acl.invalid.warning.label"/></span>
+          </span>
+      </g:if>
       <g:if test="${isScheduled && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
@@ -133,6 +146,8 @@
         ></ui-socket>
       </span>
   </section>
+
+
 
     <section class="section-space">
         <g:render template="/scheduledExecution/description"
