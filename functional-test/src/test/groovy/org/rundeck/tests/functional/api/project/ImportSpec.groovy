@@ -7,12 +7,16 @@ import org.rundeck.util.api.responses.jobs.JobExecutionsResponse
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 import org.rundeck.util.container.RdClient
+import org.rundeck.util.common.WaitingTime
+
+import java.nio.file.Files
 
 @APITest
 class ImportSpec extends BaseContainer {
     public static final String RESOURCE_ARCHIVE_TEST_README_DIR = "/projects-import/archive-test-readme"
     public static final String RESOURCE_ARCHIVE_TEST_DIR = "/projects-import/archive-test"
-    public static final String RESOURCE_CROSS_PROJECT_LOG_POC_DIR = "/projects-import/cross-project-log-poc"
+    // Default framework.logs.dir for the OSS docker test image (docker/official/etc/framework.properties)
+    public static final String DEFAULT_FRAMEWORK_LOGS_DIR = "/home/rundeck/var/logs"
 
     def "test-project-import-readme-motd"(){
         given:
@@ -178,19 +182,62 @@ class ImportSpec extends BaseContainer {
      * success (matching the original report), but the imported execution's output must never
      * disclose the forged file's content.
      */
+    /**
+     * Regression test for RUN-4950 / HackerOne #3960872: reproduces the reported PoC - a
+     * project-import archive whose execution XML forges an outputfilepath pointing at another,
+     * real project's execution log file that is not backed by any file present in the archive
+     * itself. Import must still report success (matching the original report), but the imported
+     * execution's output must never disclose the victim project's real log content.
+     *
+     * The forged path must resolve, after getFileForExecutionFiletype's extension substitution
+     * (strip the trailing extension, append the requested filetype), to the victim file's actual
+     * path - so it is built from a real victim execution's id with a ".rdlog" suffix, rather than
+     * an arbitrary file whose transformed path would never be read regardless of the fix.
+     */
     def "test-project-import-forged-outputfilepath-not-disclosed"(){
-        given:
-        String projectName = "crosslogpoc"
-        File tmpjar = createArchiveJarFile(
-                projectName,
-                new File(getClass().getResource(RESOURCE_CROSS_PROJECT_LOG_POC_DIR).getPath())
-        )
-        Object projectJsonMap = ["name": projectName]
-        post("/projects", projectJsonMap, Map)
+        given: "a victim project with a real execution log containing a unique marker"
+        String victimProject = "crosslogvictim"
+        String attackerProject = "crosslogattacker"
+        String marker = "cross-project-secret-" + UUID.randomUUID().toString()
+        post("/projects", ["name": victimProject], Map)
+        def adhoc = post("/project/${victimProject}/run/command?exec=echo+${marker}", Map)
+        String victimExecId = adhoc.execution.id.toString()
+        waitForExecutionFinish(victimExecId, WaitingTime.EXCESSIVE)
 
-        when: "we import an archive whose execution XML references a log file absent from the archive"
+        and: "a forged archive for a different project referencing that real log file by path, absent from the archive"
+        String forgedPath = "${DEFAULT_FRAMEWORK_LOGS_DIR}/rundeck/${victimProject}/run/logs/${victimExecId}.rdlog"
+        File archiveDir = Files.createTempDirectory("cross-project-log-poc").toFile()
+        File execDir = new File(archiveDir, "rundeck-${attackerProject}/executions")
+        execDir.mkdirs()
+        new File(execDir, "execution-9001.xml").text = """<executions>
+  <execution id='9001'>
+    <dateStarted>2014-03-06T18:45:25Z</dateStarted>
+    <dateCompleted>2014-03-06T18:45:27Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath>${forgedPath}</outputfilepath>
+    <failedNodeList />
+    <succeededNodeList>dignan</succeededNodeList>
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString />
+    <loglevel>INFO</loglevel>
+    <doNodedispatch>false</doNodedispatch>
+    <executionType>user</executionType>
+    <project>${attackerProject}</project>
+    <user>admin</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo hi this is a test project</exec>
+      </command>
+    </workflow>
+  </execution>
+</executions>"""
+        File tmpjar = createArchiveJarFile(attackerProject, archiveDir)
+        post("/projects", ["name": attackerProject], Map)
+
+        when: "we import the forged archive into the attacker project"
         Map parsedResponse = client.put(
-                "/project/${projectName}/import?importExecutions=true&jobUuidOption=remove",
+                "/project/${attackerProject}/import?importExecutions=true&jobUuidOption=remove",
                 tmpjar,
                 'application/zip')
 
@@ -199,7 +246,7 @@ class ImportSpec extends BaseContainer {
 
         when: "we look up the imported execution and read its output"
         def mapper = new ObjectMapper()
-        def execsResponse = client.doGetAcceptAll("/project/${projectName}/executions")
+        def execsResponse = client.doGetAcceptAll("/project/${attackerProject}/executions")
         assert execsResponse.successful
         JobExecutionsResponse execsParsed = mapper.readValue(execsResponse.body().string(), JobExecutionsResponse.class)
         execsResponse.close()
@@ -210,11 +257,12 @@ class ImportSpec extends BaseContainer {
         }
         String outputBody = outputResponse.body()?.string()
 
-        then: "the forged file's content is never disclosed through the output API"
-        !(outputBody?.contains('root:'))
+        then: "the victim project's real log content is never disclosed through the attacker project's output API"
+        !(outputBody?.contains(marker))
 
         cleanup:
-        deleteProject(projectName)
+        deleteProject(attackerProject)
+        deleteProject(victimProject)
     }
 
     def assertJobCountForProject(
