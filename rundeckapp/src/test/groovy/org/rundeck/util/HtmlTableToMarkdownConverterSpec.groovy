@@ -170,6 +170,9 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         // Unbalanced -- convert() will fail safe and return the text
         // unchanged, so there is nothing to protect the summary line from.
         '<table><tr><td>a</td></tr>'                             | false
+        // CR-only line ending (matches UtilityTagLib's own \r/\r\n/\n
+        // splitting) -- the table is on the second line, not the first.
+        'Intro\r<table><tr><td>a</td></tr></table>'              | false
         null                                                     | false
         ''                                                       | false
     }
@@ -343,6 +346,31 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
     def "a table documented inside an inline code span is left untouched"() {
         given:
         String text = 'Use `<table><tr><td>a</td></tr></table>` for a simple table.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "a table documented inside an inline code span that spans multiple lines is left untouched"() {
+        given:
+        // A code span's content can legally contain line breaks.
+        String text = 'Use ```<table>\n<tr><td>x</td></tr>\n</table>``` for a table.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "a backtick run inside a code span that does not match the opening run's length does not close it"() {
+        given:
+        // A single backtick inside a two-backtick-delimited span is just
+        // content -- only another run of exactly two backticks closes it.
+        String text = 'Use ``<table>`<tr><td>x</td></tr>`</table>`` for a table.'
 
         when:
         String result = HtmlTableToMarkdownConverter.convert(text)

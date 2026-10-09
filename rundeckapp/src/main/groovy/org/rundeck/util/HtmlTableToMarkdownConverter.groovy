@@ -61,7 +61,6 @@ import java.util.regex.Pattern
 @CompileStatic
 class HtmlTableToMarkdownConverter {
 
-    private static final Pattern INLINE_CODE_SPAN = Pattern.compile('(`+).*?\\1')
     private static final Pattern WHITESPACE_RUN = Pattern.compile('\\s+')
 
     /**
@@ -148,14 +147,18 @@ class HtmlTableToMarkdownConverter {
      * #convert} will fail safe and return the text unchanged in that case,
      * so there is nothing for the summary line to be protected from.
      */
+    private static final Pattern LINE_TERMINATOR = Pattern.compile('\r\n|\r|\n')
+
     static boolean firstLineContainsTable(String text) {
         if (!text) {
             return false
         }
-        int firstLineEnd = text.indexOf('\n')
-        if (firstLineEnd < 0) {
-            firstLineEnd = text.length()
-        }
+        // Matches the line boundaries UtilityTagLib#textFirstLine actually
+        // splits on (\r\n, \r, or \n) -- a CR-only description would
+        // otherwise have its second line misjudged as still being its
+        // first, incorrectly blanking the summary this method protects.
+        Matcher terminatorMatcher = LINE_TERMINATOR.matcher(text)
+        int firstLineEnd = terminatorMatcher.find() ? terminatorMatcher.start() : text.length()
         try {
             for (TableSpan span : findTopLevelTables(text, findCodeRanges(text))) {
                 if (span.start < firstLineEnd) {
@@ -785,8 +788,61 @@ class HtmlTableToMarkdownConverter {
     private static List<int[]> findCodeRanges(String text) {
         List<int[]> ranges = findFencedCodeBlocks(text)
         ranges.addAll(findIndentedCodeBlocks(text))
-        addMatchRanges(INLINE_CODE_SPAN, text, ranges)
+        ranges.addAll(findInlineCodeSpans(text))
         return mergeRanges(ranges)
+    }
+
+    /**
+     * Finds CommonMark inline code span ranges: a span opens at a maximal
+     * run of backtick characters and closes at the next maximal run of the
+     * SAME length -- a shorter or longer run does not close it, and a
+     * matching run that happens to be part of a longer one does not either.
+     * Done with an explicit scan rather than a backtick-count regex and
+     * {@code .*?}, which (a) cannot match across a line break without the
+     * DOTALL flag, so a span documenting a multi-line example would be
+     * missed entirely, and (b) can satisfy its backreference against a
+     * strict substring of a longer run instead of an exact-length one.
+     */
+    private static List<int[]> findInlineCodeSpans(String text) {
+        List<int[]> ranges = []
+        int length = text.length()
+        int i = 0
+        while (i < length) {
+            if (text.charAt(i) != '`' as char) {
+                i++
+                continue
+            }
+            int openStart = i
+            while (i < length && text.charAt(i) == '`' as char) {
+                i++
+            }
+            int openLength = i - openStart
+            int searchFrom = i
+            int closeStart = -1
+            while (searchFrom < length) {
+                int runStart = text.indexOf('`', searchFrom)
+                if (runStart < 0) {
+                    break
+                }
+                int runEnd = runStart
+                while (runEnd < length && text.charAt(runEnd) == '`' as char) {
+                    runEnd++
+                }
+                if (runEnd - runStart == openLength) {
+                    closeStart = runStart
+                    break
+                }
+                searchFrom = runEnd
+            }
+            if (closeStart < 0) {
+                // No run of exactly this length closes it -- this backtick
+                // run is not a code span delimiter; i is already past it.
+                continue
+            }
+            ranges << ([openStart, closeStart + openLength] as int[])
+            i = closeStart + openLength
+        }
+        return ranges
     }
 
     /**
@@ -1006,13 +1062,6 @@ class HtmlTableToMarkdownConverter {
             }
         }
         return column >= 4
-    }
-
-    private static void addMatchRanges(Pattern pattern, String text, List<int[]> ranges) {
-        Matcher matcher = pattern.matcher(text)
-        while (matcher.find()) {
-            ranges << ([matcher.start(), matcher.end()] as int[])
-        }
     }
 
     /**
