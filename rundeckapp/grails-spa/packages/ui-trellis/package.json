@@ -54,7 +54,7 @@
     "core-js": "3.50.0",
     "dagre": "0.8.5",
     "deep-object-diff": "1.1.9",
-    "dompurify": "3.4.15",
+    "dompurify": "3.4.16",
     "fuse.js": "6.6.2",
     "graphlib": "2.1.8",
     "jointjs": "3.7.7",
