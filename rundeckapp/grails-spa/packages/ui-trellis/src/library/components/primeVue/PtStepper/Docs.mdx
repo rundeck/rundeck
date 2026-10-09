@@ -1,5 +1,14 @@
-import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories, Markdown } from "@storybook/blocks";
-import * as PtStepsStories from './PtStepper.stories'
+import {
+  Meta,
+  Subtitle,
+  Title,
+  Canvas,
+  Controls,
+  Description,
+  Stories,
+  Markdown,
+} from "@storybook/blocks";
+import * as PtStepsStories from "./PtStepper.stories";
 
 <Meta of={PtStepsStories} />
 
@@ -25,11 +34,9 @@ import PtSteps from "@rundeck/ui-trellis/src/library/components/primeVue/PtSteps
 
 {/* Add a note here about the relevant props to change appearance of component */}
 
-
 <Description of={PtStepsStories} />
 
-<Stories title='' includePrimary={false} />
-
+<Stories title="" includePrimary={false} />
 
 ## Accessibility
 
@@ -40,7 +47,7 @@ Steps component uses the `nav` element and since any attribute is passed to the 
 ### Keyboard Support
 
 <Markdown>
-    {`
+  {`
 | Key           | Function                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------- |
 | tab         | Adds focus to the active step when focus moves in to the component, if there is already a focused tab header then moves the focus out of the component based on the page tab sequence. |

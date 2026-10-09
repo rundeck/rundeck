@@ -770,4 +770,57 @@ class ExecutionTest extends Specification implements DataTest  {
         assertFalse Workflow.findAll().any {Workflow w -> w.id == e1.workflowId}
         assertTrue workflow.commands.isEmpty()
     }
+
+    /**
+     * Length is left to the varchar(1024) column rather than duplicated as a domain constraint.
+     * Callers that need a clean rejection validate it themselves - the Ad Hoc Step API does, in
+     * AdhocStepRunRequest.
+     */
+    void testNoteIsOptional(){
+        when:
+        Execution exec = createBasicExecution()
+        exec.note = note
+        exec.validate()
+
+        then:
+        exec.errors.getFieldError('note') == null
+
+        where:
+        note       | _
+        null       | _
+        'a note'   | _
+        'x' * 1024 | _
+    }
+
+    void testNoteRoundTripsThroughMap(){
+        when:
+        def exec = Execution.fromMap([
+                status        : 'true',
+                dateStarted   : new Date(),
+                dateCompleted : new Date(),
+                project       : 'test1',
+                user          : 'user1',
+                note          : 'why this ran',
+                workflow      : [
+                        keepgoing: true,
+                        commands : [
+                                [
+                                        exec: "blah"
+                                ]
+                        ]
+                ]
+        ], null)
+
+        then:
+        exec.note == 'why this ran'
+        exec.toMap().note == 'why this ran'
+    }
+
+    void testToMapOmitsAbsentNote(){
+        when:
+        Execution exec = createBasicExecution()
+
+        then:
+        !exec.toMap().containsKey('note')
+    }
 }

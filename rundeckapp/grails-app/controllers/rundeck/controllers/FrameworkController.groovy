@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.api.tag.TagsForNodesResponse
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -299,7 +300,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     return
                 }
 
-                if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
+                //An ad hoc step is not an adhoc command: it has its own page, so it must not be
+                //offered back here as a rerunnable command. Null executionType reads as not-equal.
+                if (e && !e.scheduledExecution && e.executionType != ExecutionTypes.ADHOC_STEP &&
+                    e.workflow.commands.size() == 1) {
                     def cmd = e.workflow.commands[0]
                     String adhocRemoteString = null
                     if (cmd instanceof CommandExec) {
@@ -361,7 +365,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             def execWorkflowData = e?.getWorkflowData()
-            if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
+            //An ad hoc step is not an adhoc command: it has its own page, so it must not be
+            //offered back here as a rerunnable command. Null executionType reads as not-equal.
+            if (e && !e.scheduledExecution && e.executionType != ExecutionTypes.ADHOC_STEP &&
+                execWorkflowData?.commands?.size() == 1) {
                 def cmd = execWorkflowData.commands[0]
                 String adhocRemoteString = null
 

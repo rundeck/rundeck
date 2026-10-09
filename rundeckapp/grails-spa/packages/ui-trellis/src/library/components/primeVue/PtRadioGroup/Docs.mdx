@@ -1,0 +1,42 @@
+import {
+  Meta,
+  Subtitle,
+  Title,
+  Canvas,
+  Controls,
+  Description,
+  Stories,
+} from "@storybook/blocks";
+import * as PtRadioGroupStories from "./PtRadioGroup.stories";
+
+<Meta of={PtRadioGroupStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/radiobutton/)
+
+## Import
+
+```ts
+import PtRadioGroup from "@rundeck/ui-trellis/src/library/components/primeVue/PtRadioGroup/PtRadioGroup.vue";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={PtRadioGroupStories.Playground} sourceState="shown" />
+<Controls of={PtRadioGroupStories.Playground} />
+
+## How to use
+
+{/* Add a note here about the relevant props to change appearance of component */}
+
+<Description of={PtRadioGroupStories} />
+
+<Stories title="" includePrimary={false} />
+
+## Accessibility
+
+{/* Bring in accessibility notes from primeVue here and/or add aspects important for accessibility */}

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
@@ -151,11 +152,20 @@ class ExecutionController extends ControllerBase{
 
         while(execs.size()<max){
 
-            def res = Execution.findAllByProjectAndUserAndScheduledExecutionIsNull(
-                    project,
-                    session.user,
-                    [sort: 'dateStarted', order: 'desc', max: max,offset:offset]
-            )
+            //Criteria rather than a dynamic finder so ad hoc steps can be left out: they are not
+            //adhoc commands, they have their own page, and their workflow_json would otherwise be
+            //offered back here as a rerunnable command. NULL-safe for rows predating the column.
+            def res = Execution.createCriteria().list(
+                    [sort: 'dateStarted', order: 'desc', max: max, offset: offset]
+            ) {
+                eq('project', project)
+                eq('user', session.user)
+                isNull('scheduledExecution')
+                or {
+                    isNull('executionType')
+                    ne('executionType', ExecutionTypes.ADHOC_STEP)
+                }
+            }
 
             offset+=res.size()
             res.each{exec->
@@ -3203,6 +3213,8 @@ if executed in cluster mode.""",
             //ignore
             query.executionTypeFilter = null
         }
+        //Internal-only filter: not part of the API contract, so ignore any value bound from the request
+        query.excludeExecutionTypeFilter = null
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
@@ -3666,6 +3678,8 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
         if (null != query) {
+            //Internal-only filter: not part of the API contract, so ignore any value bound from the request
+            query.excludeExecutionTypeFilter = null
             query.configureFilter()
 
             if (params.recentFilter && !query.recentFilter) {
