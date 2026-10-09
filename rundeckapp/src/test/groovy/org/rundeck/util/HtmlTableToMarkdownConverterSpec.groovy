@@ -173,6 +173,11 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         // CR-only line ending (matches UtilityTagLib's own \r/\r\n/\n
         // splitting) -- the table is on the second line, not the first.
         'Intro\r<table><tr><td>a</td></tr></table>'              | false
+        // Nested or unextractable: convert() returns the text unchanged for
+        // these, so the summary line must not be blanked for them.
+        '<table><tr><td><table><tr><td>x</td></tr></table></td></tr></table>' | false
+        '<table></table>'                                        | false
+        '<table><tr><td>a</td></tr></table>\n\n<table></table>'  | false
         null                                                     | false
         ''                                                       | false
     }
@@ -585,6 +590,58 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
 
         then:
         result == text
+    }
+
+    def "a fenced code block indented inside a list item protects its documented table example"() {
+        given:
+        // 2 columns of list-content indent + 2 of fence indent: valid
+        // CommonMark, but more than the 3 a top-level fence may have.
+        String text = '- item\n' +
+            '    ~~~\n' +
+            '    <table><tr><td>a</td></tr></table>\n' +
+            '    ~~~\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result == text
+    }
+
+    def "an unclosed fence inside a list item ends with the list item instead of swallowing what follows"() {
+        given:
+        String text = '- item\n' +
+            '    ~~~\n' +
+            '    <table><tr><td>example</td></tr></table>\n' +
+            '\n' +
+            'Back at top level:\n\n' +
+            '<table><tr><td>real</td></tr></table>\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('    <table><tr><td>example</td></tr></table>')
+        result.contains('| real |')
+    }
+
+    def "a blockquote fence tolerates a bare marker line and ends where the blockquote does"() {
+        given:
+        // ">" with no trailing space on the blank line is how most editors
+        // write an empty quoted line; the fence must survive it. The
+        // unquoted table after the quote is top-level and must convert.
+        String text = '> ~~~\n' +
+            '>\n' +
+            '> <table><tr><td>example</td></tr></table>\n' +
+            '> ~~~\n\n' +
+            '<table><tr><td>real</td></tr></table>\n'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('> <table><tr><td>example</td></tr></table>')
+        result.contains('| real |')
     }
 
     def "a fenced code block inside a blockquote protects its documented table example"() {
