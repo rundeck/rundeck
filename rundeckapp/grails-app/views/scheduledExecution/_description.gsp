@@ -13,15 +13,38 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
+<%@ page import="org.rundeck.util.HtmlTableToMarkdownConverter" %>
 
 <g:set var="allowHTML"
        value="${!(cfg.getString(config: "gui.job.description.disableHTML") in [true,'true'])}"/>
-<g:set var="firstline" value="${g.textFirstLine(text: description)}"/>
+%{-- A description with a table on its very first line -- whether or not
+     prose shares that line with it -- has no separate first line that can
+     safely become a short summary: splitting one off would either leave the
+     table nothing to convert (a single-line table) or strip its own opening
+     tag onto the discarded line (a multi-line table starting on line one).
+     The summary line is always plain, escaped text anyway, so it could never
+     render a table either way. In that case the entire description goes
+     through as "remainingLine" and there is no separate first line. Every
+     other description keeps its existing first-line/remaining-lines split
+     unchanged -- see HtmlTableToMarkdownConverter javadoc. --}%
+%{-- The check must see the very same text the converter will get: only
+     what precedes the cutoff marker. Otherwise an unsupported table in the
+     cut-off section after the marker would make the check fail for a
+     perfectly good table on line one. --}%
+<g:set var="renderableDescription"
+       value="${cutoffMarker ? g.textBeforeLine(text: description, marker: cutoffMarker) : description}"/>
+<g:set var="descriptionFirstLineHasTable"
+       value="${allowHTML && !firstLineOnly && HtmlTableToMarkdownConverter.firstLineContainsTable(renderableDescription?.toString())}"/>
+<g:set var="firstline" value="${descriptionFirstLineHasTable ? '' : g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
-    <g:set var="remainingLine" value="${g.textRemainingLines(text: description)}"/>
+    <g:set var="remainingLine"
+           value="${descriptionFirstLineHasTable ? renderableDescription : g.textRemainingLines(text: description)}"/>
     <g:if test="${cutoffMarker}">
         <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
     </g:if>
+    %{-- Convert hand-written HTML <table> blocks to Markdown before they
+         reach <g:markdown> -- see HtmlTableToMarkdownConverter javadoc. --}%
+    <g:set var="remainingLine" value="${HtmlTableToMarkdownConverter.convert(remainingLine?.toString())}"/>
 
     <g:if test="${remainingLine?.trim()}">
         <g:set var="replTokens" value="${[:]}"/>
