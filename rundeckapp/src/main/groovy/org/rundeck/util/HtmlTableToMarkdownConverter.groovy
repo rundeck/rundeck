@@ -23,11 +23,13 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
- * Converts hand-written HTML {@code <table>} blocks found inside raw job
- * description text into an equivalent GFM (GitHub Flavored Markdown) pipe
- * table, so that it can be rendered by the existing, unmodified
+ * Converts hand-written HTML {@code <table>} blocks, and standalone bold
+ * ({@code <b>}/{@code <strong>}) and italic ({@code <i>}/{@code <em>}) spans,
+ * found inside raw job description text into their GFM (GitHub Flavored
+ * Markdown) equivalents, so that it can be rendered by the existing,
+ * unmodified
  * {@code rundeck.codecs.MarkdownCodec} -&gt; {@code rundeck.codecs.SanitizedHTMLCodec}
- * pipeline exactly as if the user had typed Markdown table syntax themselves.
+ * pipeline exactly as if the user had typed Markdown syntax themselves.
  * <p>
  * {@code MarkdownCodec} deliberately escapes raw inline/block HTML as text
  * rather than rendering it live, to prevent attacker-controlled HTML/CSS
@@ -83,11 +85,14 @@ class HtmlTableToMarkdownConverter {
      * Pre-processes raw description text: detects well-formed HTML
      * {@code <table>} blocks and replaces each one, in place, with an
      * equivalent GFM Markdown pipe table built only from the plain-text
-     * content of each cell. Text outside of {@code <table>} blocks -- and
-     * any other raw HTML tag -- is left completely untouched. A
-     * {@code <table>} written inside a Markdown fenced code block or inline
-     * code span is treated as a documented example, not live HTML, and is
-     * never converted.
+     * content of each cell; and detects standalone, unnested {@code <b>}/
+     * {@code <strong>}/{@code <i>}/{@code <em>} spans and replaces each one
+     * with its Markdown equivalent ({@code **text**}/{@code *text*}). Any
+     * other raw HTML tag -- and an inline style tag that contains further
+     * markup of its own -- is left completely untouched. A {@code <table>}
+     * or inline style span written inside a Markdown fenced code block or
+     * inline code span is treated as a documented example, not live HTML,
+     * and is never converted.
      * <p>
      * Fails safe: if the input contains unbalanced or nested {@code <table>}
      * tags, or any table cannot be meaningfully parsed into rows/cells, the
@@ -109,6 +114,27 @@ class HtmlTableToMarkdownConverter {
             // Fail safe: never throw, never emit partial output.
             return text
         }
+    }
+
+    /**
+     * Whether {@code text}, once leading whitespace is skipped, begins with
+     * a {@code <table} tag. {@code _description.gsp} uses this to decide
+     * whether the description has a separate first line that can stand on
+     * its own as a short, plain-text summary, or whether it starts directly
+     * with a table -- which {@link #convert} can only turn into a valid
+     * Markdown table when fed as a whole, not split across a summary line
+     * and a detail body.
+     */
+    static boolean startsWithTable(String text) {
+        if (!text) {
+            return false
+        }
+        int i = 0
+        int length = text.length()
+        while (i < length && Character.isWhitespace(text.charAt(i))) {
+            i++
+        }
+        return i < length && text.charAt(i) == '<' as char && isTagNamed(text, i, 'table', false)
     }
 
     private static String replaceConvertibleElements(String text) {
