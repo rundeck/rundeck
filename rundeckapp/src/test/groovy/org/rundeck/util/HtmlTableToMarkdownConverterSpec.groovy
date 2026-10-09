@@ -146,6 +146,22 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         HtmlTableToMarkdownConverter.convert('') == ''
     }
 
+    def "startsWithTable recognizes a table as the first thing in the text"() {
+        expect:
+        HtmlTableToMarkdownConverter.startsWithTable(text) == expected
+
+        where:
+        text                                               | expected
+        '<table><tr><td>a</td></tr></table>'                | true
+        '   \n  <table><tr><td>a</td></tr></table>'         | true
+        '<TABLE><tr><td>a</td></tr></TABLE>'                 | true
+        'Some text\n\n<table><tr><td>a</td></tr></table>'   | false
+        '<b>bold</b> then <table><tr><td>a</td></tr></table>' | false
+        '<tablecloth>not a table</tablecloth>'               | false
+        null                                                 | false
+        ''                                                   | false
+    }
+
     def "table with surrounding markdown text converts only the table, leaving the rest untouched"() {
         given:
         String text = 'Some **bold** intro.\n\n' +

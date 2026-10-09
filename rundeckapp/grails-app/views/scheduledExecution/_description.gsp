@@ -17,9 +17,20 @@
 
 <g:set var="allowHTML"
        value="${!(cfg.getString(config: "gui.job.description.disableHTML") in [true,'true'])}"/>
-<g:set var="firstline" value="${g.textFirstLine(text: description)}"/>
+%{-- A description that starts directly with a table (no separate plain-text
+     first line) has nothing meaningful to show as a short summary -- the
+     summary line is always plain, escaped text, never Markdown, so it could
+     never render a table anyway. Converting only works when the whole table
+     is fed to it as one piece, so in that case the entire thing goes through
+     as "remainingLine" and there is no separate first line. Every other
+     description keeps its existing first-line/remaining-lines split
+     unchanged -- see HtmlTableToMarkdownConverter javadoc. --}%
+<g:set var="descriptionStartsWithTable"
+       value="${allowHTML && !firstLineOnly && HtmlTableToMarkdownConverter.startsWithTable(description?.toString())}"/>
+<g:set var="firstline" value="${descriptionStartsWithTable ? '' : g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
-    <g:set var="remainingLine" value="${g.textRemainingLines(text: description)}"/>
+    <g:set var="remainingLine"
+           value="${descriptionStartsWithTable ? description : g.textRemainingLines(text: description)}"/>
     <g:if test="${cutoffMarker}">
         <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
     </g:if>
