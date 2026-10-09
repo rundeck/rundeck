@@ -786,46 +786,65 @@ class HtmlTableToMarkdownConverter {
      * to be rendered live.
      */
     private static List<int[]> findCodeRanges(String text) {
-        List<int[]> ranges = findFencedCodeBlocks(text)
-        ranges.addAll(findIndentedCodeBlocks(text))
-        ranges.addAll(findInlineCodeSpans(text))
+        List<int[]> blockRanges = findFencedCodeBlocks(text)
+        blockRanges.addAll(findIndentedCodeBlocks(text))
+        blockRanges = mergeRanges(blockRanges)
+        // Inline spans are only looked for in the text BETWEEN block-level
+        // code ranges, mirroring CommonMark's own order of parsing (blocks
+        // first, inlines within them). Scanning the whole text at once would
+        // let a stray backtick inside a fence pair with one after it, and the
+        // resulting bogus "span" -- merged below -- would swallow a real
+        // table in between as if it were a documented example.
+        List<int[]> ranges = new ArrayList<int[]>(blockRanges)
+        int gapStart = 0
+        for (int[] block : blockRanges) {
+            ranges.addAll(findInlineCodeSpans(text, gapStart, block[0]))
+            gapStart = block[1]
+        }
+        ranges.addAll(findInlineCodeSpans(text, gapStart, text.length()))
         return mergeRanges(ranges)
     }
 
+    private static final Pattern PARAGRAPH_BREAK = Pattern.compile('(?:\r\n|\r|\n)[ \t]*(?:\r\n|\r|\n)')
+
     /**
-     * Finds CommonMark inline code span ranges: a span opens at a maximal
-     * run of backtick characters and closes at the next maximal run of the
-     * SAME length -- a shorter or longer run does not close it, and a
-     * matching run that happens to be part of a longer one does not either.
+     * Finds CommonMark inline code span ranges within {@code text[from,
+     * to)}: a span opens at a maximal run of backtick characters and closes
+     * at the next maximal run of the SAME length -- a shorter or longer run
+     * does not close it, and a matching run that happens to be part of a
+     * longer one does not either. A span may contain line breaks but never
+     * a blank line: inline content does not cross a paragraph boundary, so
+     * the search for the closing run stops at the next one.
+     * <p>
      * Done with an explicit scan rather than a backtick-count regex and
      * {@code .*?}, which (a) cannot match across a line break without the
      * DOTALL flag, so a span documenting a multi-line example would be
      * missed entirely, and (b) can satisfy its backreference against a
      * strict substring of a longer run instead of an exact-length one.
      */
-    private static List<int[]> findInlineCodeSpans(String text) {
+    private static List<int[]> findInlineCodeSpans(String text, int from, int to) {
         List<int[]> ranges = []
-        int length = text.length()
-        int i = 0
-        while (i < length) {
+        int i = from
+        while (i < to) {
             if (text.charAt(i) != '`' as char) {
                 i++
                 continue
             }
             int openStart = i
-            while (i < length && text.charAt(i) == '`' as char) {
+            while (i < to && text.charAt(i) == '`' as char) {
                 i++
             }
             int openLength = i - openStart
+            int limit = nextParagraphBreak(text, i, to)
             int searchFrom = i
             int closeStart = -1
-            while (searchFrom < length) {
+            while (searchFrom < limit) {
                 int runStart = text.indexOf('`', searchFrom)
-                if (runStart < 0) {
+                if (runStart < 0 || runStart >= limit) {
                     break
                 }
                 int runEnd = runStart
-                while (runEnd < length && text.charAt(runEnd) == '`' as char) {
+                while (runEnd < limit && text.charAt(runEnd) == '`' as char) {
                     runEnd++
                 }
                 if (runEnd - runStart == openLength) {
@@ -835,14 +854,25 @@ class HtmlTableToMarkdownConverter {
                 searchFrom = runEnd
             }
             if (closeStart < 0) {
-                // No run of exactly this length closes it -- this backtick
-                // run is not a code span delimiter; i is already past it.
+                // No run of exactly this length closes it before the end of
+                // the paragraph -- this backtick run is not a code span
+                // delimiter; i is already past it.
                 continue
             }
             ranges << ([openStart, closeStart + openLength] as int[])
             i = closeStart + openLength
         }
         return ranges
+    }
+
+    /**
+     * The index of the first blank line (a paragraph boundary) in
+     * {@code text[from, to)}, or {@code to} if there is none.
+     */
+    private static int nextParagraphBreak(String text, int from, int to) {
+        Matcher matcher = PARAGRAPH_BREAK.matcher(text)
+        matcher.region(from, to)
+        return matcher.find() ? matcher.start() : to
     }
 
     /**

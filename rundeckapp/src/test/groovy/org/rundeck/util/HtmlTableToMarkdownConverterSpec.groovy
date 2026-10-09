@@ -366,6 +366,38 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         result == text
     }
 
+    def "a stray backtick inside a fenced block does not pair with one after a real table and swallow it"() {
+        given:
+        String text = '~~~\n' +
+            'echo `unmatched\n' +
+            '~~~\n\n' +
+            '<table><tr><td>a</td></tr></table>\n\n' +
+            'See the ` above.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('| a |')
+        !result.contains('<table>')
+    }
+
+    def "a stray backtick does not pair with one in a later paragraph and swallow a table in between"() {
+        given:
+        // An inline code span can contain line breaks but never a blank
+        // line -- it cannot cross a paragraph boundary.
+        String text = 'A stray ` here.\n\n' +
+            '<table><tr><td>a</td></tr></table>\n\n' +
+            'And another ` here.'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(text)
+
+        then:
+        result.contains('| a |')
+        !result.contains('<table>')
+    }
+
     def "a backtick run inside a code span that does not match the opening run's length does not close it"() {
         given:
         // A single backtick inside a two-backtick-delimited span is just
