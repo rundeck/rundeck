@@ -159,16 +159,26 @@ class HtmlTableToMarkdownConverter {
         // first, incorrectly blanking the summary this method protects.
         Matcher terminatorMatcher = LINE_TERMINATOR.matcher(text)
         int firstLineEnd = terminatorMatcher.find() ? terminatorMatcher.start() : text.length()
+        List<TableSpan> spans
         try {
-            for (TableSpan span : findTopLevelTables(text, findCodeRanges(text))) {
-                if (span.start < firstLineEnd) {
-                    return true
-                }
-            }
+            spans = findTopLevelTables(text, findCodeRanges(text))
         } catch (UnbalancedTableException ignored) {
             return false
         }
-        return false
+        boolean onFirstLine = false
+        for (TableSpan span : spans) {
+            // Same abort conditions as replaceConvertibleElements: a nested
+            // or unextractable table ANYWHERE makes convert() return the text
+            // unchanged, so the summary line must not be blanked for a table
+            // that is not actually going to be converted.
+            if (span.nested || buildMarkdownTable(text.substring(span.start, span.end)) == null) {
+                return false
+            }
+            if (span.start < firstLineEnd) {
+                onFirstLine = true
+            }
+        }
+        return onFirstLine
     }
 
     private static String replaceConvertibleElements(String text) {
@@ -916,6 +926,28 @@ class HtmlTableToMarkdownConverter {
         return matcher.lookingAt() ? matcher.group() : ''
     }
 
+    private static final Pattern LIST_MARKER_LINE_PREFIX = Pattern.compile('^[ \\t]*(?:[-*+]|\\d+[.)])[ \\t]+')
+
+    /**
+     * How many {@code >} markers {@code prefix} (as returned by
+     * {@link #blockquotePrefix}) contains -- the blockquote nesting depth.
+     */
+    private static int blockquoteDepth(String prefix) {
+        return prefix.count('>')
+    }
+
+    /**
+     * The number of leading space/tab characters of {@code [lineStart,
+     * lineEnd)}.
+     */
+    private static int leadingWhitespace(String text, int lineStart, int lineEnd) {
+        int i = lineStart
+        while (i < lineEnd && (text.charAt(i) == ' ' as char || text.charAt(i) == '\t' as char)) {
+            i++
+        }
+        return i - lineStart
+    }
+
     /**
      * Finds fenced code block ranges per the CommonMark spec: an opening
      * fence of 3+ backticks or tildes (up to 3 leading spaces) at the start
@@ -924,48 +956,90 @@ class HtmlTableToMarkdownConverter {
      * length greater than or equal to the opening fence's length -- not
      * necessarily equal. An unclosed fence extends to the end of the text.
      * <p>
-     * A fence may also start right after a blockquote marker (e.g.
-     * {@code "> ~~~"}); the closing fence must then repeat the exact same
-     * marker text. List-item-continuation fences are not handled -- the
-     * indentation needed to stay inside the same list item varies with the
-     * marker, so an unrecognized one safely just falls back to ordinary
-     * conversion rather than a guess.
+     * A fence may also live inside a container block, in which case the
+     * "up to 3 leading spaces" is measured after the container's own
+     * prefix, and the fence ends -- unclosed -- where the container does,
+     * rather than swallowing whatever top-level content follows:
+     * <ul>
+     * <li>a blockquote ({@code "> ~~~"}): continuation lines must carry at
+     * least as many {@code >} markers; the closing fence exactly as many.</li>
+     * <li>a list item ({@code "- item"} followed by lines indented to its
+     * content): continuation lines must be blank or indented at least as
+     * far as the item's content starts; the closing fence likewise.</li>
+     * </ul>
+     * Lists nested inside blockquotes (or vice versa) are not tracked.
      */
     private static List<int[]> findFencedCodeBlocks(String text) {
         List<int[]> ranges = []
         int length = text.length()
         int lineStart = 0
+        int listContentIndent = 0
         while (lineStart < length) {
             int lineEnd = text.indexOf('\n', lineStart)
             if (lineEnd < 0) {
                 lineEnd = length
             }
             String quotePrefix = blockquotePrefix(text, lineStart, lineEnd)
-            int[] fence = matchFence(text, lineStart + quotePrefix.length(), lineEnd, NO_QUOTE, 0)
-            if (fence != null) {
-                char fenceChar = (char) fence[0]
-                int fenceLen = fence[1]
-                int blockEnd = length
-                int closeLineStart = lineEnd < length ? lineEnd + 1 : length
-                while (closeLineStart < length) {
-                    int closeLineEnd = text.indexOf('\n', closeLineStart)
-                    if (closeLineEnd < 0) {
-                        closeLineEnd = length
-                    }
-                    if (text.regionMatches(closeLineStart, quotePrefix, 0, quotePrefix.length()) &&
-                        matchFence(
-                            text, closeLineStart + quotePrefix.length(), closeLineEnd, fenceChar, fenceLen
-                        ) != null) {
-                        blockEnd = closeLineEnd < length ? closeLineEnd + 1 : length
+            int containerOffset = quotePrefix.length()
+            if (quotePrefix.isEmpty()) {
+                Matcher marker = LIST_MARKER_LINE_PREFIX.matcher(text.substring(lineStart, lineEnd))
+                if (marker.lookingAt()) {
+                    listContentIndent = marker.end()
+                    containerOffset = listContentIndent
+                } else if (isBlankLine(text, lineStart, lineEnd)) {
+                    // A blank line does not end a list item on its own.
+                } else if (listContentIndent > 0 && leadingWhitespace(text, lineStart, lineEnd) >= listContentIndent) {
+                    containerOffset = listContentIndent
+                } else {
+                    listContentIndent = 0
+                }
+            }
+            int[] fence = matchFence(text, lineStart + containerOffset, lineEnd, NO_QUOTE, 0)
+            if (fence == null) {
+                lineStart = lineEnd < length ? lineEnd + 1 : length
+                continue
+            }
+            char fenceChar = (char) fence[0]
+            int fenceLen = fence[1]
+            int quoteDepth = blockquoteDepth(quotePrefix)
+            int blockEnd = length
+            int closeLineStart = lineEnd < length ? lineEnd + 1 : length
+            while (closeLineStart < length) {
+                int closeLineEnd = text.indexOf('\n', closeLineStart)
+                if (closeLineEnd < 0) {
+                    closeLineEnd = length
+                }
+                int closeOffset
+                if (quoteDepth > 0) {
+                    String linePrefix = blockquotePrefix(text, closeLineStart, closeLineEnd)
+                    int lineDepth = blockquoteDepth(linePrefix)
+                    if (lineDepth < quoteDepth) {
+                        blockEnd = closeLineStart
                         break
                     }
-                    closeLineStart = closeLineEnd < length ? closeLineEnd + 1 : length
+                    // A deeper ">" run is just fence content, never a close.
+                    closeOffset = lineDepth == quoteDepth ? linePrefix.length() : -1
+                } else if (listContentIndent > 0) {
+                    if (isBlankLine(text, closeLineStart, closeLineEnd)) {
+                        closeOffset = -1
+                    } else if (leadingWhitespace(text, closeLineStart, closeLineEnd) >= listContentIndent) {
+                        closeOffset = listContentIndent
+                    } else {
+                        blockEnd = closeLineStart
+                        break
+                    }
+                } else {
+                    closeOffset = 0
                 }
-                ranges << ([lineStart, blockEnd] as int[])
-                lineStart = blockEnd
-            } else {
-                lineStart = lineEnd < length ? lineEnd + 1 : length
+                if (closeOffset >= 0 &&
+                    matchFence(text, closeLineStart + closeOffset, closeLineEnd, fenceChar, fenceLen) != null) {
+                    blockEnd = closeLineEnd < length ? closeLineEnd + 1 : length
+                    break
+                }
+                closeLineStart = closeLineEnd < length ? closeLineEnd + 1 : length
             }
+            ranges << ([lineStart, blockEnd] as int[])
+            lineStart = blockEnd
         }
         return ranges
     }
