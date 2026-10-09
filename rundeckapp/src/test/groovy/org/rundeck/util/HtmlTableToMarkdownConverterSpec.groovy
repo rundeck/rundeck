@@ -162,6 +162,14 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         '   \n  <table><tr><td>a</td></tr></table>'              | false
         'Some text\n\n<table><tr><td>a</td></tr></table>'        | false
         '<tablecloth>not a table</tablecloth>'                   | false
+        // A documented example, not a live table -- convert() would leave
+        // it untouched too, so there is no reason to blank the summary line.
+        'Use `<table>` syntax.\nDetails'                         | false
+        'See <!-- <table> --> below.\nDetails'                   | false
+        '<img alt="<table></table>">\nDetails'                   | false
+        // Unbalanced -- convert() will fail safe and return the text
+        // unchanged, so there is nothing to protect the summary line from.
+        '<table><tr><td>a</td></tr>'                             | false
         null                                                     | false
         ''                                                       | false
     }
@@ -362,6 +370,19 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
     def "a table nested inside a cell of another table falls back to the original text unchanged"() {
         given:
         String html = '<table><tr><td>before<table><tr><td>inner</td></tr></table>after</td></tr></table>'
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(html)
+
+        then:
+        result == html
+    }
+
+    def "a complete table followed by an unclosed table aborts all conversion, not just the broken one"() {
+        given:
+        // Per the fail-safe contract: an unbalanced table anywhere in the
+        // text means nothing converts, not even the earlier, well-formed one.
+        String html = '<table><tr><td>a</td></tr></table>\n<table><tr><td>b</td></tr>'
 
         when:
         String result = HtmlTableToMarkdownConverter.convert(html)
