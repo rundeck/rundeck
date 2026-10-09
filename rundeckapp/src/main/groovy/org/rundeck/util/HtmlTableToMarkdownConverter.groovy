@@ -117,24 +117,31 @@ class HtmlTableToMarkdownConverter {
     }
 
     /**
-     * Whether {@code text}, once leading whitespace is skipped, begins with
-     * a {@code <table} tag. {@code _description.gsp} uses this to decide
+     * Whether a {@code <table} tag starts anywhere within the first physical
+     * line of {@code text} (up to the first newline, or the whole text if it
+     * has none) -- whether or not anything else (prose, other tags) shares
+     * that line with it. {@code _description.gsp} uses this to decide
      * whether the description has a separate first line that can stand on
-     * its own as a short, plain-text summary, or whether it starts directly
-     * with a table -- which {@link #convert} can only turn into a valid
-     * Markdown table when fed as a whole, not split across a summary line
-     * and a detail body.
+     * its own as a short, plain-text summary, or whether splitting one off
+     * would cut a table in two: either leaving nothing behind it to convert
+     * (a single-line table) or stripping off its own opening tag (a
+     * multi-line table starting on line one) -- {@link #convert} can only
+     * turn a table into valid Markdown when fed the whole thing at once.
      */
-    static boolean startsWithTable(String text) {
+    static boolean firstLineContainsTable(String text) {
         if (!text) {
             return false
         }
-        int i = 0
-        int length = text.length()
-        while (i < length && Character.isWhitespace(text.charAt(i))) {
-            i++
+        int firstLineEnd = text.indexOf('\n')
+        if (firstLineEnd < 0) {
+            firstLineEnd = text.length()
         }
-        return i < length && text.charAt(i) == '<' as char && isTagNamed(text, i, 'table', false)
+        for (int i = 0; i < firstLineEnd; i++) {
+            if (text.charAt(i) == '<' as char && isTagNamed(text, i, 'table', false)) {
+                return true
+            }
+        }
+        return false
     }
 
     private static String replaceConvertibleElements(String text) {

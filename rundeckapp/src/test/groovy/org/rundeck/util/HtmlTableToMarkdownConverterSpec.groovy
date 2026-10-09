@@ -146,20 +146,24 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         HtmlTableToMarkdownConverter.convert('') == ''
     }
 
-    def "startsWithTable recognizes a table as the first thing in the text"() {
+    def "firstLineContainsTable recognizes a table anywhere on the first physical line"() {
         expect:
-        HtmlTableToMarkdownConverter.startsWithTable(text) == expected
+        HtmlTableToMarkdownConverter.firstLineContainsTable(text) == expected
 
         where:
-        text                                               | expected
-        '<table><tr><td>a</td></tr></table>'                | true
-        '   \n  <table><tr><td>a</td></tr></table>'         | true
-        '<TABLE><tr><td>a</td></tr></TABLE>'                 | true
-        'Some text\n\n<table><tr><td>a</td></tr></table>'   | false
-        '<b>bold</b> then <table><tr><td>a</td></tr></table>' | false
-        '<tablecloth>not a table</tablecloth>'               | false
-        null                                                 | false
-        ''                                                   | false
+        text                                                    | expected
+        '<table><tr><td>a</td></tr></table>'                     | true
+        '<TABLE><tr><td>a</td></tr></TABLE>'                     | true
+        'Intro <table><tr><td>a</td></tr></table>'               | true
+        '<b>bold</b> then <table><tr><td>a</td></tr></table>'    | true
+        // The table is on the second physical line here, not the first --
+        // the ordinary split already hands it the table intact, so no
+        // special-casing is needed (or applied).
+        '   \n  <table><tr><td>a</td></tr></table>'              | false
+        'Some text\n\n<table><tr><td>a</td></tr></table>'        | false
+        '<tablecloth>not a table</tablecloth>'                   | false
+        null                                                     | false
+        ''                                                       | false
     }
 
     def "table with surrounding markdown text converts only the table, leaving the rest untouched"() {
