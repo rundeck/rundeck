@@ -19,11 +19,19 @@ package com.dtolabs.rundeck.core.common
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class ProjectNodeSupportSpec extends Specification {
     static final String PROJECT_NAME = 'ProjectNodeSupportSpec'
@@ -341,4 +349,225 @@ class ProjectNodeSupportSpec extends Specification {
         result[1].extraProps == [:]
     }
 
+
+    /**
+     * Create a support whose n sources are the given closures, each invoked by getNodes()
+     */
+    private ProjectNodeSupport supportWithSources(Map extraProps, List<Closure<INodeSet>> loaders) {
+        def props = new Properties()
+        loaders.eachWithIndex { c, i ->
+            props["resources.source.${i + 1}.type".toString()] = 'file'
+            props["resources.source.${i + 1}.config.file".toString()] = "/tmp/file${i}".toString()
+        }
+        extraProps.each { k, v -> props[k] = v }
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> PROJECT_NAME
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> { String type, Properties p ->
+                int idx = (p.getProperty('file') - '/tmp/file') as int
+                // not a Spock Mock: mock invocations are serialized, which would defeat parallel loading
+                def source = new ResourceModelSource() {
+                    @Override
+                    INodeSet getNodes() throws ResourceModelSourceException {
+                        loaders[idx].call()
+                    }
+                }
+                Closeables.closeableProvider(source)
+            }
+        }
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
+        new ProjectNodeSupport(File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"), config, generatorService, sourceService)
+    }
+
+    private static INodeSet nodes(String name, String value) {
+        def set = new NodeSetImpl()
+        def node = new NodeEntryImpl(name)
+        node.setAttribute('x', value)
+        set.putNode(node)
+        set
+    }
+
+    def "sources are queried in parallel and merged in source order"() {
+        given:
+        // every source waits for all the others to start, which can only complete if they run concurrently
+        def allStarted = new CountDownLatch(4)
+        def loaders = (1..4).collect { int n ->
+            { ->
+                allStarted.countDown()
+                if (!allStarted.await(10, TimeUnit.SECONDS)) {
+                    throw new ResourceModelSourceException('sources did not run concurrently')
+                }
+                nodes('a', "v${n}")
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '4'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        support.getResourceModelSourceExceptionsMap().isEmpty()
+        result.getNode('a').getAttributes().x == 'v4'
+    }
+
+    def "sources are queried serially by default and when loadThreads is #threads"() {
+        given:
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def loaders = (1..4).collect { int n ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                sleep(50)
+                active.decrementAndGet()
+                nodes("n${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources(
+                threads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): threads],
+                loaders
+        )
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        maxActive.get() == 1
+        result.nodeNames as List == ['n1', 'n2', 'n3', 'n4']
+
+        where:
+        threads << [null, '1', '0', 'not-a-number']
+    }
+
+    def "concurrency is capped at the shared maximum even if loadThreads is higher"() {
+        given:
+        def total = ProjectNodeSupport.MAX_LOAD_THREADS + 10
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        // sources block until released, so the cap is reached and held without relying on timing
+        def release = new CountDownLatch(1)
+        def loaders = (1..total).collect { int n ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                release.await(10, TimeUnit.SECONDS)
+                active.decrementAndGet()
+                nodes("n${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '1000'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+
+        then:
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+        }
+
+        when:
+        release.countDown()
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames.size() == total
+        maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+    }
+
+    def "serial loads from many projects share the global concurrency cap"() {
+        given:
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def release = new CountDownLatch(1)
+        def projects = ProjectNodeSupport.MAX_LOAD_THREADS + 10
+        def supports = (1..projects).collect {
+            supportWithSources([:], [{ ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                release.await(10, TimeUnit.SECONDS)
+                active.decrementAndGet()
+                nodes("n", 'v')
+            } as Closure<INodeSet>])
+        }
+
+        when:
+        def threads = supports.collect { s -> Thread.start { s.getNodeSet() } }
+
+        then:
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+        }
+
+        when:
+        release.countDown()
+        threads*.join(10000)
+
+        then:
+        maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+    }
+
+    def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
+        given:
+        def secondStarted = new CountDownLatch(1)
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> secondStarted.countDown(); new CountDownLatch(1).await(10, TimeUnit.SECONDS); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        secondStarted.await(10, TimeUnit.SECONDS)
+        loading.interrupt()
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames as List == ['a']
+        support.getResourceModelSourceExceptionsMap().keySet() == ['2.source'] as Set
+    }
+
+    def "failure merging one source is reported by source index and later sources still load"() {
+        given:
+        def broken = Mock(INodeSet) {
+            iterator() >> { throw new IllegalStateException('bad node data') }
+        }
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> broken } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '3'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+        def errors = support.getResourceModelSourceExceptionsMap()
+
+        then:
+        result.nodeNames as List == ['a', 'c']
+        errors.keySet() == ['2.source'] as Set
+        errors['2.source'].message == 'bad node data'
+    }
+
+    def "failure of one source is reported by source index and others still load"() {
+        given:
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> throw new ResourceModelSourceException('boom') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([:], loaders)
+
+        when:
+        def result = support.getNodeSet()
+        def errors = support.getResourceModelSourceExceptionsMap()
+
+        then:
+        result.nodeNames as List == ['a', 'c']
+        errors.keySet() == ['2.source'] as Set
+        errors['2.source'].message == 'boom'
+    }
 }

@@ -52,7 +52,10 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.services.nodes.CachedProjectNodes
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Provides asynchronous loading and caching of nodesets for projects
@@ -75,7 +78,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getCategories() {
-        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource']
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource', loadThreads: 'resourceModelSource']
     }
     @Override
     List<Property> getProjectConfigProperties() {
@@ -103,6 +106,14 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     required(false)
                     defaultValue 'true'
                     renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
+                }.build(),
+                PropertyBuilder.builder().with {
+                    integer 'loadThreads'
+                    title 'Load Threads'
+                    description 'Number of Node Sources queried concurrently when loading nodes.\n\nThe default of 1 queries Node Sources one at a time. Higher values reduce load time for projects with many Node Sources, but increase concurrent requests to the systems behind them, which may throttle. At most 20 Node Sources are queried at once across all projects, including projects that load serially.'
+                    required(false)
+                    defaultValue '1'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build()
         ]
     }
@@ -111,7 +122,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getPropertiesMapping() {
-        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH]
+        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH, 'loadThreads': ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS]
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
@@ -126,6 +137,19 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     }
             );
 
+
+    /**
+     * Source of increasing numbers for background reload requests. Never reset, so a request made after a project's
+     * tracking was removed is still newer than any node set loaded before.
+     */
+    private final AtomicLong reloadRequestSequence = new AtomicLong()
+
+    /**
+     * Number of the latest background reload request per project. Tracked outside the cached nodes, because a reload
+     * replaces them and a request made while a reload is running must not be lost. Removed when the project's
+     * nodes are forcibly refreshed, such as when the project is deleted.
+     */
+    private final ConcurrentMap<String, Long> lastReloadRequests = new ConcurrentHashMap<>()
 
     private File _frameworkVarDir
 
@@ -164,6 +188,8 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                             throws Exception
                     {
                         if (needsReload(key, oldValue)) {
+                            //a failed reload must not retry forever because of the requests it handles
+                            oldValue.reloadRequestSequence = lastReloadRequest(key)
                             ListenableFutureTask<CachedProjectNodes> task = ListenableFutureTask.create{ loadNodes(key,oldValue) }
                             nodeTaskExecutor.execute(task);
                             return task;
@@ -192,6 +218,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
+        if (lastReloadRequest(project) > oldNodes.reloadRequestSequence) {
+            log.debug("reload requested, forcing node reload for ${project}")
+            return true
+        }
         def delay = projectNodeCacheDelayConfig(rdprojectconfig)
         log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - oldNodes.cacheTime.time}...")
         if(rdprojectconfig.configLastModifiedTime > oldNodes.cacheTime){
@@ -235,6 +265,8 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
      * @return project nodes object
      */
     CachedProjectNodes loadNodes(final String project, final CachedProjectNodes oldValue) {
+        //read before loading the config, so a request made after this point triggers another reload
+        long requestSequence = lastReloadRequest(project)
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
         def enabled = isCacheEnabled(rdprojectconfig)
@@ -289,6 +321,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
          */
         def cachedNodes = new CachedProjectNodes(
                 cacheTime: new Date(),
+                reloadRequestSequence: requestSequence,
                 nodeSupport: nodeSupport,
                 doCache: enabled,
                 nodes: preloadedNodes,
@@ -328,7 +361,37 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     void refreshProjectNodes(final String name) {
+        //the forced reload covers any pending request, and this stops tracking projects that no longer exist
+        lastReloadRequests.remove(name)
         nodeCache.invalidate(name)
+    }
+
+    /**
+     * @param project project name
+     * @return the number of the latest background reload requested for the project, 0 if none is tracked
+     */
+    long lastReloadRequest(final String project) {
+        lastReloadRequests.get(project) ?: 0L
+    }
+
+    /**
+     * Reload the nodes for a project in the background. Unlike {@link #refreshProjectNodes(String)}, the cached
+     * nodes keep being served until the new node set has finished loading, so use this when a slow reload
+     * should not make the nodes unavailable (e.g. after a project config change).
+     * @param name project name
+     */
+    @Override
+    void refreshProjectNodesInBackground(final String name) {
+        lastReloadRequests.compute(name, { String k, Long v -> reloadRequestSequence.incrementAndGet() })
+        if (nodeCache.getIfPresent(name) != null) {
+            //run on the executor: if the entry is evicted before the refresh starts, the cache loads it synchronously,
+            //which must not happen on the calling thread. Ignored by the cache while a reload is already running, the
+            //request number makes the next check reload again
+            nodeTaskExecutor.execute { nodeCache.refresh(name) }
+        } else {
+            //nothing to keep serving, and refresh of an absent key would load synchronously on this thread
+            nodeCache.invalidate(name)
+        }
     }
 
     INodeSet getNodeSet(final String name) {

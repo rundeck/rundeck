@@ -22,4 +22,14 @@ package com.dtolabs.rundeck.core.common;
 public interface IProjectNodesFactory {
     IProjectNodes getNodes(final String name);
     void refreshProjectNodes(String name);
+
+    /**
+     * Reload the nodes for a project without making the currently loaded nodes unavailable while the reload runs.
+     * Implementations that cannot do this fall back to {@link #refreshProjectNodes(String)}.
+     *
+     * @param name project name
+     */
+    default void refreshProjectNodesInBackground(String name) {
+        refreshProjectNodes(name);
+    }
 }
