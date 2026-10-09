@@ -67,6 +67,7 @@ import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.reference.JobReferenceImpl
 import spock.lang.Specification
@@ -300,7 +301,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 argString     : '-a b -c d',
                 workflow      : new Workflow(
                         keepgoing: true,
-                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                        commands: [new CommandExec([description: 'Command', adhocRemoteString: 'test buddy'])]
                 ),
                 serverNodeUUID: null,
                 scheduled     : true,
@@ -555,15 +556,16 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
         cmds                                                                     | _
-        [new CommandExec(adhocExecution: true, adhocRemoteString: "do something"),
-         new CommandExec(adhocExecution: true, adhocLocalString: "test dodah"),
-          new JobExec(jobName: 'test1', jobGroup: 'a/test')] | _
+        [new CommandExec(description: 'Command1', adhocExecution: true, adhocRemoteString: "do something"),
+         new CommandExec(description: 'Command2', adhocExecution: true, adhocLocalString: "test dodah"),
+          new JobExec(description: 'Command3', jobName: 'test1', jobGroup: 'a/test')] | _
 
     }
 
     def "validate workflow step log filter"() {
         given:
         def step = new CommandExec([
+                description      : 'Command',
                 adhocRemoteString: 'test buddy',
                 pluginConfig     : [
                         LogFilter: [
@@ -642,6 +644,86 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
     }
 
+    @Unroll
+    def "validate workflow step blank step name fails: #description"() {
+        given:
+        def step = new CommandExec([
+                description      : description,
+                adhocRemoteString: 'test buddy',
+        ])
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.errors.hasFieldErrors('description')
+        step.errors.getFieldError('description').code == WorkflowStepConstants.ERR_CODE_STEP_NAME_BLANK
+
+        where:
+        description << [null, '', '   ']
+    }
+
+    def "validate workflow step non-blank step name passes"() {
+        given:
+        def step = new CommandExec([
+                description      : 'Command',
+                adhocRemoteString: 'test buddy',
+        ])
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        valid
+        !step.hasErrors()
+    }
+
+    def "validateDefinitionWorkflow allows duplicate step names"() {
+        given:
+        def job = new ScheduledExecution(
+                workflow: new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(description: 'Command', adhocRemoteString: 'test 1'),
+                                new CommandExec(description: 'Command', adhocRemoteString: 'test 2'),
+                        ]
+                )
+        )
+        def auth = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def failed = service.validateDefinitionWorkflow(job, auth, false)
+
+        then:
+        !failed
+        !job.errors.hasFieldErrors('workflow')
+    }
+
+    def "validateDefinitionWorkflow flags blank step name on errorHandler"() {
+        given:
+        def job = new ScheduledExecution(
+                workflow: new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        description: 'Command',
+                                        adhocRemoteString: 'test 1',
+                                        errorHandler: new CommandExec(adhocRemoteString: 'err command')
+                                ),
+                        ]
+                )
+        )
+        def auth = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def failed = service.validateDefinitionWorkflow(job, auth, false)
+
+        then:
+        failed
+        job.errors.hasFieldErrors('workflow')
+    }
+
     def "do validate step log filter"() {
         given:
         setupDoValidate()
@@ -679,6 +761,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                         keepgoing: true,
                         strategy: 'node-first',
                         commands: [new CommandExec([
+                                description      : 'Command',
                                 adhocRemoteString: 'test buddy',
                                 pluginConfig     : [
                                         LogFilter: [
@@ -1001,36 +1084,36 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         where:
         cmds | expectFail | strategy
 
-        ["commands": [new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
-                new CommandExec(adhocRemoteString: 'test command2', adhocExecution: true)
+        ["commands": [new CommandExec(description: 'Command1', adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
+                new CommandExec(description: 'Command2', adhocRemoteString: 'test command2', adhocExecution: true)
         ),]] | false | 'node-first'
 
-        ["commands": [new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
-                new CommandExec(adhocRemoteString: 'test command2', adhocExecution: true)
+        ["commands": [new CommandExec(description: 'Command1', adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
+                new CommandExec(description: 'Command2', adhocRemoteString: 'test command2', adhocExecution: true)
         ),]] | false | 'step-first'
 
-        ["commands": [new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
-                new JobExec(jobGroup: 'test1', jobName: 'blah')
+        ["commands": [new CommandExec(description: 'Command1', adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
+                new JobExec(description: 'Command2', jobGroup: 'test1', jobName: 'blah')
         ),]] | true | 'node-first'
 
-        ["commands": [new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
-                new JobExec(jobGroup: 'test1', jobName: 'blah')
+        ["commands": [new CommandExec(description: 'Command1', adhocRemoteString: 'test command1', adhocExecution: true, errorHandler:
+                new JobExec(description: 'Command2', jobGroup: 'test1', jobName: 'blah')
         ),]] | false | 'step-first'
 
-        ["commands": [new JobExec(jobGroup: 'test1', jobName: 'blah', errorHandler:
-                new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true)
+        ["commands": [new JobExec(description: 'Command1', jobGroup: 'test1', jobName: 'blah', errorHandler:
+                new CommandExec(description: 'Command2', adhocRemoteString: 'test command1', adhocExecution: true)
         ),]] | false |  'node-first'
 
-        ["commands": [new JobExec(jobGroup: 'test1', jobName: 'blah', errorHandler:
-                new CommandExec(adhocRemoteString: 'test command1', adhocExecution: true)
+        ["commands": [new JobExec(description: 'Command1', jobGroup: 'test1', jobName: 'blah', errorHandler:
+                new CommandExec(description: 'Command2', adhocRemoteString: 'test command1', adhocExecution: true)
         ),]] | false |  'step-first'
 
-        ["commands": [new JobExec(jobGroup: 'test1', jobName: 'blah', errorHandler:
-                new JobExec(jobGroup: 'test1', jobName: 'blah')
+        ["commands": [new JobExec(description: 'Command1', jobGroup: 'test1', jobName: 'blah', errorHandler:
+                new JobExec(description: 'Command2', jobGroup: 'test1', jobName: 'blah')
         ),]] | false | 'node-first'
 
-        ["commands": [new JobExec(jobGroup: 'test1', jobName: 'blah', errorHandler:
-                new JobExec(jobGroup: 'test1', jobName: 'blah')
+        ["commands": [new JobExec(description: 'Command1', jobGroup: 'test1', jobName: 'blah', errorHandler:
+                new JobExec(description: 'Command2', jobGroup: 'test1', jobName: 'blah')
         ),]] | false | 'step-first'
 
     }
@@ -1390,7 +1473,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         [jobName : 'monkey1', project: 'AProject', description: 'blah',
                 workflow:[threadcount: 1, keepgoing: true,strategy: 'sequential'],
          _sessionwf:'true',
-         _sessionEditWFObject: new Workflow(threadcount: 1, keepgoing: true, commands:[ new CommandExec(adhocExecution: true, adhocRemoteString: 'test command')]),
+         _sessionEditWFObject: new Workflow(threadcount: 1, keepgoing: true, commands:[ new CommandExec(description: 'Command', adhocExecution: true, adhocRemoteString: 'test command')]),
         ]
     }
 
@@ -2077,7 +2160,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
         inparams | orig                                                                                                                                                                                                      | expect
-        [ workflow: new Workflow([threadcount: 1, keepgoing: true, strategy:'node-first', commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test local')]])]|[:]                                                                                                                                                                                         |[:]
+        [ workflow: new Workflow([threadcount: 1, keepgoing: true, strategy:'node-first', commands: [new CommandExec(description: 'Command', adhocExecution: true, adhocLocalString: 'test local')]])]|[:]                                                                                                                                                                                         |[:]
         [nodeThreadcount: '',doNodedispatch: true,nodeInclude:'aname']|[[nodeThreadcount: 3,doNodedispatch: true,nodeInclude:'aname']]                                                                                       |[nodeThreadcount: 1]
         [scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'] | [:] | [scheduled: true, seconds:'0', minute:'21', hour:'*/4', dayOfMonth:'*/4', month:'*/6', dayOfWeek:'?', year:'2010-2040']
         [scheduled: true,
@@ -2123,15 +2206,15 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
         inparams  | orig |  expect
-        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow([threadcount: 1, keepgoing: true, strategy:'node-first', commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test local')]])] |
+        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow([threadcount: 1, keepgoing: true, strategy:'node-first', commands: [new CommandExec(description: 'Command', adhocExecution: true, adhocLocalString: 'test local')]])] |
                 [:] |
                 [[adhocLocalString:'test local']]
-        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow([threadcount: 1, keepgoing: false, strategy:'step-first', commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test command2')]])]                                                  |
+        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow([threadcount: 1, keepgoing: false, strategy:'step-first', commands: [new CommandExec(description: 'Command', adhocExecution: true, adhocLocalString: 'test command2')]])]                                                  |
                 [:]                                                                                                                                                                                                                       |
                 [[adhocRemoteString: 'test command2']]
-        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow(strategy: 'step-first', keepgoing: false, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test command2')])]                                                                                                                                                                    | [:] | []
+        ['_sessionwf':'true', '_sessionEditWFObject': new Workflow(strategy: 'step-first', keepgoing: false, commands: [new CommandExec(description: 'Command', adhocExecution: true, adhocLocalString: 'test command2')])]                                                                                                                                                                    | [:] | []
         //update via session workflow
-        ['_sessionwf':'true', '_sessionEditWFObject':new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec([adhocRemoteString: 'test buddy'])])] |
+        ['_sessionwf':'true', '_sessionEditWFObject':new Workflow(keepgoing: true, strategy: 'node-first', commands: [new CommandExec([description: 'Command', adhocRemoteString: 'test buddy'])])] |
                 [:] |
                 [[adhocRemoteString: 'test buddy']]
     }
@@ -2180,12 +2263,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         where:
         inparams                                                                                                                                                                                                          | expect | orig
         [description: 'new job', jobName: 'monkey',
-         workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])]                                                                                                   | [description: 'new job', jobName: 'monkey'] | [:]
-        [workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: new CommandExec(adhocRemoteString: 'err command'))])]                                                        | [:]| [:]
-        [workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', errorHandler: new PluginStep(keepgoingOnSuccess: true, type: 'asdf', nodeStep: true, configuration: ["blah": "value"]))])] | [:]| [:]
+         workflow: new Workflow(commands: [new CommandExec(description: 'Command', adhocRemoteString: 'test command', adhocExecution: true)])]                                                                                                   | [description: 'new job', jobName: 'monkey'] | [:]
+        [workflow: new Workflow(commands: [new CommandExec(description: 'Command', adhocRemoteString: 'test command', errorHandler: new CommandExec(description: 'ErrCommand', adhocRemoteString: 'err command'))])]                                                        | [:]| [:]
+        [workflow: new Workflow(commands: [new CommandExec(description: 'Command', adhocRemoteString: 'test command', errorHandler: new PluginStep(description: 'ErrCommand', keepgoingOnSuccess: true, type: 'asdf', nodeStep: true, configuration: ["blah": "value"]))])] | [:]| [:]
         [workflow: new Workflow(commands: [
-                new CommandExec(adhocRemoteString: 'test command'),
-                new CommandExec(adhocRemoteString: 'another command'),
+                new CommandExec(description: 'Command1', adhocRemoteString: 'test command'),
+                new CommandExec(description: 'Command2', adhocRemoteString: 'another command'),
         ])] | [:]                                                                                                                  | [:]
         [doNodedispatch: true, nodeIncludeName: "nodename",] |[doNodedispatch: true, nodeIncludeName: "nodename",nodeInclude:null] | [doNodedispatch: true, nodeInclude: "hostname",]
         [doNodedispatch: true, nodeInclude: "hostname",] |[doNodedispatch: true, nodeInclude: "hostname",nodeThreadcount: 3]       | [:]
@@ -2550,6 +2633,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
                                             workflow: new Workflow(
                                                     commands: [new CommandExec(
+                                                            description: 'Command',
                                                             adhocRemoteString: 'test command',
                                                             adhocExecution: true
                                                     )]
@@ -2624,36 +2708,38 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(createJobParams(
                 workflow: new Workflow(strategy: strategy,
                                        commands: [
-                                               new CommandExec(adhocRemoteString: 'test command', adhocExecution: true),
-                                               new CommandExec(adhocRemoteString: 'test command', adhocExecution: true),
-                                               new JobExec(jobName: 'test1', jobGroup: 'test'),
-                                               new JobExec(jobName: 'test1', jobGroup: 'test'),
+                                               new CommandExec(description: 'Command1', adhocRemoteString: 'test command', adhocExecution: true),
+                                               new CommandExec(description: 'Command2', adhocRemoteString: 'test command', adhocExecution: true),
+                                               new JobExec(description: 'Command3', jobName: 'test1', jobGroup: 'test'),
+                                               new JobExec(description: 'Command4', jobName: 'test1', jobGroup: 'test'),
                                        ]
                 )
         )
         ).save()
 
 
-        def eh1 = new CommandExec(adhocRemoteString: 'err command')
-        def eh2 = new CommandExec(adhocRemoteString: 'err command')
-        def eh3 = new JobExec(jobGroup: 'eh', jobName: 'eh1')
-        def eh4 = new JobExec(jobGroup: 'eh', jobName: 'eh2')
+        def eh1 = new CommandExec(description: 'ErrCommand1', adhocRemoteString: 'err command')
+        def eh2 = new CommandExec(description: 'ErrCommand2', adhocRemoteString: 'err command')
+        def eh3 = new JobExec(description: 'ErrCommand3', jobGroup: 'eh', jobName: 'eh1')
+        def eh4 = new JobExec(description: 'ErrCommand4', jobGroup: 'eh', jobName: 'eh2')
 
         def newJob = new ScheduledExecution(createJobParams(
                 workflow: new Workflow(strategy: strategy,
                                        commands: [
                                                new CommandExec(
+                                                       description: 'Command1',
                                                        adhocRemoteString: 'test command',
                                                        adhocExecution: true,
                                                        errorHandler: eh1
                                                ),
                                                new CommandExec(
+                                                       description: 'Command2',
                                                        adhocRemoteString: 'test command',
                                                        adhocExecution: true,
                                                        errorHandler: eh3
                                                ),
-                                               new JobExec(jobName: 'test1', jobGroup: 'test', errorHandler: eh2),
-                                               new JobExec(jobName: 'test1', jobGroup: 'test', errorHandler: eh4),
+                                               new JobExec(description: 'Command3', jobName: 'test1', jobGroup: 'test', errorHandler: eh2),
+                                               new JobExec(description: 'Command4', jobName: 'test1', jobGroup: 'test', errorHandler: eh4),
                                        ]
                 )
         )
@@ -2799,7 +2885,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                         [
                                 workflow: new Workflow(
                                         keepgoing: true,
-                                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])],
+                                        commands: [new CommandExec([description: 'Command', adhocRemoteString: 'test buddy'])],
                                         pluginConfigMap: pluginConfigMap
                                 )
                         ]
@@ -3066,17 +3152,17 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 project: 'AProject',
                 description: 'desc',
                 workflow: new Workflow(commands: [
-                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test",
-                                        errorHandler: new CommandExec(adhocExecution: true,
+                        new CommandExec(description: 'Command1', adhocExecution: true, adhocRemoteString: "echo test",
+                                        errorHandler: new CommandExec(description: 'ErrCommand1', adhocExecution: true,
                                                                       adhocRemoteString: "echo this is an errorhandler")),
-                        new CommandExec(argString: "blah blah", adhocLocalString: "test2",
-                                        errorHandler: new CommandExec(argString: "blah blah err",
+                        new CommandExec(description: 'Command2', argString: "blah blah", adhocLocalString: "test2",
+                                        errorHandler: new CommandExec(description: 'ErrCommand2', argString: "blah blah err",
                                                                       adhocLocalString: "test2err")),
-                        new CommandExec(argString: "blah3 blah3", adhocFilepath: "test3",
-                                        errorHandler: new CommandExec(argString: "blah3 blah3 err",
+                        new CommandExec(description: 'Command3', argString: "blah3 blah3", adhocFilepath: "test3",
+                                        errorHandler: new CommandExec(description: 'ErrCommand3', argString: "blah3 blah3 err",
                                                                       adhocFilepath: "test3err")),
-                        new JobExec(jobGroup: "group", jobName: "test",
-                                    errorHandler: new JobExec(jobName: "testerr", jobGroup: "grouperr", argString: "line err")),
+                        new JobExec(description: 'Command4', jobGroup: "group", jobName: "test",
+                                    errorHandler: new JobExec(description: 'ErrCommand4', jobName: "testerr", jobGroup: "grouperr", argString: "line err")),
 
                 ])
         )
