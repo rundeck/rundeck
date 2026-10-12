@@ -146,24 +146,10 @@ class EnhancedNodeService
 
     @Override
     void refreshProjectNodes(final String name) {
-        clearLoadedPlugins(name)
-        nodeService.refreshProjectNodes(name)
-    }
-
-    private void clearLoadedPlugins(final String name) {
         if (enabled) {
             loadedPlugins.remove(name)
         }
-    }
-
-    /**
-     * Reload the nodes in the background, the previously loaded nodes keep being served until the reload completes
-     * @param name project name
-     */
-    @Override
-    void refreshProjectNodesInBackground(final String name) {
-        clearLoadedPlugins(name)
-        nodeService.refreshProjectNodesInBackground(name)
+        nodeService.refreshProjectNodes(name)
     }
 
     @Override
