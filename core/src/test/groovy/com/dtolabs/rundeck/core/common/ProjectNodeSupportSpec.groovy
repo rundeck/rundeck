@@ -415,6 +415,40 @@ class ProjectNodeSupportSpec extends Specification {
         result.getNode('a').getAttributes().x == 'v4'
     }
 
+    def "a slow early source holds back later sources so at most loadThreads results wait to be merged"() {
+        given:
+        def releaseFirst = new CountDownLatch(1)
+        def secondDone = new CountDownLatch(1)
+        def started = Collections.synchronizedList([])
+        def loaders = (1..4).collect { int n ->
+            { ->
+                started << n
+                if (n == 1) {
+                    releaseFirst.await(10, TimeUnit.SECONDS)
+                }
+                def result = nodes("n${n}", 'v')
+                if (n == 2) {
+                    secondDone.countDown()
+                }
+                result
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        secondDone.await(10, TimeUnit.SECONDS)
+        def startedWhileFirstBlocked = new ArrayList(started).sort()
+        releaseFirst.countDown()
+        loading.join(10000)
+
+        then:
+        startedWhileFirstBlocked == [1, 2]
+        results[0].nodeNames as List == ['n1', 'n2', 'n3', 'n4']
+        support.getResourceModelSourceExceptionsMap().isEmpty()
+    }
+
     def "sources are queried serially by default and when loadThreads is #threads"() {
         given:
         def active = new AtomicInteger()

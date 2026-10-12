@@ -41,6 +41,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -168,9 +170,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         nodesSourceExceptions.clear();
         final List<LoadedResourceModelSource> sources = new ArrayList<>(getResourceModelSourcesInternal());
-        final List<SourceResult> results = querySources(sources);
-        for (int i = 0; i < results.size(); i++) {
-            final SourceResult result = results.get(i);
+        querySources(sources, (i, result) -> {
             ResourceModelSourceException error = result.error();
             if (result.nodes() != null) {
                 try {
@@ -184,7 +184,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             if (error != null) {
                 exceptions.put((i + 1) + ".source", error);
             }
-        }
+        });
         synchronized (nodesSourceExceptions){
             nodesSourceExceptions.putAll(exceptions);
         }
@@ -230,59 +230,76 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * Query all sources, in parallel if more than one thread is configured. At most the configured number of this
-     * project's sources are submitted to the shared pool at a time, which limits how much of the pool one project
-     * uses unless its limit is as high as the pool size.
+     * Query all sources, in parallel if more than one thread is configured, and pass each result to the consumer in
+     * source order as soon as it and all earlier results are available. A source is only submitted while fewer than
+     * the configured number of sources are waiting to be consumed, so at most that many results are held at once even
+     * when an early source is slow, and one project uses at most that much of the shared pool.
      *
-     * @param sources sources to query
-     *
-     * @return one result per source, in the same order as the sources
+     * @param sources  sources to query
+     * @param consumer receives the source index and its result, in source order, on the calling thread
      */
-    private List<SourceResult> querySources(final List<LoadedResourceModelSource> sources) {
+    private void querySources(
+            final List<LoadedResourceModelSource> sources,
+            final BiConsumer<Integer, SourceResult> consumer
+    )
+    {
         final int total = sources.size();
         final int threads = Math.min(Math.min(getLoadThreads(), MAX_LOAD_THREADS), total);
         if (threads <= 1) {
-            return sources.stream().map(ProjectNodeSupport::querySource).collect(Collectors.toList());
+            for (int i = 0; i < total; i++) {
+                consumer.accept(i, querySource(sources.get(i)));
+            }
+            return;
         }
-        final SourceResult[] results = new SourceResult[total];
+        final AtomicReferenceArray<SourceResult> results = new AtomicReferenceArray<>(total);
         final CompletionService<Void> completion = new ExecutorCompletionService<>(LOAD_POOL);
         final List<Future<Void>> submitted = new ArrayList<>();
         int next = 0;
-        int running = 0;
+        int consumed = 0;
         try {
-            while (next < total || running > 0) {
-                while (next < total && running < threads) {
+            while (consumed < total) {
+                while (next < total && next < consumed + threads) {
                     final int index = next++;
                     submitted.add(completion.submit(() -> {
-                        results[index] = querySource(sources.get(index));
+                        results.set(index, querySource(sources.get(index)));
                         return null;
                     }));
-                    running++;
                 }
                 completion.take().get();
-                running--;
+                SourceResult result;
+                while (consumed < next && (result = results.getAndSet(consumed, null)) != null) {
+                    consumer.accept(consumed++, result);
+                }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return withFailures(results, e);
+            consumeWithFailures(results, consumed, consumer, e);
         } catch (ExecutionException e) {
-            return withFailures(results, e);
+            consumeWithFailures(results, consumed, consumer, e);
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             submitted.forEach(f -> f.cancel(true));
         }
-        return Arrays.asList(results);
     }
 
     /**
-     * Keeps the results already collected, and reports the failure for sources that did not complete
+     * Passes the results already collected to the consumer, and reports the failure for sources that did not complete
      */
-    private static List<SourceResult> withFailures(final SourceResult[] results, final Exception e) {
+    private static void consumeWithFailures(
+            final AtomicReferenceArray<SourceResult> results,
+            final int consumed,
+            final BiConsumer<Integer, SourceResult> consumer,
+            final Exception e
+    )
+    {
         final SourceResult failed = new SourceResult(
                 null,
                 new ResourceModelSourceException("Failed loading nodes: " + e, e)
         );
-        return Arrays.stream(results).map(r -> r != null ? r : failed).collect(Collectors.toList());
+        for (int i = consumed; i < results.length(); i++) {
+            final SourceResult result = results.get(i);
+            consumer.accept(i, result != null ? result : failed);
+        }
     }
 
     /**
