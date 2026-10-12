@@ -468,7 +468,8 @@ class UpdateModeProjectService implements ProjectConfigurable {
                 || (isScheduleDisabledNow != newScheduleDisabledStatus))
         def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
 
-        frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+        //execution mode settings do not affect nodes, and this also runs from the schedule timer
+        frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes, false)
         if(reschedule){
             frameworkService.notifyProjectSchedulingChange(project, isExecutionDisabledNow, isScheduleDisabledNow, active)
             if(active){

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -1000,6 +1001,54 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         then:
         1* manager.createFrameworkProjectStrict(_,_)
         1* service.projectService.afterCreationProjectComponents(project)
+    }
+
+    def "update project config drops the node cache unless refreshNodes is false"() {
+        given:
+        def project = Mock(IRundeckProject)
+        service.rundeckFramework = Mock(Framework) {
+            getFrameworkProjectMgr() >> Stub(ProjectManager) {
+                getFrameworkProject('test1') >> project
+            }
+        }
+        service.rundeckNodeService = Mock(IProjectNodesFactory)
+        def props = new Properties()
+
+        when:
+        def result = refreshNodes == null ?
+                     service.updateFrameworkProjectConfig('test1', props, null) :
+                     service.updateFrameworkProjectConfig('test1', props, null, refreshNodes)
+
+        then:
+        result.success
+        1 * project.mergeProjectProperties(props, null)
+        expected * service.rundeckNodeService.refreshProjectNodes('test1')
+
+        where:
+        refreshNodes | expected
+        null         | 1
+        true         | 1
+        false        | 0
+    }
+
+    def "set project config drops the node cache"() {
+        given:
+        def project = Mock(IRundeckProject)
+        service.rundeckFramework = Mock(Framework) {
+            getFrameworkProjectMgr() >> Stub(ProjectManager) {
+                getFrameworkProject('test1') >> project
+            }
+        }
+        service.rundeckNodeService = Mock(IProjectNodesFactory)
+        def props = new Properties()
+
+        when:
+        def result = service.setFrameworkProjectConfig('test1', props)
+
+        then:
+        result.success
+        1 * project.setProjectProperties(props)
+        1 * service.rundeckNodeService.refreshProjectNodes('test1')
     }
 
     class MockScheduledExecutionService{

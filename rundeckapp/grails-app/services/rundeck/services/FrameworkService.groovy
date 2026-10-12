@@ -87,6 +87,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     PluginService pluginService
     PluginControlService pluginControlService
     def scheduledExecutionService
+    IProjectNodesFactory rundeckNodeService
     def logFileStorageService
     def fileUploadService
     EventBus grailsEventBus
@@ -519,14 +520,24 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      * @param project name
      * @param properties new properties to merge in
      * @param removePrefixes set of string prefixes of properties to remove
+     * @param refreshNodes true to drop the project node cache so the next read loads nodes from the new config,
+     * false to keep serving the cached nodes until the next node cache refresh interval
      * @return [success:boolean, error: String]
      */
-    def updateFrameworkProjectConfig(String project,Properties properties, Set<String> removePrefixes){
+    def updateFrameworkProjectConfig(
+        String project,
+        Properties properties,
+        Set<String> removePrefixes,
+        boolean refreshNodes = true
+    ){
         try {
             getFrameworkProject(project).mergeProjectProperties(properties, removePrefixes)
         } catch (Error e) {
             log.error(e.message,e)
             return [success: false, error: e.message]
+        }
+        if (refreshNodes) {
+            rundeckNodeService.refreshProjectNodes(project)
         }
         [success:true]
     }
@@ -545,6 +556,8 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
             log.debug(e.message,e)
             return [success: false, error: e.message]
         }
+        //manual config save: drop the node cache so the next read loads nodes from the new config
+        rundeckNodeService.refreshProjectNodes(project)
         [success:true]
     }
     /**

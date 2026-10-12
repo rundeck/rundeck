@@ -494,9 +494,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def metadata = [(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):MIME_TYPE_PROJECT_PROPERTIES]
         def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
+        //the node cache is not dropped here: the cached nodes keep being served and reload on the next refresh
+        //interval because the config is newer. Manual config saves drop it in FrameworkService instead
         projectCache.invalidate(projectName)
-        //reload nodes before returning so callers see nodes from the new config
-        rundeckNodeService.refreshProjectNodes(projectName)
 
         eventBus.notify(
             AppEvents.PROJECT_CONFIG_CHANGED,
