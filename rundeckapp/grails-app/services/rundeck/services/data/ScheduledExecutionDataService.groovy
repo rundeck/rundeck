@@ -25,6 +25,21 @@ abstract class ScheduledExecutionDataService implements IScheduledExecutionDataS
         ScheduledExecution.load(id)
     }
 
+    /**
+     * Batched lookup by uuid.
+     *
+     * Implemented here rather than left for the {@link Service} transform to generate: on GORM 9 the
+     * data-service finder parser type-checks the argument against the property without accounting for
+     * the {@code InList} operator, so it rejects {@code List<String>} against a {@code String} uuid.
+     * The same finder is still generated normally on the domain class, which is what this delegates to.
+     *
+     * @param uuids job uuids to look up
+     * @return the matching jobs, in no particular order
+     */
+    List<ScheduledExecution> findAllByUuidInList(List<String> uuids) {
+        ScheduledExecution.findAllByUuidInList(uuids)
+    }
+
 }
 
 interface IScheduledExecutionDataService {
