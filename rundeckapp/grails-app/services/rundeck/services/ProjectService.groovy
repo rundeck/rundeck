@@ -42,6 +42,7 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -97,6 +98,7 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.util.concurrent.ConcurrentHashMap
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -126,6 +128,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
+    def frameworkService
+    final Set<String> deferredDeletesInFlight = ConcurrentHashMap.newKeySet()
 
     static transactional = false
 
@@ -1938,7 +1942,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username, Boolean deferred = null) {
         log.info("Requested deletion of project ${project.name}")
 
-        if(framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)) {
+        boolean alreadyDisabled = framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)
+        if (alreadyDisabled && !deferredDeletesInFlight.add(project.name)) {
             return new DeleteResponse(
             success: false,
             error: "Cannot delete an already disabled project.")
@@ -1947,21 +1952,32 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def deferDelete = Optional.ofNullable(deferred)
             .orElse(configurationService.getBoolean("projectService.deferredProjectDelete", true))
 
-        if(!deferDelete) {
+        if (!alreadyDisabled && !deferDelete) {
             return deleteProjectInternal(project, framework, authContext, username)
         }
 
-        try {
-            framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
-        } catch (UnsupportedOperationException e) {
-            log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
-            throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
+        if (!alreadyDisabled) {
+            try {
+                framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
+            } catch (UnsupportedOperationException e) {
+                log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
+                throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
+            }
+            if (!deferredDeletesInFlight.add(project.name)) {
+                return new DeleteResponse(
+                success: false,
+                error: "Cannot delete an already disabled project.")
+            }
         }
 
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         def promise = Promises.task {
-                return deleteProjectInternal(project, framework, authContext, username)
+            DeleteResponse result = deleteProjectInternal(project, framework, authContext, username)
+            if (result != null && result.success) {
+                deferredDeletesInFlight.remove(project.name)
+            }
+            return result
         }
         promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
@@ -1973,6 +1989,29 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
 
         return new DeleteResponse(success: true)
+    }
+
+    /**
+     * Resume deferred deletes left DISABLED after a restart. A failed attempt stays in
+     * {@link #deferredDeletesInFlight} until this JVM is replaced.
+     */
+    @Subscriber('rundeck.bootstrap')
+    void resumeDisabledProjectsFromBootstrap() {
+        def framework = frameworkService?.rundeckFramework
+        if (framework) {
+            resumeDisabledProjects((IFramework) framework)
+        }
+    }
+
+    void resumeDisabledProjects(IFramework framework) {
+        Collection<String> names = framework.frameworkProjectMgr.listDisabledFrameworkProjectNames()
+        if (!names) {
+            return
+        }
+        for (String name : names) {
+            IRundeckProject disabledProject = framework.frameworkProjectMgr.getFrameworkProject(name)
+            deleteProject(disabledProject, framework, null, 'system', Boolean.TRUE)
+        }
     }
 
 

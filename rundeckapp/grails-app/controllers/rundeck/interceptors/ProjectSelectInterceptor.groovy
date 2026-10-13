@@ -95,7 +95,8 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
-            if (frameworkService.isFrameworkProjectDisabled(selected)) {
+            boolean deletingProject = controllerName == 'project' && actionName == 'delete'
+            if (frameworkService.isFrameworkProjectDisabled(selected) && !deletingProject) {
                 response.setStatus(409)
                 request.title = 'Disabled'
                 request.errorCode = 'project.disabled'

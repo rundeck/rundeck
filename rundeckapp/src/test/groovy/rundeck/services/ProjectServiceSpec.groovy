@@ -27,10 +27,13 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import org.grails.async.factory.BoundPromise
+import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import com.dtolabs.rundeck.net.api.RundeckApi
 import com.dtolabs.rundeck.net.api.RundeckClient
 import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.util.ZipBuilder
+import grails.async.Promise
 import grails.async.Promises
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
@@ -83,6 +86,14 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 import static org.junit.Assert.*
+
+class HoldingPromiseFactory extends org.grails.async.factory.SynchronousPromiseFactory {
+    @Override
+    public <T> Promise<T> createPromise(Closure<T>... closures) {
+        return (Promise<T>) new BoundPromise(new ProjectService.DeleteResponse(success: false))
+    }
+}
+
 /**
  * Created by greg on 8/5/15.
  */
@@ -598,6 +609,120 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         false      | true        | 0
         false      | false       | 0
 
+    }
+
+    def "delete of a disabled project resumes cleanup when this JVM has not started it"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def fwk = Mock(Framework)
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null)
+
+        then:
+        result.success
+        result.error == null
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> true
+            0 * disableFrameworkProject('myproject')
+            0 * enableFrameworkProject('myproject')
+            1 * removeFrameworkProject('myproject')
+        }
+    }
+
+    def "second delete is rejected while a deferred delete is still in flight"() {
+        given:
+        Promises.promiseFactory = new HoldingPromiseFactory()
+        def disabled = false
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def mgr = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> { disabled }
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def first = service.deleteProject(project, fwk, null, null)
+        def second = service.deleteProject(project, fwk, null, null)
+
+        then:
+        first.success
+        !second.success
+        second.error == 'Cannot delete an already disabled project.'
+        service.deferredDeletesInFlight.contains('myproject')
+        1 * mgr.disableFrameworkProject('myproject') >> { disabled = true }
+        0 * mgr.removeFrameworkProject('myproject')
+        0 * mgr.enableFrameworkProject('myproject')
+    }
+
+    def "failed deferred delete stays disabled and is resumed on the next bootstrap"() {
+        given:
+        def disabled = false
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.execReportDataProvider = Mock(ExecReportDataProvider) {
+            deleteWithTransaction(_) >> { throw new RuntimeException('db') }
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def mgr = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> { disabled }
+            disableFrameworkProject('myproject') >> { disabled = true }
+            0 * enableFrameworkProject('myproject')
+            0 * removeFrameworkProject('myproject')
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def first = service.deleteProject(project, fwk, null, null)
+        def second = service.deleteProject(project, fwk, null, null)
+
+        then:
+        first.success
+        !second.success
+        second.error == 'Cannot delete an already disabled project.'
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+        service.deferredDeletesInFlight.contains('myproject')
+
+        when:
+        service.deferredDeletesInFlight.clear()
+        mgr.listDisabledFrameworkProjectNames() >> ['myproject']
+        mgr.getFrameworkProject('myproject') >> project
+        service.resumeDisabledProjects(fwk)
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+        0 * mgr.enableFrameworkProject('myproject')
     }
 
     def "import project archive only nodes without config"() {
