@@ -417,6 +417,7 @@ class ProjectNodeSupportSpec extends Specification {
 
     def "a slow early source holds back later sources so at most loadThreads results wait to be merged"() {
         given:
+        def firstStarted = new CountDownLatch(1)
         def releaseFirst = new CountDownLatch(1)
         def secondDone = new CountDownLatch(1)
         def started = Collections.synchronizedList([])
@@ -424,6 +425,7 @@ class ProjectNodeSupportSpec extends Specification {
             { ->
                 started << n
                 if (n == 1) {
+                    firstStarted.countDown()
                     releaseFirst.await(10, TimeUnit.SECONDS)
                 }
                 def result = nodes("n${n}", 'v')
@@ -438,6 +440,8 @@ class ProjectNodeSupportSpec extends Specification {
 
         when:
         def loading = Thread.start { results << support.getNodeSet() }
+        //sources 1 and 2 run concurrently, so wait for both before checking that no later source started
+        firstStarted.await(10, TimeUnit.SECONDS)
         secondDone.await(10, TimeUnit.SECONDS)
         def startedWhileFirstBlocked = new ArrayList(started).sort()
         releaseFirst.countDown()
