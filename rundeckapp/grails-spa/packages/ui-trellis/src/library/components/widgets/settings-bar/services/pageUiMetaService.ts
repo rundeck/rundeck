@@ -3,7 +3,8 @@ import type { PageUiMeta } from "../NextUIIndicatorTypes";
 
 export function getPageUiMeta(): PageUiMeta {
   const rawData = loadJsonData("pageUiMeta") || {};
-  const nextUiCapable = rawData.nextUiCapable === true || rawData.nextUiCapable === "true";
+  const nextUiCapable =
+    rawData.nextUiCapable === true || rawData.nextUiCapable === "true";
   const uiType = rawData.uiType || "current";
 
   return {
@@ -11,5 +12,3 @@ export function getPageUiMeta(): PageUiMeta {
     isNextUiPage: uiType === "next",
   };
 }
-
-

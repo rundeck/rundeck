@@ -85,6 +85,10 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
         params.project = projectName
         params.integration = integration
 
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * listJobsForProjectUncached(projectName) >> []
+        }
+
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
             0 * _(*_)
@@ -209,6 +213,9 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
         def job2 = definedJobs.job2
         def job3 = definedJobs.job3
 
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * listJobsForProjectUncached(projectName) >> definedJobs.values().toList()
+        }
 
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject(projectName) >> true
@@ -883,6 +890,9 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
             def definedJobs = defineJobs('job1', 'job2')
             def jobs=[]
             controller.scmService=Mock(ScmService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * listJobsForProjectUncached(project) >> definedJobs.values().toList()
+            }
         when:
             def result=controller.getViewExportActionItems(project,jobs)
         then:
@@ -920,6 +930,9 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
             def definedJobs = defineJobs('job1', 'job2')
             def jobs=[]
             controller.scmService=Mock(ScmService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * listJobsForProjectUncached(project) >> definedJobs.values().toList()
+            }
         when:
             def result=controller.getViewExportActionItems(project,jobs)
         then:
@@ -951,6 +964,9 @@ class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmC
             def definedJobs = defineJobs('job1', 'job2')
             def jobs=[]
             controller.scmService=Mock(ScmService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                1 * listJobsForProjectUncached(project) >> definedJobs.values().toList()
+            }
         when:
             def result=controller.getViewExportActionItems(project,jobs)
         then:

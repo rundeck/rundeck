@@ -1,0 +1,97 @@
+name: Bug Report
+description: Report a reproducible bug in Rundeck (community / self-hosted use)
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Enterprise or SaaS customer?** Please don't file a bug here — open a ticket at [support.rundeck.com](https://support.rundeck.com) instead for prioritized handling. This template is for community/self-hosted reports only.
+
+        Have a configuration or troubleshooting question rather than a reproducible bug? Ask in the [Community forum](https://community.pagerduty.com/) instead — bug reports without a clear reproduction may be redirected there.
+
+  - type: input
+    id: version
+    attributes:
+      label: Rundeck Version
+      description: The exact version you're running.
+      placeholder: e.g. 6.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: OS/distro of the machine running Rundeck.
+      placeholder: e.g. Ubuntu 22.04, RHEL 9, Windows Server 2019, macOS 14
+    validations:
+      required: true
+
+  - type: input
+    id: java_version
+    attributes:
+      label: Java Version
+      description: Output of `java -version`.
+      placeholder: e.g. OpenJDK 17.0.9
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: What happened? What did you observe?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Reproduction Steps
+      description: Exact steps to reproduce, numbered.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Stack Trace
+      description: Optional — paste any relevant logs or stack traces (rendered as a code block).
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      description: Optional — only if relevant to the bug.
+      options:
+        - MySQL / MariaDB
+        - PostgreSQL
+        - Oracle
+        - Microsoft SQL Server
+        - H2 (default/embedded)
+        - Not applicable / Unknown
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: version_confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have verified this occurs on a version within Rundeck's [supported window](https://docs.rundeck.com/docs/history/release-calendar.html) (released within the last 12 months).
+          required: true

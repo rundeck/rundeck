@@ -61,7 +61,7 @@ export default defineComponent({
     job(): JobBrowseItem {
       return this.itemData?.job;
     },
-    authz(): Object | undefined {
+    authz(): Record<string, any> | undefined {
       const data: any = this.job?.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "authz",
       )?.data;

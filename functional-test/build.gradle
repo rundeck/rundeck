@@ -79,19 +79,30 @@ def checkWarFile(destination, fileName) {
 
 /** 
  * Returns a function that includes only the test files specified in the `testFiles` parameter.
- * The `testFiles` parameter is a string of paths to the source code of the tests to be run.
+ * The `testFiles` parameter is a string of test source paths, or of fully qualified
+ * class names, one entry per line.
  */
 def explicitTestIncluder(String testFiles) {
     // Convert test file source code paths to compiled class paths.
     // Example: `functional-test/src/test/groovy/org/rundeck/tests/functional/api/basic/BasicSpec.groovy`
     // needs to become `org/rundeck/tests/functional/api/basic/BasicSpec.class`.
+    //
+    // `circleci tests glob` yields those source paths, but when rerunning only the
+    // failed tests `circleci tests run` yields fully qualified class names instead,
+    // because Gradle's JUnit XML carries a `classname` attribute and no `file` one.
+    // Both forms must map to the same compiled class path, otherwise the include
+    // matches nothing and the task is skipped as NO-SOURCE, turning a failing job
+    // green without running a single test.
     def compiledFilesToTest = testFiles
         .split(System.lineSeparator())
-        .collect { testFilePath -> 
-            testFilePath
-            .trim()
-            .replaceFirst(".*\\/src\\/test\\/(groovy\\/|java\\/)", "")
-            .replaceFirst("(.groovy|.java)\$", ".class")
+        .collect { it.trim() }
+        .findAll { !it.isEmpty() }
+        .collect { testFileOrClass ->
+            testFileOrClass.contains("/")
+                ? testFileOrClass
+                    .replaceFirst(".*\\/src\\/test\\/(groovy\\/|java\\/)", "")
+                    .replaceFirst("(.groovy|.java)\$", ".class")
+                : testFileOrClass.replace(".", "/") + ".class"
         }
 
     logger.info("Compiled files to test: {}", compiledFilesToTest)

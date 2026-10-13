@@ -224,7 +224,7 @@ class WebhookService {
         }
         String generatedSecureString = null
         if(hookData.useAuth == true && hookData.regenAuth == true) {
-            generatedSecureString = RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+            generatedSecureString = RandomStringUtils.secure().next(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
             saveWebhookRequest.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
         } else if(hookData.useAuth == false) {
             saveWebhookRequest.setAuthConfigJson(null)
@@ -257,7 +257,7 @@ class WebhookService {
             try {
                 def at=apiService.generateUserToken(authContext, 0L, checkUser, roles, false,
                                                             AuthTokenType.WEBHOOK)
-                saveWebhookRequest.setAuthToken(at.token)
+                saveWebhookRequest.setAuthToken(at.clearToken)
             } catch (Exception e) {
                 return [err: "Failed to create associated Auth Token: "+e.message]
             }

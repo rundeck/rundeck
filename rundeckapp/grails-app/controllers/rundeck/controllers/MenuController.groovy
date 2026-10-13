@@ -57,6 +57,7 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -95,6 +96,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
+    JobExecutionAclMetadataComponent jobExecutionAclMetadataComponent
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     StorageService storageService
 
@@ -415,7 +417,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         } else {
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
-        def results=listWorkflows(query,authContext,session.user)
+        def results=listWorkflows(query,authContext,session.user, true)
 
         if (scmFlags == JobsScmInfo.MINIMAL) {
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
@@ -517,7 +519,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
-    private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
+    /**
+     * @param includeExecutionAclValid resolve the execution ACL flag for the listed jobs.
+     * Opt-in: it costs an authorization evaluation per scheduled job, and only the job
+     * list renders the warning -- the picker and the export do not.
+     */
+    private def listWorkflows(
+        ScheduledExecutionQuery query,
+        AuthContext authContext,
+        String user,
+        boolean includeExecutionAclValid = false
+    ) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
@@ -625,9 +637,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         log.debug("listWorkflows(last): "+(System.currentTimeMillis()-last));
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
 
+        // evaluated only here, once schedlist holds the jobs the viewer may actually
+        // see: a narrowly authorized viewer would otherwise pay a saved-owner context
+        // build and an ACL check for every scheduled job on the page, hidden ones too
+        def executionAclValid = includeExecutionAclValid ?
+                jobExecutionAclMetadataComponent.validateExecutionAcl(
+                        allScheduled.findAll { authorizemap[it.id.toString()] }
+                ) : [:]
+
         return [
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+        executionAclValid: executionAclValid,
         scheduledJobs: allScheduled,
         nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,
@@ -2679,7 +2700,7 @@ Since: V18''',
             description = "Job ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -3373,7 +3394,7 @@ Since: v14
                 name = "format",
                 description = '''can be "yaml" or "json" (API v44+) to specify the output format''',
                 in = ParameterIn.QUERY,
-                content = @Content(schema = @Schema(implementation = String,allowableValues = ['json','yaml']))
+                schema = @Schema(type = 'string', allowableValues = ['json', 'yaml'])
             )
         ]
     )
@@ -3734,8 +3755,10 @@ if executed in cluster mode.
         def results=[:]
         if(request.format=='json' ) {
             // Grails 7: Parse body using Jackson instead of request.JSON
-            def data = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
-            def nextScheduled = data?.join(",")?.replaceAll(/"/, '')
+            // The request body here is a bare JSON array of job ids (not an object), sent by the
+            // legacy (non-NextUI) job list page — see RUN-10468.
+            def data = com.dtolabs.rundeck.util.JsonUtil.parseRequestBodyAsList(request)
+            def nextScheduled = data?.join(",")
             def query = new ScheduledExecutionQuery()
             query.idlist = nextScheduled
             query.projFilter = params.project

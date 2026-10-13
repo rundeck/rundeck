@@ -1,5 +1,9 @@
 <template>
-  <li v-if="item.inline" :id="item.id" class="utility-bar__item utility-bar__item--inline">
+  <li
+    v-if="item.inline"
+    :id="item.id"
+    class="utility-bar__item utility-bar__item--inline"
+  >
     <component :is="item.widget" />
   </li>
   <li v-else :id="item.id" class="utility-bar__item" @click="handleClick">
@@ -61,7 +65,7 @@ export default defineComponent({
 .utility-bar__item--inline {
   padding: 0;
   cursor: default;
-  
+
   &:hover {
     background-color: transparent;
   }

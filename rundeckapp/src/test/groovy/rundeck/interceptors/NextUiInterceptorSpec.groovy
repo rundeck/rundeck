@@ -38,6 +38,8 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
             'menu'               | 'home'                  | true
             'menu'               | 'index'                 | false
             'menu'               | 'projectHome'           | false
+            'user'               | 'list'                  | true
+            'user'               | 'edit'                  | false
             'other'              | 'someAction'            | false
     }
 

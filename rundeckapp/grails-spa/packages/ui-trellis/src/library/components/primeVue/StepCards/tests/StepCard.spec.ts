@@ -14,8 +14,16 @@ jest.mock("@/library", () => ({
 }));
 
 jest.mock("@/library/modules/rundeckClient", () => ({ client: {} }));
-jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({ default: { name: "PluginConfig", template: "<div />" } }));
-jest.mock("@/library/components/plugins/pluginPropView.vue", () => ({ default: { name: "PluginPropView", template: "<div />", props: ["prop", "value", "allowCopy"] } }));
+jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+  default: { name: "PluginConfig", template: "<div />" },
+}));
+jest.mock("@/library/components/plugins/pluginPropView.vue", () => ({
+  default: {
+    name: "PluginPropView",
+    template: "<div />",
+    props: ["prop", "value", "allowCopy"],
+  },
+}));
 
 const createWrapper = async (props = {}): Promise<any> => {
   const wrapper = mount(StepCard, {
@@ -28,7 +36,14 @@ const createWrapper = async (props = {}): Promise<any> => {
       stubs: {
         Menu: { template: "<div />", methods: { toggle: jest.fn() } },
       },
-      components: { BaseStepCard, StepCardHeader, StepCardContent, ConfigSection, PluginInfo, PtButton },
+      components: {
+        BaseStepCard,
+        StepCardHeader,
+        StepCardContent,
+        ConfigSection,
+        PluginInfo,
+        PtButton,
+      },
     },
   });
   await wrapper.vm.$nextTick();
@@ -43,17 +58,32 @@ describe("StepCard", () => {
   describe("service name", () => {
     it("shows the node step tag when serviceName is WorkflowNodeStep", async () => {
       const wrapper = await createWrapper({ serviceName: "WorkflowNodeStep" });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-node");
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-node");
     });
 
     it("shows the workflow step tag when serviceName is WorkflowStep", async () => {
       const wrapper = await createWrapper({ serviceName: "WorkflowStep" });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-workflow");
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-workflow");
     });
 
     it("derives node step from config.nodeStep when serviceName is an empty string", async () => {
-      const wrapper = await createWrapper({ config: { nodeStep: true }, serviceName: "" });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-node");
+      const wrapper = await createWrapper({
+        config: { nodeStep: true },
+        serviceName: "",
+      });
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-node");
     });
   });
 
@@ -62,33 +92,43 @@ describe("StepCard", () => {
       const wrapper = await createWrapper({
         errorHandler: [{ type: "exec", nodeStep: true, config: {} }],
       });
-      expect(wrapper.findComponent(StepCardContent).props("errorHandlerServiceName")).toBe("WorkflowNodeStep");
+      expect(
+        wrapper.findComponent(StepCardContent).props("errorHandlerServiceName"),
+      ).toBe("WorkflowNodeStep");
     });
 
     it("passes WorkflowStep service name to content when the error handler is not a node step", async () => {
       const wrapper = await createWrapper({
         errorHandler: [{ type: "exec", nodeStep: false, config: {} }],
       });
-      expect(wrapper.findComponent(StepCardContent).props("errorHandlerServiceName")).toBe("WorkflowStep");
+      expect(
+        wrapper.findComponent(StepCardContent).props("errorHandlerServiceName"),
+      ).toBe("WorkflowStep");
     });
 
     it("passes the error handler provider type to content", async () => {
       const wrapper = await createWrapper({
         errorHandler: [{ type: "my-error-handler", config: {} }],
       });
-      expect(wrapper.findComponent(StepCardContent).props("errorHandlerProvider")).toBe("my-error-handler");
+      expect(
+        wrapper.findComponent(StepCardContent).props("errorHandlerProvider"),
+      ).toBe("my-error-handler");
     });
 
     it("passes empty string as provider when there is no error handler", async () => {
       const wrapper = await createWrapper({ errorHandler: [] });
-      expect(wrapper.findComponent(StepCardContent).props("errorHandlerProvider")).toBe("");
+      expect(
+        wrapper.findComponent(StepCardContent).props("errorHandlerProvider"),
+      ).toBe("");
     });
   });
 
   describe("events", () => {
     it("emits delete when the user clicks the delete button", async () => {
       const wrapper = await createWrapper();
-      await wrapper.find('[data-testid="step-card-header-delete-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="step-card-header-delete-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("delete")).toHaveLength(1);
@@ -96,7 +136,9 @@ describe("StepCard", () => {
 
     it("emits edit when the user clicks the plugin info area", async () => {
       const wrapper = await createWrapper();
-      await wrapper.find('[data-testid="step-card-header-plugin-info"]').trigger("click");
+      await wrapper
+        .find('[data-testid="step-card-header-plugin-info"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("edit")).toHaveLength(1);

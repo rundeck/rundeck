@@ -8,11 +8,7 @@
 
 <script>
 import axios from "axios";
-import Trellis, {
-  getRundeckContext,
-  getSynchronizerToken,
-  RundeckBrowser,
-} from "../../../library";
+import { getRundeckContext } from "../../../library";
 
 export default {
   name: "CommunityNewsNotification",
@@ -56,7 +52,7 @@ export default {
       const appRundeckGatewayUrl =
         this.RundeckContext.appMeta.appRundeckGatewayUrl;
 
-      return new Promise(function (resolve, reject) {
+      return new Promise(function (resolve) {
         axios
           .get(appRundeckGatewayUrl + "/news/v1/blog/list", {
             params: {

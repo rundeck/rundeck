@@ -133,7 +133,10 @@
                   />
                 </div>
 
-                <btn type="default" size="sm" @click="doEditNotification(notif)"
+                <btn
+                  type="default"
+                  size="sm"
+                  @click="doEditNotification(notif)"
                   >{{ $t("Edit") }}</btn
                 >
               </div>
@@ -215,7 +218,9 @@
                     >
                     </plugin-info>
                   </span>
-                  <span v-else> {{ $t("notifications.selectNotification") }} </span>
+                  <span v-else>
+                    {{ $t("notifications.selectNotification") }}
+                  </span>
                 </btn>
                 <template #dropdown>
                   <li v-for="plugin in sortedProviders" :key="plugin.name">

@@ -1,4 +1,4 @@
 import { ThemeStore } from "../../../library/stores/Theme";
-// @ts-ignore
-window.SVGInject = require("@iconfu/svg-inject");
+import SVGInject from "@iconfu/svg-inject";
+(window as any).SVGInject = SVGInject;
 new ThemeStore();

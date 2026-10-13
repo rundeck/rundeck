@@ -97,7 +97,7 @@ darkTheme.args = {
 //     })
 // })
 
-export const basicOutput: StoryFn<typeof LogViewer> = (args) => ({
+export const basicOutput: StoryFn<typeof LogViewer> = () => ({
   components: {
     LogViewer,
   },
@@ -144,7 +144,7 @@ export const basicOutput: StoryFn<typeof LogViewer> = (args) => ({
   },
 });
 
-export const htmlOutput: StoryFn<typeof LogViewer> = (args) => ({
+export const htmlOutput: StoryFn<typeof LogViewer> = () => ({
   components: {
     LogViewer: playback(LogViewer, "/fixtures/ExecHtmlOutput.json"),
   },
@@ -159,7 +159,7 @@ export const htmlOutput: StoryFn<typeof LogViewer> = (args) => ({
   }),
 });
 
-export const ansiColorOutput: StoryFn<typeof LogViewer> = (args) => ({
+export const ansiColorOutput: StoryFn<typeof LogViewer> = () => ({
   components: {
     LogViewer: playback(LogViewer, "/fixtures/ExecAnsiColorOutput.json"),
   },
@@ -174,7 +174,7 @@ export const ansiColorOutput: StoryFn<typeof LogViewer> = (args) => ({
   }),
 });
 
-export const largeOutput: StoryFn<typeof LogViewer> = (args) => ({
+export const largeOutput: StoryFn<typeof LogViewer> = () => ({
   components: {
     LogViewer: playback(LogViewer, "/fixtures/ExecLargeOutput.json"),
   },
@@ -189,7 +189,7 @@ export const largeOutput: StoryFn<typeof LogViewer> = (args) => ({
   }),
 });
 
-export const runningOutput: StoryFn<typeof LogViewer> = (args) => ({
+export const runningOutput: StoryFn<typeof LogViewer> = () => ({
   components: {
     LogViewer: playback(LogViewer, "/fixtures/ExecRunningOutput.json"),
   },

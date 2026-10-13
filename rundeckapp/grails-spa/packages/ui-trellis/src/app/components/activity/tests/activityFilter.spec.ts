@@ -31,7 +31,8 @@ const mountActivityFilter = async (props = {}) => {
     global: {
       stubs: {
         modal: {
-          template: '<div class="modal"><slot v-if="$attrs.modelValue"></slot><slot v-if="$attrs.modelValue" name="footer"></slot></div>',
+          template:
+            '<div class="modal"><slot v-if="$attrs.modelValue"></slot><slot v-if="$attrs.modelValue" name="footer"></slot></div>',
         },
         DateTimePicker: {
           template: '<div id="DateTimePicker" />',
@@ -172,7 +173,7 @@ describe("ActivityFilter", () => {
     });
     it("handles custom periods in dropdown correctly", async () => {
       const wrapper = await mountActivityFilter({
-        modelValue: { recentFilter: "-" }
+        modelValue: { recentFilter: "-" },
       });
       await wrapper.find('[data-test-id="filter-button"]').trigger("click");
       await wrapper.vm.$nextTick();
@@ -286,7 +287,7 @@ describe("ActivityFilter", () => {
     });
     it("renders date filters correctly when recentFilter is set to '-'", async () => {
       const wrapper = await mountActivityFilter({
-        modelValue: { recentFilter: "-" }
+        modelValue: { recentFilter: "-" },
       });
       await wrapper.find('[data-test-id="filter-button"]').trigger("click");
       await wrapper.vm.$nextTick();
@@ -321,7 +322,9 @@ describe("ActivityFilter", () => {
       await optionFilterInput.setValue("-sleep 10 -env prod");
       await wrapper.vm.$nextTick();
 
-      expect((optionFilterInput.element as HTMLInputElement).value).toBe("-sleep 10 -env prod");
+      expect((optionFilterInput.element as HTMLInputElement).value).toBe(
+        "-sleep 10 -env prod",
+      );
 
       const searchButton = wrapper.find('[data-testid="searchfilter"]');
       await searchButton.trigger("click");

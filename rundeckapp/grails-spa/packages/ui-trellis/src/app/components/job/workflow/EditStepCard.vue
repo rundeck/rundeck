@@ -12,7 +12,11 @@
     @toggle="contentExpanded = !contentExpanded"
   >
     <template #content>
-      <div v-if="isJobRef" class="jobref-form-content" data-testid="jobref-form-content">
+      <div
+        v-if="isJobRef"
+        class="jobref-form-content"
+        data-testid="jobref-form-content"
+      >
         <div class="step-name-section">
           <div class="form-group">
             <label
@@ -83,11 +87,17 @@
           description-css="ml-5"
           data-testid="plugin-info"
           :service-name="serviceName"
+          :use-runner-selector="true"
+          :event-bus="eventBus"
           :extra-autocomplete-vars="extraAutocompleteVars"
         />
       </div>
 
-      <div v-else-if="loading" class="loading-container" data-testid="loading-container">
+      <div
+        v-else-if="loading"
+        class="loading-container"
+        data-testid="loading-container"
+      >
         <i class="fas fa-spinner fa-spin"></i>
         <span>{{ $t("loading.text") }}</span>
       </div>
@@ -128,7 +138,11 @@ import { getRundeckContext } from "../../../../library";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
 import VueScrollTo from "vue-scrollto";
-import { resetValidation, createJobRefDefinition, type PluginDetails } from "./stepEditorUtils";
+import {
+  resetValidation,
+  createJobRefDefinition,
+  type PluginDetails,
+} from "./stepEditorUtils";
 
 const rundeckContext = getRundeckContext();
 
@@ -193,6 +207,7 @@ export default defineComponent({
       loading: false,
       pluginConfigMode: "edit",
       validationErrors: resetValidation(),
+      eventBus: rundeckContext.eventBus,
       jobRefDefaults: {
         description: "",
         jobref: createJobRefDefinition(rundeckContext.projectName),
@@ -222,7 +237,8 @@ export default defineComponent({
     if (this.modelValue.jobref) {
       this.editModel = merge(cloneDeep(this.jobRefDefaults), this.modelValue);
     } else {
-      const { description, ...rest } = this.modelValue;
+      const rest = { ...this.modelValue };
+      delete rest.description;
       this.editModel = cloneDeep(rest);
     }
 
@@ -248,7 +264,8 @@ export default defineComponent({
               easing: "ease-in-out",
               onDone: () => {
                 setTimeout(() => {
-                  const inputElement = document.getElementById("stepDescription");
+                  const inputElement =
+                    document.getElementById("stepDescription");
                   if (inputElement) {
                     inputElement.focus({ preventScroll: true });
                   }
@@ -324,7 +341,8 @@ export default defineComponent({
       if (newVal.jobref) {
         this.editModel = merge(cloneDeep(this.jobRefDefaults), newVal);
       } else {
-        const { description, ...rest } = newVal;
+        const rest = { ...newVal };
+        delete rest.description;
         this.editModel = cloneDeep(rest);
       }
 
@@ -332,8 +350,8 @@ export default defineComponent({
     },
     async pluginDetails() {
       await this.loadProvider();
-    }
-  }
+    },
+  },
 });
 </script>
 

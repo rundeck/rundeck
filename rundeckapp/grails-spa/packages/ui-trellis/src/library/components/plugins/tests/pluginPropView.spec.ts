@@ -59,7 +59,11 @@ describe("PluginPropView", () => {
     it("shows title when value is true", async () => {
       const wrapper = await createWrapper({
         props: {
-          prop: { type: "Boolean", title: "Enable Feature", desc: "Toggle feature" },
+          prop: {
+            type: "Boolean",
+            title: "Enable Feature",
+            desc: "Toggle feature",
+          },
           value: "true",
         },
       });
@@ -96,9 +100,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(
-        findByTestId(wrapper, "boolean-true-value").classes(),
-      ).toContain("text-primary");
+      expect(findByTestId(wrapper, "boolean-true-value").classes()).toContain(
+        "text-primary",
+      );
     });
 
     it("uses text-success as default class for true value", async () => {
@@ -109,9 +113,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(
-        findByTestId(wrapper, "boolean-true-value").classes(),
-      ).toContain("text-success");
+      expect(findByTestId(wrapper, "boolean-true-value").classes()).toContain(
+        "text-success",
+      );
     });
 
     it("shows false value when value is false and defaultValue is true", async () => {
@@ -158,9 +162,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(
-        findByTestId(wrapper, "boolean-false-value").classes(),
-      ).toContain("text-danger");
+      expect(findByTestId(wrapper, "boolean-false-value").classes()).toContain(
+        "text-danger",
+      );
     });
   });
 
@@ -364,6 +368,30 @@ describe("PluginPropView", () => {
         "1 lines",
       );
     });
+
+    // Regression for RUN-4890/RUN-4891: AceEditorVue.vue's minLines default
+    // changed from 12 to 0, where 0 now means "manually resizable, fixed
+    // 320px box" instead of "auto-grow to fit content". A read-only display
+    // of a plugin property must never be a manually-resizable box, so
+    // min-lines/max-lines are pinned explicitly here rather than left to
+    // pick up whatever default the shared editor happens to have.
+    it("opts out of AceEditorVue's resizable-box default by passing explicit min-lines/max-lines", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Script",
+            desc: "Code snippet",
+            options: { displayType: "CODE", codeSyntaxMode: "javascript" },
+          },
+          value: "line1\nline2\nline3",
+        },
+      });
+
+      const aceEditor = wrapper.find("ace-editor-stub");
+      expect(aceEditor.attributes("minlines")).toBe("12");
+      expect(aceEditor.attributes("maxlines")).toBe("Infinity");
+    });
   });
 
   describe("String MULTI_LINE display type", () => {
@@ -401,6 +429,26 @@ describe("PluginPropView", () => {
       expect(findByTestId(wrapper, "multiline-line-count").text()).toContain(
         "4 lines",
       );
+    });
+
+    // Regression for RUN-4890/RUN-4891 — see the matching CODE display-type
+    // test above for the full explanation.
+    it("opts out of AceEditorVue's resizable-box default by passing explicit min-lines/max-lines", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Description",
+            desc: "Long text",
+            options: { displayType: "MULTI_LINE" },
+          },
+          value: "line one\nline two\nline three\nline four",
+        },
+      });
+
+      const aceEditor = wrapper.find("ace-editor-stub");
+      expect(aceEditor.attributes("minlines")).toBe("12");
+      expect(aceEditor.attributes("maxlines")).toBe("Infinity");
     });
   });
 
@@ -462,6 +510,31 @@ describe("PluginPropView", () => {
 
       expect(wrapper.findAll('[data-testid="configpair"]')).toHaveLength(0);
     });
+
+    it("reflects a value prop change after mount — regression for RUN-4764", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Config",
+            desc: "Dynamic form",
+            options: { displayType: "DYNAMIC_FORM" },
+          },
+          value: "",
+        },
+      });
+      expect(wrapper.findAll('[data-testid="configpair"]')).toHaveLength(0);
+
+      await wrapper.setProps({
+        value: JSON.stringify([{ label: "Host", value: "localhost" }]),
+      });
+      await wrapper.vm.$nextTick();
+
+      const pairs = wrapper.findAll('[data-testid="configpair"]');
+      expect(pairs).toHaveLength(1);
+      expect(pairs[0].text()).toContain("Host:");
+      expect(pairs[0].text()).toContain("localhost");
+    });
   });
 
   describe("prop.desc undefined — regression for RUN-4521", () => {
@@ -484,9 +557,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(findByTestId(wrapper, "string-prop-title").attributes("title")).toBe(
-        "",
-      );
+      expect(
+        findByTestId(wrapper, "string-prop-title").attributes("title"),
+      ).toBe("");
     });
 
     it("mounts without throwing when desc is undefined for Boolean type", async () => {

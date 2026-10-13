@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 @Schema
 class ScmProjectStatus {
     String project
-    @Schema(allowableValues = ['import','export'])
+    @Schema(type = 'string', allowableValues = ['import','export'])
     String integration
     @Schema(description = '''Indicates the state.
 
@@ -42,7 +42,7 @@ Export plugin values for `synchState`:
 * `REFRESH_NEEDED` - plugin needs to refresh
 * `EXPORT_NEEDED` - some changes need to be exported
 * `CREATE_NEEDED` - some jobs need to be added to the repo
-''', allowableValues = [
+''', type = 'string', allowableValues = [
         'CLEAN',
         'UNKNOWN',
         'REFRESH_NEEDED',

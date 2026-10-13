@@ -19,6 +19,8 @@ package rundeck.controllers
 import rundeck.support.filters.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.IProjectNodes
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
@@ -27,6 +29,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.core.resources.WriteableModelSource
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
@@ -1188,6 +1192,223 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         assertEquals("name: monkey1",result.query.filter)
         assertNotNull(result.runCommand)
         assertEquals("a remote string from plugin step",result.runCommand)
+    }
+
+    // RUN-4671: Security validation tests for editProjectNodeSourceFile
+
+    void "editProjectNodeSourceFile should reject paths outside project directory by default"() {
+        given: "a file resource model source pointing outside the project directory"
+        params.project = "TestProject"
+        params.index = "0"
+
+        def mockWriteableSource = Mock(WriteableModelSource) {
+            getSyntaxMimeType() >> 'application/yaml'
+            getSourceDescription() >> '/etc/passwd'
+            validateWriteableSource(_, _, _) >> {
+                throw new com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException(
+                    "File path must be within the project directory"
+                )
+            }
+        }
+
+        def mockSource = [
+            index: 0,
+            type: 'file',
+            writeableSource: mockWriteableSource
+        ]
+
+        def mockProjectNodes = Mock(IProjectNodes) {
+            getWriteableResourceModelSources() >> [mockSource]
+        }
+
+        def mockProject = Mock(IRundeckProject) {
+            getProjectNodes() >> mockProjectNodes
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> mockProject
+            getRundeckFramework() >> Mock(Framework)
+        }
+
+        controller.pluginService = Mock(PluginService) {
+            getPluginDescriptor(_, _) >> null
+        }
+
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> null
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            authorizeProjectConfigure(_, _) >> true
+        }
+
+        when: "editProjectNodeSourceFile is called"
+        def result = controller.editProjectNodeSourceFile()
+
+        then: "file should be treated as empty and warning set"
+        result.fileEmpty == true
+        result.fileText == ""
+        controller.flash.warning == "File path must be within the project directory"
+    }
+
+    void "editProjectNodeSourceFile should handle non-existent files"() {
+        given: "a file resource model source pointing to non-existent file"
+        params.project = "TestProject"
+        params.index = "0"
+
+        def mockWriteableSource = Mock(WriteableModelSource) {
+            getSyntaxMimeType() >> 'application/yaml'
+            getSourceDescription() >> '/var/rundeck/projects/TestProject/etc/nonexistent.yaml'
+            validateWriteableSource(_, _, _) >> { /* validation passes */ }
+        }
+
+        def mockSource = [
+            index: 0,
+            type: 'file',
+            writeableSource: mockWriteableSource
+        ]
+
+        def mockProjectNodes = Mock(IProjectNodes) {
+            getWriteableResourceModelSources() >> [mockSource]
+        }
+
+        def mockProject = Mock(IRundeckProject) {
+            getProjectNodes() >> mockProjectNodes
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> mockProject
+            getRundeckFramework() >> Mock(Framework)
+        }
+
+        controller.pluginService = Mock(PluginService) {
+            getPluginDescriptor(_, _) >> null
+        }
+
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> null
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            authorizeProjectConfigure(_, _) >> true
+        }
+
+        when: "editProjectNodeSourceFile is called"
+        def result = controller.editProjectNodeSourceFile()
+
+        then: "file is treated as empty"
+        result.project == "TestProject"
+        result.index == 0
+        result.fileEmpty == true
+        result.sourceDesc == '/var/rundeck/projects/TestProject/etc/nonexistent.yaml'
+    }
+
+    void "editProjectNodeSourceFile should call validation with configured allowed paths"() {
+        given: "a file resource model source and configured allowed paths"
+        params.project = "TestProject"
+        params.index = "0"
+
+        def mockWriteableSource = Mock(WriteableModelSource) {
+            getSyntaxMimeType() >> 'application/yaml'
+            getSourceDescription() >> '/opt/shared/nodes.yaml'
+            validateWriteableSource(_, _, _) >> { /* validation passes with allowed paths */ }
+        }
+
+        def mockSource = [
+            index: 0,
+            type: 'file',
+            writeableSource: mockWriteableSource
+        ]
+
+        def mockProjectNodes = Mock(IProjectNodes) {
+            getWriteableResourceModelSources() >> [mockSource]
+        }
+
+        def mockProject = Mock(IRundeckProject) {
+            getProjectNodes() >> mockProjectNodes
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> mockProject
+            getRundeckFramework() >> Mock(Framework)
+        }
+
+        controller.pluginService = Mock(PluginService) {
+            getPluginDescriptor(_, _) >> null
+        }
+
+        grailsApplication.config.rundeck.resourceModelSource.file.allowedBasePaths = "/opt/shared,/var/custom"
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            authorizeProjectConfigure(_, _) >> true
+        }
+
+        when: "editProjectNodeSourceFile is called"
+        def result = controller.editProjectNodeSourceFile()
+
+        then: "validation is called with config properties containing allowed paths"
+        1 * mockWriteableSource.validateWriteableSource(
+            { Map props -> props.get("resourceModelSource.file.allowedBasePaths") == "/opt/shared,/var/custom" },
+            _,
+            "TestProject"
+        )
+        result.project == "TestProject"
+        result.sourceDesc == '/opt/shared/nodes.yaml'
+
+        cleanup:
+        grailsApplication.config.rundeck.resourceModelSource.file.allowedBasePaths = null
+    }
+
+    void "editProjectNodeSourceFile should handle IOException during file access"() {
+        given: "a file that causes IOException when accessed"
+        params.project = "TestProject"
+        params.index = "0"
+
+        def mockWriteableSource = Mock(WriteableModelSource) {
+            getSyntaxMimeType() >> 'application/yaml'
+            // Use a path with special characters that might cause issues
+            getSourceDescription() >> '/var/rundeck/projects/TestProject/etc/file-with- -null.yaml'
+            validateWriteableSource(_, _, _) >> { /* validation passes */ }
+        }
+
+        def mockSource = [
+            index: 0,
+            type: 'file',
+            writeableSource: mockWriteableSource
+        ]
+
+        def mockProjectNodes = Mock(IProjectNodes) {
+            getWriteableResourceModelSources() >> [mockSource]
+        }
+
+        def mockProject = Mock(IRundeckProject) {
+            getProjectNodes() >> mockProjectNodes
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> mockProject
+            getRundeckFramework() >> Mock(Framework)
+        }
+
+        controller.pluginService = Mock(PluginService) {
+            getPluginDescriptor(_, _) >> null
+        }
+
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> null
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            authorizeProjectConfigure(_, _) >> true
+        }
+
+        when: "editProjectNodeSourceFile is called"
+        def result = controller.editProjectNodeSourceFile()
+
+        then: "IOException is handled and file is treated as empty"
+        result.project == "TestProject"
+        result.fileEmpty == true
+        controller.flash.warning == "Unable to access file"
     }
 
 

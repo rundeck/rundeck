@@ -8,17 +8,17 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
 
     @Override
     RdPluginMeta findByProjectAndKey(String project, String key) {
-        return PluginMeta.findByProjectAndKey(project, key)
+        return PluginMeta.findByProjectAndKey(project, key, [cache: false])
     }
 
     @Override
     List<RdPluginMeta> findAllByProjectAndKeyLike(String project, String key) {
-        return PluginMeta.findAllByProjectAndKeyLike(project, key)
+        return PluginMeta.findAllByProjectAndKeyLike(project, key, [cache: false])
     }
 
     @Override
     void deleteByProjectAndKey(String project, String key) {
-        def found = PluginMeta.findByProjectAndKey(project, key)
+        def found = PluginMeta.findByProjectAndKey(project, key, [cache: false])
         if (found) {
             found.delete(flush: true)
         }
@@ -26,7 +26,7 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
 
     @Override
     void deleteAllByProjectAndKeyLike(String project, String keyLike) {
-        def found = PluginMeta.findAllByProjectAndKeyLike(project, keyLike)
+        def found = PluginMeta.findAllByProjectAndKeyLike(project, keyLike, [cache: false])
         if (found) {
             found*.delete(flush: true)
         }
@@ -35,7 +35,7 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
     @Override
     Integer deleteAllByProject(String project) {
         // Grails 7: DataTest trait doesn't support HQL executeUpdate, use criteria instead
-        def found = PluginMeta.findAllByProject(project)
+        def found = PluginMeta.findAllByProject(project, [cache: false])
         def count = found.size()
         found*.delete(flush: true)
         return count
@@ -43,7 +43,7 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
 
     @Override
     void setJobPluginMeta(String project, String key, Map metadata) {
-        def found = PluginMeta.findByProjectAndKey(project, key)
+        def found = PluginMeta.findByProjectAndKey(project, key, [cache: false])
         if (!found) {
             found = new PluginMeta()
             found.project = project

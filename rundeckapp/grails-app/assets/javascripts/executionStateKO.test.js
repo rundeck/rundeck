@@ -130,6 +130,31 @@ jQuery(function () {
             // Actual execution duration: 457ms
             var ms = RDNode.computeNodeDurationMs(-1, steps, 457);
             this.assert('clamps to execDurationMs', ms === 457);
+        },
+        isSkippedOnlySuccessAcceptsAllStepsSkippedTest: function () {
+            this.assert('every step was skipped',
+                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 0, NOT_STARTED: 3}) === true);
+        },
+        isSkippedOnlySuccessAcceptsMixOfSkippedAndSucceededTest: function () {
+            this.assert('every step that ran succeeded',
+                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 2, NOT_STARTED: 1}) === true);
+        },
+        isSkippedOnlySuccessRejectsStepThatRanWithoutSucceedingTest: function () {
+            this.assert('aborted step',
+                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 1, NOT_STARTED: 1, other: 1}) === false);
+        },
+        isSkippedOnlySuccessRejectsPendingWorkTest: function () {
+            this.assert('node still has pending steps',
+                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 2, NOT_STARTED: 1, pending: 1}) === false);
+        },
+        isSkippedOnlySuccessRejectsNodeWithoutSkippedStepsTest: function () {
+            this.assert('nothing was skipped',
+                RDNode.isSkippedOnlySuccess({total: 2, SUCCEEDED: 2, NOT_STARTED: 0}) === false);
+        },
+        isSkippedOnlySuccessRejectsSummaryWithoutCountsTest: function () {
+            this.assert('summary from a server that does not report counts',
+                RDNode.isSkippedOnlySuccess({summaryState: 'PARTIAL_NOT_STARTED'}) === false);
+            this.assert('no summary at all', RDNode.isSkippedOnlySuccess(null) === false);
         }
     });
 });

@@ -31,7 +31,6 @@ class User implements RdUser{
     
     static mapping = {
         table "rduser"
-        id generator: 'identity'
     }
     String dashboardPref
     String filterPref

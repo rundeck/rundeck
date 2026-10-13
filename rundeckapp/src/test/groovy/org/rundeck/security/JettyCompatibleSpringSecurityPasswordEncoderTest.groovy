@@ -63,4 +63,26 @@ class JettyCompatibleSpringSecurityPasswordEncoderTest extends Specification {
         !encoder.matches(null, "MD5:7ddf32e17a6ac5ce04a8ecbf782ca509")
         !encoder.matches("somepassword", null)
     }
+
+    def "encode() returns BCRYPT-prefixed hash, not plaintext"() {
+        given:
+        def raw = "supersecret"
+
+        when:
+        def encoded = encoder.encode(raw)
+
+        then:
+        encoded.startsWith("BCRYPT:")
+        encoded != raw
+    }
+
+    def "encode() output can be verified by matches()"() {
+        given:
+        def raw = "supersecret"
+        def encoded = encoder.encode(raw)
+
+        expect:
+        encoder.matches(raw, encoded)
+        !encoder.matches("wrongpassword", encoded)
+    }
 }

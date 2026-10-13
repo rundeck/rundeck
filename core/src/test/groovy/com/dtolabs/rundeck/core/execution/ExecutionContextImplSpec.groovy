@@ -240,6 +240,28 @@ class ExecutionContextImplSpec extends Specification {
             String | ['Test1', 'Test2'] | false    | false
     }
 
+    def "removeComponentsOfType removes assignable components from a copied builder without affecting the original"() {
+        given:
+            def orig = ExecutionContextImpl.builder()
+                                           .addComponent('marker', 'MarkerValue', String)
+                                           .addComponent('flag', true, Boolean)
+                                           .build()
+
+        when:
+            def child = ExecutionContextImpl.builder(orig)
+                                            .removeComponentsOfType(String)
+                                            .build()
+
+        then:
+            !child.componentForType(String).present
+            child.componentForType(Boolean).present
+            child.componentForType(Boolean).get() == true
+
+        and: "the original context is unaffected"
+            orig.componentForType(String).present
+            orig.componentForType(String).get() == 'MarkerValue'
+    }
+
     def "merge builder merges settings"() {
         def selector1 = Mock(NodesSelector)
         def selector2 = Mock(NodesSelector)

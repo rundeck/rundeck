@@ -38,7 +38,7 @@ const getParameters = (): Promise<{ [key: string]: string }> => {
 };
 export const getPluginProvidersForService = async (svcName: string) => {
   if (ServicesCache[svcName]) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       resolve(ServicesCache[svcName]);
     });
   }
@@ -70,7 +70,7 @@ export const getServiceProviderDescription = async (
     ServiceProvidersCache[svcName] &&
     ServiceProvidersCache[svcName].providers[provider]
   ) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       resolve(ServiceProvidersCache[svcName].providers[provider]);
     });
   }

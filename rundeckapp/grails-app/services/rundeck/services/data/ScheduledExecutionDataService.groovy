@@ -30,5 +30,6 @@ abstract class ScheduledExecutionDataService implements IScheduledExecutionDataS
 interface IScheduledExecutionDataService {
     ScheduledExecution get(Serializable id)
     ScheduledExecution findByUuid(String uuid)
+    List<ScheduledExecution> findAllByUuidInList(List<String> uuids)
     Integer countByUuid(String uuid)
 }

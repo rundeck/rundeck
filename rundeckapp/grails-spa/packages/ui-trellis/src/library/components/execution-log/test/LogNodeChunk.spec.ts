@@ -136,7 +136,9 @@ describe("LogNodeChunk.vue", () => {
       gutter: true,
       lineWrap: true,
     });
-    expect((wrapper.vm as any).nodeChunkKey).toBe("key-true-true-true-true-true");
+    expect((wrapper.vm as any).nodeChunkKey).toBe(
+      "key-true-true-true-true-true",
+    );
 
     const wrapper2 = createWrapper({
       nodeIcon: false,
@@ -145,7 +147,9 @@ describe("LogNodeChunk.vue", () => {
       gutter: false,
       lineWrap: false,
     });
-    expect((wrapper2.vm as any).nodeChunkKey).toBe("key-false-false-false-false-false");
+    expect((wrapper2.vm as any).nodeChunkKey).toBe(
+      "key-false-false-false-false-false",
+    );
   });
 
   it("computes entryOutputs correctly", () => {
@@ -170,15 +174,17 @@ describe("LogNodeChunk.vue", () => {
     });
 
     const opts = (wrapper.vm as any).opts;
-    expect(opts).toEqual(expect.objectContaining({
-      node: "testNode",
-      stepCtx: "testStep",
-      nodeIcon: true,
-      command: { visible: true },
-      time: { visible: true },
-      gutter: { visible: true },
-      content: { lineWrap: true },
-    }));
+    expect(opts).toEqual(
+      expect.objectContaining({
+        node: "testNode",
+        stepCtx: "testStep",
+        nodeIcon: true,
+        command: { visible: true },
+        time: { visible: true },
+        gutter: { visible: true },
+        content: { lineWrap: true },
+      }),
+    );
   });
 
   it("emits line-select and jumped events when jumpToLine is provided", async () => {
@@ -219,24 +225,24 @@ describe("LogNodeChunk.vue", () => {
       time: "10:30:00",
       absoluteTime: "2023-05-10T10:30:00Z",
       level: "INFO",
-      renderedStep: [
-        { stepNumber: 1, label: "Step One", type: "command" },
-      ],
+      renderedStep: [{ stepNumber: 1, label: "Step One", type: "command" }],
       node: "node1",
     };
 
     const builtEntry = (wrapper.vm as any).buildEntry(entry, 0);
-    expect(builtEntry).toEqual(expect.objectContaining({
-      log: "Test log",
-      time: "10:30:00",
-      absoluteTime: "2023-05-10T10:30:00Z",
-      level: "INFO",
-      stepLabel: "1Step One",
-      stepType: "command",
-      lineNumber: 1,
-      node: "node1",
-      selected: false,
-    }));
+    expect(builtEntry).toEqual(
+      expect.objectContaining({
+        log: "Test log",
+        time: "10:30:00",
+        absoluteTime: "2023-05-10T10:30:00Z",
+        level: "INFO",
+        stepLabel: "1Step One",
+        stepType: "command",
+        lineNumber: 1,
+        node: "node1",
+        selected: false,
+      }),
+    );
   });
 
   it("handles onSelectLine correctly", () => {
@@ -245,16 +251,87 @@ describe("LogNodeChunk.vue", () => {
     expect(wrapper.emitted("line-select")?.[0]).toEqual([3]);
   });
 
-  it.each([true,false])("scrolls to bottom when follow is %p", (follow:boolean) => {
-    const scrollToBottomMock = jest.fn();
-    const wrapper = createWrapper({ follow });
+  it.each([true, false])(
+    "scrolls to bottom when follow is %p",
+    (follow: boolean) => {
+      const scrollToBottomMock = jest.fn();
+      const wrapper = createWrapper({ follow });
 
-    // Mock the $refs.scroller
-    (wrapper.vm as any).$refs.scroller.scrollToBottom = scrollToBottomMock;
+      // Mock the $refs.scroller
+      (wrapper.vm as any).$refs.scroller.scrollToBottom = scrollToBottomMock;
 
-    (wrapper.vm as any).scrollToLine();
-    expect(scrollToBottomMock).toHaveBeenCalledTimes(follow?1:0);
+      (wrapper.vm as any).scrollToLine();
+      expect(scrollToBottomMock).toHaveBeenCalledTimes(follow ? 1 : 0);
+    },
+  );
+
+  describe("_isLastEntryMeasured", () => {
+    it("returns true when there are no entries", () => {
+      const wrapper = createWrapper({ entries: [] });
+      expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(true);
+    });
+
+    it("returns false when the last entry has not been measured yet", () => {
+      const wrapper = createWrapper();
+      (wrapper.vm as any).$refs.scroller.getItemSize = jest
+        .fn()
+        .mockReturnValue(0);
+      expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(false);
+    });
+
+    it("returns true once the last entry has been measured", () => {
+      const wrapper = createWrapper();
+      (wrapper.vm as any).$refs.scroller.getItemSize = jest
+        .fn()
+        .mockReturnValue(20);
+      expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(true);
+    });
   });
 
+  describe("onScrollerScroll", () => {
+    // RUN-4814: on a large, actively-streaming log, DynamicScroller's
+    // scrollHeight underestimates the real content height while trailing
+    // entries are still unmeasured, so the naive "am I at the bottom?"
+    // check can fire long before the user actually reaches the last line.
+    const scrollEvent = (
+      scrollTop: number,
+      clientHeight = 500,
+      scrollHeight = 1000,
+    ) =>
+      ({
+        target: { scrollTop, clientHeight, scrollHeight },
+      }) as unknown as Event;
 
+    it("disables follow when the user scrolls up", () => {
+      const wrapper = createWrapper({ follow: true });
+      const vm = wrapper.vm as any;
+
+      vm.onScrollerScroll(scrollEvent(500)); // primes _prevScrollTop
+      vm.onScrollerScroll(scrollEvent(400)); // scrolls up
+
+      expect(wrapper.emitted("follow-change")?.[0]).toEqual([false]);
+    });
+
+    it("does not re-enable follow at the bottom while the last entry is still unmeasured", () => {
+      const wrapper = createWrapper({ follow: false });
+      const vm = wrapper.vm as any;
+      vm.$refs.scroller.getItemSize = jest.fn().mockReturnValue(0);
+
+      vm.onScrollerScroll(scrollEvent(490)); // primes _prevScrollTop
+      vm.onScrollerScroll(scrollEvent(500)); // 500 + 500 >= 1000 - 10 -> at bottom
+
+      expect(wrapper.emitted("follow-change")).toBeFalsy();
+    });
+
+    it("re-enables follow at the bottom once the last entry has been measured", () => {
+      const wrapper = createWrapper({ follow: false });
+      const vm = wrapper.vm as any;
+      vm.$refs.scroller.getItemSize = jest.fn().mockReturnValue(20);
+
+      vm.onScrollerScroll(scrollEvent(490)); // primes _prevScrollTop
+      vm.onScrollerScroll(scrollEvent(500)); // 500 + 500 >= 1000 - 10 -> at bottom
+
+      expect(wrapper.emitted("follow-change")?.[0]).toEqual([true]);
+    });
+  });
 });

@@ -11,6 +11,7 @@ import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
+import axios from "axios";
 import { cloneDeep } from "lodash";
 import { Btn, Modal } from "uiv";
 jest.mock("../../../../library/services/executions", () => {
@@ -86,7 +87,7 @@ describe("ActivityList", () => {
   });
   beforeEach(() => {
     reports = cloneDeep(mockReports);
-    
+
     mockQueryRunning.mockResolvedValue({
       results: mockRunningExecutions,
       paging: { max: 20, offset: 0, total: 2, count: 2 },
@@ -103,14 +104,13 @@ describe("ActivityList", () => {
       const wrapper = await shallowMountActivityList();
       await flushPromises();
       await wrapper.vm.$nextTick();
-      
+
       const pageInfoSpan = wrapper.find('[data-testid="page-info"]');
       const summaryCount = wrapper.find('[data-testid="summary-count"]');
       expect(pageInfoSpan.text()).toBe("1 - 2 of");
       expect(summaryCount.text()).toBe("20 executions");
     });
 
-    
     it("information about the current executions and finished jobs", async () => {
       const wrapper = await shallowMountActivityList();
       await wrapper.vm.$nextTick();
@@ -148,9 +148,8 @@ describe("ActivityList", () => {
       const noInfoMessage = wrapper.find('[data-testid="no-data-message"]');
       expect(noInfoMessage.text()).toBe("No results for the query");
     });
-    
   });
-  
+
   describe("trigger bulk actions", () => {
     it("trigger bulk actions - delete", async () => {
       const wrapper = await shallowMountActivityList();
@@ -181,17 +180,24 @@ describe("ActivityList", () => {
       const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
-      
+
       // Update mock for after deletion
       mockQueryExecutions.mockResolvedValueOnce({
         results: reports.slice(2),
-        paging: { max: 10, offset: 0, total: reports.length - 2, count: reports.length - 2 },
+        paging: {
+          max: 10,
+          offset: 0,
+          total: reports.length - 2,
+          count: reports.length - 2,
+        },
       });
-      
+
       await modalConfirmDeleteButton.trigger("click");
 
       await wrapper.vm.$nextTick();
-      expect(api.post).toHaveBeenCalledWith("executions/delete", { ids: [42, 43] });
+      expect(api.post).toHaveBeenCalledWith("executions/delete", {
+        ids: [42, 43],
+      });
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion
     });
@@ -206,13 +212,13 @@ describe("ActivityList", () => {
       await filterButton.trigger("click");
       await wrapper.vm.$nextTick();
       const activityFilter = wrapper.findComponent(ActivityFilter);
-      
+
       // Mock filtered results
       mockQueryExecutions.mockResolvedValueOnce({
         results: [{ ...reports[0], node: "1/0/1" }],
         paging: { max: 10, offset: 0, total: 1, count: 1 },
       });
-      
+
       await activityFilter.vm.$emit("update:modelValue", {
         recentFilter: "testJobId",
       });
@@ -328,13 +334,126 @@ describe("ActivityList", () => {
     );
   });
 
+  describe("filter URL sync", () => {
+    // Regression tests for https://github.com/rundeck/rundeck/issues/10031:
+    // filters were only ever kept in component state, so opening an
+    // execution and using the browser back button returned to the URL as it
+    // was on the original page load, silently clearing any applied filter.
+    let replaceStateSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      replaceStateSpy = jest
+        .spyOn(window.history, "replaceState")
+        .mockImplementation(() => {});
+      // The component only syncs the URL when the browser is already on the
+      // Activity page itself (see "does not touch the URL when embedded on
+      // a different page" below) -- default to that for the rest of these
+      // tests, which are about the sync behavior itself.
+      window.history.pushState({}, "", "/project/test/activity");
+    });
+
+    afterEach(() => {
+      replaceStateSpy.mockRestore();
+    });
+
+    it("reflects an applied filter into the URL via history.replaceState", async () => {
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).toHaveBeenCalled();
+      const [, , url] =
+        replaceStateSpy.mock.calls[replaceStateSpy.mock.calls.length - 1];
+      expect(url).toBe("/project/test/activity?statFilter=failed");
+    });
+
+    it("preserves existing URL params it doesn't manage, e.g. ?max=", async () => {
+      // Regression test: a URL like /project/x/activity?max=1 (page size,
+      // not part of this component's `query`) was getting silently dropped
+      // because syncQueryToUrl used to replace the whole query string with
+      // only the filter params derived from `query` (see PR #10547 CI
+      // failures in ActivitySpec, which navigate directly to ?max=N and
+      // expect it to still be there after the page settles).
+      window.history.pushState({}, "", "/project/test/activity?max=1");
+      replaceStateSpy.mockClear();
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).toHaveBeenCalled();
+      const [, , url] =
+        replaceStateSpy.mock.calls[replaceStateSpy.mock.calls.length - 1];
+      const params = new URLSearchParams(url.split("?")[1]);
+      expect(params.get("max")).toBe("1");
+      expect(params.get("statFilter")).toBe("failed");
+    });
+
+    it("does not touch the URL when replaceState is unsupported", async () => {
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      // Force the "unsupported" branch: assigning undefined (rather than
+      // `delete`) is required here because `delete` on a jest.spyOn'd
+      // property just removes the spy's own-property and falls through to
+      // the real History.prototype.replaceState, which is still a function
+      // -- so the component's `typeof history.replaceState !== "function"`
+      // guard would never actually be exercised.
+      // simulate an environment without history.replaceState
+      (
+        window.history as { replaceState?: History["replaceState"] }
+      ).replaceState = undefined;
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      // There's no spy left to assert a call count on once replaceState is
+      // undefined -- the meaningful assertion is that the watcher ran to
+      // completion (the reactive value updated) without the missing
+      // replaceState causing an error.
+      expect(wrapper.vm.query.statFilter).toBe("failed");
+    });
+
+    it("does not touch the URL when embedded on a different page", async () => {
+      // Regression test: this component is also embedded on pages other
+      // than the standalone Activity page -- e.g. the ad hoc Command page
+      // (adhocNext.gsp) sets activityPageHref to the Activity page's URL
+      // and bootstraps query as { adhoc: true } even though the browser is
+      // actually on /command/run. Before this guard, mounting there
+      // immediately clobbered the address bar to the Activity page's URL,
+      // breaking every Selenium test that expected to land on /command/run
+      // (see PR #10547 CI failures).
+      window.history.pushState({}, "", "/project/test/command/run");
+      replaceStateSpy.mockClear();
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).not.toHaveBeenCalled();
+      expect(window.location.pathname).toBe("/project/test/command/run");
+    });
+  });
+
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
     jest.useFakeTimers();
-    
+
     // Mock axios for the since.json endpoint
-    const axios = require('axios');
-    const axiosGetSpy = jest.spyOn(axios, 'get');
-    
+    const axiosGetSpy = jest.spyOn(axios, "get");
+
     mockQueryExecutions.mockResolvedValue({
       results: [],
       paging: { max: 10, offset: 0, total: 1, count: 0 },
@@ -343,11 +462,11 @@ describe("ActivityList", () => {
       results: [],
       paging: { max: 20, offset: 0, total: 0, count: 0 },
     });
-    
+
     const wrapper = await shallowMountActivityList();
     await flushPromises();
     await wrapper.vm.$nextTick();
-    
+
     // Enable auto-refresh
     const autoRefreshCheckbox = wrapper.find(
       '[data-testid="auto-refresh-checkbox"]',
@@ -359,22 +478,21 @@ describe("ActivityList", () => {
     axiosGetSpy.mockResolvedValue({
       data: {
         since: {
-          count: 5
-        }
-      }
+          count: 5,
+        },
+      },
     });
 
     jest.advanceTimersByTime(5000);
     await flushPromises();
     await wrapper.vm.$nextTick();
-    
+
     const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
     expect(sinceCountData.exists()).toBe(true);
     expect(sinceCountData.text()).toContain("5");
-    
+
     axiosGetSpy.mockRestore();
     jest.clearAllTimers();
     jest.useRealTimers();
   });
-  
 });

@@ -149,10 +149,18 @@
       <ui-socket location="fields" section="job-search-modal" />
     </div>
     <template #footer>
-      <btn type="button" @click="doClose">
+      <btn
+        data-testid="job-search-modal-cancel-button"
+        type="default"
+        @click="doClose"
+      >
         {{ $t("cancel") }}
       </btn>
-      <btn type="button" @click="doClear">
+      <btn
+        data-testid="job-search-modal-clear-button"
+        type="default"
+        @click="doClear"
+      >
         {{ $t("job.filter.clear.button.title") }}
       </btn>
       <btn type="primary" @click="doSearch">

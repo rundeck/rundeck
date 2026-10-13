@@ -317,6 +317,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      *
      * @deprecated should invoke engine workflow executor
      */
+    @Deprecated
     protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
             final StepExecutionContext executionContext,
             final Map<Integer, StepExecutionResult> failedMap,
@@ -714,6 +715,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
 
                     ExecutionContextImpl.Builder wfHandlerContext = new ExecutionContextImpl.Builder(executionContext);
+                    //mark this context branch as an error handler execution, so components that
+                    //cannot otherwise distinguish a handler's context from its parent step's context
+                    //(e.g. runner/agent selection) can resolve their own, handler-specific configuration
+                    wfHandlerContext.addComponent(
+                            "WorkflowItemErrorHandlerContext",
+                            WorkflowItemErrorHandlerContext.INSTANCE,
+                            WorkflowItemErrorHandlerContext.class
+                    );
                     replaceFailedNodesListenerInContext(
                             wfHandlerContext,
                             handlerCaptureFailedNodesListener,

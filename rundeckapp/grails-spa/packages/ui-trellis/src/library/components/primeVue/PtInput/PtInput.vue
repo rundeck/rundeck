@@ -9,11 +9,19 @@
       {{ label }}
     </label>
 
-    <p v-if="helpText" class="text-body--sm pt-input__help" data-testid="pt-input-help">
+    <p
+      v-if="helpText"
+      class="text-body--sm pt-input__help"
+      data-testid="pt-input-help"
+    >
       {{ helpText }}
     </p>
 
-    <IconField v-if="leftIcon || rightIcon" class="pt-input__field" data-testid="pt-input-icon-container">
+    <IconField
+      v-if="leftIcon || rightIcon"
+      class="pt-input__field"
+      data-testid="pt-input-icon-container"
+    >
       <InputIcon v-if="leftIcon" :class="leftIcon" />
       <InputText
         :id="inputId"
@@ -56,7 +64,11 @@
       @input="onInput"
     />
 
-    <p v-if="invalid && errorText" class="text-body--sm pt-input__error" data-testid="pt-input-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-input__error"
+      data-testid="pt-input-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -290,6 +302,30 @@ export default defineComponent({
     background: var(--colors-gray-50);
     color: var(--colors-gray-500);
     cursor: not-allowed;
+  }
+}
+
+// Dark mode
+*[data-color-theme="dark"] {
+  .p-inputtext {
+    @include form-input-dark;
+
+    &.p-invalid {
+      @include form-input-dark-invalid;
+    }
+
+    &:disabled {
+      background: var(--grey-700);
+      color: var(--grey-300);
+    }
+  }
+
+  .p-inputicon {
+    color: var(--grey-300);
+  }
+
+  .pt-input__error {
+    color: #e55b5b;
   }
 }
 </style>

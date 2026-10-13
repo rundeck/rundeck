@@ -25,6 +25,7 @@ import java.util.Date;
  * Handles log file storage and retrieval
  * @deprecated no longer used, replaced by {@link ExecutionFileStorage}
  */
+@Deprecated
 public interface LogFileStorage {
     /**
      * Stores a log file read from the given stream

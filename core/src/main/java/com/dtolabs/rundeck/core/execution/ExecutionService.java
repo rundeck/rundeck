@@ -171,6 +171,7 @@ public interface ExecutionService
      * @deprecated use {@link #executeCommand(ExecutionContext, ExecArgList, com.dtolabs.rundeck.core.common.INodeEntry)}
      *
      */
+    @Deprecated
     public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node);
 
     /**

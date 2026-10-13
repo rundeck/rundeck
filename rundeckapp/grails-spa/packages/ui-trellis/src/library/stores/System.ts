@@ -4,7 +4,6 @@ import { RundeckVersion } from "../utilities/RundeckVersion";
 import { Serial } from "../utilities/Async";
 
 import { RootStore } from "./RootStore";
-import { ref } from "vue";
 
 export class SystemStore {
   versionInfo: VersionInfo;

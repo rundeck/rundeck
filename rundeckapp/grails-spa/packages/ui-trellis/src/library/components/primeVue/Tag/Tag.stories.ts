@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/vue3";
 import "./tag.scss";
 import Tag from "primevue/tag";
-import Badge from "primevue/badge";
 
 const meta: Meta<typeof Tag> = {
   title: "Tag",

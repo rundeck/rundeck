@@ -1,5 +1,4 @@
 const Path = require("path");
-const webpack = require("webpack");
 const ESLintPlugin = require("eslint-webpack-plugin");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
@@ -33,6 +32,7 @@ module.exports = {
     "components/readme-motd": {
       entry: "./src/app/components/readme-motd/main.ts",
     },
+    "pages/user-list": { entry: "./src/app/pages/user-list/main.ts" },
     "pages/storage": { entry: "./src/app/pages/storage/main.ts" },
     "pages/login": { entry: "./src/app/pages/login/main.ts" },
     "pages/project-dashboard": {
@@ -179,11 +179,6 @@ module.exports = {
     },
     externals: { vue: "Vue" },
     plugins: [
-      /** Generate source maps for CSS as it does not support eval-source-map */
-      new webpack.SourceMapDevToolPlugin({
-        filename: "[file].map",
-        include: [/\.css$/],
-      }),
       /** ESLint validation during build watch */
       new ESLintPlugin({
         extensions: ["js", "ts", "vue"],

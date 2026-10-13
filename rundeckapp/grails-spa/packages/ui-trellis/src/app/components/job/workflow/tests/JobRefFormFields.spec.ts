@@ -7,6 +7,7 @@ const mockEventBusOff = jest.fn();
 const mockEventBusEmit = jest.fn();
 const mockSetSelectedFilter = jest.fn();
 const mockFetchNodes = jest.fn();
+const mockSearchJobsByName = jest.fn();
 
 const createMockRootStore = () => {
   const uiItems: Array<{
@@ -50,6 +51,10 @@ jest.mock("@/library/rundeckService", () => ({
   })),
 }));
 
+jest.mock("@/library/services/jobBrowse", () => ({
+  searchJobsByName: (...args: unknown[]) => mockSearchJobsByName(...args),
+}));
+
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: () => ({
     total: 5,
@@ -78,6 +83,7 @@ jest.mock("@/library/stores/contextVariables", () => ({
 
 // --- Import component after mocks ---
 import JobRefFormFields from "../JobRefFormFields.vue";
+import PtEntityAutoComplete from "@/library/components/primeVue/PtEntityAutoComplete/PtEntityAutoComplete.vue";
 
 // Stubs for child components
 const NodeFilterInputStub = {
@@ -119,6 +125,17 @@ const ModalStub = {
   emits: ["update:modelValue"],
 };
 
+/** Jobs returned by the mocked name search: one grouped, one at the root. */
+const jobSuggestions = [
+  {
+    name: "Deploy Web App",
+    group: "release/prod",
+    project: "testProject",
+    id: "uuid-1",
+  },
+  { name: "Restart", group: "", project: "testProject", id: "uuid-2" },
+];
+
 const baseModelValue = {
   nodeStep: false,
   name: "",
@@ -141,6 +158,10 @@ const baseModelValue = {
     },
   },
 };
+
+/** The job name autocomplete rendered for the job reference name field. */
+const nameAutocomplete = (w: VueWrapper<any>) =>
+  w.findComponent(PtEntityAutoComplete);
 
 describe("JobRefFormFields", () => {
   let wrapper: VueWrapper<any>;
@@ -219,7 +240,7 @@ describe("JobRefFormFields", () => {
       wrapper = createWrapper();
       await flushPromises();
 
-      expect(wrapper.find('[data-testid="jobNameField"]').exists()).toBe(true);
+      expect(nameAutocomplete(wrapper).exists()).toBe(true);
       expect(wrapper.find('[data-testid="jobGroupField"]').exists()).toBe(true);
     });
 
@@ -286,8 +307,7 @@ describe("JobRefFormFields", () => {
       });
       await flushPromises();
 
-      const nameField = wrapper.find('[data-testid="jobNameField"]') as any;
-      expect(nameField.element.value).toBe("Test Job");
+      expect(nameAutocomplete(wrapper).props("modelValue")).toBe("Test Job");
 
       const groupField = wrapper.find('[data-testid="jobGroupField"]') as any;
       expect(groupField.element.value).toBe("test/group");
@@ -328,10 +348,9 @@ describe("JobRefFormFields", () => {
       });
       await flushPromises();
 
-      const nameGroup = wrapper
-        .find('[data-testid="jobNameField"]')
-        .element.closest(".form-group");
-      expect(nameGroup?.classList.contains("has-error")).toBe(true);
+      expect(
+        wrapper.find('[data-testid="jobNameFieldGroup"]').classes(),
+      ).toContain("has-error");
     });
   });
 
@@ -363,8 +382,10 @@ describe("JobRefFormFields", () => {
       wrapper = createWrapper({ modelValue });
       await flushPromises();
 
-      const nameField = wrapper.find('[data-testid="jobNameField"]');
-      await nameField.setValue("Updated Job");
+      await nameAutocomplete(wrapper).vm.$emit(
+        "update:modelValue",
+        "Updated Job",
+      );
 
       // Direct mutation - modelValue is mutated in place
       expect(modelValue.name).toBe("Updated Job");
@@ -715,9 +736,7 @@ describe("JobRefFormFields", () => {
       wrapper = createWrapper();
       await flushPromises();
 
-      expect(
-        wrapper.find('[data-testid="jobNameField"]').attributes("readonly"),
-      ).toBeDefined();
+      expect(nameAutocomplete(wrapper).props("readOnly")).toBe(true);
       expect(
         wrapper.find('[data-testid="jobGroupField"]').attributes("readonly"),
       ).toBeDefined();
@@ -729,9 +748,7 @@ describe("JobRefFormFields", () => {
       });
       await flushPromises();
 
-      expect(
-        wrapper.find('[data-testid="jobNameField"]').attributes("readonly"),
-      ).toBeUndefined();
+      expect(nameAutocomplete(wrapper).props("readOnly")).toBe(false);
       expect(
         wrapper.find('[data-testid="jobGroupField"]').attributes("readonly"),
       ).toBeUndefined();
@@ -761,6 +778,69 @@ describe("JobRefFormFields", () => {
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toBeTruthy();
       expect((emitted?.[emitted.length - 1]?.[0] as any)?.useName).toBe(false);
+    });
+  });
+
+  describe("Job name autocomplete", () => {
+    it("looks up suggestions for the project selected in the form", async () => {
+      mockSearchJobsByName.mockResolvedValue(jobSuggestions);
+      wrapper = createWrapper({
+        modelValue: { ...baseModelValue, project: "otherProject" },
+      });
+      await flushPromises();
+
+      await nameAutocomplete(wrapper).props("search")("Depl");
+
+      expect(mockSearchJobsByName).toHaveBeenCalledWith("otherProject", "Depl");
+    });
+
+    it("falls back to the current project when the form has none selected", async () => {
+      mockSearchJobsByName.mockResolvedValue(jobSuggestions);
+      wrapper = createWrapper({
+        modelValue: { ...baseModelValue, project: "" },
+      });
+      await flushPromises();
+
+      await nameAutocomplete(wrapper).props("search")("any");
+
+      expect(mockSearchJobsByName).toHaveBeenCalledWith("testProject", "any");
+    });
+
+    it("returns the jobs found for the typed query", async () => {
+      mockSearchJobsByName.mockResolvedValue(jobSuggestions);
+      wrapper = createWrapper();
+      await flushPromises();
+
+      await expect(
+        nameAutocomplete(wrapper).props("search")("Depl"),
+      ).resolves.toEqual(jobSuggestions);
+    });
+
+    it("populates name, group and uuid when a suggestion is selected", async () => {
+      const modelValue = { ...baseModelValue, useName: true };
+      wrapper = createWrapper({ modelValue });
+      await flushPromises();
+
+      await nameAutocomplete(wrapper).vm.$emit("select", jobSuggestions[0]);
+
+      expect(modelValue.name).toBe("Deploy Web App");
+      expect(modelValue.group).toBe("release/prod");
+      expect(modelValue.uuid).toBe("uuid-1");
+    });
+
+    it("clears the group when the selected job has no group path", async () => {
+      const modelValue = {
+        ...baseModelValue,
+        useName: true,
+        group: "stale/group",
+      };
+      wrapper = createWrapper({ modelValue });
+      await flushPromises();
+
+      await nameAutocomplete(wrapper).vm.$emit("select", jobSuggestions[1]);
+
+      expect(modelValue.group).toBe("");
+      expect(modelValue.uuid).toBe("uuid-2");
     });
   });
 });

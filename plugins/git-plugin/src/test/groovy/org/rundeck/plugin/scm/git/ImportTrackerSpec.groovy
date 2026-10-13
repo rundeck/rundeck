@@ -66,6 +66,7 @@ class ImportTrackerSpec extends Specification {
         tracker.renamedValue(path) == null
         tracker.trackedJob(path) == null
         tracker.trackedCommit(path) == null
+        tracker.trackedPath('123') == null
         !tracker.wasRenamed(path)
         tracker.originalValue(path) == null
         tracker.trackedItemIsUnknown(path)

@@ -54,7 +54,8 @@ export default defineComponent({
     size: {
       type: String,
       default: undefined,
-      validator: (val: string) => val === undefined || ["small", "large"].includes(val),
+      validator: (val: string) =>
+        val === undefined || ["small", "large"].includes(val),
     },
     fluid: {
       type: Boolean,
@@ -123,11 +124,9 @@ export default defineComponent({
       border-color: var(--colors-blue-600);
     }
 
-
     &:active {
       background: var(--colors-blue-700);
       border-color: var(--colors-blue-700);
-
     }
   }
 
@@ -135,6 +134,41 @@ export default defineComponent({
     font-weight: var(--fontWeights-bold);
     font-size: 14px;
     line-height: 17px;
+  }
+}
+
+// Dark mode (Figma: selectbutton): unselected #27272a, selected green-600
+*[data-color-theme="dark"] .p-selectbutton .p-togglebutton {
+  border-color: var(--grey-300);
+  color: var(--white, #fff);
+
+  .p-togglebutton-content,
+  .p-togglebutton-label {
+    color: inherit;
+  }
+
+  &:not(.p-togglebutton-checked) {
+    background: #27272a;
+
+    &:hover {
+      background: var(--grey-800);
+    }
+
+    &:active {
+      background: var(--grey-700);
+    }
+  }
+
+  &.p-togglebutton-checked {
+    background: #16a34a;
+
+    &:hover {
+      background: #15803d;
+    }
+
+    &:active {
+      background: #166534;
+    }
   }
 }
 </style>

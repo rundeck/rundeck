@@ -138,6 +138,9 @@ class EditProjectSpec extends SeleniumBase {
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectDescription(projectDescription)
         projectEditPage.save()
+        // Save triggers POST + redirect; navigating immediately can abort the request so
+        // the new description never persists and the dashboard keeps showing the old value.
+        projectEditPage.waitForUrlToNotContain('/configure')
         then:
         projectDashboard.expectProjectDescriptionToBe(projectDescription)
 
@@ -145,6 +148,7 @@ class EditProjectSpec extends SeleniumBase {
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectDescription(anotherProjectDescription)
         projectEditPage.save()
+        projectEditPage.waitForUrlToNotContain('/configure')
         then:
         projectDashboard.expectProjectDescriptionToBe(anotherProjectDescription)
 
@@ -172,6 +176,9 @@ class EditProjectSpec extends SeleniumBase {
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectLabel projectLabel
         projectEditPage.save()
+        // Save triggers POST + redirect; navigating immediately can abort the request so
+        // the new label never persists and the dashboard keeps showing the old value.
+        projectEditPage.waitForUrlToNotContain('/configure')
         then:
         projectDashboard.expectProjectLabelToBe(projectLabel)
 
@@ -179,6 +186,7 @@ class EditProjectSpec extends SeleniumBase {
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectLabel anotherProjectLabel
         projectEditPage.save()
+        projectEditPage.waitForUrlToNotContain('/configure')
         then:
         projectDashboard.expectProjectLabelToBe(anotherProjectLabel)
 

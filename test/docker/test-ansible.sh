@@ -18,6 +18,7 @@ if [ -f rd.deb ] ; then
 fi
 
 build_rdtest_docker
+build_rundeckansible_docker
 
 # clean up docker env
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans

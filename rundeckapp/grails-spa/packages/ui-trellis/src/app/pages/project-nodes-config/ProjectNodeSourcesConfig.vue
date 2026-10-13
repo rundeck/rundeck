@@ -91,7 +91,7 @@ export default defineComponent({
     };
   },
   watch: {
-    sourcesData: function (val, oldVal) {
+    sourcesData: function () {
       this.checkUnauthorized();
     },
   },

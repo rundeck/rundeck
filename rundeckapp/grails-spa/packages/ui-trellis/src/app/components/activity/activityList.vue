@@ -22,7 +22,6 @@
           v-if="pagination.total >= 0"
           class="summary-count"
           :class="{
-
             'text-strong': pagination.total < 1,
             'text-info': pagination.total > 0,
           }"
@@ -505,7 +504,11 @@
                   )
                 "
               >
-                {{ rpt.job.group ? rpt.job.group + '/' + rpt.job.name : rpt.job.name }}
+                {{
+                  rpt.job.group
+                    ? rpt.job.group + "/" + rpt.job.name
+                    : rpt.job.name
+                }}
               </span>
               <span v-else>
                 {{ rpt.description }}
@@ -580,19 +583,26 @@
 </template>
 
 <script lang="ts">
-import {getExecutions, PagedResult, queryRunning,} from "../../../library/services/executions";
+import {
+  getExecutions,
+  queryRunning,
+} from "../../../library/services/executions";
 import axios from "axios";
-import {defineComponent, PropType} from "vue";
-import moment, {MomentInput} from "moment";
+import { defineComponent, PropType } from "vue";
+import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
 
-import {EventBus, getRundeckContext} from "../../../library";
-import {ExecutionBulkDeleteResponse} from "@rundeck/client/dist/lib/models";
-import {Execution, ExecutionDate, Status} from "../../../library/types/executions/Execution";
+import { EventBus, getRundeckContext } from "../../../library";
+import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
+import {
+  Execution,
+  ExecutionDate,
+  Status,
+} from "../../../library/types/executions/Execution";
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import {api} from "../../../library/services/api";
+import { api } from "../../../library/services/api";
 
 /**
  * Generate a URL
@@ -744,13 +754,14 @@ export default defineComponent({
   },
   watch: {
     query: {
-      handler(newValue, oldValue) {
+      handler() {
         this.reload();
+        this.syncQueryToUrl();
       },
       deep: true,
     },
     autorefresh: {
-      handler(newValue, oldValue) {
+      handler(newValue) {
         if (newValue) {
           //turn on
           this.startAutorefresh();
@@ -1068,8 +1079,7 @@ export default defineComponent({
         this.loadActivity(this.pagination.offset);
       } catch (error) {
         this.bulkEditProgress = false;
-        //@ts-ignore
-        this.bulkEditError = error.message || error;
+        this.bulkEditError = (error as Error).message || (error as string);
       }
     },
     performBulkDelete() {
@@ -1099,9 +1109,8 @@ export default defineComponent({
           this.sincecount = response.data.since.count;
         }
       } catch (error) {
-        //@ts-ignore
         this.disableRefresh = !this.disableRefresh;
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     async loadRunning() {
@@ -1129,8 +1138,7 @@ export default defineComponent({
       } catch (error) {
         this.disableRefresh = !this.disableRefresh;
         this.loadingRunning = false;
-        //@ts-ignore
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     async loadActivity(offset: number) {
@@ -1158,8 +1166,7 @@ export default defineComponent({
         }
       } catch (error) {
         this.loading = false;
-        //@ts-ignore
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     parseToExecutionQuery() {
@@ -1222,6 +1229,49 @@ export default defineComponent({
         }
       }
       return params;
+    },
+    syncQueryToUrl() {
+      // Reflect the current filters in the address bar (without navigating) so
+      // that browser back/forward restores the filter state instead of losing
+      // it. See https://github.com/rundeck/rundeck/issues/10031 -- filters
+      // previously only lived in component state, so opening an execution and
+      // going back returned to the URL as it was on the original page load.
+      if (
+        typeof history.replaceState !== "function" ||
+        !this.activityPageHref
+      ) {
+        return;
+      }
+      // This component is also embedded on other pages that share the same
+      // bootstrap data shape (e.g. the ad hoc Command page sets
+      // activityPageHref to the standalone Activity page's URL even though
+      // the browser is actually on /command/run). Only touch the address bar
+      // when it already matches the Activity page itself, otherwise this
+      // would clobber the URL of whatever page embeds this component.
+      let activityPathname;
+      try {
+        activityPathname = new URL(
+          this.activityPageHref,
+          window.location.origin,
+        ).pathname;
+      } catch (e) {
+        return;
+      }
+      if (window.location.pathname !== activityPathname) {
+        return;
+      }
+      // Merge into the existing query string rather than reusing activityHref
+      // wholesale (which only reflects this.query): the URL may already carry
+      // params this component doesn't manage, e.g. ?max=1 for page size, and
+      // replacing the whole query string would silently drop them.
+      const params = new URLSearchParams(window.location.search);
+      Object.keys(this.query).forEach((key) => params.delete(key));
+      Object.entries(this.fullQueryParams()).forEach(([key, value]) => {
+        params.set(key, value);
+      });
+      const queryString = params.toString();
+      const url = activityPathname + (queryString ? `?${queryString}` : "");
+      history.replaceState(history.state, "", url);
     },
   },
 });

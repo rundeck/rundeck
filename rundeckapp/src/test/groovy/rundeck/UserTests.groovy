@@ -71,4 +71,29 @@ class UserTests extends Specification implements DataTest {
         then:
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
+
+    /**
+     * Regression guard for https://github.com/rundeck/rundeck/issues/10493: an explicit
+     * {@code identity} id generator requires the database column itself to auto-generate the
+     * value, which fails against long-lived Postgres installations whose {@code rduser.id}
+     * column predates/lacks a real DB-level identity or sequence. Unlike the persistence tests
+     * in UserIntegrationSpec -- which run against a freshly-created (Hibernate ddl-auto)
+     * schema that would mask this regression by always matching whatever generator is
+     * currently declared -- this asserts directly on the source mapping, so it fails
+     * immediately if the identity generator is reintroduced, regardless of test schema shape.
+     */
+    void "does not map id with an explicit generator"() {
+        given:
+        def candidatePaths = [
+            "rundeckapp/grails-app/domain/rundeck/User.groovy",
+            "grails-app/domain/rundeck/User.groovy",
+        ]
+        File userSource = candidatePaths
+            .collect { new File(it).absoluteFile }
+            .find { it.exists() }
+
+        expect:
+        userSource != null
+        !(userSource.text =~ /id\s+generator\s*:/)
+    }
 }

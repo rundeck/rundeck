@@ -59,6 +59,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
                 }
             }
         })
+        factory.addServerCustomizers(new EmptySegmentCompactingCustomizer())
         // Grails 7/Jetty 12: BanHttpMethodCustomizer disabled temporarily to debug ServletApiRequest NPE
         // TODO: Re-enable HTTP method filtering once ServletAPI issue is resolved
         if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
@@ -66,6 +67,35 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
+        applySecureSessionCookieDefault(factory)
+    }
+
+    /**
+     * Auto-enables the {@code Secure} flag on the session cookie when the configured
+     * {@code grails.serverURL} uses the {@code https} scheme, unless the operator has
+     * already set {@code server.servlet.session.cookie.secure} explicitly.
+     * <p>
+     * Skipped when {@code useForwardHeaders} is enabled: in that mode {@code grails.serverURL}
+     * describes the public URL of an upstream TLS-terminating proxy, not the scheme this Jetty
+     * listener itself serves, so it is not a reliable signal here. Forcing {@code Secure} in that
+     * case would cause the session cookie to be silently dropped by clients (e.g. rundeck-cli)
+     * connecting directly to Rundeck's own plain-HTTP port, breaking session/cookie-based
+     * authentication for them (rundeck/rundeck#10584).
+     * @param factory the servlet web server factory being customized
+     */
+    void applySecureSessionCookieDefault(final JettyServletWebServerFactory factory) {
+        def cookie = factory.session?.cookie
+        if (cookie != null && cookie.secure == null && !useForwardHeaders && isHttpsUrl(serverUrl)) {
+            cookie.secure = true
+        }
+    }
+
+    /**
+     * @param url a URL string, may be null
+     * @return true if the URL scheme is {@code https} (case-insensitive)
+     */
+    static boolean isHttpsUrl(final String url) {
+        url != null && url.trim().toLowerCase().startsWith("https://")
     }
 }
 

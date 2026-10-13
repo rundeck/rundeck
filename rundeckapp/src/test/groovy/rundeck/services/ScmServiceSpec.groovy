@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import org.hibernate.ObjectNotFoundException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -892,6 +893,94 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
 
         1 * plugin.clusterFixJobs(_,_,_)>> [:]
         1 * plugin.getJobStatus(_,_)>> Mock(JobState)
+    }
+
+    def "importStatusForJobs skips the cluster fix for an empty job list"() {
+        given:
+        def project = "test"
+        def plugin = Mock(ScmImportPlugin)
+        service.frameworkService = Stub(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.pluginConfigService = Stub(PluginConfigService) {
+            loadScmConfig(_, _, _) >> Stub(ScmPluginConfigData) {
+                getEnabled() >> true
+            }
+        }
+        service.initedProjects << "import/" + project
+        service.loadedImportPlugins[project] = Closeables.closeableProvider(plugin)
+
+        when:
+        service.importStatusForJobs(project, Mock(UserAndRolesAuthContext), [], true)
+
+        then:
+        0 * plugin.reconcileJobState(_)
+        0 * plugin.clusterFixJobs(_, _, _)
+    }
+
+    def "importStatusForJobs does not reconcile import state for a partial job list"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def project = "test"
+
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_, _, _) >>
+                    Mock(UserAndRolesAuthContext) {
+                        getUsername() >> 'admin'
+                    }
+        }
+
+        def job = new ScheduledExecution()
+        job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
+
+        ScmImportPlugin plugin = Mock(ScmImportPlugin)
+
+        service.jobMetadataService = Mock(JobMetadataService) {
+            getJobPluginMeta(_, _) >> [:]
+        }
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'admin'
+        }
+        service.initedProjects << "import/" + project
+        service.loadedImportPlugins[project] = Closeables.closeableProvider(plugin)
+
+        when:
+        service.importStatusForJobs(project, auth, [job], true)
+
+        then:
+        _ * service.pluginConfigService.loadScmConfig(_, _, _) >> Mock(ScmPluginConfigData) {
+            getEnabled() >> true
+            getSetting("username") >> "admin"
+            getSettingList("roles") >> ["admin"]
+            _ * getType() >> 'pluginType'
+            getConfig() >> [plugin: 'config']
+        }
+
+        0 * plugin.reconcileJobState(_)
+        1 * plugin.clusterFixJobs(_, _, _) >> [:]
+        1 * plugin.getJobStatus(_)
+    }
+
+    def "get jobs plugin metadata returns empty map for stale cached entity"() {
+        given:
+        service.jobMetadataService = Mock(JobMetadataService) {
+            getJobsPluginMeta("test", "scm-import") >> {
+                throw new ObjectNotFoundException(123L, "PluginMeta")
+            }
+        }
+
+        expect:
+        service.getJobsPluginMeta("test", "scm-import") == [:]
     }
 
     def "get job plugin meta"(){

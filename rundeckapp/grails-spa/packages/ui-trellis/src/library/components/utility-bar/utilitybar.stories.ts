@@ -146,7 +146,7 @@ export const widgetCounter: StoryFn<typeof UtilityBar> = (args) => {
       rootStore: rootStore,
     }),
     watch: {
-      count(newVal, oldVal) {
+      count(newVal) {
         item.count = newVal;
       },
     },

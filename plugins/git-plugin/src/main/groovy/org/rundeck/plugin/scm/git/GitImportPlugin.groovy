@@ -202,7 +202,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
-        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+        def loadingStatus = snapshotJobStateMap().find {key, meta -> meta["synch"] == SynchState.LOADING }
 
         if(loadingStatus){
             def synchState = new GitExportSynchState()
@@ -244,7 +244,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
 
-        Map jobsCache = jobStateMap.collectEntries {key, value -> [value.path, value]}
+        Map<String, Map> jobStateSnapshot = snapshotJobStateMap()
+        Map jobsCache = jobStateSnapshot.collectEntries {key, value -> [value.path, value]}
 
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def tracked = false
@@ -271,7 +272,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 notExpected.remove(walk.getPathString())
                 tracked = true
             }
-            if(!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))){
+            String trackedJobId = !tracked ? importTracker.getTrackedJobIds().get(walk.getPathString()) : null
+            Map jobState = trackedJobId ? jobStateSnapshot.get(trackedJobId) : null
+            if(!tracked && jobState){
 
                 def originalValue = importTracker.originalValue(walk.getPathString())
                 def renamedJob = null
@@ -285,7 +288,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     }
                 }
                 if(!renamedJob){
-                    def jobState = jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))
                     if(!ImportSynchState.CLEAN.equals(jobState.get("synch"))){
                         importNeeded++
                     }
@@ -378,7 +380,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         jobStateMap.remove(job.id)
 
         def jobstat = Collections.synchronizedMap([:])
-        def latestCommit = GitUtil.lastCommitForPath repo, git, path
+        def latestCommit = lastCommitForPath(path)
 
 //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path)
@@ -551,6 +553,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 importTracker.untrackPath(path)
+                jobStateMap.remove(reference.id)
 
                 def status = [synch: ImportSynchState.IMPORT_NEEDED]
                 return createJobImportStatus(status,jobActionsForStatus(status))
@@ -642,7 +645,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         path = originalPath ?: getRelativePathForJob(job)
         def temp = serializeTemp(job, config.format, config.importPreserve, config.importArchive)
-        def latestCommit = GitUtil.lastCommitForPath repo, git, path
+        def latestCommit = lastCommitForPath(path)
 
         def id = latestCommit ? lookupId(latestCommit, path) : null
 
@@ -689,9 +692,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } else if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
 
             List<ScmImportTrackedItem> found = []
+            Map<String, Map> jobStateSnapshot = snapshotJobStateMap()
 
             //files to delete
-            jobStateMap?.each {job->
+            jobStateSnapshot.each {job->
                 String status = job.getValue()?.get("synch")
                 if (status?.equalsIgnoreCase('DELETE_NEEDED')){
                     found << trackPath(
@@ -703,13 +707,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
 
+            //job id by path, resolved once instead of scanning the snapshot per repo file
+            Map<String, String> jobIdByPath = [:]
+            jobStateSnapshot.each { k, v -> if (v?.path) jobIdByPath.putIfAbsent(v.path.toString(), k) }
+
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
                 found << trackPath(
                         walk.getPathString(),
                         trackedItemNeedsImport(walk.getPathString()),
                         importTracker.trackedJob(walk.getPathString()) ?:
-                                jobStateMap.find {String key, Map values -> values.path?.equals(walk.getPathString())}?.key?.toString() //get job id from jobStateMap if importTracker is empty
+                                jobIdByPath[walk.getPathString()] //get job id from jobStateMap if importTracker is empty
                 )
             }
             return found
@@ -762,6 +770,23 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     boolean isTrackedPath(final String path) {
         return trackedItems?.contains(path) || config.shouldUseFilePattern() && config.filePattern && path.matches(config.filePattern)
+    }
+
+    /**
+     * Remove node-local state for jobs that no longer exist in Rundeck.
+     *
+     * @param currentJobIds current Rundeck job IDs for the project
+     */
+    @Override
+    void reconcileJobState(Set<String> currentJobIds) {
+        Set<String> authoritativeJobIds = currentJobIds ?: Collections.emptySet()
+        Set<String> cachedJobIds = new HashSet<>(snapshotJobStateMap().keySet())
+        cachedJobIds.addAll(importTracker.trackedJobIdSet())
+        cachedJobIds.removeAll(authoritativeJobIds)
+        cachedJobIds.each { String jobId ->
+            jobStateMap.remove(jobId)
+            importTracker.untrackJob(jobId)
+        }
     }
 
 

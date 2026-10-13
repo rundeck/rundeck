@@ -2214,6 +2214,54 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
         request.errorArgs == [ACTION_CREATE, 'ACL for Project', 'test']
 
     }
+
+    @Unroll
+    def "importArchive rejects import-only principal for #mutatingOption when configure is denied"() {
+        given:
+            assert getControllerMethodAnnotation('importArchive', RdAuthorizeProject).value() ==
+                    RundeckAccess.Project.AUTH_APP_IMPORT
+            def project = Stub(IRundeckProject) {
+                getName() >> 'test'
+            }
+            def authorizingProject = Mock(AuthorizingProject) {
+                getResource() >> project
+                getAuthContext() >> Stub(UserAndRolesAuthContext)
+            }
+            controller.rundeckAppAuthorizer = Stub(AppAuthorizer) {
+                project(_, _) >> authorizingProject
+            }
+            controller.metaClass.getAuthorizingProject = { authorizingProject }
+            controller.rundeckAuthContextProcessor = Stub(AppAuthContextProcessor)
+            controller.frameworkService = Stub(FrameworkService) {
+                getFrameworkProject('test') >> project
+                getRundeckFramework() >> Stub(IFramework)
+            }
+            controller.projectService = Mock(ProjectService) {
+                validateAllProjectComponentImportOptions(_) >> [:]
+            }
+            setupFormTokens()
+            params.project = 'test'
+            params.importACL = 'false'
+            params."$mutatingOption" = 'true'
+            request.method = 'POST'
+            request.addFile(new GrailsMockMultipartFile('zipFile', 'archive'.bytes))
+
+        when:
+            controller.importArchive()
+
+        then:
+            1 * authorizingProject.authorize(RundeckAccess.Project.APP_CONFIGURE) >> {
+                throw new UnauthorizedAccess('configure', 'Project', 'test')
+            }
+            1 * controller.rundeckExceptionHandler.handleException(_, _, _ as UnauthorizedAccess)
+            0 * controller.projectService.importToProject(
+                    _, _, _, _, { it."$mutatingOption" }
+            )
+
+        where:
+            mutatingOption << ['importConfig', 'importNodesSources', 'importScm']
+    }
+
     def "import archive token failure"(){
         setup:
         controller.frameworkService=Mock(FrameworkService){

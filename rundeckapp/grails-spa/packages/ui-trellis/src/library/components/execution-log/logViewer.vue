@@ -81,8 +81,27 @@
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
+          <input
+            id="logview_stats"
+            v-model="settings.stats"
+            type="checkbox"
+            data-testid="log-viewer-stats-checkbox"
+          />
           <label for="logview_stats">Display Stats</label>
+        </div>
+        <div class="checkbox">
+          <input
+            id="logview_hideIncomplete"
+            type="checkbox"
+            data-testid="log-viewer-hide-incomplete-checkbox"
+            :checked="hideIncompleteNodes"
+            :disabled="!hideIncompleteApplies"
+            :title="$t('hideIncompleteNodesDescription')"
+            @change="onHideIncompleteCheckboxChange"
+          />
+          <label for="logview_hideIncomplete">{{
+            $t("hideIncompleteNodes")
+          }}</label>
         </div>
         <ui-socket
           section="execution-log-viewer"
@@ -98,7 +117,9 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
+      :style="
+        node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}
+      "
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -120,7 +141,10 @@
               data-testid="log-viewer-follow-btn"
               @click="toggleFollow"
             >
-              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
+              <i
+                :class="[followIcon]"
+                data-testid="log-viewer-follow-icon"
+              />Follow
             </btn>
           </btn-group>
           <transition name="fade">
@@ -212,9 +236,8 @@ import RdDrawer from "../containers/drawer/Drawer.vue";
 import UiSocket from "../utils/UiSocket.vue";
 import { EventBus } from "../../utilities/vueEventBus";
 import { Btn, BtnGroup, ProgressBar } from "uiv";
-import { App, PropType } from "vue";
+import { PropType } from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
-import { JobWorkflow } from "@/library/utilities/JobWorkflow";
 import { getRundeckContext } from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
@@ -349,6 +372,16 @@ export default defineComponent({
       viewerEntriesByNodeCtx: null,
       viewerFilteredEntries: [] as any[],
       autorunDisposer: null as IReactionDisposer | null,
+      hideIncompleteNodes: false,
+      hideIncompleteApplies: false,
+      incompleteNodeNames: [] as string[],
+      hideIncompleteStateListener: null as
+        | ((payload: {
+            hide?: boolean;
+            applies?: boolean;
+            nodeNames?: string[];
+          }) => void)
+        | null,
     };
   },
   computed: {
@@ -391,10 +424,18 @@ export default defineComponent({
       if (this.viewer == null) {
         return [];
       }
-      if (this.node) {
-        return this.viewerFilteredEntries;
+      const entries = this.node
+        ? this.viewerFilteredEntries
+        : this.entriesFromViewer;
+      if (
+        !this.hideIncompleteNodes ||
+        !this.incompleteNodeNames ||
+        this.incompleteNodeNames.length < 1
+      ) {
+        return entries;
       }
-      return this.entriesFromViewer;
+      const hidden = new Set(this.incompleteNodeNames);
+      return (entries || []).filter((entry) => !hidden.has(entry.node));
     },
   },
   watch: {
@@ -433,7 +474,9 @@ export default defineComponent({
     // Capture the raw ExecutionOutput reference before Vue wraps it in a
     // reactive proxy, so MobX can properly track ObservableGroupMap accesses
     // inside the autorun callback.
-    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    const rawViewer = rootStore.executionOutputStore.createOrGet(
+      this.executionId,
+    );
     this.viewer = rawViewer;
     if (this.node) {
       const node = this.node;
@@ -448,6 +491,13 @@ export default defineComponent({
     if (this.autorunDisposer) {
       this.autorunDisposer();
       this.autorunDisposer = null;
+    }
+    if (this.eventBus && this.hideIncompleteStateListener) {
+      this.eventBus.off(
+        "execution-hide-incomplete-nodes-state",
+        this.hideIncompleteStateListener,
+      );
+      this.hideIncompleteStateListener = null;
     }
   },
   async mounted() {
@@ -467,6 +517,7 @@ export default defineComponent({
 
     this.execCompleted = this.viewer.execCompleted;
     this.mfollow = !this.viewer.execCompleted;
+    this.bindHideIncompleteNodes();
 
     if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
       this.logSize = this.viewer.size;
@@ -478,6 +529,38 @@ export default defineComponent({
     this.populateLogsProm = await this.populateLogs();
   },
   methods: {
+    bindHideIncompleteNodes() {
+      if (!this.eventBus) {
+        return;
+      }
+      this.hideIncompleteStateListener = (payload) => {
+        this.onHideIncompleteState(payload);
+      };
+      this.eventBus.on(
+        "execution-hide-incomplete-nodes-state",
+        this.hideIncompleteStateListener,
+      );
+      this.eventBus.emit("execution-hide-incomplete-nodes-request");
+    },
+    onHideIncompleteState(payload: {
+      hide?: boolean;
+      applies?: boolean;
+      nodeNames?: string[];
+    }) {
+      this.hideIncompleteNodes = !!payload && !!payload.hide;
+      this.hideIncompleteApplies = !!payload && !!payload.applies;
+      this.incompleteNodeNames =
+        payload && payload.nodeNames ? payload.nodeNames : [];
+    },
+    onHideIncompleteCheckboxChange(event: Event) {
+      const target = event.target as HTMLInputElement;
+      if (this.eventBus) {
+        this.eventBus.emit(
+          "execution-hide-incomplete-nodes-toggle",
+          !!target.checked,
+        );
+      }
+    },
     loadConfig() {
       if (this.useUserSettings) {
         const _settings = localStorage.getItem(CONFIG_STORAGE_KEY);
@@ -531,7 +614,7 @@ export default defineComponent({
         };
         setTimeout(update, delay);
         while (!cancel.signaled) {
-          await new Promise((res, rej) => {
+          await new Promise((res) => {
             setTimeout(res, 1000);
           });
           if (this.progress == 100) this.cancelProgress?.cancel();
@@ -595,7 +678,7 @@ export default defineComponent({
     toggleProgressBar() {
       this.consumeLogs = !this.consumeLogs;
     },
-    handleJump(e: string) {
+    handleJump() {
       this.scrollToLine(this.jumpToLine || 0);
     },
     handleJumpToEnd() {
@@ -607,12 +690,12 @@ export default defineComponent({
     async populateLogs() {
       while (this.consumeLogs) {
         if (!this.resp) this.resp = this.viewer.getOutput(this.batchSize);
-        const res = await this.resp;
+        await this.resp;
         this.resp = undefined;
 
         if (!this.viewer.completed) {
           this.resp = this.viewer.getOutput(this.batchSize);
-          await new Promise<void>((res, rej) =>
+          await new Promise<void>((res) =>
             setTimeout(() => {
               res();
             }, 0),

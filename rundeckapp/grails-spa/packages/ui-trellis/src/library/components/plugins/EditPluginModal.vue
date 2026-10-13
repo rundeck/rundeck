@@ -28,6 +28,8 @@
         description-css="ml-5"
         data-testid="plugin-info"
         :service-name="serviceName"
+        :use-runner-selector="true"
+        :event-bus="eventBus"
         :extra-autocomplete-vars="extraAutocompleteVars"
       ></plugin-config>
       <slot name="extra"></slot>
@@ -54,6 +56,7 @@ import pluginInfo from "./PluginInfo.vue";
 import { PluginConfig } from "../../../library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "../../../library/modules/pluginService";
 import { ContextVariable } from "../../../library/stores/contextVariables";
+import { getRundeckContext } from "../../../library";
 import { cloneDeep } from "lodash";
 import { defineComponent, type PropType } from "vue";
 
@@ -98,6 +101,7 @@ export default defineComponent({
       provider: null,
       loading: false,
       pluginConfigMode: "edit",
+      eventBus: getRundeckContext()?.eventBus,
     };
   },
   computed: {

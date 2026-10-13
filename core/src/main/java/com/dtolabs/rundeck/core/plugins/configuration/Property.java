@@ -142,4 +142,23 @@ public interface Property {
     public default String getUnexpandableBehaviorFrom() {
         return null;
     }
+
+    /**
+     * @return metadata describing this property as an exposed "output" value for conditional-logic
+     * reference (see {@code com.dtolabs.rundeck.plugins.descriptions.PluginOutput}), or null if this
+     * property is not exposed as an output value.
+     */
+    public default List<PluginOutputMetadata> getOutputMetadata() {
+        return null;
+    }
+
+    /**
+     * @return true if this property was built from a field carrying only {@code @PluginOutput} (no
+     * {@code @PluginProperty}) — a computed, backend-only value used for condition-key resolution and
+     * output capture, and never job-configurable. Such properties should be excluded from job/step
+     * configuration UI rendering even though they remain in {@link com.dtolabs.rundeck.core.plugins.configuration.Description#getProperties()}.
+     */
+    public default boolean isOutputOnly() {
+        return false;
+    }
 }

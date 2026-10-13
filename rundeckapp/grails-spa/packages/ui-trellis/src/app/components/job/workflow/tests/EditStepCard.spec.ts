@@ -94,7 +94,7 @@ const BaseStepCardStub = {
 
 // JobRefFormFields stub to render the actual form fields
 const JobRefFormFieldsStub = {
-  name: 'JobRefFormFieldsStub',
+  name: "JobRefFormFieldsStub",
   template: `<div class="jobref-form-fields-stub">
     <select data-testid="jobProjectField">
       <option value="testProject">testProject</option>
@@ -103,17 +103,29 @@ const JobRefFormFieldsStub = {
     <input data-testid="jobGroupField" :value="modelValue.group" />
     <input data-testid="jobUuidField" :value="modelValue.uuid" />
   </div>`,
-  props: ['modelValue', 'showValidation', 'extraAutocompleteVars'],
-  emits: ['update:modelValue'],
+  props: ["modelValue", "showValidation", "extraAutocompleteVars"],
+  emits: ["update:modelValue"],
 };
 
 /** Minimal shell so EditStepCard mounts; plugin behavior is driven via $emit in tests when full plugin-config setup is not feasible. */
 const pluginConfigStub = {
   name: "pluginConfig",
   template: `<div data-testid="plugin-info"></div>`,
-  props: ["modelValue", "mode", "pluginConfig", "showTitle", "showDescription",
-    "contextAutocomplete", "validation", "scope", "defaultScope", "groupCss",
-    "descriptionCss", "serviceName", "extraAutocompleteVars"],
+  props: [
+    "modelValue",
+    "mode",
+    "pluginConfig",
+    "showTitle",
+    "showDescription",
+    "contextAutocomplete",
+    "validation",
+    "scope",
+    "defaultScope",
+    "groupCss",
+    "descriptionCss",
+    "serviceName",
+    "extraAutocompleteVars",
+  ],
   emits: ["update:modelValue"],
 };
 
@@ -197,7 +209,9 @@ describe("EditStepCard", () => {
 
   describe("Regular plugin step rendering", () => {
     it("renders save and cancel buttons", async () => {
-      const wrapper = await createWrapper({ pluginDetails: mockPluginProvider });
+      const wrapper = await createWrapper({
+        pluginDetails: mockPluginProvider,
+      });
 
       // Footer is v-show controlled (conditional element)
       expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(true);
@@ -206,7 +220,12 @@ describe("EditStepCard", () => {
 
     it("loads provider from API when pluginDetails prop is not provided", async () => {
       await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         serviceName: "WorkflowNodeStep",
       });
 
@@ -218,7 +237,12 @@ describe("EditStepCard", () => {
 
     it("uses pluginDetails prop when provided instead of fetching", async () => {
       await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         serviceName: "WorkflowNodeStep",
         pluginDetails: mockPluginProvider,
       });
@@ -228,17 +252,32 @@ describe("EditStepCard", () => {
 
     it("renders pluginConfig component for regular plugin steps", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
-      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(false);
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        true,
+      );
+      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows step description input for regular steps", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "My step" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+          description: "My step",
+        },
         pluginDetails: mockPluginProvider,
       });
 
@@ -266,39 +305,66 @@ describe("EditStepCard", () => {
           serviceName: "WorkflowNodeStep",
         },
         global: {
-          stubs: { BaseStepCard: BaseStepCardStub, pluginConfig: pluginConfigStub, PtButton: PtButtonStub, PtInput: PtInputStub },
+          stubs: {
+            BaseStepCard: BaseStepCardStub,
+            pluginConfig: pluginConfigStub,
+            PtButton: PtButtonStub,
+            PtInput: PtInputStub,
+          },
         },
       });
       await wrapper.vm.$nextTick();
 
       // While provider loads: loading container is visible, pluginConfig is not
-      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(true);
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(false);
+      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(
+        true,
+      );
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        false,
+      );
 
       resolveProvider!(mockPluginProvider);
       await flushPromises();
 
       // After provider loads: pluginConfig renders, loading container is gone
-      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(false);
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(
+        false,
+      );
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        true,
+      );
     });
 
     it("passes mode=create to pluginConfig when config is empty", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect(wrapper.findComponent({ name: "pluginConfig" }).props("mode")).toBe("create");
+      expect(
+        wrapper.findComponent({ name: "pluginConfig" }).props("mode"),
+      ).toBe("create");
     });
 
     it("passes mode=edit to pluginConfig when config has values", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: { adhocLocalString: "echo hello" }, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: { adhocLocalString: "echo hello" },
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect(wrapper.findComponent({ name: "pluginConfig" }).props("mode")).toBe("edit");
+      expect(
+        wrapper.findComponent({ name: "pluginConfig" }).props("mode"),
+      ).toBe("edit");
     });
   });
 
@@ -329,8 +395,12 @@ describe("EditStepCard", () => {
         serviceName: "WorkflowNodeStep",
       });
 
-      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(true);
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(false);
+      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(
+        true,
+      );
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        false,
+      );
     });
 
     it("shows job name input with correct value", async () => {
@@ -361,7 +431,9 @@ describe("EditStepCard", () => {
         serviceName: "WorkflowNodeStep",
       });
 
-      expect(wrapper.find('[data-testid="jobProjectField"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="jobProjectField"]').exists()).toBe(
+        true,
+      );
     });
 
     it("shows step description for job references", async () => {
@@ -372,7 +444,9 @@ describe("EditStepCard", () => {
 
       const descInput = wrapper.find('[data-testid="step-description"]');
       expect(descInput.exists()).toBe(true);
-      expect((descInput.element as HTMLInputElement).value).toBe("Run another job");
+      expect((descInput.element as HTMLInputElement).value).toBe(
+        "Run another job",
+      );
     });
 
     it("renders jobref form (not pluginConfig) when model has jobref property", async () => {
@@ -381,23 +455,37 @@ describe("EditStepCard", () => {
         serviceName: "WorkflowNodeStep",
       });
 
-      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(
+        true,
+      );
     });
 
     it("does not render jobref form for regular plugin steps", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="jobref-form-content"]').exists()).toBe(
+        false,
+      );
     });
   });
 
   describe("Save flow", () => {
     it("emits save and update:modelValue for regular plugin step", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: { adhocLocalString: "echo test" }, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: { adhocLocalString: "echo test" },
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
@@ -411,14 +499,24 @@ describe("EditStepCard", () => {
 
     it("includes description in save data", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "My step" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+          description: "My step",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      await wrapper.find('[data-testid="step-description"]').setValue("Updated step name");
+      await wrapper
+        .find('[data-testid="step-description"]')
+        .setValue("Updated step name");
       await wrapper.find('[data-testid="save-button"]').trigger("click");
 
-      const emittedData = wrapper.emitted("update:modelValue")![0][0] as EditStepData;
+      const emittedData = wrapper.emitted(
+        "update:modelValue",
+      )![0][0] as EditStepData;
       expect(emittedData.description).toBe("Updated step name");
     });
 
@@ -448,7 +546,9 @@ describe("EditStepCard", () => {
 
       await wrapper.find('[data-testid="save-button"]').trigger("click");
 
-      const emittedData = wrapper.emitted("update:modelValue")![0][0] as EditStepData;
+      const emittedData = wrapper.emitted(
+        "update:modelValue",
+      )![0][0] as EditStepData;
       expect(emittedData.filters).toEqual([filterEntry]);
       expect(emittedData.id).toBe("step-with-filters");
     });
@@ -460,7 +560,14 @@ describe("EditStepCard", () => {
           id: "test-jobref-1",
           nodeStep: true,
           config: {},
-          jobref: { name: "My Job", uuid: "", group: "", project: "testProject", args: "", nodeStep: true },
+          jobref: {
+            name: "My Job",
+            uuid: "",
+            group: "",
+            project: "testProject",
+            args: "",
+            nodeStep: true,
+          },
         },
         serviceName: "WorkflowNodeStep",
       });
@@ -478,7 +585,14 @@ describe("EditStepCard", () => {
           id: "test-jobref-1",
           nodeStep: true,
           config: {},
-          jobref: { name: "", uuid: "abc-123-def", group: "", project: "testProject", args: "", nodeStep: true },
+          jobref: {
+            name: "",
+            uuid: "abc-123-def",
+            group: "",
+            project: "testProject",
+            args: "",
+            nodeStep: true,
+          },
         },
         serviceName: "WorkflowNodeStep",
       });
@@ -492,7 +606,12 @@ describe("EditStepCard", () => {
   describe("Cancel flow", () => {
     it("emits cancel when cancel button is clicked", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
@@ -504,7 +623,12 @@ describe("EditStepCard", () => {
 
     it("does not emit save when cancel is clicked", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
@@ -522,7 +646,12 @@ describe("EditStepCard", () => {
       };
 
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
         validation: validationErrors,
       });
@@ -536,32 +665,62 @@ describe("EditStepCard", () => {
   describe("Step description field", () => {
     it("shows description from modelValue in the input", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "Initial description" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+          description: "Initial description",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Initial description");
+      expect(
+        (
+          wrapper.find('[data-testid="step-description"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("Initial description");
     });
 
     it("shows empty description when modelValue has no description", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("");
+      expect(
+        (
+          wrapper.find('[data-testid="step-description"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("");
     });
 
     it("updated description appears in the save payload after typing", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      await wrapper.find('[data-testid="step-description"]').setValue("New description");
+      await wrapper
+        .find('[data-testid="step-description"]')
+        .setValue("New description");
       await wrapper.find('[data-testid="save-button"]').trigger("click");
 
-      const emittedData = wrapper.emitted("update:modelValue")![0][0] as EditStepData;
+      const emittedData = wrapper.emitted(
+        "update:modelValue",
+      )![0][0] as EditStepData;
       expect(emittedData.description).toBe("New description");
     });
   });
@@ -569,11 +728,22 @@ describe("EditStepCard", () => {
   describe("Model initialization", () => {
     it("shows description from modelValue in the step description input", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "Step desc" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+          description: "Step desc",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Step desc");
+      expect(
+        (
+          wrapper.find('[data-testid="step-description"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("Step desc");
     });
 
     it("passes jobref data to JobRefFormFields component", async () => {
@@ -609,7 +779,9 @@ describe("EditStepCard", () => {
         serviceName: "WorkflowNodeStep",
       });
 
-      const jobrefComp = wrapper.findComponent({ name: "JobRefFormFieldsStub" });
+      const jobrefComp = wrapper.findComponent({
+        name: "JobRefFormFieldsStub",
+      });
       expect(jobrefComp.exists()).toBe(true);
       expect(jobrefComp.props("modelValue").name).toBe("My Job");
     });
@@ -618,7 +790,12 @@ describe("EditStepCard", () => {
   describe("Props", () => {
     it("accepts showNavigation prop", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
         showNavigation: true,
       });
@@ -631,7 +808,12 @@ describe("EditStepCard", () => {
         { name: "myVar", type: "option", title: "My Var" },
       ];
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
         extraAutocompleteVars: vars,
       });
@@ -643,17 +825,22 @@ describe("EditStepCard", () => {
   describe("Footer buttons", () => {
     it("renders both Save and Cancel buttons", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
       // Both buttons are inside a v-show container (conditional)
-      const saveButtons = wrapper.findAllComponents({ name: "PtButton" }).filter(
-        (b) => b.attributes("data-testid") === "save-button"
-      );
-      const cancelButtons = wrapper.findAllComponents({ name: "PtButton" }).filter(
-        (b) => b.attributes("data-testid") === "cancel-button"
-      );
+      const saveButtons = wrapper
+        .findAllComponents({ name: "PtButton" })
+        .filter((b) => b.attributes("data-testid") === "save-button");
+      const cancelButtons = wrapper
+        .findAllComponents({ name: "PtButton" })
+        .filter((b) => b.attributes("data-testid") === "cancel-button");
       expect(saveButtons.length).toBe(1);
       expect(cancelButtons.length).toBe(1);
     });
@@ -662,7 +849,12 @@ describe("EditStepCard", () => {
   describe("Button DOM interactions", () => {
     it("clicking cancel button emits cancel", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
@@ -673,7 +865,12 @@ describe("EditStepCard", () => {
 
     it("clicking save button emits save and update:modelValue for a regular step", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+        },
         pluginDetails: mockPluginProvider,
       });
 
@@ -692,7 +889,12 @@ describe("EditStepCard", () => {
 
       const wrapper = shallowMount(EditStepCard, {
         props: {
-          modelValue: { type: "script-file-url", config: {}, nodeStep: true, id: "test-1" },
+          modelValue: {
+            type: "script-file-url",
+            config: {},
+            nodeStep: true,
+            id: "test-1",
+          },
           serviceName: "WorkflowNodeStep",
           pluginDetails: null,
         },
@@ -711,7 +913,9 @@ describe("EditStepCard", () => {
       await flushPromises();
 
       // Initially: no plugin config should render (API returned null)
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(false);
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        false,
+      );
       expect(wrapper.find('[data-testid="plugin-info"]').exists()).toBe(false);
 
       // Parent component finishes async fetch and provides pluginDetails
@@ -719,7 +923,8 @@ describe("EditStepCard", () => {
         name: "script-file-url",
         title: "Script file or URL",
         description: "Execute a local script file or a script from a URL",
-        iconUrl: "http://localhost:4440/plugin/icon/WorkflowNodeStep/script-file-url",
+        iconUrl:
+          "http://localhost:4440/plugin/icon/WorkflowNodeStep/script-file-url",
         props: {},
       };
 
@@ -727,15 +932,24 @@ describe("EditStepCard", () => {
       await flushPromises();
 
       // Now pluginConfig should render (form is interactive)
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        true,
+      );
       expect(wrapper.find('[data-testid="plugin-info"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(
+        false,
+      );
     });
 
     it("transitions from loading state to form when pluginDetails arrives", async () => {
       const wrapper = shallowMount(EditStepCard, {
         props: {
-          modelValue: { type: "script-file-url", config: {}, nodeStep: true, id: "dkzxn" },
+          modelValue: {
+            type: "script-file-url",
+            config: {},
+            nodeStep: true,
+            id: "dkzxn",
+          },
           serviceName: "WorkflowNodeStep",
           pluginDetails: undefined,
         },
@@ -751,7 +965,9 @@ describe("EditStepCard", () => {
       await wrapper.vm.$nextTick();
 
       // Before pluginDetails arrives: either loading or no content
-      const hasPluginConfigBefore = wrapper.findComponent({ name: "pluginConfig" }).exists();
+      const hasPluginConfigBefore = wrapper
+        .findComponent({ name: "pluginConfig" })
+        .exists();
       expect(hasPluginConfigBefore).toBe(false);
 
       // Parent provides pluginDetails
@@ -765,14 +981,21 @@ describe("EditStepCard", () => {
       await flushPromises();
 
       // After pluginDetails arrives: form renders
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        true,
+      );
       expect(wrapper.find('[data-testid="plugin-info"]').exists()).toBe(true);
     });
 
     it("does not call API when pluginDetails prop updates from null to defined", async () => {
       const wrapper = shallowMount(EditStepCard, {
         props: {
-          modelValue: { type: "script-file-url", config: {}, nodeStep: true, id: "test-1" },
+          modelValue: {
+            type: "script-file-url",
+            config: {},
+            nodeStep: true,
+            id: "test-1",
+          },
           serviceName: "WorkflowNodeStep",
           pluginDetails: null,
         },
@@ -802,23 +1025,47 @@ describe("EditStepCard", () => {
 
       // Should use prop, not fetch from API
       expect(mockGetServiceProviderDescription).not.toHaveBeenCalled();
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(
+        true,
+      );
     });
 
     it("updates step description input when modelValue description changes", async () => {
       const wrapper = await createWrapper({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "Original" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+          description: "Original",
+        },
         pluginDetails: mockPluginProvider,
       });
 
-      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Original");
+      expect(
+        (
+          wrapper.find('[data-testid="step-description"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("Original");
 
       await wrapper.setProps({
-        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "Updated" },
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-1",
+          description: "Updated",
+        },
       });
       await flushPromises();
 
-      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Updated");
+      expect(
+        (
+          wrapper.find('[data-testid="step-description"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("Updated");
     });
   });
 });

@@ -93,11 +93,14 @@ docker-publish: create-caches
 clean-caches:
 	docker volume rm -f circleci-local-gradle-cache
 
+# renovate: datasource=docker depName=cimg/base
+CIMG_BASE_IMAGE := cimg/base:2023.09-22.04@sha256:1c0a5d87a2609f73f631875e4b0d9e01e8f985e4c05d7fb5e962e20094ae4eaf
+
 create-caches:
 	docker volume create circleci-local-gradle-cache
 	docker run \
 		-v circleci-local-gradle-cache:/home/circleci/.gradle:rw \
-		--rm -it cimg/base:2023.09-22.04 \
+		--rm -it $(CIMG_BASE_IMAGE) \
 		/bin/bash -c "sudo chown circleci.circleci /home/circleci/.gradle"
 
 clean: clean-caches

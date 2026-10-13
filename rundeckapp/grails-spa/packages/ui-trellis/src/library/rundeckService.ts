@@ -1,4 +1,3 @@
-import { URL } from "url";
 import { RundeckContext, RundeckToken } from "./interfaces/rundeckWindow";
 import { AppLinks } from "./interfaces/AppLinks";
 

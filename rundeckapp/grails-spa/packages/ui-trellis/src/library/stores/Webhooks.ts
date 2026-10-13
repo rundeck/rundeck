@@ -33,7 +33,7 @@ export class WebhookStore {
   }
 
   async refresh(project: string): Promise<void> {
-    const [_, resp] = await Promise.all([
+    const [, resp] = await Promise.all([
       this.root.plugins.load(ServiceType.WebhookEvent),
       api.get(`project/${project}/webhooks`),
     ]);

@@ -114,4 +114,27 @@ export default defineComponent({
     }
   }
 }
+
+/* Dark mode (Figma: Dark Mode/Grey scale) */
+*[data-color-theme="dark"] .baseStepCard {
+  background: var(--grey-800);
+  border-color: var(--grey-400);
+  color: var(--white, #fff);
+
+  .p-card-body,
+  .p-card-content {
+    background: var(--grey-800);
+    color: var(--white, #fff);
+  }
+
+  .tag-code {
+    background: var(--grey-100);
+    color: var(--grey-800);
+  }
+
+  // The conditional step icon is a dark glyph; flip it so it reads on grey-600
+  &.complex > .p-card-header .plugin-icon {
+    filter: invert(1);
+  }
+}
 </style>

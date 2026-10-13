@@ -1846,6 +1846,42 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "re initialize with createBranch keeps uncommitted files when already on export branch"() {
+        given: "SCM export with Create Branch enabled and Branch != Base Branch"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        Export exportConfig = createTestConfig(gitdir, origindir, [
+                branch      : 'dev2',
+                createBranch: 'true',
+                baseBranch  : 'master'
+        ])
+        new GitExportPlugin(exportConfig).initialize(Mock(ScmOperationContext))
+
+        // serialized-but-uncommitted job files, as written by the export plugin
+        def pendingJob = new File(gitdir, 'a-job.xml')
+        pendingJob << '<job>modified</job>'
+        def tracked = new File(gitdir, 'testcommit.txt')
+        tracked << '\nlocal edit'
+
+        when: "ScmLoader creates a new plugin instance and initializes again"
+        def plugin = new GitExportPlugin(exportConfig)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        then: "workdir is not wiped; local job changes remain visible for export"
+        pendingJob.exists()
+        pendingJob.text == '<job>modified</job>'
+        tracked.exists()
+        tracked.text.contains('local edit')
+        plugin.branch == 'dev2'
+        openGit(gitdir).repository.getFullBranch() == 'refs/heads/dev2'
+    }
+
     def "initialize plugin with create config does not recreate branch when it already exists on remote"() {
         given:
         def gitdir = new File(tempdir, 'scm')

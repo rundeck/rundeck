@@ -176,6 +176,8 @@ class MyPlugin implements StepPlugin {
 @SelectValues(values = ["option1", "option2", "option3"])
 ```
 
+**`scope` — always set it explicitly**: `PropertyScope.Instance` resolves the job/step value first, then falls back to Project, then Framework/System config. If `scope` is left unset, the effective default depends on the plugin type — Workflow Step / Workflow Node Step plugins (the common script-plugin case) default to `PropertyScope.InstanceOnly`, which resolves **only** the per-job value and silently ignores any Project- or System-level configuration for that property, with no error or warning. Other plugin types (Script Node Executor/File Copier, notification, resource model source, etc.) default to `PropertyScope.Instance`. Because this default is inconsistent and undocumented at the framework level, always declare `scope = PropertyScope.Instance` explicitly for any property that should be configurable above the individual job/step level — do not rely on the default. See [RUN-4800](https://pagerduty.atlassian.net/browse/RUN-4800) for details.
+
 ### Phase 4: Write Plugin Tests
 
 **Test plugin properties**:

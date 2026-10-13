@@ -2645,10 +2645,12 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 filter: filterFixture
         )
 
-        def lg = new MockFor(LinkGenerator)
-        lg.demand.link(2..2) { return '' }
+        // Spock stub instead of MockFor: generateServerURL is statically compiled and bypasses the metaClass proxy
+        def lg = Stub(LinkGenerator) {
+            link(_) >> ''
+        }
 
-        def jobcontext = ExecutionService.exportContextForExecution(ex, lg.proxyInstance())
+        def jobcontext = ExecutionService.exportContextForExecution(ex, lg)
 
         assertEquals(filterFixture, jobcontext.filter)
 
@@ -2657,6 +2659,42 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         expect:
         // asserts validate above
         1 == 1
+    }
+
+    def "generateServerURL keeps the trailing slash of the root link"() {
+        given:
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> generated
+        }
+
+        when:
+        def result = ExecutionService.generateServerURL(linkGenerator)
+
+        then:
+        result == generated
+
+        where:
+        generated << ['http://h:4440/', 'http://h:4440/rundeck/', null]
+    }
+
+    def "exportContextForExecution sets job.serverUrl with trailing slash and leaves job.url unchanged"() {
+        given:
+        def executionUrl = 'http://h:4440/project/test/execution/show/1'
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> { Map attrs -> attrs.controller == 'menu' ? 'http://h:4440/' : executionUrl }
+        }
+        def ex = new Execution(
+                project: "test",
+                user: "test",
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "exec")]),
+        )
+
+        when:
+        def jobcontext = ExecutionService.exportContextForExecution(ex, linkGenerator)
+
+        then:
+        jobcontext.serverUrl == 'http://h:4440/'
+        jobcontext.url == executionUrl
     }
 
     def "ensureExecutionOutputFilePath"() {

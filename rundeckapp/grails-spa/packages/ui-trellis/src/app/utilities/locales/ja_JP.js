@@ -419,20 +419,28 @@ const messages = {
   "node.metadata.tags": "タグ",
   "resource.metadata.entity.tags": "タグ",
   "form.option.multivalued.description": "複数の値を選択できるか",
-  "form.option.multivalued.secure-conflict.message": "セキュアな入力オプションは複数の値を許可しません。",
-  "form.option.usage.secureAuth.message": "セキュア認証のオプション値はコマンドまたはスクリプトでは利用できません。",
-  "form.option.delimiter.description": "デリミタはすべての入力値を結合するのに利用します。どのような文字でも利用できます。: ' ' (space), ',' (comma), など。クォートは含められません。",
-  "form.option.secureInput.description": "Rundeckはセキュアな入力値を使用した後、保持しません。スクリプトまたはコマンド内で値がさらされた場合、出力ログにはその値が含まれている可能性があります。",
+  "form.option.multivalued.secure-conflict.message":
+    "セキュアな入力オプションは複数の値を許可しません。",
+  "form.option.usage.secureAuth.message":
+    "セキュア認証のオプション値はコマンドまたはスクリプトでは利用できません。",
+  "form.option.delimiter.description":
+    "デリミタはすべての入力値を結合するのに利用します。どのような文字でも利用できます。: ' ' (space), ',' (comma), など。クォートは含められません。",
+  "form.option.secureInput.description":
+    "Rundeckはセキュアな入力値を使用した後、保持しません。スクリプトまたはコマンド内で値がさらされた場合、出力ログにはその値が含まれている可能性があります。",
   "form.option.inputType.label": "入力タイプ",
   "form.option.secureInput.false.label": "平文",
   "form.option.secureExposed.false.label": "セキュアリモート認証",
-  "form.option.secureExposed.true.description": "パスワード入力。スクリプトまたはコマンドで値が表示される。",
-  "form.option.secureExposed.false.description": "パスワード入力。スクリプトまたはコマンドでは値は表示されず、ノードエグゼキュータだけが認証に利用する。",
+  "form.option.secureExposed.true.description":
+    "パスワード入力。スクリプトまたはコマンドで値が表示される。",
+  "form.option.secureExposed.false.description":
+    "パスワード入力。スクリプトまたはコマンドでは値は表示されず、ノードエグゼキュータだけが認証に利用する。",
   "Workflow.Step.argString.label": "引数",
   "delete.selected.jobs": "選択したジョブを削除",
   "Option.required.label": "必須",
-  "Option.required.description": "ジョブを実行するときこのオプションで空ではない値を必須にするか",
-  "Workflow.property.keepgoing.false.description": "失敗したステップで停止する。",
+  "Option.required.description":
+    "ジョブを実行するときこのオプションで空ではない値を必須にするか",
+  "Workflow.property.keepgoing.false.description":
+    "失敗したステップで停止する。",
   "Workflow.property.keepgoing.true.description": "残りのステップを実行する。",
   "Workflow.property.keepgoing.prompt": "ステップが失敗したら:",
   "job.schedule.will.never.fire": "ジョブのスケジュールは稼働しません",
@@ -443,7 +451,8 @@ const messages = {
   Execution: "実行",
   "scheduledExecution.action.edit.button.label": "このジョブを編集…",
   "scheduledExecution.action.duplicate.button.label": "このジョブを複製…",
-  "scheduledExecution.action.downloadformat.button.label": "{0}形式でジョブ定義をダウンロード",
+  "scheduledExecution.action.downloadformat.button.label":
+    "{0}形式でジョブ定義をダウンロード",
   "page.section.Activity.for.jobs": "ジョブのアクティビティ",
   "add.new.option": "オプションを追加",
   "form.option.name.label": "オプション名",
@@ -461,7 +470,8 @@ const messages = {
   "form.option.delimiter.label": "デミリタ",
   "commandline.arguments.prompt": "コマンドライン引数:",
   "script.content.prompt": "スクリプト内容:",
-  "scheduledExecution.option.unsaved.warning": "このジョブの変更を完了する前にこのオプションの変更を破棄するか保存してください。",
+  "scheduledExecution.option.unsaved.warning":
+    "このジョブの変更を完了する前にこのオプションの変更を破棄するか保存してください。",
   "form.option.cancel.title": "オプション追加をキャンセル",
   "form.option.create.title": "新しいオプションを保存",
   discard: "破棄",
@@ -477,9 +487,12 @@ const messages = {
   "new.job.button.label": "新しいジョブ…",
   "enable.schedule.this.job": "スケジュールを有効化",
   "disable.schedule.this.job": "スケジュールを無効化",
-  "scheduledExecution.action.enable.schedule.button.label": "スケジュールを有効化",
-  "scheduledExecution.action.disable.schedule.button.label": "スケジュールを無効化",
-  "scheduleExecution.schedule.disabled": "ジョブのスケジュールが無効化されています",
+  "scheduledExecution.action.enable.schedule.button.label":
+    "スケジュールを有効化",
+  "scheduledExecution.action.disable.schedule.button.label":
+    "スケジュールを無効化",
+  "scheduleExecution.schedule.disabled":
+    "ジョブのスケジュールが無効化されています",
   "enable.execution.this.job": "実行を有効化",
   "disable.execution.this.job": "実行を無効化",
   "scheduledExecution.action.enable.execution.button.label": "実行を有効化",

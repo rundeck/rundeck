@@ -55,6 +55,11 @@ class JobExecutionStatusSpec extends BaseContainer {
                       <group>api-test/job-run-timeout</group>
                       <description></description>
                       <loglevel>INFO</loglevel>
+                      <context>
+                        <options>
+                          <option name='opt2' />
+                        </options>
+                      </context>
                       <timeout>3s</timeout>
                       <dispatch>
                         <threadcount>1</threadcount>
@@ -76,7 +81,8 @@ class JobExecutionStatusSpec extends BaseContainer {
         def responseExec = JobUtils.waitForExecution(
                 ExecutionStatus.TIMEDOUT.state,
                 execId as String,
-                client)
+                client,
+                WaitingTime.EXCESSIVE)
 
         then:
         verifyAll {
@@ -95,6 +101,11 @@ class JobExecutionStatusSpec extends BaseContainer {
                           <group>api-test/job-run-timeout-retry</group>
                           <description></description>
                           <loglevel>INFO</loglevel>
+                          <context>
+                            <options>
+                              <option name='opt2' />
+                            </options>
+                          </context>
                           <timeout>3s</timeout>
                           <retry>1</retry>
                           <dispatch>
@@ -117,7 +128,8 @@ class JobExecutionStatusSpec extends BaseContainer {
         def response = JobUtils.waitForExecution(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 execId as String,
-                client)
+                client,
+                WaitingTime.EXCESSIVE)
 
         then:
         verifyAll {
@@ -128,12 +140,61 @@ class JobExecutionStatusSpec extends BaseContainer {
         def responseExec1 = JobUtils.waitForExecution(
                 ExecutionStatus.TIMEDOUT.state,
                 response.retriedExecution.id as String,
-                client)
+                client,
+                WaitingTime.EXCESSIVE)
 
         then:
         verifyAll {
             responseExec1.status == 'timedout'
             response.retriedExecution != null
         }
+    }
+
+    def "job/id/run does not reject undeclared options by default (RUN-4693)"() {
+        setup: "a job that declares NO options; the reject control is opt-in and off by default"
+        def projectName = UUID.randomUUID().toString()
+        setupProject(projectName)
+        def xml = """
+                <joblist>
+                   <job>
+                      <name>no-options job</name>
+                      <group>api-test/job-run-undeclared</group>
+                      <description></description>
+                      <loglevel>INFO</loglevel>
+                      <sequence>
+                        <command>
+                        <exec>echo hello</exec>
+                        </command>
+                      </sequence>
+                   </job>
+                </joblist>
+            """
+        def path = JobUtils.generateFileToImport(xml, 'xml')
+        def jobId = JobUtils.jobImportFile(projectName, path, client).succeeded[0].id
+
+        when: "the job is run with an option it does not declare"
+        def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-ghost pwned")
+        def execId = jsonValue(jobRun.body()).id
+
+        then: "the execution is created"
+        execId != null
+
+        when: "the execution finishes"
+        def execFinal = JobUtils.waitForExecution(
+                ExecutionStatus.SUCCEEDED.state,
+                execId as String,
+                client,
+                WaitingTime.EXCESSIVE)
+
+        then: "the undeclared option passes through (default off) and the execution succeeds"
+        execFinal.status == 'succeeded'
+
+        when:
+        def output = JobUtils.getExecutionOutput(execId as String, client)
+        def logs = output.entries.collect { it.log }
+
+        then: "the step ran and no rejection was logged"
+        logs.any { it.contains('hello') }
+        !logs.any { it.contains('Execution rejected') }
     }
 }

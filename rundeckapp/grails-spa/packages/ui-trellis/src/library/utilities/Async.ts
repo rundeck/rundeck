@@ -2,7 +2,7 @@
  * effectively serializing the coroutines.
  */
 export function Serial(
-  target: Object,
+  target: object,
   key: string | symbol,
   prop: PropertyDescriptor,
 ) {
@@ -16,7 +16,7 @@ export function Serial(
 
     const serialFunc = async () => {
       try {
-        const res = await original.apply(this, args);
+        await original.apply(this, args);
       } finally {
         context.prom = undefined;
       }

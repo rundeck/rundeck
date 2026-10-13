@@ -1756,6 +1756,98 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             assertEquals null,response.json.errors
     }
 
+    @Unroll
+    void "apiProjectImport rejects import-only principal for #mutatingOption when configure is denied"() {
+        given:
+            assert getControllerMethodAnnotation('apiProjectImport', RdAuthorizeProject).value() ==
+                    RundeckAccess.Project.AUTH_APP_IMPORT
+            setupImportApiService('json')
+            controller.frameworkService = Stub(FrameworkService)
+            controller.asyncImportService = Stub(AsyncImportService) {
+                statusFileExists(_) >> false
+            }
+            controller.projectService = Mock(ProjectService)
+            def authorizingProject = Mock(AuthorizingProject)
+            controller.rundeckAppAuthorizer = Stub(AppAuthorizer) {
+                project(_, _) >> authorizingProject
+            }
+            controller.rundeckAuthContextProcessor = Stub(AppAuthContextProcessor)
+            def archiveParams = new ProjectArchiveParams(project: 'test1')
+            archiveParams.setProperty(mutatingOption, true)
+            request.api_version = ApiVersions.V39
+            params.project = 'test1'
+            request.content = 'archive'.bytes
+            request.format = 'application/zip'
+            response.format = 'json'
+            request.method = 'PUT'
+
+        when:
+            controller.apiProjectImport(archiveParams)
+
+        then:
+            1 * authorizingProject.getResource() >> Stub(IRundeckProject) {
+                getName() >> 'test'
+            }
+            1 * authorizingProject.authorize(RundeckAccess.Project.APP_CONFIGURE) >> {
+                throw new UnauthorizedAccess('configure', 'Project', 'test')
+            }
+            1 * controller.rundeckExceptionHandler.handleException(_, _, _ as UnauthorizedAccess)
+            0 * controller.projectService.handleApiImport(
+                    _, _, _, _, { it.is(archiveParams) && it."$mutatingOption" }
+            )
+
+        where:
+            mutatingOption << ['importConfig', 'importNodesSources']
+    }
+
+    void "apiProjectImport preserves jobs-only import for import-only principal"() {
+        given:
+            assert getControllerMethodAnnotation('apiProjectImport', RdAuthorizeProject).value() ==
+                    RundeckAccess.Project.AUTH_APP_IMPORT
+            setupImportApiService('json')
+            controller.frameworkService = Stub(FrameworkService)
+            controller.asyncImportService = Stub(AsyncImportService) {
+                statusFileExists(_) >> false
+            }
+            controller.projectService = Mock(ProjectService)
+            def authorizingProject = Mock(AuthorizingProject)
+            controller.rundeckAppAuthorizer = Stub(AppAuthorizer) {
+                project(_, _) >> authorizingProject
+            }
+            controller.rundeckAuthContextProcessor = Stub(AppAuthContextProcessor)
+            def archiveParams = new ProjectArchiveParams(
+                    project: 'test1',
+                    importConfig: false,
+                    importNodesSources: false,
+                    importScm: false
+            )
+            request.api_version = ApiVersions.V39
+            params.project = 'test1'
+            request.content = 'archive'.bytes
+            request.format = 'application/zip'
+            response.format = 'json'
+            request.method = 'PUT'
+
+        when:
+            controller.apiProjectImport(archiveParams)
+
+        then:
+            1 * authorizingProject.getResource() >> Stub(IRundeckProject) {
+                getName() >> 'test'
+            }
+            0 * authorizingProject.authorize(RundeckAccess.Project.APP_CONFIGURE)
+            1 * controller.projectService.handleApiImport(
+                    _, _, _, _, {
+                        it.is(archiveParams) &&
+                                !it.importConfig &&
+                                !it.importNodesSources &&
+                                !it.importScm
+                    }
+            ) >> [success: true]
+            response.status == HttpServletResponse.SC_OK
+            response.json == [import_status: 'successful', successful: true]
+    }
+
 
 
     void apiProjectList_json_date_v33_creation_time(){
