@@ -117,7 +117,9 @@ public interface ProjectManager {
     /**
      * @return names of projects whose state is DISABLED. Empty when storage cannot represent that state.
      */
-    Collection<String> listDisabledFrameworkProjectNames();
+    default Collection<String> listDisabledFrameworkProjectNames() {
+        return java.util.Collections.emptyList();
+    }
 
     /**
      * Gets the project description

@@ -715,6 +715,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         when:
         service.deferredDeletesInFlight.clear()
+        def resumeAuth = Mock(AuthContext)
+        service.rundeckAuthContextProcessor = new Expando()
+        service.rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject = { String user, roles, String projectName ->
+            resumeAuth
+        }
         mgr.listDisabledFrameworkProjectNames() >> ['myproject']
         mgr.getFrameworkProject('myproject') >> project
         service.resumeDisabledProjects(fwk)
@@ -723,6 +728,40 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
         1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
         0 * mgr.enableFrameworkProject('myproject')
+    }
+
+    def "bootstrap resume continues when one disabled project cannot be loaded"() {
+        given:
+        def kept = Mock(IRundeckProject) {
+            getName() >> 'kept'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        service.rundeckAuthContextProcessor = new Expando()
+        service.rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject = { String user, roles, String projectName ->
+            Mock(AuthContext)
+        }
+        def mgr = Mock(ProjectManager) {
+            listDisabledFrameworkProjectNames() >> ['gone', 'kept']
+            getFrameworkProject('gone') >> { throw new IllegalArgumentException('Project not found in cache or DB: gone') }
+            getFrameworkProject('kept') >> kept
+            isFrameworkProjectDisabled('kept') >> true
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        service.resumeDisabledProjects(fwk)
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['kept'])
+        0 * service.eventBus.notify('projectWillBeDeleted', ['gone'])
     }
 
     def "import project archive only nodes without config"() {

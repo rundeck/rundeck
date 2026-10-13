@@ -124,6 +124,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ScmService scmService
     def executionUtilService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
+    def rundeckAuthContextProcessor
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
@@ -2009,8 +2010,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             return
         }
         for (String name : names) {
-            IRundeckProject disabledProject = framework.frameworkProjectMgr.getFrameworkProject(name)
-            deleteProject(disabledProject, framework, null, 'system', Boolean.TRUE)
+            try {
+                IRundeckProject disabledProject = framework.frameworkProjectMgr.getFrameworkProject(name)
+                AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
+                    'system',
+                    ['admin'],
+                    name
+                )
+                deleteProject(disabledProject, framework, authContext, 'system', Boolean.TRUE)
+            } catch (Throwable t) {
+                log.error("Failed to resume deletion of disabled project ${name}: ${t.message}", t)
+            }
         }
     }
 
