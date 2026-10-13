@@ -113,6 +113,37 @@ class ProjectController extends ControllerBase{
      *
      * See .claude/rules/grails-multipart.md.
      */
+    /**
+     * Fills in command object properties that come from a URL mapping variable rather than the query
+     * string, and re-validates.
+     *
+     * On Grails 8 a command object is bound from the request. When the binder cannot reach the
+     * GrailsWebRequest it falls back to the servlet parameter map, which carries only the query
+     * string -- URL mapping variables such as `project` are simply absent, so the property binds as
+     * null and the object fails its `nullable: false` constraint before the action does any work.
+     * The caller sees `"project" parameter is required` for a request whose path clearly names one.
+     *
+     * Measured on a live instance, same endpoint, same content type, same wrapper chain:
+     *
+     *   failing: source(request) keys = [jobUuidOption]
+     *   working: source(request) keys = [jobUuidOption, controller, project, action, api_version]
+     *   both:    source(params)  keys = [project, action, jobUuidOption, controller, api_version]
+     *
+     * `params` is right either way, which is what this reads from. Type-checked before assignment:
+     * a params value coerced into a String unchecked is its own class of bug -- see
+     * .claude/rules/grails-multipart.md.
+     */
+    private void bindProjectFromParams(ProjectArchiveParams archiveParams) {
+        if (archiveParams == null || archiveParams.project) {
+            return
+        }
+        if (params.project instanceof String) {
+            archiveParams.project = (String) params.project
+            archiveParams.clearErrors()
+            archiveParams.validate()
+        }
+    }
+
     private boolean isMultipartRequest() {
         if (request.contentType?.toLowerCase()?.startsWith('multipart/')) {
             return true
@@ -3004,6 +3035,7 @@ Requires `export` authorization for the project resource.""",
         if(!apiService.requireApi(request,response)){
             return
         }
+        bindProjectFromParams(archiveParams)
         def project = authorizingProject.resource
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
         if (archiveParams.hasErrors()) {
@@ -3726,6 +3758,7 @@ Note: `other_errors` included since API v35""",
         if(!apiService.requireApi(request,response)){
             return
         }
+        bindProjectFromParams(archiveParams)
         def project = authorizingProject.resource
         if(!apiService.requireRequestFormat(request,response,['application/zip'])){
             return
