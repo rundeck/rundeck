@@ -700,8 +700,6 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="scss">
-@import "~vue3-markdown/dist/vue3-markdown.css";
-
 .longlist {
   max-height: 500px;
   overflow-y: auto;
