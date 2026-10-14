@@ -438,6 +438,23 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !result.contains('<table>')
     }
 
+    def "many unmatched backtick runs of unique lengths do not cause quadratic scanning and leave a real table convertible"() {
+        given:
+        // Every run has a different length, so none pairs up: with
+        // rescanning per unmatched opener this is quadratic. The table in the
+        // same paragraph must still convert, since no span protects it.
+        StringBuilder sb = new StringBuilder()
+        (1..300).each { int n -> sb.append('`' * n).append(' x ') }
+        sb.append('<table><tr><td>a</td></tr></table>')
+
+        when:
+        String result = HtmlTableToMarkdownConverter.convert(sb.toString())
+
+        then:
+        result.contains('| a |')
+        !result.contains('<table>')
+    }
+
     def "a backtick run inside a code span that does not match the opening run's length does not close it"() {
         given:
         // A single backtick inside a two-backtick-delimited span is just

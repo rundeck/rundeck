@@ -862,56 +862,69 @@ class HtmlTableToMarkdownConverter {
      * strict substring of a longer run instead of an exact-length one.
      */
     private static List<int[]> findInlineCodeSpans(String text, int from, int to) {
-        List<int[]> ranges = []
+        // Pass 1: tokenize every maximal backtick run once, as [start, length].
+        List<int[]> runs = []
         int i = from
         while (i < to) {
             if (text.charAt(i) != '`' as char) {
                 i++
                 continue
             }
-            int openStart = i
+            int start = i
             while (i < to && text.charAt(i) == '`' as char) {
                 i++
             }
-            int openLength = i - openStart
-            int limit = nextParagraphBreak(text, i, to)
-            int searchFrom = i
-            int closeStart = -1
-            while (searchFrom < limit) {
-                int runStart = text.indexOf('`', searchFrom)
-                if (runStart < 0 || runStart >= limit) {
-                    break
-                }
-                int runEnd = runStart
-                while (runEnd < limit && text.charAt(runEnd) == '`' as char) {
-                    runEnd++
-                }
-                if (runEnd - runStart == openLength) {
-                    closeStart = runStart
-                    break
-                }
-                searchFrom = runEnd
-            }
-            if (closeStart < 0) {
-                // No run of exactly this length closes it before the end of
-                // the paragraph -- this backtick run is not a code span
-                // delimiter; i is already past it.
-                continue
-            }
-            ranges << ([openStart, closeStart + openLength] as int[])
-            i = closeStart + openLength
+            runs << ([start, i - start] as int[])
         }
-        return ranges
-    }
-
-    /**
-     * The index of the first blank line (a paragraph boundary) in
-     * {@code text[from, to)}, or {@code to} if there is none.
-     */
-    private static int nextParagraphBreak(String text, int from, int to) {
+        if (runs.size() < 2) {
+            return []
+        }
+        // Pass 2: every paragraph boundary in the region, once.
+        List<Integer> breaks = []
         Matcher matcher = PARAGRAPH_BREAK.matcher(text)
         matcher.region(from, to)
-        return matcher.find() ? matcher.start() : to
+        while (matcher.find()) {
+            breaks << matcher.start()
+        }
+        // Pass 3: pair runs by delimiter length, left to right. For each
+        // length, the candidate-closer cursor only ever moves forward, and
+        // so does the paragraph-break pointer, so the whole pairing is
+        // amortized linear in the number of runs -- instead of rescanning
+        // every later run of the paragraph for each unmatched opener, which
+        // is quadratic for a crafted run of unique lengths.
+        Map<Integer, List<Integer>> runsByLength = [:]
+        for (int r = 0; r < runs.size(); r++) {
+            runsByLength.computeIfAbsent(runs.get(r)[1]) { Integer k -> [] as List<Integer> } << r
+        }
+        Map<Integer, Integer> cursorByLength = [:]
+        List<int[]> ranges = []
+        int breakIndex = 0
+        int r = 0
+        while (r < runs.size()) {
+            int[] opener = runs.get(r)
+            int openerEnd = opener[0] + opener[1]
+            while (breakIndex < breaks.size() && breaks.get(breakIndex) < openerEnd) {
+                breakIndex++
+            }
+            int limit = breakIndex < breaks.size() ? breaks.get(breakIndex) : to
+            List<Integer> sameLength = runsByLength.get(opener[1])
+            int c = cursorByLength.getOrDefault(opener[1], 0)
+            while (c < sameLength.size() && sameLength.get(c) <= r) {
+                c++
+            }
+            cursorByLength.put(opener[1], c)
+            if (c < sameLength.size() && runs.get(sameLength.get(c))[0] < limit) {
+                int[] closer = runs.get(sameLength.get(c))
+                ranges << ([opener[0], closer[0] + closer[1]] as int[])
+                // Runs inside the span are its content, never openers.
+                r = sameLength.get(c) + 1
+            } else {
+                // No run of exactly this length closes it before the end of
+                // the paragraph -- this run is plain text, not a delimiter.
+                r++
+            }
+        }
+        return ranges
     }
 
     /**
