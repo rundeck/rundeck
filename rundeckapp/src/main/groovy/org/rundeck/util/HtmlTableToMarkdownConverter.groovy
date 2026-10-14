@@ -64,6 +64,17 @@ class HtmlTableToMarkdownConverter {
     private static final Pattern WHITESPACE_RUN = Pattern.compile('\\s+')
 
     /**
+     * Elements that visibly separate the text before them from the text
+     * after them when nested inside a table cell: line breaks and
+     * block-level containers. See {@code TableExtractionPolicy#separateContent}.
+     */
+    private static final Set<String> CONTENT_SEPARATING_ELEMENTS = [
+        'br', 'p', 'div', 'li', 'ul', 'ol', 'dl', 'dt', 'dd',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'pre', 'blockquote', 'hr', 'section', 'article',
+    ] as Set<String>
+
+    /**
      * Holds the extracted plain-text cells of a single {@code <tr>} row.
      */
     private static class RowData {
@@ -285,10 +296,22 @@ class HtmlTableToMarkdownConverter {
                 continue
             }
             String tagName = INLINE_STYLE_TAGS.find { String candidate -> isTagNamed(text, i, candidate, false) }
-            int openTagEnd = tagName == null ? -1 : skipTag(text, i)
-            if (tagName == null || openTagEnd < 0 || openTagEnd > regionEnd ||
-                tagsWithNoRemainingClose.contains(tagName)) {
+            int openTagEnd = skipTag(text, i)
+            if (openTagEnd < 0 || openTagEnd > regionEnd) {
+                // Unterminated (or region-crossing) tag: treat this "<" as a
+                // literal character and move on.
                 i++
+                continue
+            }
+            if (tagName == null || tagsWithNoRemainingClose.contains(tagName)) {
+                // Not a convertible span. Skip the WHOLE token -- comment,
+                // tag with its quoted attributes, and a raw-text element's
+                // content -- the same way findTopLevelTables does, so a
+                // "<b>" hidden inside another tag's attribute value or an
+                // HTML comment is never rediscovered and rewritten.
+                String rawTextElement = rawTextElementName(text, i)
+                int rawTextEnd = rawTextElement == null ? -1 : skipRawTextElement(text, openTagEnd, rawTextElement)
+                i = rawTextEnd > 0 && rawTextEnd <= regionEnd ? rawTextEnd : openTagEnd
                 continue
             }
             int closeIndex = findClosingTag(text, openTagEnd, regionEnd, tagName, commentRangeCursor)
@@ -1369,9 +1392,11 @@ class HtmlTableToMarkdownConverter {
             closeRow()
         }
 
-        // Any tag other than tr/td/th/br (e.g. a nested <span>) is ignored
-        // here; its own text content still reaches text() below and is
-        // appended to whatever cell is currently open.
+        // Any tag other than tr/td/th (e.g. a nested <span>) is ignored as
+        // structure here; its own text content still reaches text() below and
+        // is appended to whatever cell is currently open. Elements that
+        // separate visible content, though, must leave a separator behind --
+        // see separateContent().
         @Override
         void openTag(String elementName, List<String> attrs) {
             switch (elementName) {
@@ -1392,14 +1417,8 @@ class HtmlTableToMarkdownConverter {
                     currentCellIsHeader = elementName == 'th'
                     currentCellText = new StringBuilder()
                     break
-                case 'br':
-                    // A line break has no text content of its own, so without
-                    // this the text before and after it would otherwise be
-                    // concatenated with nothing between them.
-                    if (currentCellText != null) {
-                        currentCellText.append(' ')
-                    }
-                    break
+                default:
+                    separateContent(elementName)
             }
         }
 
@@ -1414,6 +1433,23 @@ class HtmlTableToMarkdownConverter {
                 case 'th':
                     closeCell()
                     break
+                default:
+                    separateContent(elementName)
+            }
+        }
+
+        /**
+         * A line break or a block-level element has no text of its own, yet
+         * visibly separates the text before it from the text after it. Without
+         * a separator here, {@code <td><p>First</p><p>Second</p></td>} (or
+         * adjacent {@code <li>}/{@code <div>}) would be emitted as
+         * "FirstSecond". The space is appended on both open and close; the
+         * whitespace collapse in {@link #closeCell} folds any run of them
+         * into one and trims the ends.
+         */
+        private void separateContent(String elementName) {
+            if (currentCellText != null && CONTENT_SEPARATING_ELEMENTS.contains(elementName)) {
+                currentCellText.append(' ')
             }
         }
 

@@ -301,6 +301,22 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         !result.contains('![probe]')
     }
 
+    def "an inline style tag hidden inside another tag's attribute or a comment is never rewritten"() {
+        expect:
+        // The scan skips a non-convertible tag or comment as one whole token,
+        // so it never continues INTO the token and rediscovers markup there.
+        HtmlTableToMarkdownConverter.convert(text) == expected
+
+        where:
+        text                                              | expected
+        '<span title="<b>hint</b>">text</span>'           | '<span title="<b>hint</b>">text</span>'
+        '<!-- <b>x</b> --> after'                         | '<!-- <b>x</b> --> after'
+        '<!-- <b> -->text</b>'                            | '<!-- <b> -->text</b>'
+        '<script>var s = "<b>x</b>";</script>'            | '<script>var s = "<b>x</b>";</script>'
+        // The style tag's OWN attributes are skipped too; only its text is kept.
+        '<b title="<i>x</i>">bold</b>'                    | '**bold**'
+    }
+
     def "many unmatched opening tags do not cause quadratic scanning"() {
         given:
         // None of these ever close, so nothing should convert -- this
@@ -950,6 +966,19 @@ class HtmlTableToMarkdownConverterSpec extends Specification {
         // Falls back to the safe, unchanged-text path rather than padding
         // every narrow row out to 101 columns.
         result == html.toString()
+    }
+
+    def "nested block elements inside a cell keep a separator between their contents"() {
+        expect:
+        HtmlTableToMarkdownConverter.convert(html).contains(expectedRow)
+
+        where:
+        html                                                        | expectedRow
+        '<table><tr><td><p>First</p><p>Second</p></td></tr></table>' | '| First Second |'
+        '<table><tr><td><ul><li>a</li><li>b</li></ul></td></tr></table>' | '| a b |'
+        '<table><tr><td>x<div>y</div>z</td></tr></table>'           | '| x y z |'
+        // Inline elements are not separators: no space is introduced.
+        '<table><tr><td>a<span>b</span>c</td></tr></table>'         | '| abc |'
     }
 
     def "a line break tag inserts a space instead of merging the surrounding text"() {
