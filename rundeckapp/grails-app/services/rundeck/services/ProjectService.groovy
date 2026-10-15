@@ -132,12 +132,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ExecReportDataProvider execReportDataProvider
     def frameworkService
     /**
-     * Name of a deferred delete to the project row id claimed for it.
-     * {@link #UNKNOWN_PROJECT_ID} is used when the row id cannot be read.
-     * A later delete of the same name with a different id replaces the claim.
+     * Name of a deferred delete mapped to the project row id claimed for it.
+     * A claim is stored only when that id was read. A later delete replaces it
+     * only when the row id is different.
      */
     final Map<String, Long> deferredDeletesInFlight = new ConcurrentHashMap<>()
-    private static final long UNKNOWN_PROJECT_ID = Long.MIN_VALUE
 
     static transactional = false
 
@@ -1948,22 +1947,26 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     /**
-     * Claim this JVM's deferred delete for the current project row.
-     * @return the id stored in the claim, or null when the same project is already claimed
+     * Claim this JVM's deferred delete for a project row that was actually read.
+     * @return the id stored in the claim, or null when that same row is already claimed
      */
-    private Long claimDeferredDelete(String name) {
-        Long projectId = currentProjectId(name)
-        Long stored = projectId != null ? projectId : UNKNOWN_PROJECT_ID
-        Long existing = deferredDeletesInFlight.putIfAbsent(name, stored)
-        if (existing == null) {
-            return stored
+    private Long claimDeferredDelete(String name, Long projectId) {
+        if (projectId == null) {
+            return null
         }
-        // A claim recorded before the row id could be read must not block the recreated project.
-        if (projectId != null && existing != projectId &&
-                deferredDeletesInFlight.replace(name, existing, projectId)) {
+        Long existing = deferredDeletesInFlight.putIfAbsent(name, projectId)
+        if (existing == null) {
+            return projectId
+        }
+        if (existing != projectId && deferredDeletesInFlight.replace(name, existing, projectId)) {
             return projectId
         }
         return null
+    }
+
+    private boolean projectRowMatches(String name, Long claimedId) {
+        Long current = currentProjectId(name)
+        return current != null && current == claimedId
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
@@ -1991,20 +1994,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             return new DeleteResponse(success: false, error: "Project is not disabled.")
         }
         Long claimId = null
-        if (alreadyDisabled) {
-            claimId = claimDeferredDelete(project.name)
-            if (claimId == null) {
-                return new DeleteResponse(
-                success: false,
-                error: "Cannot delete an already disabled project.")
-            }
-        }
 
         def deferDelete = Optional.ofNullable(deferred)
             .orElse(configurationService.getBoolean("projectService.deferredProjectDelete", true))
 
         if (!alreadyDisabled && !deferDelete) {
-            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup)
+            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup, null)
+        }
+
+        Long projectId = currentProjectId(project.name)
+        if (projectId == null) {
+            return new DeleteResponse(
+                success: false,
+                error: "Cannot delete project ${project.name}: project id is not available.")
         }
 
         if (!alreadyDisabled) {
@@ -2014,19 +2016,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
                 throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
             }
-            claimId = claimDeferredDelete(project.name)
-            if (claimId == null) {
-                return new DeleteResponse(
-                success: false,
-                error: "Cannot delete an already disabled project.")
-            }
+        }
+        claimId = claimDeferredDelete(project.name, projectId)
+        if (claimId == null) {
+            return new DeleteResponse(
+            success: false,
+            error: "Cannot delete an already disabled project.")
         }
 
         log.info("Deferring deletion of project ${project.name} to background task.")
 
         Long claimedId = claimId
         def promise = Promises.task {
-            DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup)
+            if (!projectRowMatches(project.name, claimedId)) {
+                deferredDeletesInFlight.remove(project.name, claimedId)
+                return new DeleteResponse(success: false, error: "Project changed before cleanup")
+            }
+            DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
             if (result != null && result.success) {
                 deferredDeletesInFlight.remove(project.name, claimedId)
             } else if (runningExecutionBlockedDelete(result?.error)) {
@@ -2099,7 +2105,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @CompileStatic(TypeCheckingMode.SKIP)
-    protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup = false) {
+    protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup = false, Long claimedProjectId = null) {
+        if (claimedProjectId != null && !projectRowMatches(project.name, claimedProjectId)) {
+            notify('projectDeleteFailed', project.name)
+            return new DeleteResponse(success: false, error: "Project changed before cleanup")
+        }
         log.info("Starting deletion of project ${project.name} by username $username")
         notify('projectWillBeDeleted', project.name)
         def result = new DeleteResponse(success: false)
@@ -2157,6 +2167,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         }
         //if success, delete framework dir
+        if (result.success && claimedProjectId != null && !projectRowMatches(project.name, claimedProjectId)) {
+            result.success = false
+            result.error = "Project changed before cleanup"
+        }
         if (result.success) {
             framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
             notify('projectWasDeleted', project.name)

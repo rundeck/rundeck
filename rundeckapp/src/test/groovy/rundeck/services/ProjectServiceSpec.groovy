@@ -94,6 +94,16 @@ class HoldingPromiseFactory extends org.grails.async.factory.SynchronousPromiseF
     }
 }
 
+class CapturingPromiseFactory extends org.grails.async.factory.SynchronousPromiseFactory {
+    Closure captured
+
+    @Override
+    public <T> Promise<T> createPromise(Closure<T>... closures) {
+        captured = closures[0]
+        return (Promise<T>) new BoundPromise(new ProjectService.DeleteResponse(success: true))
+    }
+}
+
 /**
  * Created by greg on 8/5/15.
  */
@@ -557,6 +567,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.configurationService=Mock(ConfigurationService){
             getBoolean('projectService.deferredProjectDelete',_) >> true
         }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
+        }
         def fwk = Mock(Framework)
 
         when:
@@ -584,6 +597,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.targetEventBus = Mock(EventBus)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('projectService.deferredProjectDelete', _) >> configValue
+        }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
         }
         def fwk = Mock(Framework)
 
@@ -623,6 +639,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('projectService.deferredProjectDelete', _) >> true
         }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
+        }
         def fwk = Mock(Framework)
 
         when:
@@ -654,6 +673,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.targetEventBus = Mock(EventBus)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
         }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
@@ -730,6 +752,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('projectService.deferredProjectDelete', _) >> true
         }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
+        }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
             disableFrameworkProject('myproject') >> { disabled = true }
@@ -764,6 +789,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.targetEventBus = Mock(EventBus)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
         }
         Execution.metaClass.static.findAllByProject = { String name -> [[id: 7L]] }
         def mgr = Mock(ProjectManager) {
@@ -861,6 +889,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('projectService.deferredProjectDelete', _) >> true
         }
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
+        }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
             disableFrameworkProject('myproject') >> { disabled = true }
@@ -915,6 +946,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject = { String user, roles, String projectName ->
             Mock(AuthContext)
         }
+        if (!Project.findByName('kept')) {
+            new Project(name: 'kept').save(flush: true, failOnError: true)
+        }
         def mgr = Mock(ProjectManager) {
             listDisabledFrameworkProjectNames() >> ['gone', 'kept']
             getFrameworkProject('gone') >> { throw new IllegalArgumentException('Project not found in cache or DB: gone') }
@@ -934,9 +968,17 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         0 * service.eventBus.notify('projectWillBeDeleted', ['gone'])
     }
 
-    def "a claim recorded without a project row is replaced after the name is recreated"() {
+    def "a delete is not queued when the project row id cannot be read"() {
         given:
         Promises.promiseFactory = new HoldingPromiseFactory()
+        def row = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def reads = 0
+        Project.metaClass.static.findByName = { String n ->
+            if (++reads == 1) {
+                throw new RuntimeException('db')
+            }
+            row
+        }
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }
@@ -957,17 +999,64 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
 
         when:
-        def first = service.deleteProject(project, fwk, null, null)
-        def unknownClaim = service.deferredDeletesInFlight['myproject']
-        def row = new Project(name: 'myproject').save(flush: true, failOnError: true)
-        def second = service.deleteProject(project, fwk, null, null)
+        def failedRead = service.deleteProject(project, fwk, null, null)
+        def queued = service.deleteProject(project, fwk, null, null)
+        def duplicate = service.deleteProject(project, fwk, null, null)
 
         then:
-        first.success
-        unknownClaim != null
-        unknownClaim != row.id
-        second.success
+        !failedRead.success
+        failedRead.error.contains('project id is not available')
+        queued.success
+        !duplicate.success
+        duplicate.error == 'Cannot delete an already disabled project.'
         service.deferredDeletesInFlight['myproject'] == row.id
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(Project)
+    }
+
+    def "a queued delete does not remove a project recreated before the task runs"() {
+        given:
+        def factory = new CapturingPromiseFactory()
+        Promises.promiseFactory = factory
+        def original = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.execReportDataProvider = Mock(ExecReportDataProvider)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def mgr = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> true
+            0 * disableFrameworkProject(_)
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def queued = service.deleteProject(project, fwk, null, null)
+        def claimed = service.deferredDeletesInFlight['myproject']
+        original.delete(flush: true)
+        def replacement = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def taskResult = factory.captured.call()
+
+        then:
+        queued.success
+        claimed == original.id
+        !taskResult.success
+        taskResult.error == 'Project changed before cleanup'
+        Project.get(replacement.id)
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        0 * service.scheduledExecutionService.deleteScheduledExecution(*_)
+        0 * service.eventBus.notify('projectWillBeDeleted', _)
     }
 
     def "resume does not delete a name recreated as an enabled project"() {
