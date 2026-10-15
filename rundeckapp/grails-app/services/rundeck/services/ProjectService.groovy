@@ -75,6 +75,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.annotation.Propagation
 
 import retrofit2.Converter
 import rundeck.Execution
@@ -2058,6 +2059,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * was recreated with a new id or the failure was an execution that was still running.
      */
     @Subscriber('rundeck.bootstrap')
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void resumeDisabledProjectsFromBootstrap() {
         def pending = executionService?.startupCleanupFuture
         if (pending != null) {
@@ -2067,9 +2069,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.error("Startup execution cleanup did not finish before project delete recovery: ${t.message}", t)
             }
         }
-        def framework = frameworkService?.rundeckFramework
-        if (framework) {
-            resumeDisabledProjects((IFramework) framework)
+        Project.withNewTransaction {
+            def framework = frameworkService?.rundeckFramework
+            if (framework) {
+                resumeDisabledProjects((IFramework) framework)
+            }
         }
     }
 
