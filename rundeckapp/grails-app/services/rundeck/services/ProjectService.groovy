@@ -1965,6 +1965,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         return null
     }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private DeleteResponse runDeferredProjectDelete(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup, Long claimedId) {
+        Project.withNewSession {
+            if (!projectRowMatches(project.name, claimedId)) {
+                deferredDeletesInFlight.remove(project.name, claimedId)
+                return new DeleteResponse(success: false, error: "Project changed before cleanup")
+            }
+            DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
+            if (result != null && result.success) {
+                deferredDeletesInFlight.remove(project.name, claimedId)
+            } else if (runningExecutionBlockedDelete(result?.error)) {
+                deferredDeletesInFlight.remove(project.name, claimedId)
+            }
+            return result
+        }
+    }
+
     private boolean projectRowMatches(String name, Long claimedId) {
         Long current = currentProjectId(name)
         return current != null && current == claimedId
@@ -2029,17 +2046,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         Long claimedId = claimId
         def promise = Promises.task {
-            if (!projectRowMatches(project.name, claimedId)) {
-                deferredDeletesInFlight.remove(project.name, claimedId)
-                return new DeleteResponse(success: false, error: "Project changed before cleanup")
-            }
-            DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
-            if (result != null && result.success) {
-                deferredDeletesInFlight.remove(project.name, claimedId)
-            } else if (runningExecutionBlockedDelete(result?.error)) {
-                deferredDeletesInFlight.remove(project.name, claimedId)
-            }
-            return result
+            runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
         }
         promise.onComplete { DeleteResponse it ->
             log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")

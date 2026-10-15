@@ -94,6 +94,27 @@ class HoldingPromiseFactory extends org.grails.async.factory.SynchronousPromiseF
     }
 }
 
+class ThreadedPromiseFactory extends org.grails.async.factory.SynchronousPromiseFactory {
+    @Override
+    public <T> Promise<T> createPromise(Closure<T>... closures) {
+        def result = new Object[1]
+        def failure = new Throwable[1]
+        def worker = new Thread({
+            try {
+                result[0] = closures[0].call()
+            } catch (Throwable t) {
+                failure[0] = t
+            }
+        })
+        worker.start()
+        worker.join(10000)
+        if (failure[0]) {
+            throw failure[0]
+        }
+        return (Promise<T>) new BoundPromise((T) result[0])
+    }
+}
+
 class CapturingPromiseFactory extends org.grails.async.factory.SynchronousPromiseFactory {
     Closure captured
 
@@ -1013,6 +1034,40 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         cleanup:
         GroovySystem.metaClassRegistry.removeMetaClass(Project)
+    }
+
+    def "deferred delete reads the project row on the worker thread"() {
+        given:
+        Promises.promiseFactory = new ThreadedPromiseFactory()
+        if (!Project.findByName('myproject')) {
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
+        }
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def mgr = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> false
+            disableFrameworkProject('myproject') >> null
+            1 * removeFrameworkProject('myproject')
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def result = service.deleteProject(project, fwk, null, null)
+
+        then:
+        result.success
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+        0 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
     }
 
     def "a queued delete does not remove a project recreated before the task runs"() {
