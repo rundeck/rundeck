@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.Cookie
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.NoSuchElementException
@@ -56,6 +57,21 @@ abstract class BasePage {
 
     /** Fluent: enable nextUi mode. Shorthand for withFlag('nextUi', true) */
     BasePage withNextUi(boolean enabled = true) {
+        return withFlag('nextUi', enabled)
+    }
+
+    /**
+     * Selects the Next UI mode with the same cookie used by the application toggle.
+     * Selenium can only add cookies after visiting the target domain.
+     *
+     * @param enabled true for Next UI, false for the current default UI
+     * @return this page object
+     */
+    BasePage setNextUiCookie(final boolean enabled) {
+        if (!driver.currentUrl?.startsWith(context.client.baseUrl)) {
+            driver.get(context.client.baseUrl)
+        }
+        driver.manage().addCookie(new Cookie('nextUi', enabled.toString(), '/'))
         return withFlag('nextUi', enabled)
     }
 

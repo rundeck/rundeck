@@ -232,6 +232,13 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     /**
+     * Opens the project ACL remediation link.
+     */
+    void openExecutionAclFixLink() {
+        executionAclFixLink.click()
+    }
+
+    /**
      * Whether the warning banner is present. Callers asserting absence must first
      * wait for the page to render, since absence is indistinguishable from not
      * having loaded yet.
