@@ -919,6 +919,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             listDisabledFrameworkProjectNames() >> ['gone', 'kept']
             getFrameworkProject('gone') >> { throw new IllegalArgumentException('Project not found in cache or DB: gone') }
             getFrameworkProject('kept') >> kept
+            isFrameworkProjectDisabled('gone') >> true
             isFrameworkProjectDisabled('kept') >> true
         }
         def fwk = Mock(Framework) {
@@ -931,6 +932,79 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * service.eventBus.notify('projectWillBeDeleted', ['kept'])
         0 * service.eventBus.notify('projectWillBeDeleted', ['gone'])
+    }
+
+    def "a claim recorded without a project row is replaced after the name is recreated"() {
+        given:
+        Promises.promiseFactory = new HoldingPromiseFactory()
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def mgr = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> true
+            0 * disableFrameworkProject(_)
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def first = service.deleteProject(project, fwk, null, null)
+        def unknownClaim = service.deferredDeletesInFlight['myproject']
+        def row = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def second = service.deleteProject(project, fwk, null, null)
+
+        then:
+        first.success
+        unknownClaim != null
+        unknownClaim != row.id
+        second.success
+        service.deferredDeletesInFlight['myproject'] == row.id
+    }
+
+    def "resume does not delete a name recreated as an enabled project"() {
+        given:
+        def recreated = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        service.rundeckAuthContextProcessor = new Expando()
+        service.rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject = { String user, roles, String projectName ->
+            Mock(AuthContext)
+        }
+        def mgr = Mock(ProjectManager) {
+            listDisabledFrameworkProjectNames() >> ['myproject']
+            isFrameworkProjectDisabled('myproject') >> false
+            getFrameworkProject('myproject') >> recreated
+            0 * disableFrameworkProject(_)
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        service.resumeDisabledProjects(fwk)
+        def direct = service.deleteProject(recreated, fwk, null, 'system', Boolean.TRUE, true)
+
+        then:
+        !direct.success
+        direct.error == 'Project is not disabled.'
+        0 * service.eventBus.notify('projectWillBeDeleted', _)
     }
 
     def "import project archive only nodes without config"() {

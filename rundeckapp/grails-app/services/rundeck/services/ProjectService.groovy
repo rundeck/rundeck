@@ -1958,7 +1958,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         if (existing == null) {
             return stored
         }
-        if (projectId != null && existing != UNKNOWN_PROJECT_ID && existing != projectId &&
+        // A claim recorded before the row id could be read must not block the recreated project.
+        if (projectId != null && existing != projectId &&
                 deferredDeletesInFlight.replace(name, existing, projectId)) {
             return projectId
         }
@@ -1985,6 +1986,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Requested deletion of project ${project.name}")
 
         boolean alreadyDisabled = framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)
+        if (trustedCleanup && Boolean.TRUE == deferred && !alreadyDisabled) {
+            log.info("Skipping resumed deletion of project ${project.name}: it is no longer disabled")
+            return new DeleteResponse(success: false, error: "Project is not disabled.")
+        }
         Long claimId = null
         if (alreadyDisabled) {
             claimId = claimDeferredDelete(project.name)
@@ -2069,6 +2074,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         for (String name : names) {
             try {
+                if (!framework.frameworkProjectMgr.isFrameworkProjectDisabled(name)) {
+                    log.info("Skipping resume of project ${name}: it is no longer disabled")
+                    continue
+                }
                 IRundeckProject disabledProject = framework.frameworkProjectMgr.getFrameworkProject(name)
                 AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
                     'system',
