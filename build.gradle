@@ -216,7 +216,12 @@ allprojects {
     // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
     // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
     // moves jackson onto the patched 2.21.4 across grails-* plugin modules and rundeckapp.
-    ext["jackson-bom.version"] = jacksonDatabindVersion
+    // Grails 8.0.0 GA renamed these BOM properties: jackson2.version -> jackson-2-bom.version
+    // (com.fasterxml, Jackson 2) and jackson3.version -> jackson-bom.version (tools.jackson,
+    // Jackson 3). The CVE above is a Jackson 2 one, so the override has to use the -2- name;
+    // under the old name it forces a Jackson 2 number onto the Jackson 3 coordinates and
+    // resolution fails on tools.jackson.core:jackson-databind:<2.x>.
+    ext["jackson-2-bom.version"] = jacksonDatabindVersion
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
