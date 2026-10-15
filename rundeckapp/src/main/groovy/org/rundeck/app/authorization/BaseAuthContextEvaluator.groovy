@@ -46,13 +46,14 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator, ApplicationCo
      * Resolve the ACL resource used to authorize read/view of a job-less execution, by its
      * execution type. Consults any registered {@link ExecutionAuthResourceResolver} beans; the
      * first non-null result wins, otherwise the built-in adhoc resource is used. This lets a
-     * feature gate its own execution type behind its own ACL kind in the generic execution and
-     * activity lists without this open source class knowing that kind.
-     * @param execution job-less execution
-     * @return ACL resource map
+     * feature gate its own execution type behind its own ACL kind - in the generic execution and
+     * activity lists and when authorizing a single execution - without this open source class
+     * knowing that kind.
+     * @param executionType the execution's {@code executionType}, which may be null
+     * @return ACL resource map, never null
      */
-    protected Map<String, String> authResourceForExecution(Execution execution) {
-        String executionType = execution?.executionType
+    @Override
+    Map<String, String> authResourceForExecutionType(String executionType) {
         for (ExecutionAuthResourceResolver resolver : getExecutionAuthResourceResolvers()) {
             Map<String, String> resource = resolver.authResourceForExecutionType(executionType)
             if (null != resource) {
@@ -283,7 +284,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator, ApplicationCo
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAll(authContext, se, actions, se.project) :
-               authorizeProjectResourceAll(authContext, authResourceForExecution(exec), actions, exec.project)
+               authorizeProjectResourceAll(authContext, authResourceForExecutionType(exec?.executionType), actions, exec.project)
 
     }
     /**
@@ -298,7 +299,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator, ApplicationCo
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAny(authContext, se, actions, se.project) :
-               authorizeProjectResourceAny(authContext, authResourceForExecution(exec), actions, exec.project)
+               authorizeProjectResourceAny(authContext, authResourceForExecutionType(exec?.executionType), actions, exec.project)
 
     }
     /**
@@ -329,7 +330,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator, ApplicationCo
                 }
                 authorized = cached
             } else {
-                Map<String, String> resource = authResourceForExecution(exec)
+                Map<String, String> resource = authResourceForExecutionType(exec?.executionType)
                 String cacheKey = resource.toString()
                 Boolean cached = adhocauth[cacheKey]
                 if (null == cached) {
@@ -372,7 +373,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator, ApplicationCo
                 }
                 authorized = cached
             } else {
-                Map<String, String> resource = authResourceForExecution(exec)
+                Map<String, String> resource = authResourceForExecutionType(exec?.executionType)
                 String cacheKey = resource.toString()
                 Boolean cached = adhocauth[cacheKey]
                 if (null == cached) {
