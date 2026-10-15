@@ -40,6 +40,14 @@ class ProjectAclCreateSpec extends SeleniumBase {
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
+    /**
+     * Every feature selects its UI mode with the nextUi cookie; remove it so the mode cannot
+     * carry over into the next iteration or a later spec sharing the browser session.
+     */
+    def cleanup() {
+        (page(LoginPage) as LoginPage).deleteNextUiCookie()
+    }
+
     def "admin sees the empty project ACL creation form"() {
         setup:
             createPage = openCreatePage(nextUi)

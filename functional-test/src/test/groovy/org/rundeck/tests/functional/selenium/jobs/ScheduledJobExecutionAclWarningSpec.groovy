@@ -62,13 +62,16 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
     )
     def "scheduled job saved by a user without run access warns on the job page"() {
         given: "a user who may author jobs but not run them schedules one"
+            // per-iteration name: each iteration must be identifiable on its own, and cleanup
+            // removes it so the next iteration's job list holds only its own job
+            String jobName = "job scheduled by a user who cannot run it ${nextUi ? 'next' : 'legacy'}"
             def login = page LoginPage
             login.go()
             login.login(RESTRICTED_USER, USER_PASSWORD)
             waitForPageLoadComplete()
 
             def jobCreatePage = go JobCreatePage, PROJECT_NAME
-            jobCreatePage.fillBasicJob 'job scheduled by a user who cannot run it'
+            jobCreatePage.fillBasicJob jobName
             jobCreatePage.enableDailySchedule()
             jobCreatePage.clickCreateJob()
             jobCreatePage.waitForUrlToContain('/job/show')
@@ -123,7 +126,12 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             aclCreatePage.editorText.contains("urn: user:${RESTRICTED_USER}")
 
         cleanup:
+            // the warning-badge count above sees every job in the project, so this iteration's
+            // job must not survive into the next one; API-only, so it runs before any UI step can throw
+            deleteProjectJobs()
             def topMenuPage = page TopMenuPage
+            // the cookie selected this iteration's ACL editor; don't let it outlive the iteration
+            topMenuPage.deleteNextUiCookie()
             topMenuPage.logOut()
             waitForPageLoadComplete()
 
@@ -159,5 +167,17 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             def topMenuPage = page TopMenuPage
             topMenuPage.logOut()
             waitForPageLoadComplete()
+    }
+
+    /**
+     * Deletes every job in the spec's project through the API. Listing the project rather than
+     * tracking a uuid also removes a job whose iteration failed before its uuid was read.
+     */
+    private void deleteProjectJobs() {
+        def jobs = get("/project/${PROJECT_NAME}/jobs", List)
+        jobs.each { job ->
+            def response = doDelete("/job/${(job as Map).id}")
+            assert response.successful : "could not delete job ${(job as Map).id}: ${response.code()}"
+        }
     }
 }
