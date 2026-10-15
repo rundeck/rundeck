@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.*;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
@@ -59,14 +60,54 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private ResourceFormatGeneratorService                                         resourceFormatGeneratorService;
     private ResourceModelSourceService                                             resourceModelSourceService;
     private NodeSourceLoader     nodeSourceLoader;
+    private FileResourceModelPathPolicy fileResourceModelPathPolicy;
     private boolean                                                                sourcesOpened;
     private File varDir;
 
     /**
+     * Creates project node support with file resource-model path validation.
+     *
+     * @param varDir framework variable-data directory
      * @param projectConfig
      * @param resourceFormatGeneratorService
+     * @param resourceModelSourceService resource model source service
      * @param nodeSourceLoader model source provider
+     * @param fileResourceModelPathPolicy file source path policy
      */
+    public ProjectNodeSupport(
+            final File varDir,
+            final IRundeckProjectConfig projectConfig,
+            final ResourceFormatGeneratorService resourceFormatGeneratorService,
+            final ResourceModelSourceService resourceModelSourceService,
+            final NodeSourceLoader nodeSourceLoader,
+            final FileResourceModelPathPolicy fileResourceModelPathPolicy
+    )
+    {
+        this.varDir = varDir;
+        this.projectConfig = projectConfig;
+        this.resourceFormatGeneratorService = resourceFormatGeneratorService;
+        this.resourceModelSourceService = resourceModelSourceService;
+        this.nodeSourceLoader = nodeSourceLoader;
+        this.fileResourceModelPathPolicy = Objects.requireNonNull(
+                fileResourceModelPathPolicy,
+                "fileResourceModelPathPolicy"
+        );
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
+    }
+
+    /**
+     * Creates project node support with strict project-only file path validation.
+     *
+     * @param varDir framework variable-data directory
+     * @param projectConfig project configuration
+     * @param resourceFormatGeneratorService resource format generator service
+     * @param resourceModelSourceService resource model source service
+     * @param nodeSourceLoader model source provider
+     * @deprecated use {@link #ProjectNodeSupport(File, IRundeckProjectConfig,
+     * ResourceFormatGeneratorService, ResourceModelSourceService, NodeSourceLoader,
+     * FileResourceModelPathPolicy)}
+     */
+    @Deprecated
     public ProjectNodeSupport(
             final File varDir,
             final IRundeckProjectConfig projectConfig,
@@ -75,29 +116,49 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             final NodeSourceLoader nodeSourceLoader
     )
     {
-        this.varDir = varDir;
-        this.projectConfig = projectConfig;
-        this.resourceFormatGeneratorService = resourceFormatGeneratorService;
-        this.resourceModelSourceService = resourceModelSourceService;
-        this.nodeSourceLoader = nodeSourceLoader;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
+        this(
+                varDir,
+                projectConfig,
+                resourceFormatGeneratorService,
+                resourceModelSourceService,
+                nodeSourceLoader,
+                createDefaultFileResourceModelPathPolicy(projectConfig, resourceModelSourceService)
+        );
     }
+
     /**
+     * Creates project node support with strict project-only file path validation.
+     *
+     * @param varDir framework variable-data directory
      * @param projectConfig
      * @param resourceFormatGeneratorService
-     * @deprecated use {@link #ProjectNodeSupport(File, IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, NodeSourceLoader)}
+     * @param resourceModelSourceService resource model source service
+     * @deprecated use {@link #ProjectNodeSupport(File, IRundeckProjectConfig,
+     * ResourceFormatGeneratorService, ResourceModelSourceService, NodeSourceLoader,
+     * FileResourceModelPathPolicy)}
      */
+    @Deprecated
     public ProjectNodeSupport(
         final File varDir,
         final IRundeckProjectConfig projectConfig,
         final ResourceFormatGeneratorService resourceFormatGeneratorService,
         final ResourceModelSourceService resourceModelSourceService
     ) {
-        this.varDir = varDir;
-        this.projectConfig = projectConfig;
-        this.resourceFormatGeneratorService = resourceFormatGeneratorService;
-        this.resourceModelSourceService = resourceModelSourceService;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
+        this(varDir, projectConfig, resourceFormatGeneratorService, resourceModelSourceService, null);
+    }
+
+    /**
+     * Creates a strict project-only policy for compatibility constructors.
+     */
+    private static FileResourceModelPathPolicy createDefaultFileResourceModelPathPolicy(
+            final IRundeckProjectConfig projectConfig,
+            final ResourceModelSourceService resourceModelSourceService
+    ) {
+        return new FileResourceModelPathPolicy(
+                resourceModelSourceService.getFrameworkInstance().getFrameworkProjectsBaseDir(),
+                projectConfig.getName(),
+                null
+        );
     }
 
     //TODO: add flag to ResourceModelSource that allows disabling local file cache
@@ -219,6 +280,26 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             resourceModelSources.stream()
                                 .map(i -> (ReadableProjectNodes) i)
                                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns whether any configured file source violates the path policy.
+     * This check is side-effect free so callers can reject stale aggregate caches
+     * before resource model providers are loaded.
+     *
+     * @return true when a configured file source is outside permitted directories
+     */
+    public boolean hasInvalidFileResourceModelPaths() {
+        for (Map<String, Object> sourceConfiguration : listResourceModelConfigurations()) {
+            String type = (String) sourceConfiguration.get("type");
+            Properties properties = (Properties) sourceConfiguration.get("props");
+            try {
+                validateFileResourceModelPath(type, properties);
+            } catch (ExecutionServiceException e) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private synchronized List<LoadedResourceModelSource> getResourceModelSourcesInternal() {
@@ -473,6 +554,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     {
 
         configuration.put("project", projectConfig.getName());
+        validateFileResourceModelPath(type, configuration);
 
         CloseableProvider<ResourceModelSource> sourceForConfiguration ;
 
@@ -504,6 +586,37 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             return new LoadedSource(
                     index,
                     type, sourceForConfiguration.getProvider()
+            );
+        }
+    }
+
+    /**
+     * Validates configured file sources before their providers can read node data.
+     *
+     * @param type resource model source provider type
+     * @param configuration source configuration
+     * @throws ExecutionServiceException if the configured file is outside permitted directories
+     */
+    private void validateFileResourceModelPath(
+            final String type,
+            final Properties configuration
+    ) throws ExecutionServiceException {
+        if (!"file".equals(type)) {
+            return;
+        }
+
+        String configuredPath = configuration.getProperty(FileResourceModelSource.Configuration.FILE);
+        if (configuredPath == null) {
+            return;
+        }
+
+        try {
+            fileResourceModelPathPolicy.validate(new File(configuredPath));
+        } catch (ConfigurationException e) {
+            throw new ExecutionServiceException(
+                    e.getMessage(),
+                    e,
+                    type
             );
         }
     }

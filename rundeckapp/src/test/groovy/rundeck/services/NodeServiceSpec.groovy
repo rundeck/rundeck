@@ -46,6 +46,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
+            getString('resourceModelSource.file.allowedBasePaths', null) >> '/tmp'
         }
     }
     def "get nodes project DNE"() {
@@ -108,6 +109,10 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
 
         then:
+        1 * service.configurationService.getString(
+                'resourceModelSource.file.allowedBasePaths',
+                null
+        ) >> '/tmp'
         frameWorkService.getRundeckFramework() >> Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
@@ -245,6 +250,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
             getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> defFirstLoadAsynch
+            getString('resourceModelSource.file.allowedBasePaths', null) >> '/tmp'
             0 * _(*_)
         }
         INodeSet preloadedNodes = new NodeSetImpl()
@@ -312,6 +318,57 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
     }
 
+    def "disallowed file source skips stale aggregate cache preload"() {
+        given:
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('nodeService.nodeCache.enabled', true) >> true
+            getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> false
+            getString('resourceModelSource.file.allowedBasePaths', null) >> null
+        }
+        def properties = [
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/disallowed.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'resources.source.1.config.includeServerNode'        : 'true',
+                'project.nodeCache.enabled'                          : 'true',
+        ]
+        def projectConfig = new PropsConfig(
+                projectProperties: properties,
+                properties: properties,
+                name: 'test1',
+                configLastModifiedTime: new Date()
+        )
+        INodeSet staleNodes = new NodeSetImpl()
+        staleNodes.putNode(new NodeEntryImpl('stale-node'))
+        def cacheModelSource = Mock(ResourceModelSource)
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> new File('/projects')
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                existsFrameworkProject('test1') >> true
+                loadProjectConfig('test1') >> projectConfig
+            }
+            getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
+                getSourceForConfiguration('file', _) >> cacheModelSource
+            }
+            getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkVarDir() >> new File(RESOURCE_TMP_DIR)
+            getRundeckFramework() >> framework
+        }
+
+        when:
+        def result = service.getNodes('test1')
+        def nodes = result.nodeSet
+
+        then:
+        nodes.nodeNames.empty
+        !nodes.nodeNames.contains('stale-node')
+        0 * cacheModelSource.getNodes() >> staleNodes
+        0 * service.nodeTaskExecutor.execute(_)
+    }
+
     @Unroll
     def "get nodes with first load asynch defAsynch project value projAsynch"() {
         given:
@@ -320,6 +377,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
             getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> defAsynch
+            getString('resourceModelSource.file.allowedBasePaths', null) >> '/tmp'
             0 * _(*_)
         }
         INodeSet preloadedNodes = new NodeSetImpl()
@@ -431,6 +489,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
             getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> false
+            getString('resourceModelSource.file.allowedBasePaths', null) >> '/tmp'
             0 * _(*_)
         }
         INodeSet modelNodes = new NodeSetImpl()
@@ -521,6 +580,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
             getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> true
+            getString('resourceModelSource.file.allowedBasePaths', null) >> '/tmp'
             0 * _(*_)
         }
         INodeSet modelNodes = new NodeSetImpl()

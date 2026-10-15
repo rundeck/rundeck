@@ -320,70 +320,17 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
         Framework framework,
         String project
     ) throws ConfigurationException {
-        // Get the file path from this source's configuration
         if (configuration == null || configuration.nodesFile == null) {
-            return;  // No file configured yet
+            return;
         }
 
-        try {
-            // 1. Canonicalize file path to prevent traversal attacks (../, symlinks)
-            File canonicalFile = configuration.nodesFile.getCanonicalFile();
-
-            // 2. Get project base directory
-            File projectsBaseDir = framework.getFrameworkProjectsBaseDir();
-            File projectBaseDir = new File(projectsBaseDir, project);
-            File canonicalProjectDir = projectBaseDir.getCanonicalFile();
-
-            // 3. Check if file is under project directory (allowed by default)
-            if (isPathUnder(canonicalFile, canonicalProjectDir)) {
-                return;  // Path is within project, allowed
-            }
-
-            // 4. File is outside project - check configuration for allowed paths
-            String allowedPaths = (String) configProperties.get("resourceModelSource.file.allowedBasePaths");
-
-            // 5. If no allowed paths configured, reject
-            if (allowedPaths == null || allowedPaths.trim().isEmpty()) {
-                throw new ConfigurationException(
-                    "File path must be within the project directory"
-                );
-            }
-
-            // 6. Parse allowed paths (comma-separated) and check if file is under any
-            String[] paths = allowedPaths.split(",");
-            for (String path : paths) {
-                String trimmedPath = path.trim();
-                // Skip empty segments to avoid treating empty string as working directory
-                if (trimmedPath.isEmpty()) {
-                    continue;
-                }
-                File allowedBase = new File(trimmedPath).getCanonicalFile();
-                if (isPathUnder(canonicalFile, allowedBase)) {
-                    return;  // Path is within an allowed base path
-                }
-            }
-
-            // 7. Path not allowed
-            throw new ConfigurationException(
-                "File path is not within project directory or allowed base paths"
-            );
-
-        } catch (IOException e) {
-            // Don't include exception message to avoid leaking path information
-            throw new ConfigurationException("Invalid file path", e);
-        }
-    }
-
-    /**
-     * Checks if a file is located under a base directory using Path comparison.
-     * This is more reliable than string prefix matching.
-     *
-     * @param file file to check
-     * @param baseDir base directory
-     * @return true if file is under baseDir
-     */
-    private boolean isPathUnder(File file, File baseDir) {
-        return file.toPath().startsWith(baseDir.toPath());
+        String allowedPaths = (String) configProperties.get(
+                FileResourceModelPathPolicy.ALLOWED_BASE_PATHS_CONFIG_KEY
+        );
+        new FileResourceModelPathPolicy(
+                new File(framework.getFrameworkProjectsBaseDir(), project),
+                allowedPaths
+        ).validate(configuration.nodesFile);
     }
 
 

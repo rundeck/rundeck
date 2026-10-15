@@ -76,4 +76,32 @@ class NodesSpec extends BaseContainer {
             "blah:blahblah" | 3
             "foo:bar"       | 5
     }
+
+    def "disallowed file source does not expose generated nodes"() {
+        given:
+            String project = "${PROJECT}-path-containment"
+            setupProject(
+                    project,
+                    [
+                            "resources.source.1.type"                            : "file",
+                            "resources.source.1.config.file"                     : "/tmp/run-4832-resources.xml",
+                            "resources.source.1.config.format"                   : "resourcexml",
+                            "resources.source.1.config.generateFileAutomatically": "true",
+                            "resources.source.1.config.includeServerNode"        : "true",
+                            "resources.source.1.config.requireFileExists"        : "false",
+                            "resources.source.2.type"                            : "stub",
+                            "resources.source.2.config.count"                    : "1",
+                            "resources.source.2.config.prefix"                   : "RUN-4832-safe-",
+                    ]
+            )
+
+        when:
+            Map response = client.get("/project/$project/resources", Map)
+
+        then:
+            response.keySet() == ['RUN-4832-safe-0'] as Set
+
+        cleanup:
+            deleteProject(project)
+    }
 }

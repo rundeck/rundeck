@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.resources.FileResourceModelPathPolicy;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
@@ -77,17 +78,20 @@ public class FrameworkFactory {
         return new IProjectNodesFactory() {
             @Override
             public IProjectNodes getNodes(final String name) {
+                File projectDirectory = new File(filesystemFramework.getFrameworkProjectsBaseDir(), name);
 
                 return new ProjectNodeSupport(
                         new File(filesystemFramework.getBaseDir(), "var"),
                         loadFrameworkProjectConfig(
                                 name,
-                                new File(filesystemFramework.getFrameworkProjectsBaseDir(), name),
+                                projectDirectory,
                                 filesystemFramework,
                                 null
                         ),
                         formatGeneratorServiceSupplier.get(),
-                        resourceModelSourceServiceSupplier.get()
+                        resourceModelSourceServiceSupplier.get(),
+                        null,
+                        new FileResourceModelPathPolicy(projectDirectory, null)
                 );
             }
 

@@ -68,6 +68,7 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.WriteableModelSource
+import com.dtolabs.rundeck.core.resources.FileResourceModelPathPolicy
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -2296,15 +2297,13 @@ List of config values, each value contains:
         Map<String, Object> configProps = [:]
 
         // Read allowed paths from rundeck-config.properties
-        // Note: ConfigurationService automatically adds "rundeck." prefix,
-        // so this reads "rundeck.resourceModelSource.file.allowedBasePaths" from the properties file
         String allowedPaths = grailsApplication.config.getProperty(
                 "rundeck.resourceModelSource.file.allowedBasePaths",
                 String.class,
                 null
         )
         if (allowedPaths != null) {
-            configProps.put("resourceModelSource.file.allowedBasePaths", allowedPaths)
+            configProps.put(FileResourceModelPathPolicy.ALLOWED_BASE_PATHS_CONFIG_KEY, allowedPaths)
         }
 
         return configProps
