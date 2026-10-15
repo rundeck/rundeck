@@ -51,6 +51,7 @@ import type { PtModalButton } from "./ptModalTypes";
 
 export default defineComponent({
   name: "PtModal",
+  // eslint-disable-next-line vue/no-reserved-component-names
   components: { Dialog, PtButton },
   props: {
     /** Whether the modal is open; bind with v-model. */
@@ -94,8 +95,8 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
-.p-dialog.pt-modal {
+<style scoped lang="scss">
+:deep(.p-dialog.pt-modal) {
   width: var(--sizes-modal-md);
   max-width: 100%;
   border: 0;
