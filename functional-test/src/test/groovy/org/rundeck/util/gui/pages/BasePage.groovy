@@ -75,6 +75,22 @@ abstract class BasePage {
         return withFlag('nextUi', enabled)
     }
 
+    /**
+     * Removes the {@code nextUi} cookie set by {@link #setNextUiCookie(boolean)}, so the UI mode
+     * chosen by one test cannot carry over to whatever runs next in the same browser session.
+     * Specs that call {@code setNextUiCookie} call this from their {@code cleanup:} block.
+     * It is a no-op when the browser is not on the Rundeck domain (no cookie can be visible there).
+     *
+     * @return this page object
+     */
+    BasePage deleteNextUiCookie() {
+        if (driver.currentUrl?.startsWith(context.client.baseUrl)) {
+            driver.manage().deleteCookieNamed('nextUi')
+        }
+        pageFlags.remove('nextUi')
+        return this
+    }
+
     /** Fluent: enable legacyUi mode. Shorthand for withFlag('legacyUi', true) */
     BasePage withLegacyUi(boolean enabled = true) {
         return withFlag('legacyUi', enabled)

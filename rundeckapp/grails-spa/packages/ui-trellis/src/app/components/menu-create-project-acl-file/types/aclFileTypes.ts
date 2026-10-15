@@ -9,6 +9,11 @@ export interface AclValidation {
   errors: Record<string, string[]>;
 }
 
+export interface AclValidationEntry {
+  document: string;
+  messages: string[];
+}
+
 export interface AclHelpLinks {
   accessControlPolicy: string;
   aclPolicyFormat: string;

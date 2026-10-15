@@ -8,10 +8,21 @@
       <code data-testid="acl-validation-document-name">{{
         entry.document
       }}</code>
+      <span
+        class="has_tooltip text-info"
+        data-placement="bottom"
+        data-container="body"
+        :title="$t('acl.validation.error.sourceIdentity.help')"
+        :aria-label="$t('acl.validation.error.sourceIdentity.help')"
+        role="img"
+        data-testid="acl-validation-identity-help"
+      >
+        <i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>
+      </span>
       <ol>
         <li
-          v-for="message in entry.messages"
-          :key="message"
+          v-for="(message, index) in entry.messages"
+          :key="`${entry.document}-message-${index}`"
           data-testid="acl-validation-message"
         >
           <code>{{ message }}</code>
@@ -24,7 +35,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
 
-import type { AclValidation } from "./types/aclFileTypes";
+import type { AclValidation, AclValidationEntry } from "./types/aclFileTypes";
 
 export default defineComponent({
   name: "AclValidationReport",
@@ -35,7 +46,7 @@ export default defineComponent({
     },
   },
   computed: {
-    validationEntries(): Array<{ document: string; messages: string[] }> {
+    validationEntries(): AclValidationEntry[] {
       return Object.keys(this.validation.errors)
         .sort()
         .map((document) => ({

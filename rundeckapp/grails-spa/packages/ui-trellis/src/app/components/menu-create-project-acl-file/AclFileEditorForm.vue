@@ -5,6 +5,8 @@
     :action="saveUrl"
     data-testid="acl-file-form"
     @submit="handleSubmit"
+    @change="markDirty"
+    @keydown="markDirty"
   >
     <input type="hidden" name="project" :value="project" />
     <input type="hidden" name="create" value="true" />
@@ -30,14 +32,24 @@
             :title="$t('navigation.back.title')"
             data-testid="acl-back-link"
           >
-            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            <i
+              class="glyphicon glyphicon-arrow-left"
+              aria-hidden="true"
+              data-testid="acl-back-icon"
+            ></i>
             <span class="sr-only">{{ $t("navigation.back.title") }}</span>
           </a>
           {{ $t("create.project.acl.file") }}
           <div class="buttons pull-right">
-            <div class="dropdown" :class="{ open: helpOpen }">
+            <div
+              ref="helpDropdown"
+              class="dropdown"
+              :class="{ open: helpOpen }"
+              data-testid="acl-help-dropdown"
+            >
               <button
                 id="aclHelp"
+                ref="helpToggle"
                 type="button"
                 class="btn btn-default btn-sm dropdown-toggle"
                 :aria-expanded="helpOpen"
@@ -58,6 +70,7 @@
                     :href="helpLinks.accessControlPolicy"
                     target="_new"
                     data-testid="acl-help-access-control-link"
+                    @click="closeHelp"
                   >
                     {{ $t("link.title.access.control.policy") }}
                     <i class="fas fa-arrow-right" aria-hidden="true"></i>
@@ -68,6 +81,7 @@
                     :href="helpLinks.aclPolicyFormat"
                     target="_new"
                     data-testid="acl-help-format-link"
+                    @click="closeHelp"
                   >
                     {{ $t("link.title.acl.policy.format") }}
                     <i class="fas fa-arrow-right" aria-hidden="true"></i>
@@ -85,9 +99,13 @@
           :class="{ 'has-error': nameErrors.length > 0 }"
           data-testid="acl-name-group"
         >
-          <span id="acl-policy-name-label" class="control-label col-sm-2">
+          <label
+            for="acl-policy-name"
+            class="control-label col-sm-2"
+            data-testid="acl-name-label"
+          >
             {{ $t("policy.name.label.prompt") }}
-          </span>
+          </label>
           <div class="col-sm-10">
             <input
               id="acl-policy-name"
@@ -95,7 +113,6 @@
               class="form-control"
               type="text"
               name="name"
-              aria-labelledby="acl-policy-name-label"
               autocomplete="off"
               data-testid="acl-name-input"
               @keypress.enter.prevent
@@ -104,8 +121,8 @@
               {{ $t("policy.name.description") }}
             </div>
             <div
-              v-for="error in nameErrors"
-              :key="error"
+              v-for="(error, index) in nameErrors"
+              :key="`name-error-${index}`"
               class="help-block"
               data-testid="acl-name-error"
             >
@@ -115,9 +132,9 @@
         </div>
 
         <div class="form-group">
-          <span class="control-label col-sm-2">
+          <label class="control-label col-sm-2" data-testid="acl-project-label">
             {{ $t("project.label.prompt") }}
-          </span>
+          </label>
           <div class="col-sm-10">
             <p
               class="form-control-static text-info"
@@ -156,8 +173,8 @@
                   data-testid="acl-file-text-input"
                 ></textarea>
                 <div
-                  v-for="error in fileTextErrors"
-                  :key="error"
+                  v-for="(error, index) in fileTextErrors"
+                  :key="`fileText-error-${index}`"
                   class="help-block"
                   data-testid="acl-file-text-error"
                 >
@@ -172,9 +189,11 @@
             >
               <h3>
                 <i
-                  class="glyphicon glyphicon-warning-sign text-warning"
+                  class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                  role="img"
                   :title="$t('aclpolicy.format.validation.failed')"
-                  aria-hidden="true"
+                  :aria-label="$t('aclpolicy.format.validation.failed')"
+                  data-testid="acl-validation-warning-icon"
                 ></i>
                 {{ $t("error.validation.failed.title") }}
               </h3>
@@ -286,13 +305,36 @@ export default defineComponent({
   },
   mounted() {
     window.addEventListener("beforeunload", this.confirmPageLeave);
+    document.addEventListener("click", this.closeHelpOnOutsideClick);
+    document.addEventListener("keydown", this.closeHelpOnEscape);
   },
   unmounted() {
     window.removeEventListener("beforeunload", this.confirmPageLeave);
+    document.removeEventListener("click", this.closeHelpOnOutsideClick);
+    document.removeEventListener("keydown", this.closeHelpOnEscape);
   },
   methods: {
     toggleHelp(): void {
       this.helpOpen = !this.helpOpen;
+    },
+    closeHelp(): void {
+      this.helpOpen = false;
+    },
+    closeHelpOnOutsideClick(event: MouseEvent): void {
+      const dropdown = this.$refs.helpDropdown as HTMLElement | undefined;
+      if (!this.helpOpen || !dropdown) {
+        return;
+      }
+      if (!dropdown.contains(event.target as Node)) {
+        this.closeHelp();
+      }
+    },
+    closeHelpOnEscape(event: KeyboardEvent): void {
+      if (!this.helpOpen || event.key !== "Escape") {
+        return;
+      }
+      this.closeHelp();
+      (this.$refs.helpToggle as HTMLButtonElement | undefined)?.focus();
     },
     focusEditor(editor: AceEditorInstance): void {
       editor.focus();
@@ -301,8 +343,8 @@ export default defineComponent({
         editorInput.id = "acl-policy-editor-input";
       }
     },
-    markDirty(value: string): void {
-      this.pageConfirmationArmed = value !== this.fileText;
+    markDirty(): void {
+      this.pageConfirmationArmed = true;
     },
     disarmPageConfirmation(): void {
       this.pageConfirmationArmed = false;
