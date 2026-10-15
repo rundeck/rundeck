@@ -748,6 +748,48 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
     }
 
+    def "a running ad-hoc execution releases the claim so delete can be retried"() {
+        given:
+        def disabled = false
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService) {
+            deleteBulkExecutionIds([7L], null, null, false) >> [success: false, failures: [[message: 'Failed to delete execution {{Execution 7}}: The execution is currently running']]]
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.execReportDataProvider = Mock(ExecReportDataProvider)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        Execution.metaClass.static.findAllByProject = { String name -> [[id: 7L]] }
+        def mgr = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> { disabled }
+            disableFrameworkProject('myproject') >> { disabled = true }
+            0 * removeFrameworkProject('myproject')
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def first = service.deleteProject(project, fwk, null, null)
+        def second = service.deleteProject(project, fwk, null, null)
+
+        then:
+        first.success
+        second.success
+        second.error == null
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        2 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+    }
+
     def "project removal waits until execution cleanup succeeds"() {
         given:
         def project = Mock(IRundeckProject) {

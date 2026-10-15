@@ -1387,8 +1387,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return new DeleteJobResult(success:false,error:errmsg)
             }
             
-            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
-            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){
@@ -1404,6 +1402,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     exec.scheduledExecution = null
                 }
             }
+            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
+            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             fileUploadService.deleteRecordsForScheduledExecution(scheduledExecution)
             //before delete job
             rundeckJobDefinitionManager.beforeDelete(scheduledExecution, authContext)

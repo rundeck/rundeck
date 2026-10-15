@@ -1940,6 +1940,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean success
         String error
     }
+    private static boolean runningExecutionBlockedDelete(String error) {
+        return error != null && (
+            error.contains('currently being executed') ||
+                error.contains('The execution is currently running')
+        )
+    }
+
     /**
      * Claim this JVM's deferred delete for the current project row.
      * @return the id stored in the claim, or null when the same project is already claimed
@@ -2017,7 +2024,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup)
             if (result != null && result.success) {
                 deferredDeletesInFlight.remove(project.name, claimedId)
-            } else if (result?.error?.contains('currently being executed')) {
+            } else if (runningExecutionBlockedDelete(result?.error)) {
                 deferredDeletesInFlight.remove(project.name, claimedId)
             }
             return result
