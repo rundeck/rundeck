@@ -116,7 +116,15 @@ class ApiVersionInterceptor {
             flash.errorCode = 'api.error.api-version.required'
             AA_TimerInterceptor.afterRequest(request, response, session)
             logDetail(request, params.toString(), actionName, controllerName, 'api.error.api-version.required')
-            apiService.renderErrorFormat(response,[code: 'api.error.api-version.required'])
+            // Without an explicit status this renders the error body with the default 200,
+            // so callers see a successful response carrying an error. Every other error exit
+            // in this interceptor sets one; this branch did not.
+            apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: 'api.error.api-version.required'
+                    ]
+            )
             return false
         }
         def unsupported = !(VersionMap.containsKey(params.api_version))

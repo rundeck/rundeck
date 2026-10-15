@@ -2658,10 +2658,10 @@ key2=value'''
                     break
                 }
             case 'json':
-                render(contentType: 'application/json') {
-                    key key_
-                    value value_
-                }
+                // Converter form, not render(contentType:..){closure}: the closure form commits no
+                // response on Grails 8, so the dispatcher falls through to view resolution and
+                // answers 500 "Could not resolve view with name '<action>'".
+                render([key: key_, value: value_] as JSON)
                 break
         }
     }
@@ -2902,10 +2902,10 @@ Authorization required: `configure` access for `project` resource type or `admin
                     break
                 }
             case 'json':
-                render(contentType: 'application/json') {
-                    key key_
-                    value value_
-                }
+                // Converter form, not render(contentType:..){closure}: the closure form commits no
+                // response on Grails 8, so the dispatcher falls through to view resolution and
+                // answers 500 "Could not resolve view with name '<action>'".
+                render([key: key_, value: value_] as JSON)
                 break
         }
     }
@@ -3919,31 +3919,33 @@ Note: `other_errors` included since API v35""",
                     break;
                 }
             case 'json':
-                render(contentType: 'application/json'){
-                    import_status result.success ? 'successful' : 'failed'
-                    successful result.success
-
-                    if (!result.success) {
-                        //list errors
-                        errors result.joberrors
-                    }
-
-                    if(result.execerrors){
-                        execution_errors result.execerrors
-                    }
-
-                    if(result.aclerrors){
-                        acl_errors result.aclerrors
-                    }
-                    if(result.scmerrors){
-                        scm_errors result.scmerrors
-                    }
-                    if (request.api_version > ApiVersions.V34) {
-                        if (result.importerErrors) {
-                            other_errors result.importerErrors
-                        }
-                    }
+                // The closure form of render(contentType:'application/json'){..} leaves this
+                // action with no committed response on Grails 8: the dispatcher then falls through
+                // to view resolution and answers 500 "Could not resolve view with name
+                // 'apiProjectImport'" on an import that had already completed successfully.
+                // apiProjectConfigKeyGet/Put in this file hit the same failure and were
+                // converted the same way.
+                Map importResult = [
+                        import_status: result.success ? 'successful' : 'failed',
+                        successful   : result.success
+                ]
+                if (!result.success) {
+                    //list errors
+                    importResult.errors = result.joberrors
                 }
+                if (result.execerrors) {
+                    importResult.execution_errors = result.execerrors
+                }
+                if (result.aclerrors) {
+                    importResult.acl_errors = result.aclerrors
+                }
+                if (result.scmerrors) {
+                    importResult.scm_errors = result.scmerrors
+                }
+                if (request.api_version > ApiVersions.V34 && result.importerErrors) {
+                    importResult.other_errors = result.importerErrors
+                }
+                render(importResult as JSON)
                 break;
         }
     }
