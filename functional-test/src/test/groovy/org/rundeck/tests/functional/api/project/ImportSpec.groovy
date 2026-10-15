@@ -176,23 +176,7 @@ class ImportSpec extends BaseContainer {
     }
 
     /**
-     * Regression test for RUN-4950 / HackerOne #3960872: reproduces the reported PoC - a
-     * project-import archive whose execution XML forges an outputfilepath ("/etc/passwd") that
-     * is not backed by any file actually present in the archive. Import must still report
-     * success (matching the original report), but the imported execution's output must never
-     * disclose the forged file's content.
-     */
-    /**
-     * Regression test for RUN-4950 / HackerOne #3960872: reproduces the reported PoC - a
-     * project-import archive whose execution XML forges an outputfilepath pointing at another,
-     * real project's execution log file that is not backed by any file present in the archive
-     * itself. Import must still report success (matching the original report), but the imported
-     * execution's output must never disclose the victim project's real log content.
-     *
-     * The forged path must resolve, after getFileForExecutionFiletype's extension substitution
-     * (strip the trailing extension, append the requested filetype), to the victim file's actual
-     * path - so it is built from a real victim execution's id with a ".rdlog" suffix, rather than
-     * an arbitrary file whose transformed path would never be read regardless of the fix.
+     * Regression test for RUN-4950 / HackerOne #3960872. See PR description for details.
      */
     def "test-project-import-forged-outputfilepath-not-disclosed"(){
         given: "a victim project with a real execution log containing a unique marker"

@@ -1240,10 +1240,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
 
     /**
-     * Regression test for RUN-4950 / HackerOne #3960872: a forged archive can reference an
-     * outputfilepath outside the importing project's own log storage (e.g. another project's
-     * log file). If that path is not backed by a file actually present in the archive, the
-     * raw archive-supplied value must never be persisted on the imported Execution.
+     * Regression test for RUN-4950 / HackerOne #3960872. See PR description for details.
      */
     def "importExecutionsToProject drops archive-supplied outputfilepath when referenced log file is absent from archive"() {
         setup:
