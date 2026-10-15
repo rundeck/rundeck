@@ -31,7 +31,7 @@ class MockFrameworkService{
         this.rundeckProject = rundeckProject
     }
 
-    def updateFrameworkProjectConfig(String project,Properties properties, Set<String> removePrefixes){
+    def updateFrameworkProjectConfig(String project,Properties properties, Set<String> removePrefixes, boolean refreshNodes = true){
         [success:true]
     }
 
