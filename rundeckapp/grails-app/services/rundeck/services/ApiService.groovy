@@ -1051,6 +1051,15 @@ class ApiService implements WebUtilService{
         if (defformat) {
             return defformat
         }
+        // Never hand back a format the caller did not allow. A dotted key path such as
+        // /project/X/config/test.property makes Grails read 'property' as the URL extension, so
+        // request.format is that extension rather than the request's content type. Returning it
+        // left the caller's switch(respFormat) matching no case at all: the action rendered
+        // nothing and the dispatcher answered 500 "Could not resolve view with name '<action>'".
+        // Call sites that pass a defformat never reach this branch.
+        if (allowed && requestFormat) {
+            return allowed.first()
+        }
         return requestFormat ?: 'json'
     }
 
