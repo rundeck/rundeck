@@ -142,6 +142,7 @@ import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
@@ -187,6 +188,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
+    /** In-flight startup cleanup, so project-delete recovery can wait for it. */
+    Future startupCleanupFuture
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecycleComponentService
 
@@ -935,7 +938,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
 
-        executorService.submit {
+        startupCleanupFuture = executorService.submit {
             def found = executionIds.collect { Execution.get(it) }
             cleanupRunningJobs(found, status)
         }
@@ -2190,7 +2193,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext
      * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
      */
-    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username) {
+    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username, boolean skipAuthorization = false) {
         def failures=[]
         def failed=false
         def count=0;
@@ -2200,7 +2203,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (!exec) {
                 result = [success: false, message: 'Execution Not found: ' + id, id: id]
             } else {
-                result = deleteExecution(exec, authContext, username)
+                result = skipAuthorization ? deleteExecutionAuthorized(exec, username) : deleteExecution(exec, authContext, username)
                 result.id = id
             }
             if(!result.success){
