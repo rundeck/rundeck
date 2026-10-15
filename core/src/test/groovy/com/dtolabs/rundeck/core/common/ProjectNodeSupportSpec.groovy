@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.common
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.resources.FileResourceModelPathPolicy
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
@@ -54,7 +55,10 @@ class ProjectNodeSupportSpec extends Specification {
             getName() >> PROJECT_NAME
             getProperties() >> ([
                     'resources.source.1.type'                            : 'file',
-                    'resources.source.1.config.file'                     : '/tmp/file',
+                    'resources.source.1.config.file'                     : new File(
+                            testProject.baseDir,
+                            'etc/file'
+                    ).absolutePath,
                     'resources.source.1.config.requireFileExists'        : 'false',
                     'resources.source.1.config.includeServerNode'        : 'true',
                     'resources.source.1.config.generateFileAutomatically': 'false',
@@ -95,7 +99,10 @@ class ProjectNodeSupportSpec extends Specification {
             getProperties() >> (
                 [
                     'resources.source.1.type'                            : 'file',
-                    'resources.source.1.config.file'                     : '/tmp/file',
+                    'resources.source.1.config.file'                     : new File(
+                            testProject.baseDir,
+                            'etc/file'
+                    ).absolutePath,
                     'resources.source.1.config.requireFileExists'        : 'false',
                     'resources.source.1.config.includeServerNode'        : 'true',
                     'resources.source.1.config.generateFileAutomatically': 'false',
@@ -124,6 +131,87 @@ class ProjectNodeSupportSpec extends Specification {
         result2 != null
         result2.nodeNames != null
         result2.nodeNames.size() == 1
+    }
+
+    def "loads file source within project directory"() {
+        given:
+            File nodesFile = copyNodeFixture(new File(testProject.baseDir, "etc/resources.xml"))
+            ProjectNodeSupport support = createFileSourceSupport(nodesFile)
+
+        when:
+            def result = support.nodeSet
+
+        then:
+            !support.hasInvalidFileResourceModelPaths()
+            result.nodeNames.containsAll(['test1', 'testnode2'])
+            support.resourceModelSourceExceptionsMap.isEmpty()
+
+        cleanup:
+            support?.close()
+    }
+
+    def "loads file source within configured allowed base path"() {
+        given:
+            File allowedDirectory = File.createTempDir("ProjectNodeSupportSpec-allowed", "")
+            File nodesFile = copyNodeFixture(new File(allowedDirectory, "resources.xml"))
+            ProjectNodeSupport support = createFileSourceSupport(nodesFile, allowedDirectory.absolutePath)
+
+        when:
+            def result = support.nodeSet
+
+        then:
+            !support.hasInvalidFileResourceModelPaths()
+            result.nodeNames.containsAll(['test1', 'testnode2'])
+            support.resourceModelSourceExceptionsMap.isEmpty()
+
+        cleanup:
+            support?.close()
+            FileUtils.deleteDir(allowedDirectory)
+    }
+
+    def "rejects file source outside permitted directories without leaking path"() {
+        given:
+            File outsideDirectory = File.createTempDir("ProjectNodeSupportSpec-outside", "")
+            File nodesFile = copyNodeFixture(new File(outsideDirectory, "sensitive-resources.xml"))
+            ProjectNodeSupport support = createFileSourceSupport(nodesFile)
+
+        when:
+            boolean invalidBeforeLoad = support.hasInvalidFileResourceModelPaths()
+            def result = support.nodeSet
+
+        then:
+            invalidBeforeLoad
+            !result.nodeNames.contains('test1')
+            support.resourceModelSourceExceptionsMap['1.source']
+            support.resourceModelSourceExceptionsMap['1.source'].message.contains(
+                    'File path must be within the project directory'
+            )
+            !support.resourceModelSourceExceptionsMap['1.source'].message.contains(nodesFile.absolutePath)
+
+        cleanup:
+            support?.close()
+            FileUtils.deleteDir(outsideDirectory)
+    }
+
+    def "does not apply file path policy to non-file source types"() {
+        given:
+            Properties properties = new Properties()
+            properties.setProperty('resources.source.1.type', 'local')
+            properties.setProperty('resources.source.1.config.file', '/outside/project/resources.xml')
+            ProjectNodeSupport support = createSupport(
+                    properties,
+                    new FileResourceModelPathPolicy(testProject.baseDir, null)
+            )
+
+        when:
+            def result = support.nodeSet
+
+        then:
+            result != null
+            support.resourceModelSourceExceptionsMap.isEmpty()
+
+        cleanup:
+            support?.close()
     }
 
     def "serialize plugin config"() {
@@ -339,6 +427,57 @@ class ProjectNodeSupportSpec extends Specification {
         result[1].type == "provider2"
         result[1].props == ['x':'y','z':'w']
         result[1].extraProps == [:]
+    }
+
+    /**
+     * Creates project node support for a configured file source.
+     */
+    private ProjectNodeSupport createFileSourceSupport(
+            final File nodesFile,
+            final String allowedBasePaths = null
+    ) {
+        Properties properties = new Properties()
+        properties.setProperty('resources.source.1.type', 'file')
+        properties.setProperty('resources.source.1.config.file', nodesFile.absolutePath)
+        properties.setProperty('resources.source.1.config.format', 'resourcexml')
+        properties.setProperty('resources.source.1.config.includeServerNode', 'false')
+        createSupport(
+                properties,
+                new FileResourceModelPathPolicy(testProject.baseDir, allowedBasePaths)
+        )
+    }
+
+    /**
+     * Creates project node support with the supplied source configuration and path policy.
+     */
+    private ProjectNodeSupport createSupport(
+            final Properties properties,
+            final FileResourceModelPathPolicy pathPolicy
+    ) {
+        IRundeckProjectConfig config = Mock(IRundeckProjectConfig) {
+            getName() >> PROJECT_NAME
+            getProperties() >> properties
+            getConfigLastModifiedTime() >> new Date()
+        }
+        new ProjectNodeSupport(
+                File.createTempDir("ProjectNodeSupportSpec-var", ""),
+                config,
+                ResourceFormatGeneratorService.getInstanceForFramework(framework, framework),
+                ResourceModelSourceService.getInstanceForFramework(framework, framework),
+                null,
+                pathPolicy
+        )
+    }
+
+    /**
+     * Copies the shared XML node fixture to the requested file.
+     */
+    private static File copyNodeFixture(final File destination) {
+        destination.parentFile.mkdirs()
+        destination.bytes = new File(
+                'src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml'
+        ).bytes
+        destination
     }
 
 }
