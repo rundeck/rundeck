@@ -16,6 +16,7 @@
 package rundeckapp.init
 
 import org.eclipse.jetty.util.security.Password
+import spock.lang.IgnoreIf
 import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -198,5 +199,146 @@ class RundeckInitializerSpec extends Specification {
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
         System.clearProperty("rdeck.config")
 
+    }
+
+    private RundeckInitializer newInitializer(File dir) {
+        RundeckInitConfig cfg = new RundeckInitConfig()
+        cfg.cliOptions.baseDir = dir.absolutePath
+        cfg.cliOptions.configDir = dir.absolutePath
+        cfg.cliOptions.dataDir = dir.absolutePath
+        cfg.cliOptions.logDir = dir.absolutePath
+        RundeckInitializer initializer = new RundeckInitializer(cfg)
+        initializer.thisJar = new File(dir, "rundeck.war")
+        return initializer
+    }
+
+    def "config-defaults does not ship a default admin password"() {
+        given:
+        Properties defaults = new Properties()
+        getClass().getClassLoader().getResourceAsStream("config-defaults.properties").withCloseable {
+            defaults.load(it)
+        }
+
+        expect:
+        defaults.getProperty("default.admin.name") == "admin"
+        !defaults.containsKey(RundeckInitializer.PROP_DEFAULT_ADMIN_PASSWORD)
+    }
+
+    def "generateAdminPassword returns unique random 24 char values"() {
+        when:
+        def first = RundeckInitializer.generateAdminPassword()
+        def second = RundeckInitializer.generateAdminPassword()
+
+        then:
+        first.length() == 24
+        first ==~ /[A-Za-z0-9_-]+/
+        first != "admin"
+        first != second
+    }
+
+    def "initConfigurations generates admin password when none supplied"() {
+        given:
+        File dir = File.createTempDir()
+        RundeckInitializer initializer = newInitializer(dir)
+
+        when:
+        initializer.initConfigurations()
+
+        then:
+        initializer.generatedAdminPassword
+        def password = initializer.config.runtimeConfiguration.getProperty(RundeckInitializer.PROP_DEFAULT_ADMIN_PASSWORD)
+        password.length() == 24
+        password != "admin"
+
+        cleanup:
+        dir.deleteDir()
+    }
+
+    def "initConfigurations uses admin password from system property"() {
+        given:
+        File dir = File.createTempDir()
+        System.setProperty(RundeckInitializer.PROP_DEFAULT_ADMIN_PASSWORD, "supplied-pass")
+        RundeckInitializer initializer = newInitializer(dir)
+
+        when:
+        initializer.initConfigurations()
+        def written = initializer.persistGeneratedAdminPassword(dir, "supplied-pass", false)
+
+        then:
+        !initializer.generatedAdminPassword
+        initializer.config.runtimeConfiguration.getProperty(RundeckInitializer.PROP_DEFAULT_ADMIN_PASSWORD) == "supplied-pass"
+        written == null
+        !new File(dir, RundeckInitializer.INITIAL_ADMIN_PASSWORD_FILE).exists()
+
+        cleanup:
+        System.clearProperty(RundeckInitializer.PROP_DEFAULT_ADMIN_PASSWORD)
+        dir.deleteDir()
+    }
+
+    def "persistGeneratedAdminPassword writes nothing when realm already existed"() {
+        given:
+        File dir = File.createTempDir()
+        RundeckInitializer initializer = newInitializer(dir)
+        initializer.generatedAdminPassword = true
+
+        when:
+        def written = initializer.persistGeneratedAdminPassword(dir, "generated", true)
+
+        then:
+        written == null
+        !new File(dir, RundeckInitializer.INITIAL_ADMIN_PASSWORD_FILE).exists()
+
+        cleanup:
+        dir.deleteDir()
+    }
+
+    @IgnoreIf({ !java.nio.file.FileSystems.getDefault().supportedFileAttributeViews().contains("posix") })
+    def "persistGeneratedAdminPassword writes owner-only file with generated password"() {
+        given:
+        File dir = File.createTempDir()
+        RundeckInitializer initializer = newInitializer(dir)
+        initializer.generatedAdminPassword = true
+
+        when:
+        File written = initializer.persistGeneratedAdminPassword(dir, "generated-pass", false)
+
+        then:
+        written == new File(dir, RundeckInitializer.INITIAL_ADMIN_PASSWORD_FILE)
+        written.text.trim() == "generated-pass"
+        java.nio.file.attribute.PosixFilePermissions.toString(
+            java.nio.file.Files.getPosixFilePermissions(written.toPath())
+        ) == "rw-------"
+
+        cleanup:
+        dir.deleteDir()
+    }
+
+    def "realm template renders generated admin password and leaves existing realm untouched"() {
+        given:
+        File dir = File.createTempDir()
+        File templateDir = new File("templates")
+        File template = new File(templateDir, "config/realm.properties.template")
+        RundeckInitializer initializer = newInitializer(dir)
+        initializer.initConfigurations()
+        def props = initializer.config.runtimeConfiguration
+        def password = props.getProperty(RundeckInitializer.PROP_DEFAULT_ADMIN_PASSWORD)
+
+        when:
+        initializer.copyToDestinationAndExpandProperties(dir, templateDir.toPath(), template, props, false)
+        File realm = new File(dir, "realm.properties")
+
+        then:
+        realm.readLines().contains("admin:" + password + ",user,admin")
+        !realm.text.contains("admin:admin")
+
+        when: "realm already exists"
+        realm.text = "admin:keepme,user,admin"
+        initializer.copyToDestinationAndExpandProperties(dir, templateDir.toPath(), template, props, false)
+
+        then:
+        realm.text == "admin:keepme,user,admin"
+
+        cleanup:
+        dir.deleteDir()
     }
 }
