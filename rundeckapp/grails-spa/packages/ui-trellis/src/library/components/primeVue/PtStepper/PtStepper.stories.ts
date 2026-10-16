@@ -22,6 +22,12 @@ const meta: Meta<typeof PtStepper> = {
       type: "number",
       description: "Index of active step.",
     },
+    orientation: {
+      control: { type: "select" },
+      options: ["horizontal", "vertical"],
+      description:
+        "Layout of the steps. `vertical` shows each step's `content` slot beneath it, joined by a connector line.",
+    },
     items: {
       description:
         "Array of steps to render. By default each item must have a label",
@@ -118,4 +124,17 @@ export const Completed: Story = {
       },
     },
   },
+};
+
+export const Vertical: Story = {
+  name: "Vertical",
+  render: (args) => ({
+    components: { PtStepper },
+    setup: () => ({ args }),
+    template: `
+      <PtStepper orientation="vertical" :items="args.items">
+        <template #content="{ item }">Content for {{ item.label }}</template>
+      </PtStepper>`,
+  }),
+  args: {},
 };

@@ -120,10 +120,13 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         HashMap<String, String> stringStringHashMap = new HashMap<>();
         if (null != failureData) {
             for (String s : failureData.keySet()) {
-                stringStringHashMap.put(
-                        stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, identity),
-                        failureData.get(s).toString()
-                );
+                //skip null values that plugins may put in StepException failure data
+                if (null != failureData.get(s)) {
+                    stringStringHashMap.put(
+                            stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, identity),
+                            failureData.get(s).toString()
+                    );
+                }
             }
         }
         if (stringStringHashMap.size() > 0) {
