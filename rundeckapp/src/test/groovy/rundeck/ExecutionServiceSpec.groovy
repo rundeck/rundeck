@@ -1471,6 +1471,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+        Closure<Map> rdlogRemoval = { throw new RuntimeException('storage') }
+        Closure<Map> stateRemoval = { [started: false, error: "not found"] }
 
 
         service.fileUploadService = Mock(FileUploadService)
@@ -1480,8 +1482,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
-            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
+            1 * prepareRemoteLogFileRemoval(execution, 'rdlog') >> { rdlogRemoval }
+            1 * prepareRemoteLogFileRemoval(execution, 'state.json') >> { stateRemoval }
             0 * _(*_)
         }
 
@@ -1537,6 +1539,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+        Closure<Map> rdlogRemoval = { [started: false, error: "not found"] }
+        Closure<Map> stateRemoval = { [started: false, error: "not found"] }
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
@@ -1545,8 +1549,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
-            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
+            1 * prepareRemoteLogFileRemoval(execution, 'rdlog') >> { rdlogRemoval }
+            1 * prepareRemoteLogFileRemoval(execution, 'state.json') >> { stateRemoval }
             0 * _(*_)
         }
 
@@ -1592,12 +1596,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ).save(flush: true)
         def logfile = File.createTempFile('rundeck.ExecutionServiceSpec-rollback', '.log')
         logfile.deleteOnExit()
+        def remoteRemovalCalled = false
+        Closure<Map> remoteRemoval = {
+            remoteRemovalCalled = true
+            [started: true]
+        }
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
             1 * getExecutionFiles(completed, [], false) >> ['rdlog': Mock(ExecutionFile)]
             1 * getFileForExecutionFiletype(completed, 'rdlog', false, false) >> logfile
             1 * getFileForExecutionFiletype(completed, 'rdlog', false, true) >> null
-            0 * removeRemoteLogFile(_, _)
+            1 * prepareRemoteLogFileRemoval(completed, 'rdlog') >> { remoteRemoval }
         }
 
         when:
@@ -1618,6 +1627,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         !runningResult.success
         runningResult.error == 'running'
         logfile.exists()
+        !remoteRemovalCalled
     }
 
     def "delete execution job file records"() {

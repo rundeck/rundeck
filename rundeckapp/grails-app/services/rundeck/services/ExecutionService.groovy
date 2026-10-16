@@ -2268,6 +2268,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             reportService.deleteByExecution(e)
 
             List<File> files = []
+            List<Closure<Map>> remoteFileRemovals = []
             def execs = []
 
             def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
@@ -2275,6 +2276,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //aggregate all files to delete
             execs << e
             executionFiles.each { ftype, executionFile ->
+                remoteFileRemovals << logFileStorageService.prepareRemoteLogFileRemoval(e, ftype)
 
                 def localFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
                 if (null != localFile && localFile.exists()) {
@@ -2299,7 +2301,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete()
-            deleteExecutionFilesAfterCommit(e, executionFiles.keySet(), files)
+            deleteExecutionFilesAfterCommit(e, remoteFileRemovals, files)
             result = [success: true]
         } catch (Exception ex) {
             log.error("Failed to delete execution ${e.id}", ex)
@@ -2310,14 +2312,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     private void deleteExecutionFilesAfterCommit(
         Execution execution,
-        Collection<String> filetypes,
+        Collection<Closure<Map>> remoteFileRemovals,
         Collection<File> files
     ) {
         def cleanup = {
-            filetypes.each { String filetype ->
-                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(execution, filetype)
-                if (!resultDeleteRemote.started) {
-                    log.debug(resultDeleteRemote.error)
+            remoteFileRemovals.each { Closure<Map> removeRemoteFile ->
+                try {
+                    def resultDeleteRemote = removeRemoteFile.call()
+                    if (!resultDeleteRemote.started) {
+                        log.debug(resultDeleteRemote.error)
+                    }
+                } catch (Throwable t) {
+                    log.warn("Failed to delete a remote log file for execution ${execution.id}: ${t.message}", t)
                 }
             }
             int deletedFiles = 0

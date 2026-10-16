@@ -14,6 +14,8 @@ import org.rundeck.util.SHAInputStream
 import org.rundeck.util.SHAOutputStream
 import org.rundeck.util.Sizes
 import org.rundeck.util.ThresholdInputStream
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.validation.Errors
 import rundeck.Execution
 import rundeck.JobFileRecord
@@ -290,11 +292,27 @@ class FileUploadService {
     def deleteRecord(JobFileRecord record) {
         def plugin = getPlugin()
         def reference = record.storageReference
-        if (plugin.hasFile(reference)) {
-            plugin.transitionState(reference, FileUploadPlugin.ExternalState.Deleted)
-        }
-        removeLocalFile(reference)
         record.delete()
+        def cleanup = {
+            try {
+                if (plugin.hasFile(reference)) {
+                    plugin.transitionState(reference, FileUploadPlugin.ExternalState.Deleted)
+                }
+                removeLocalFile(reference)
+            } catch (Throwable t) {
+                log.warn("Failed to delete uploaded file ${reference}: ${t.message}", t)
+            }
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                void afterCommit() {
+                    cleanup.call()
+                }
+            })
+        } else {
+            cleanup.call()
+        }
     }
 
     def deleteRecordsForExecution(Execution e) {
