@@ -3124,7 +3124,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupDoUpdate()
         def  uuid=UUID.randomUUID().toString()
-        def orig = new ScheduledExecution(createJobParams()+[uuid:uuid]).save()
+        // flush, or loadJobs cannot see this job from its own transaction and reports
+        // no uuid conflict, leaving errjobs empty
+        def orig = new ScheduledExecution(createJobParams()+[uuid:uuid]).save(flush: true)
         def upload = new ScheduledExecution(
                 createJobParams() + [project: 'BProject', description: 'new desc', uuid: uuid]
         )
