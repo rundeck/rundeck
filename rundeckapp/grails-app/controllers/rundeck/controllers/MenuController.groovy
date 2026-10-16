@@ -18,6 +18,7 @@ package rundeck.controllers
 
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.app.api.homeSummary.HomeSummary
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
@@ -1195,7 +1196,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         } catch (IOException e) {
             log.error("Error deleting project acl: $input.id: $e.message", e)
-            request.error = e.message
+            request.error = ClientErrorMessages.publicMessage(e)
         }
         return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
@@ -1304,7 +1305,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             flash.storedSize = size
         } catch (IOException e) {
             log.error("Error storing project acl: ${input.createId()}: $e.message", e)
-            request.error = e.message
+            request.error = ClientErrorMessages.publicMessage(e)
             error = true
         }
         return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
@@ -3791,7 +3792,7 @@ if executed in cluster mode.
                         results.putAll(pluginData)
                     }
                 } catch (ScmPluginException e) {
-                    results.warning = "Failed to update SCM Export status: ${e.message}"
+                    results.warning = "Failed to update SCM Export status: ${ClientErrorMessages.publicMessage(e)}"
                 }
             }
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
@@ -3819,7 +3820,7 @@ if executed in cluster mode.
                         }
                     }
                 } catch (ScmPluginException e) {
-                    results.warning = "Failed to update SCM Import status: ${e.message}"
+                    results.warning = "Failed to update SCM Import status: ${ClientErrorMessages.publicMessage(e)}"
                 }
             }
         }
