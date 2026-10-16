@@ -90,27 +90,35 @@
     <stepplugin:customFields json="${values[prop.name]}"/>
 </g:elseif>
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT']}">
-    %{--persisted STATIC_TEXT values are job data, not the trusted plugin descriptor default, so they must be sanitized rather than passed through raw--}%
-    <g:if test="${values[prop.name]}">
-        <span class="configpair">
-            <span title="${enc(attr: propdesc)}"><stepplugin:message
-                    service="${service}"
-                    name="${provider}"
-                    code="${messagePrefix?:''}property.${prop.name}.title"
-                    default="${prop.title ?: prop.name}"/>:</span>
-            <span class="text-success">
-                <g:if test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/html']}">
-                    <g:enc sanitize="${values[prop.name]}"/>
-                </g:if>
-                <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/x-markdown']}">
-                    <g:markdown>${values[prop.name]}</g:markdown>
-                </g:elseif>
-                <g:else>
-                    <g:enc html="${values[prop.name]}"/>
-                </g:else>
-            </span>
+    %{--STATIC_TEXT is plugin-declared help content, not user config: always show the
+       trusted descriptor default (as the edit-mode form field partial does), never the
+       persisted value -- job data can be unexpectedly tainted, as this very bug showed--}%
+    <g:set var="staticTextValue" value="${
+                stepplugin.messageText(
+                        service: service,
+                        name: provider,
+                        code: (messagePrefix?:'')+'property.' + prop.name + '.defaultValue',
+                        default: prop.defaultValue
+                )
+    }"/>
+    <span class="configpair">
+        <span title="${enc(attr: propdesc)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix?:''}property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/>:</span>
+        <span class="text-success">
+            <g:if test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/html']}">
+                <g:enc sanitize="${staticTextValue}"/>
+            </g:if>
+            <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/x-markdown']}">
+                <g:markdown>${staticTextValue}</g:markdown>
+            </g:elseif>
+            <g:else>
+                <g:enc html="${staticTextValue}"/>
+            </g:else>
         </span>
-    </g:if>
+    </span>
 </g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
