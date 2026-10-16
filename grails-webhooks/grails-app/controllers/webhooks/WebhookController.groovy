@@ -2,6 +2,7 @@ package webhooks
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
@@ -549,7 +550,7 @@ Since: v33
             def responder = webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext, request)
             responder.respond(response)
         } catch(WebhookEventException wee) {
-            sendJsonError(wee.message)
+            sendJsonError(ClientErrorMessages.publicMessage(wee))
         }
     }
     static final def KEYS_TO_CLEAN = ["controller","action","authtoken","api_version"]

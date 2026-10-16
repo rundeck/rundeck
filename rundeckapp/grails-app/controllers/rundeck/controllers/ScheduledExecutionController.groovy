@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -2453,7 +2454,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         try{
             result = scheduledExecutionService._doupdate(params, authContext, changeinfo)
         }catch(exception){
-            flash.error = "Failed to update job: [${exception.message}]"
+            flash.error = "Failed to update job: [${ClientErrorMessages.publicMessage(exception)}]"
             log.warn("There was errors with the update process: ${exception.stackTrace}")
             return redirect(controller: 'scheduledExecution', action: 'edit',
                         params: [id: params.id, project: found.project])
@@ -3452,7 +3453,7 @@ Since: v56''',
                 try{
                     opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType, authContext)
                 }catch(Exception e){
-                    optionValuesPluginErrors.put(opt.name, "Error loading option plugin: ${e.message}")
+                    optionValuesPluginErrors.put(opt.name, "Error loading option plugin: ${ClientErrorMessages.publicMessage(e)}")
                     log.warn("option value plugin failed: ${e.message}")
 
                 }
@@ -3845,7 +3846,7 @@ Since: v56''',
                             )
                             fileresults[optname] = ref
                         } catch (FileUploadServiceException e) {
-                            def msg = g.message(code: 'api.error.job-upload.error', args: [e.message])
+                            def msg = g.message(code: 'api.error.job-upload.error', args: [ClientErrorMessages.publicMessage(e)])
                             return [success: false, failed: true, error: 'input', message: msg]
                         }
                     }
@@ -4556,7 +4557,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
                 return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request',
-                    args: ["Failed to parse JSON request body: ${e.message}"],
+                    args: ["Failed to parse JSON request body: ${ClientErrorMessages.publicMessage(e)}"],
                     format: response.format
                 ])
             }

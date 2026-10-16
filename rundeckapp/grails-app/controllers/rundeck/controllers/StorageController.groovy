@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
 import groovy.transform.CompileStatic
@@ -214,7 +215,7 @@ class StorageController extends ControllerBase{
                 //problem reading storage contents
                 log.error("Failed reading storage content: "+e.message,e)
                 response.status=HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-                appendOutput(response, "Failed reading storage content: "+e.message)
+                appendOutput(response, "Failed reading storage content: " + ClientErrorMessages.publicMessage(e))
             }
 
             return
@@ -409,7 +410,7 @@ class StorageController extends ControllerBase{
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
-            flash.error= e.message
+            flash.error = ClientErrorMessages.publicMessage(e)
             return redirect(controller: 'menu', action: 'storage',params: ([resourcePath:resourcePath]) + (params.project ? ([project:params.project]) : ([:])))
         }
     }
@@ -626,7 +627,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
             log.debug("Error creating resource ${resourcePath}", e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message: e.message
+                    message: ClientErrorMessages.publicMessage(e)
             ])
         }
     }
@@ -711,7 +712,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
             log.debug("Error deleting resource ${resourcePath}", e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message: e.message
+                    message: ClientErrorMessages.publicMessage(e)
             ])
         }
     }
@@ -849,7 +850,7 @@ Authorization under the key path `project/{project}` can be granted at the proje
             log.debug("Error putting resource ${resourcePath}", e)
             apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message:e.message
+                    message: ClientErrorMessages.publicMessage(e)
             ])
         }
     }
@@ -1015,14 +1016,14 @@ Authorization under the key path `project/{project}` can be granted at the proje
             log.debug("Error reading resource ${resourcePath}",e)
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message: e.message
+                    message: ClientErrorMessages.publicMessage(e)
             ])
         }catch(Exception e){
             log.error("Error reading resource ${resourcePath}: ${e.message}")
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message: "Error: ${e.getMessage()}",
-                    meta: "Error: ${e.message}"
+                    message: "Error: ${ClientErrorMessages.publicMessage(e)}",
+                    meta: "Error: ${ClientErrorMessages.publicMessage(e)}"
             ])
         }
     }
