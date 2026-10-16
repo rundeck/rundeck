@@ -1,5 +1,37 @@
 <template>
-  <Stepper :value="activeStep" linear>
+  <Stepper
+    v-if="vertical"
+    :value="activeStep"
+    linear
+    class="pt-stepper-vertical"
+    data-testid="pt-stepper-vertical"
+  >
+    <StepItem
+      v-for="(item, index) in items"
+      :key="`step${index}`"
+      :value="index + 1"
+    >
+      <Step :value="index + 1" :pt="getPtOptions(item)">
+        <slot name="step" :item="item">
+          <span :data-testid="`pt-stepper-label-${index + 1}`">{{
+            item.label
+          }}</span>
+        </slot>
+      </Step>
+      <div
+        class="pt-stepper-content"
+        :data-testid="`pt-stepper-content-${index + 1}`"
+      >
+        <slot name="content" :item="item" :index="index"></slot>
+      </div>
+    </StepItem>
+  </Stepper>
+  <Stepper
+    v-else
+    :value="activeStep"
+    linear
+    data-testid="pt-stepper-horizontal"
+  >
     <StepList>
       <Step
         v-for="(item, index) in items"
@@ -7,7 +39,11 @@
         :value="index + 1"
         :pt="getPtOptions(item)"
       >
-        <slot name="step" :item="item">{{ item.label }}</slot>
+        <slot name="step" :item="item">
+          <span :data-testid="`pt-stepper-label-${index + 1}`">{{
+            item.label
+          }}</span>
+        </slot>
       </Step>
     </StepList>
     <slot></slot>
@@ -18,13 +54,23 @@
 import { defineComponent, PropType } from "vue";
 import Stepper from "primevue/stepper";
 import StepList from "primevue/steplist";
-import Step from "primevue/step";
+import Step, { type StepPassThroughMethodOptions } from "primevue/step";
+import StepItem from "primevue/stepitem";
 import { Item } from "./ptStepperTypes";
 
 export default defineComponent({
   name: "PtStepper",
-  components: { Stepper, StepList, Step },
+  components: { Stepper, StepList, Step, StepItem },
   props: {
+    /**
+     * Layout of the steps. `vertical` stacks every step with its `content`
+     * slot underneath, joined by a connector line; all content stays visible.
+     */
+    orientation: {
+      type: String as PropType<"horizontal" | "vertical">,
+      default: "horizontal",
+      validator: (value: string) => ["horizontal", "vertical"].includes(value),
+    },
     activeStep: {
       type: Number,
       default: 1,
@@ -39,14 +85,19 @@ export default defineComponent({
       },
     },
   },
+  computed: {
+    vertical(): boolean {
+      return this.orientation === "vertical";
+    },
+  },
   methods: {
     getPtOptions(item: Item) {
       return {
-        root: ({ context, props }) => {
+        root: ({ context, props }: StepPassThroughMethodOptions) => {
           return {
             class:
               item.completed ||
-              (!context.active && props.value < this.activeStep)
+              (!context.active && Number(props.value) < this.activeStep)
                 ? "p-completed"
                 : "",
           };
@@ -115,5 +166,59 @@ export default defineComponent({
   //&.p-disabled {
   //  opacity: 1;
   //}
+}
+</style>
+
+<style scoped lang="scss">
+// Vertical timeline (all steps and their content visible at once). Scoped so
+// these rules only reach the PrimeVue markup rendered by this component.
+.pt-stepper-vertical {
+  :deep(.p-stepitem) {
+    flex: initial;
+  }
+
+  :deep(.p-step) {
+    padding: 0;
+
+    &.p-disabled {
+      opacity: 1;
+    }
+  }
+
+  :deep(.p-step-header) {
+    padding: 0;
+    font-family: Inter, var(--fonts-body2);
+    gap: 8px;
+    cursor: default;
+
+    .p-step-number {
+      min-width: 24px;
+      height: 24px;
+      line-height: 24px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--colors-gray-150, #f4f4f5);
+      font-size: 14px;
+      font-weight: var(--fontWeights-normal);
+      color: var(--colors-gray-800);
+    }
+
+    .p-step-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--colors-gray-800-original);
+    }
+  }
+
+  // connector line, centered under the number circle
+  .pt-stepper-content {
+    margin: 4px 0 4px 11px;
+    padding: 12px 0 12px 20px;
+    border-left: 1px solid var(--colors-gray-400);
+  }
+
+  :deep(.p-stepitem:last-of-type) .pt-stepper-content {
+    border-left-color: transparent;
+  }
 }
 </style>
