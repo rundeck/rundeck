@@ -797,6 +797,25 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         0 * mgr.removeFrameworkProject('myproject')
     }
 
+    def "a delayed stale request cannot replace the recreated project's active claim"() {
+        given:
+        def original = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        Long staleId = original.id
+        original.delete(flush: true)
+        def replacement = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def claim = ProjectService.getDeclaredMethod('claimDeferredDelete', String, Long)
+        claim.accessible = true
+
+        when:
+        Long replacementClaim = claim.invoke(service, 'myproject', replacement.id) as Long
+        Long staleClaim = claim.invoke(service, 'myproject', staleId) as Long
+
+        then:
+        replacementClaim == replacement.id
+        staleClaim == null
+        service.deferredDeletesInFlight['myproject'] == replacement.id
+    }
+
     def "a deferred delete blocked by a running execution releases its claim"() {
         given:
         def disabled = false

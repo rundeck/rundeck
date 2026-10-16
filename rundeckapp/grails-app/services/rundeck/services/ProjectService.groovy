@@ -101,6 +101,7 @@ import java.util.jar.Manifest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -1955,14 +1956,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         if (projectId == null) {
             return null
         }
-        Long existing = deferredDeletesInFlight.putIfAbsent(name, projectId)
-        if (existing == null) {
-            return projectId
+        AtomicBoolean claimed = new AtomicBoolean(false)
+        deferredDeletesInFlight.compute(name) { String ignored, Long existing ->
+            //Resolve identity while holding this map key. A delayed request for an
+            //older row must not displace the active claim of a recreated project.
+            Long currentId = currentProjectId(name)
+            if (currentId != projectId) {
+                return existing
+            }
+            if (existing == null || existing != projectId) {
+                claimed.set(true)
+                return projectId
+            }
+            existing
         }
-        if (existing != projectId && deferredDeletesInFlight.replace(name, existing, projectId)) {
-            return projectId
-        }
-        return null
+        claimed.get() ? projectId : null
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
