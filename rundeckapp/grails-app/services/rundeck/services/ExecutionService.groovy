@@ -2624,6 +2624,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
+     * Check whether the given authContext is authorized to run (ACTION_RUN) the given job.
+     * Used by the Quartz scheduled-trigger path (ExecutionJob), which builds its authContext
+     * from the job's stored user/roles rather than an interactively-authenticated caller.
+     * Gated by {@link Features#SCHEDULED_RUN_AUTHORIZATION} ({@code feature.scheduledRunAuthorization.enabled}).
+     */
+    @CompileStatic
+    public boolean validateExecution(ScheduledExecution se, UserAndRolesAuthContext authContext) {
+        if (!featureService.featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION)) {
+            return true
+        }
+        return rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project)
+    }
+
+    /**
      * Run a job at a later time.
      *
      * The runAtTime parameter must be specified as an ISO 8601 compliant timestamp.
