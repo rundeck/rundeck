@@ -6993,6 +6993,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.duration.max == 240000
     }
 
+    def "metrics from projection results when all executions are running"(){
+        given:
+        Date now = new Date()
+        def projresult = [
+                [dateStarted: new Timestamp(now.time), dateCompleted: null, status: 'running'],
+                [dateStarted: new Timestamp(now.time), dateCompleted: null, status: 'running']
+        ]
+        when:
+        def result = service.metricsDataFromProjectionResult(projresult)
+        then:
+        noExceptionThrown()
+        result.total == 2
+        result.duration.average == 0
+        result.duration.min == null
+        result.duration.max == null
+    }
+
     def "load additional listener"(){
         when:
             def result = service.loadAdditionalListeners([])
