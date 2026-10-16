@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -220,6 +221,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final String status
         final String user
         final String execType
+        /** Normalized to a String to keep the all-Strings/Boolean invariant above. */
+        final String execTypeExclude
         final Boolean adhoc
         final String recentFilter
         final String olderFilter
@@ -230,6 +233,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             this.status = args.status
             this.user = args.user
             this.execType = args.execType
+            this.execTypeExclude = args.execTypeExclude
             this.adhoc = args.adhoc
             this.recentFilter = args.recentFilter
             this.olderFilter = args.olderFilter
@@ -253,6 +257,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 status: query.statusFilter,
                 user: query.userFilter,
                 execType: query.executionTypeFilter,
+                execTypeExclude: query.excludeExecutionTypeFilter?.sort()?.join(','),
                 adhoc: query.adhoc,
                 recentFilter: query.recentFilter,
                 olderFilter: query.olderFilter,
@@ -632,6 +637,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
+                //Execution types to leave out, NULL-safe for rows predating the column
+                if (query.excludeExecutionTypeFilter) {
+                    or {
+                        isNull('executionType')
+                        not { inList('executionType', query.excludeExecutionTypeFilter) }
+                    }
+                }
+
                 //running status filter.
                 if (query.runningFilter) {
                     Date now = new Date()
@@ -739,6 +752,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                  }
                              }
                          }
+                     }
+                 }
+
+                 //Execution types to leave out, NULL-safe for rows predating the column
+                 if (query.excludeExecutionTypeFilter) {
+                     or {
+                         isNull('executionType')
+                         not { inList('executionType', query.excludeExecutionTypeFilter) }
                      }
                  }
 
@@ -2427,7 +2448,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflowData:params.workflow,
                                       argString:params.argString,
-                                      executionType: params.executionType ?: 'scheduled',
+                                      executionType: params.executionType ?: ExecutionTypes.SCHEDULED,
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
@@ -2436,7 +2457,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
                                       excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
-                                      extraMetadataMap: params.extraMetadataMap?:null
+                                      extraMetadataMap: params.extraMetadataMap?:null,
+                                      note: params.note?:null
             )
 
             execution.userRoles = params.userRoles
@@ -2517,7 +2539,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def props =[:]
         props.putAll(params)
 
-        props.executionType = 'scheduled'
+        //Callers that build this map themselves (e.g. the Ad Hoc Step plugin) can type the
+        //execution. Callers passing a bound request params map must set it explicitly rather
+        //than rely on this default, so a request parameter can't choose the type.
+        props.executionType = params.executionType ?: ExecutionTypes.SCHEDULED
 
         Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
         execution.dateStarted = new Date()
@@ -2838,7 +2863,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId','note']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 

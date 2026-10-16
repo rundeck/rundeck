@@ -16,11 +16,14 @@
 
 package org.rundeck.app.authorization
 
+import com.dtolabs.rundeck.core.authorization.ExecutionAuthResourceResolver
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import org.rundeck.core.auth.AuthConstants
+import org.springframework.context.ApplicationContext
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import spock.lang.Specification
@@ -386,6 +389,72 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             false          | false          | true                  | true
             true           | true           | true                  | true
             false          | false          | false                 | false
+    }
+
+    @Unroll
+    def "filterAuthorizedProjectExecutionsAny uses the adhoc resource for a job-less execution when no resolver matches"() {
+        given:
+            def test = new BaseAuthContextEvaluator()
+            test.applicationContext = Mock(ApplicationContext) {
+                _ * getBeansOfType(ExecutionAuthResourceResolver) >> [:]
+            }
+            def auth = Mock(AuthContext)
+            test.authContextEvaluatorCacheManager = Mock(AuthCache) {
+                _ * evaluate(
+                    auth,
+                    [AuthConstants.RESOURCE_ADHOC].toSet(),
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY].toSet(),
+                    'testProject'
+                ) >> makeDecisions([authorized])
+            }
+            Execution exec = new Execution(project: 'testProject')
+        when:
+            def result = test.filterAuthorizedProjectExecutionsAny(
+                auth,
+                [exec],
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]
+            )
+        then:
+            (result.size() == 1) == authorized
+
+        where:
+            authorized << [true, false]
+    }
+
+    @Unroll
+    def "filterAuthorizedProjectExecutionsAny gates an adhoc-step execution by the resolver-supplied resource"() {
+        given:
+            def test = new BaseAuthContextEvaluator()
+            def adHocStepResource = AuthorizationUtil.resource('ad-hoc-step')
+            def resolver = Mock(ExecutionAuthResourceResolver) {
+                _ * authResourceForExecutionType('adhoc-step') >> adHocStepResource
+            }
+            test.applicationContext = Mock(ApplicationContext) {
+                _ * getBeansOfType(ExecutionAuthResourceResolver) >> [adHocStepResolver: resolver]
+            }
+            def auth = Mock(AuthContext)
+            test.authContextEvaluatorCacheManager = Mock(AuthCache) {
+                _ * evaluate(
+                    auth,
+                    [adHocStepResource].toSet(),
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY].toSet(),
+                    'testProject'
+                ) >> makeDecisions([authorized])
+                //an ad-hoc-step execution must not fall back to the built-in adhoc resource
+                0 * evaluate(auth, [AuthConstants.RESOURCE_ADHOC].toSet(), _, _)
+            }
+            Execution exec = new Execution(project: 'testProject', executionType: 'adhoc-step')
+        when:
+            def result = test.filterAuthorizedProjectExecutionsAny(
+                auth,
+                [exec],
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]
+            )
+        then:
+            (result.size() == 1) == authorized
+
+        where:
+            authorized << [true, false]
     }
 
     public HashSet<Decision> makeDecisions(List<Boolean> decisions) {

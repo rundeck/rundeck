@@ -42,7 +42,9 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, Proje
                 resource.scheduledExecution.groupPath,
                 resource.scheduledExecution.uuid
             ) :
-            AuthConstants.RESOURCE_ADHOC
+            //a job-less execution is gated by the resource its type resolves to (e.g. ad-hoc-step),
+            //falling back to the built-in adhoc resource - the same resolution used by the list filter
+            (rundeckAuthContextProcessor.authResourceForExecutionType(resource.executionType) ?: AuthConstants.RESOURCE_ADHOC)
         )
     }
 
