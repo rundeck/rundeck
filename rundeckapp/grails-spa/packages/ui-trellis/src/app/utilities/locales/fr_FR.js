@@ -39,7 +39,6 @@ const messages = {
   message_fieldLabel: "Label du champ",
   message_fieldKey: "Cl\u00e9 du champ",
   message_fieldFilter: "Ecrire pour filtrer un champ",
-  message_empty: "Peut \u00eatre vide",
   message_cancel: "Annuler",
   message_add: "Ajouter",
   message_addField: "Ajouter un champ personnalis\u00e9",

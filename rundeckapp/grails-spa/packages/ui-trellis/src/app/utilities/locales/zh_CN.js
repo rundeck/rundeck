@@ -38,7 +38,6 @@ const messages = {
   message_fieldLabel: "Field Label",
   message_fieldKey: "Field Key",
   message_fieldFilter: "Type to filter a field",
-  message_empty: "Can be empty",
   message_cancel: "Cancel",
   message_add: "Add",
   message_addField: "Add Custom Field",
