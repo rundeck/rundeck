@@ -338,16 +338,40 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
 
     }
 
+    /**
+     * Resolve the given relative path against the project base dir, and verify the
+     * resulting canonical path is actually contained within the base dir. Used to
+     * prevent path traversal (e.g. via "../" sequences) from escaping the project
+     * directory when loading, checking, or deleting project file resources.
+     *
+     * @param path relative path requested by a caller
+     * @return the resolved File if it is contained within the base dir, or null if
+     * the canonical path cannot be resolved or escapes the base dir
+     */
+    private File resolveContainedFile(final String path) {
+        try {
+            String canonicalBase = getBaseDir().getCanonicalPath();
+            File result = new File(getBaseDir(), path);
+            String resultPath = result.getCanonicalPath();
+            if (!resultPath.equals(canonicalBase) && !resultPath.startsWith(canonicalBase + File.separator)) {
+                return null;
+            }
+            return result;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     @Override
     public boolean existsFileResource(final String path) {
-        File result = new File(getBaseDir(), path);
-        return result.exists()&& result.isFile();
+        File result = resolveContainedFile(path);
+        return result != null && result.exists() && result.isFile();
     }
 
     @Override
     public boolean existsDirResource(final String path) {
-        File result = new File(getBaseDir(), path);
-        return result.exists()&& result.isDirectory();
+        File result = resolveContainedFile(path);
+        return result != null && result.exists() && result.isDirectory();
     }
 
     @Override
@@ -371,17 +395,18 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
 
     @Override
     public boolean deleteFileResource(final String path) {
-        File result = new File(getBaseDir(), path);
+        File result = resolveContainedFile(path);
+        if (result == null) {
+            return false;
+        }
         return !result.exists() || result.delete();
     }
 
     @Override
     public long storeFileResource(final String path, final InputStream input) throws IOException {
-        String canonicalPath = getBaseDir().getCanonicalPath();
-        File result = new File(getBaseDir(), path);
-        String resultPath = result.getCanonicalPath();
-        if (!resultPath.startsWith(canonicalPath)) {
-            throw new IOException(String.format("Path is outside of destination directory: %s", result));
+        File result = resolveContainedFile(path);
+        if (result == null) {
+            throw new IOException(String.format("Path is outside of destination directory: %s", path));
         }
         if(!result.getParentFile().exists()){
             result.getParentFile().mkdirs();
@@ -393,7 +418,10 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
 
     @Override
     public long loadFileResource(final String path, final OutputStream output) throws IOException {
-        File result = new File(getBaseDir(), path);
+        File result = resolveContainedFile(path);
+        if (result == null) {
+            throw new IOException(String.format("Path is outside of destination directory: %s", path));
+        }
         try(FileInputStream fis = new FileInputStream(result)) {
             return Streams.copyStream(fis, output);
         }

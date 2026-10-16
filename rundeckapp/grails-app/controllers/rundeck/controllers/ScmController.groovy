@@ -299,6 +299,9 @@ Since: v15''',
     }
 
     def setup(String integration, String project, String type) {
+        if (!(integration in ['export', 'import'])) {
+            return renderErrorView("integration parameter must be one of export,import")
+        }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
@@ -329,6 +332,9 @@ Since: v15''',
     }
 
     def saveSetup(String integration, String project, String type) {
+        if (!(integration in ['export', 'import'])) {
+            return renderErrorView("integration parameter must be one of export,import")
+        }
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(
                 session.subject,
@@ -2630,6 +2636,9 @@ The response will include information about the result.
     }
 
     def deletePluginConfig(String project, String integration, String type){
+        if (!(integration in ['export', 'import'])) {
+            return renderErrorView("integration parameter must be one of export,import")
+        }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
