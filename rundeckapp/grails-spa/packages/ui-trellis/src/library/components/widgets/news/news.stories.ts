@@ -6,7 +6,7 @@ import "../../../stories/setup";
 
 import { RootStore } from "../../../stores/RootStore";
 
-import News from "./News.vue";
+import News from "./NewsWidget.vue";
 
 (window as any)._rundeck.rundeckClient = new Rundeck(
   new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN),

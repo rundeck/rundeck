@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import Popper from "../Popper.vue";
+import Popper from "../RdPopper.vue";
 
 jest.mock("@popperjs/core", () => ({
   createPopper: jest.fn(() => ({ destroy: jest.fn() })),
@@ -9,7 +9,7 @@ interface MountOptions {
   slots?: Record<string, string>;
 }
 
-// Popper.vue reads this.$refs.wrapper.parentElement at mount time to know
+// RdPopper.vue reads this.$refs.wrapper.parentElement at mount time to know
 // what counts as "inside" for the outside-click check, so the test mounts it
 // into an explicit trigger element (as it's used in real usage, e.g. a
 // button) rather than relying on Vue Test Utils' own attachTo container.
@@ -30,7 +30,7 @@ const createWrapper = async (options: MountOptions = {}) => {
   return wrapper;
 };
 
-// Popper.vue moves its content node onto document.body for positioning, so it
+// RdPopper.vue moves its content node onto document.body for positioning, so it
 // is no longer a descendant of wrapper.element after mount - query the
 // document directly for it, per data-testid selector convention.
 const findInDocument = (testId: string) =>

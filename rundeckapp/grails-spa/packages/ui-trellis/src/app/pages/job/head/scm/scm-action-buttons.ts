@@ -21,7 +21,7 @@ rootStore.ui.addItems([
         components: { JobScmActions },
         props: ["itemData"],
         setup(props) {
-          let job: JobBrowseItem = reactive({
+          const job: JobBrowseItem = reactive({
             job: true,
             groupPath: "",
             id: props.itemData.jobUuid,
@@ -43,10 +43,10 @@ rootStore.ui.addItems([
 ]);
 
 window.addEventListener("DOMContentLoaded", () => {
-  let jobActionsButtons = document.querySelectorAll(
+  const jobActionsButtons = document.querySelectorAll(
     '[id^="action-menu-jobrow_"]',
   );
-  for (let elem of jobActionsButtons) {
+  for (const elem of jobActionsButtons) {
     if (elem) {
       observer.observe(elem, { subtree: true, childList: true });
     }

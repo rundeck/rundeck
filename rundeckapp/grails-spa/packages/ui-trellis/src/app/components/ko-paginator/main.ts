@@ -1,5 +1,5 @@
 import { createApp, defineComponent, PropType } from "vue";
-import Pagination from "../../../library/components/utils/Pagination.vue";
+import Pagination from "../../../library/components/utils/RdPagination.vue";
 
 interface KoPagerPage {
   current: boolean;

@@ -140,7 +140,6 @@ import Skeleton from "primevue/skeleton";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
-import AccordionContent from "primevue/accordioncontent";
 
 export default defineComponent({
   name: "PluginAccordionList",
@@ -151,7 +150,6 @@ export default defineComponent({
     Accordion,
     AccordionPanel,
     AccordionHeader,
-    AccordionContent,
   },
   props: {
     groupedProviders: {
