@@ -168,6 +168,7 @@
                   class="sr-only"
                   name="fileText"
                   :value="localFileText"
+                  :aria-label="$t('acl.policy.content.label')"
                   aria-hidden="true"
                   tabindex="-1"
                   data-testid="acl-file-text-input"

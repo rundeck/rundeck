@@ -85,6 +85,15 @@ describe("AclFileEditorForm", () => {
     ).toBe("acl-file-text-input");
   });
 
+  it("gives the hidden policy mirror field an accessible label", async () => {
+    const wrapper = await createWrapper();
+
+    const mirrorField = wrapper.find('[data-testid="acl-file-text-input"]');
+    expect(mirrorField.attributes("aria-label")).toBeTruthy();
+    expect(mirrorField.attributes("aria-hidden")).toBe("true");
+    expect(mirrorField.attributes("tabindex")).toBe("-1");
+  });
+
   it("opens the help menu with both documentation links", async () => {
     const wrapper = await createWrapper();
 

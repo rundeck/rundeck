@@ -628,6 +628,7 @@ const messages = {
   "acl.create.help": "Help",
   "link.title.access.control.policy": "Access Control Policy",
   "link.title.acl.policy.format": "ACL Policy Format",
+  "acl.policy.content.label": "ACL policy content",
   "aclpolicy.format.validation.failed": "ACLPolicy format Validation failed",
   "error.validation.failed.title": "Validation Failed",
   "acl.validation.error.sourceIdentity.help":
