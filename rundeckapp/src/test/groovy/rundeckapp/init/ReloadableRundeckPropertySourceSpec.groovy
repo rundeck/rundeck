@@ -52,5 +52,27 @@ class ReloadableRundeckPropertySourceSpec extends Specification {
 
     }
 
+    def "dataSource.url carries permitMysqlScheme when the MariaDB driver would reject the scheme"() {
+
+        when:
+        File tmpProp = File.createTempFile("app-test", ".properties")
+        tmpProp << "dataSource.driverClassName=${driver}\n"
+        tmpProp << "dataSource.url=${url}\n"
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, tmpProp.absolutePath)
+        ReloadableRundeckPropertySource.reload()
+        PropertySource props = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
+
+        then:
+        props.getProperty("dataSource.url") == expected
+
+        where:
+        url                                        | driver                     || expected
+        'jdbc:mysql://h/rundeck'                   | 'org.mariadb.jdbc.Driver'  || 'jdbc:mysql://h/rundeck?permitMysqlScheme'
+        'jdbc:mysql://h/rundeck?useSSL=false'      | 'org.mariadb.jdbc.Driver'  || 'jdbc:mysql://h/rundeck?useSSL=false&permitMysqlScheme'
+        'jdbc:mysql://h/rundeck?permitMysqlScheme' | 'org.mariadb.jdbc.Driver'  || 'jdbc:mysql://h/rundeck?permitMysqlScheme'
+        'jdbc:mysql://h/rundeck'                   | 'com.mysql.cj.jdbc.Driver' || 'jdbc:mysql://h/rundeck'
+        'jdbc:mariadb://h/rundeck'                 | 'org.mariadb.jdbc.Driver'  || 'jdbc:mariadb://h/rundeck'
+        'jdbc:h2:file:./db/devDb'                  | 'org.h2.Driver'            || 'jdbc:h2:file:./db/devDb'
+    }
 
 }

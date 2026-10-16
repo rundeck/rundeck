@@ -15,41 +15,42 @@
  */
 package rundeckapp.init
 
-import org.grails.spring.context.support.PluginAwareResourceBundleMessageSource
+import org.springframework.context.support.ReloadableResourceBundleMessageSource
+import org.springframework.context.support.ResourceBundleMessageSource
 import spock.lang.Specification
-
-import java.lang.reflect.Field
-
 
 class RundeckExtendedMessageBundleTest extends Specification {
 
     def "Test Rundeck message bundle extender"() {
         given:
-        PluginAwareResourceBundleMessageSource messageSource = new PluginAwareResourceBundleMessageSource(null,null)
-        Field baseNameField = messageSource.getClass().getSuperclass().getDeclaredField("basenames")
-        baseNameField.setAccessible(true)
+        def messageSource = new ReloadableResourceBundleMessageSource()
 
         when:
-        RundeckExtendedMessageBundle extender = new RundeckExtendedMessageBundle(messageSource,"file:/tmp/i18n/messages")
-        def baseNames = baseNameField.get(messageSource).toList()
+        new RundeckExtendedMessageBundle(messageSource, "file:/tmp/i18n/messages")
 
-        then:
-        baseNames[0] == "file:/tmp/i18n/messages"
-
+        then: "the external base is first, so it overrides the bundles shipped with the product"
+        messageSource.basenameSet.toList()[0] == "file:/tmp/i18n/messages"
     }
 
     def "Test Rundeck message bundle extender does not extend when external bundle ref is null"() {
         given:
-        PluginAwareResourceBundleMessageSource messageSource = new PluginAwareResourceBundleMessageSource(null,null)
-        Field baseNameField = messageSource.getClass().getSuperclass().getDeclaredField("basenames")
-        baseNameField.setAccessible(true)
+        def messageSource = new ReloadableResourceBundleMessageSource()
 
         when:
-        RundeckExtendedMessageBundle extender = new RundeckExtendedMessageBundle(messageSource,null)
-        def baseNames = baseNameField.get(messageSource).toList()
+        new RundeckExtendedMessageBundle(messageSource, null)
 
         then:
-        baseNames.size() == 0
+        messageSource.basenameSet.isEmpty()
+    }
 
+    def "Test Rundeck message bundle extender leaves a classpath-only message source alone"() {
+        given: "a message source that reads base names from the classpath and cannot load a file location"
+        def messageSource = new ResourceBundleMessageSource()
+
+        when:
+        new RundeckExtendedMessageBundle(messageSource, "file:/tmp/i18n/messages")
+
+        then: "the base name is not added, so startup does not fail on a bundle that cannot be read"
+        messageSource.basenameSet.isEmpty()
     }
 }
