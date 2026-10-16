@@ -1018,11 +1018,15 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                 wait *= backoff
             }
             HttpClient<HttpResponse> httpClient = new ApacheHttpClient()
-            httpClient.setFollowRedirects(true)
+            // Redirects are not followed: following a redirect would let an
+            // externally-reachable URL hop to an internal-only destination after
+            // the host check below has already passed.
+            httpClient.setFollowRedirects(false)
             httpClient.setTimeout(timeout*1000)
 
             try{
                 URL urlo = new URL(url)
+                org.rundeck.app.http.WebhookDestinationGuard.assertPublicHost(urlo.host)
                 httpClient.setUri(urlo.toURI())
                 if(urlo.userInfo){
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
@@ -1030,6 +1034,9 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
+            }catch(IOException e){
+                error = "Notification destination rejected: " + e.getMessage()
+                break
             }
 
             if(httpMethod != GET) {
