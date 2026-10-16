@@ -298,9 +298,10 @@ class FileUploadService {
                 if (plugin.hasFile(reference)) {
                     plugin.transitionState(reference, FileUploadPlugin.ExternalState.Deleted)
                 }
-                removeLocalFile(reference)
             } catch (Throwable t) {
                 log.warn("Failed to delete uploaded file ${reference}: ${t.message}", t)
+            } finally {
+                removeLocalFile(reference)
             }
         }
         if (TransactionSynchronizationManager.isSynchronizationActive()) {

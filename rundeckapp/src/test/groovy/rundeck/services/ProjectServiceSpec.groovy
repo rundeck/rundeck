@@ -145,6 +145,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
 
     void setup() {
+        Project.metaClass.static.lock = { Serializable id -> Project.get(id) }
         def configService = Stub(ConfigurationService) {
             getString('projectService.projectExgitportCache.spec', _) >> 'refreshAfterWrite=2m'
         }
@@ -681,6 +682,45 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
     }
 
+    def "explicit synchronous delete of a disabled project waits for cleanup result"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        new Project(
+            name: 'myproject',
+            state: org.rundeck.app.data.model.v1.project.RdProject.State.DISABLED
+        ).save(flush: true, failOnError: true)
+        def mgr = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> true
+            0 * disableFrameworkProject('myproject')
+            1 * removeFrameworkProject('myproject') >> {
+                assert org.springframework.transaction.support.TransactionSynchronizationManager
+                    .isActualTransactionActive()
+            }
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def result = service.deleteProject(project, fwk, null, 'admin', Boolean.FALSE)
+
+        then:
+        result.success
+        result.error == null
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+    }
+
     def "second delete is rejected while a deferred delete is still in flight"() {
         given:
         Promises.promiseFactory = new HoldingPromiseFactory()
@@ -1112,6 +1152,51 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         !service.deferredDeletesInFlight.containsKey('myproject')
         0 * service.scheduledExecutionService.deleteScheduledExecution(*_)
         0 * service.eventBus.notify('projectWillBeDeleted', _)
+    }
+
+    def "cleanup stops when the claimed project is recreated before the row lock"() {
+        given:
+        def original = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        Project replacement
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService) {
+            0 * removeAllPluginConfiguration(_)
+        }
+        service.executionService = Mock(ExecutionService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.execReportDataProvider = Mock(ExecReportDataProvider)
+        service.targetEventBus = Mock(EventBus)
+        def mgr = Mock(ProjectManager) {
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def result = service.deleteProjectInternal(
+            project,
+            fwk,
+            null,
+            'system',
+            true,
+            original.id
+        )
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject']) >> {
+            original.delete(flush: true)
+            replacement = new Project(name: 'myproject').save(flush: true, failOnError: true)
+            null
+        }
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+        !result.success
+        result.error.contains('Project changed before cleanup')
+        Project.get(replacement.id)
+        0 * service.scheduledExecutionService.deleteScheduledExecution(*_)
     }
 
     def "resume does not delete a name recreated as an enabled project"() {

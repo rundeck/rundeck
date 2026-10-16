@@ -2042,9 +2042,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             error: "Cannot delete an already disabled project.")
         }
 
+        Long claimedId = claimId
+        if (!deferDelete) {
+            return runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
+        }
+
         log.info("Deferring deletion of project ${project.name} to background task.")
 
-        Long claimedId = claimId
         def promise = Promises.task {
             runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
         }
@@ -2125,12 +2129,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         notify('projectWillBeDeleted', project.name)
         def result = new DeleteResponse(success: false)
 
-        //disable scm
-        scmService.removeAllPluginConfiguration(project.name)
-
         ScheduledExecution.withTransaction { TransactionStatus status ->
 
             try {
+                if (claimedProjectId != null) {
+                    Project lockedProject = Project.lock(claimedProjectId)
+                    if (lockedProject == null || lockedProject.name != project.name) {
+                        throw new IllegalStateException("Project changed before cleanup")
+                    }
+                }
+
+                //disable scm only after the claimed row is locked
+                scmService.removeAllPluginConfiguration(project.name)
+
                 //delete all reports
                 execReportDataProvider.deleteWithTransaction(project.name)
 
@@ -2169,6 +2180,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     throw new Exception("Some components had an error: " + compErrors.join("; "))
                 }
 
+                //The claimed row lock prevents another node from deleting and recreating
+                //this name between the cleanup queries and final removal.
+                framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
                 result.success = true
             } catch (Exception e) {
                 status.setRollbackOnly()
@@ -2177,13 +2191,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 result.success = false
             }
         }
-        //if success, delete framework dir
-        if (result.success && claimedProjectId != null && !projectRowMatches(project.name, claimedProjectId)) {
-            result.success = false
-            result.error = "Project changed before cleanup"
-        }
+
         if (result.success) {
-            framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
             notify('projectWasDeleted', project.name)
         } else {
             notify('projectDeleteFailed', project.name)
