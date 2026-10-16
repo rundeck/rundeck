@@ -244,7 +244,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import Expandable from "../utils/Expandable.vue";
+import Expandable from "../utils/RdExpandable.vue";
 import AceEditor from "../utils/AceEditor.vue";
 import PluginPropVal from "./pluginPropVal.vue";
 import { CopyToClipboard } from "../../utilities/Clipboard";

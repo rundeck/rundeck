@@ -70,7 +70,7 @@ import { url } from "../../../rundeckService";
 import RundeckLogo from "../../svg/RundeckLogo.vue";
 import PagerdutyLogo from "../../svg/PagerdutyLogo.vue";
 
-import Copyright from "../../version/Copyright.vue";
+import Copyright from "../../version/RdCopyright.vue";
 import RundeckVersion from "../../version/RundeckVersionDisplay.vue";
 import VersionDisplay from "../../version/VersionIconNameDisplay.vue";
 import ServerDisplay from "../../version/ServerDisplay.vue";

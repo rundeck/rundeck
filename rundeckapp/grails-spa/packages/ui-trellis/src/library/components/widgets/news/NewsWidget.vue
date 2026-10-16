@@ -40,7 +40,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
-import Skeleton from "../../skeleton/Skeleton.vue";
+import Skeleton from "../../skeleton/RdSkeleton.vue";
 
 export default defineComponent({
   name: "NewsWidget",
