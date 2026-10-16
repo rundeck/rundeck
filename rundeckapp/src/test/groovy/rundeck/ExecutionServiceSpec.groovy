@@ -6293,7 +6293,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 workflow: job.workflow
         )
         e1.scheduledExecution = job
-        e1.save() != null
+        // flush, or the write stays in this session and the new transaction that
+        // saveExecutionState opens cannot see it: Execution.get() there returns null.
+        e1.save(flush: true) != null
 
         def nodeSet = new NodeSetImpl()
         def node1 = new NodeEntryImpl('node1')
@@ -6363,6 +6365,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         when:
         service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
+        // saveExecutionState commits in a transaction of its own. This session is still holding
+        // the instance from before that write -- Execution.get() hands back that same cached
+        // object -- so re-read it, or the assertions below see what this spec set up.
+        e1.refresh()
         then:
 
         calls * service.workflowService.requestStateSummary(_,succeededNodes.toList()) >> new WorkflowStateFileLoader(workflowState: [nodeSummaries: nodeSummaries])
@@ -6401,7 +6407,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 workflow: job.workflow
         )
         e1.scheduledExecution = job
-        e1.save() != null
+        // flush, or the write stays in this session and the new transaction that
+        // saveExecutionState opens cannot see it: Execution.get() there returns null.
+        e1.save(flush: true) != null
 
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
@@ -6465,7 +6473,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 workflow: job.workflow
         )
         e1.scheduledExecution = job
-        e1.save() != null
+        // flush, or the write stays in this session and the new transaction that
+        // saveExecutionState opens cannot see it: Execution.get() there returns null.
+        e1.save(flush: true) != null
 
         // simulate what StepNodeUsageWorkflowListener would have already done during the
         // real execution: accumulate a total and finalize it into the store under this
