@@ -628,8 +628,8 @@ const messages = {
   "acl.create.help": "Help",
   "link.title.access.control.policy": "Access Control Policy",
   "link.title.acl.policy.format": "ACL Policy Format",
-  "aclpolicy.format.validation.failed": "ACL policy format validation failed",
-  "error.validation.failed.title": "Validation failed",
+  "aclpolicy.format.validation.failed": "ACLPolicy format Validation failed",
+  "error.validation.failed.title": "Validation Failed",
   "acl.validation.error.sourceIdentity.help":
     'This identifies the location of the error, such as the file path and an index "[1]" of the policy definition in that file.',
   "policy.create.conflict": "ACL Policy already exists: {0}",
