@@ -115,6 +115,13 @@ public interface ProjectManager {
     boolean isFrameworkProjectDisabled(String projectName);
 
     /**
+     * @return names of projects whose state is DISABLED. Empty when storage cannot represent that state.
+     */
+    default Collection<String> listDisabledFrameworkProjectNames() {
+        return java.util.Collections.emptyList();
+    }
+
+    /**
      * Gets the project description
      * 
      * @param projectName Project name identifier

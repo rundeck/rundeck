@@ -45,5 +45,43 @@ class ApiProjectSelectInterceptorSpec extends Specification implements Intercept
         then:
         !interceptor.doesMatch()
     }
+
+    def "api project delete is allowed when the project is disabled"() {
+        given:
+        params.project = 'myproject'
+        interceptor.frameworkService = Mock(FrameworkService) {
+            existsFrameworkProject('myproject') >> true
+            isFrameworkProjectDisabled('myproject') >> true
+        }
+        interceptor.apiService = Mock(ApiService)
+
+        when:
+        webRequest.controllerName = 'project'
+        webRequest.actionName = 'apiProjectDelete'
+        def allowed = interceptor.before()
+
+        then:
+        allowed
+        0 * interceptor.apiService.renderErrorFormat(*_)
+    }
+
+    def "other api requests are rejected when the project is disabled"() {
+        given:
+        params.project = 'myproject'
+        interceptor.frameworkService = Mock(FrameworkService) {
+            existsFrameworkProject('myproject') >> true
+            isFrameworkProjectDisabled('myproject') >> true
+        }
+        interceptor.apiService = Mock(ApiService)
+
+        when:
+        webRequest.controllerName = 'project'
+        webRequest.actionName = 'apiProjectConfig'
+        def allowed = interceptor.before()
+
+        then:
+        !allowed
+        1 * interceptor.apiService.renderErrorFormat(_, { it.code == 'api.error.project.disabled' })
+    }
 }
 

@@ -186,6 +186,11 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @Override
+    Collection<String> listDisabledFrameworkProjectNames() {
+        return projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.DISABLED)
+    }
+
+    @Override
     int countFrameworkProjects() {
         return projectDataProvider.countFrameworkProjectsByState(RdProject.State.ENABLED)
     }

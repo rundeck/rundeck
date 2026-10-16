@@ -356,6 +356,107 @@ class FileUploadServiceSpec extends Specification implements ServiceUnitTest<Fil
         ).save(flush: true)
     }
 
+    def "uploaded file contents are kept when record deletion rolls back"() {
+        given:
+        def storageRef = 'rollback-upload'
+        def localFile = File.createTempFile('rundeck.FileUploadServiceSpec-rollback', '.tmp')
+        localFile.deleteOnExit()
+        service.localFileMap[storageRef] = localFile
+        def record = new JobFileRecord(
+            fileName: 'input.txt',
+            size: localFile.length(),
+            recordType: 'option',
+            fileState: 'retained',
+            uuid: UUID.randomUUID().toString(),
+            sha: 'a' * 64,
+            jobId: 'job',
+            recordName: 'input',
+            storageType: 'filesystem-temp',
+            user: 'user',
+            storageReference: storageRef,
+            project: 'testproj'
+        ).save(flush: true)
+        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
+            pluginConfigFactory(_, _) >> Mock(PropertyResolverFactory.Factory)
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+        }
+        def plugin = Mock(FileUploadPlugin) {
+            1 * initialize()
+            0 * hasFile(_)
+            0 * transitionState(_, _)
+        }
+        service.pluginService = Mock(PluginService) {
+            configurePlugin('filesystem-temp', _, _, PropertyScope.Framework) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
+        }
+
+        when:
+        try {
+            JobFileRecord.withNewTransaction {
+                service.deleteRecord(record)
+                throw new RuntimeException('force rollback')
+            }
+        } catch (RuntimeException e) {
+            assert e.message == 'force rollback'
+        }
+
+        then:
+        localFile.exists()
+        service.localFileMap[storageRef] == localFile
+    }
+
+    def "local uploaded file is removed when plugin cleanup fails after commit"() {
+        given:
+        def storageRef = 'failed-plugin-upload'
+        def localFile = File.createTempFile('rundeck.FileUploadServiceSpec-plugin-failure', '.tmp')
+        service.localFileMap[storageRef] = localFile
+        def record = new JobFileRecord(
+            fileName: 'input.txt',
+            size: localFile.length(),
+            recordType: 'option',
+            fileState: 'retained',
+            uuid: UUID.randomUUID().toString(),
+            sha: 'b' * 64,
+            jobId: 'job',
+            recordName: 'input',
+            storageType: 'filesystem-temp',
+            user: 'user',
+            storageReference: storageRef,
+            project: 'testproj'
+        ).save(flush: true)
+        def registry = Mock(RundeckPluginRegistry) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> registry
+            pluginConfigFactory(_, _) >> Mock(PropertyResolverFactory.Factory)
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+        }
+        def plugin = Mock(FileUploadPlugin) {
+            1 * initialize()
+            1 * hasFile(storageRef) >> { throw new RuntimeException('storage unavailable') }
+        }
+        service.pluginService = Mock(PluginService) {
+            configurePlugin('filesystem-temp', _, _, PropertyScope.Framework) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
+        }
+
+        when:
+        service.deleteRecord(record)
+
+        then:
+        !localFile.exists()
+        !service.localFileMap.containsKey(storageRef)
+    }
+
     def "check and expire records"() {
         given:
         String jobid = 'ajobid'
