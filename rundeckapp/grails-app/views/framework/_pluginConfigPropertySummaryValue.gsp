@@ -89,10 +89,14 @@
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.DYNAMIC_FORM, 'DYNAMIC_FORM']}">
     <stepplugin:customFields json="${values[prop.name]}"/>
 </g:elseif>
-<g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT']}">
+<g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT'] && prop.type.toString() != 'AutogenInstanceId'}">
     %{--STATIC_TEXT is plugin-declared help content, not user config: always show the
        trusted descriptor default (as the edit-mode form field partial does), never the
-       persisted value -- job data can be unexpectedly tainted, as this very bug showed--}%
+       persisted value -- job data can be unexpectedly tainted, as this very bug showed.
+       Excludes AutogenInstanceId: it is also rendered as STATIC_TEXT but its generated id
+       IS real per-job data with an empty descriptor default (PropertyBuilder.java:100-103),
+       matching the exclusion pluginConfig.vue's isStaticTextProp() already applies -- those
+       ids must keep falling through to the persisted-value branch below, not show blank--}%
     <g:set var="staticTextValue" value="${
                 stepplugin.messageText(
                         service: service,
