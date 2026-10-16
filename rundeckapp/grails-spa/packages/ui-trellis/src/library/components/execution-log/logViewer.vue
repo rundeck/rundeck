@@ -726,6 +726,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- imports global stylesheet -->
 <style lang="scss">
 @import "./ansi.css";
 @import "./theme-light.scss";

@@ -25,7 +25,7 @@ import { defineComponent, PropType } from "vue";
 
 import { UtilityWidgetItem } from "../../stores/UtilityBar";
 
-import Popper from "./Popper.vue";
+import Popper from "./RdPopper.vue";
 
 export default defineComponent({
   name: "UtilityWidgetItem",

@@ -4,7 +4,7 @@ import "../../stories/setup";
 
 import { RootStore } from "../../stores/RootStore";
 
-import Skeleton from "./Skeleton.vue";
+import Skeleton from "./RdSkeleton.vue";
 
 export default {
   title: "Skeleton",
