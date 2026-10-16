@@ -1567,6 +1567,59 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.success
     }
 
+    def "bulk delete rollback keeps files when a later execution is running"() {
+        given:
+        def completed = new Execution(
+            user: 'userB',
+            project: 'AProject',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(adhocRemoteString: 'test buddy')]
+            ),
+            dateStarted: new Date(100),
+            dateCompleted: new Date(200),
+            status: 'succeeded'
+        ).save(flush: true)
+        def running = new Execution(
+            user: 'userB',
+            project: 'AProject',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(adhocRemoteString: 'test buddy')]
+            ),
+            dateStarted: new Date(100),
+            status: 'running'
+        ).save(flush: true)
+        def logfile = File.createTempFile('rundeck.ExecutionServiceSpec-rollback', '.log')
+        logfile.deleteOnExit()
+        service.fileUploadService = Mock(FileUploadService)
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            1 * getExecutionFiles(completed, [], false) >> ['rdlog': Mock(ExecutionFile)]
+            1 * getFileForExecutionFiletype(completed, 'rdlog', false, false) >> logfile
+            1 * getFileForExecutionFiletype(completed, 'rdlog', false, true) >> null
+            0 * removeRemoteLogFile(_, _)
+        }
+
+        when:
+        Map completedResult
+        Map runningResult
+        try {
+            Execution.withNewTransaction {
+                completedResult = service.deleteExecutionAuthorized(completed, 'system')
+                runningResult = service.deleteExecutionAuthorized(running, 'system')
+                throw new RuntimeException('force rollback')
+            }
+        } catch (RuntimeException e) {
+            assert e.message == 'force rollback'
+        }
+
+        then:
+        completedResult.success
+        !runningResult.success
+        runningResult.error == 'running'
+        logfile.exists()
+    }
+
     def "delete execution job file records"() {
         given:
 
