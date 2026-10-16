@@ -79,8 +79,8 @@ class SanitizedHTMLCodecTest {
     // "info" property whose value is a help table. A prior bug (RUN-4866) could persist that
     // table into saved job config, and the read-only Job Definition view had no STATIC_TEXT
     // handling, so it fell through to plain HTML-escaping instead of rendering a table. The
-    // fix routes STATIC_TEXT/text-html values through this same sanitizer rather than through
-    // plain escaping or raw/unescaped output -- these tests cover that codec usage directly.
+    // fix renders STATIC_TEXT/text-html content through this same sanitizer -- these tests
+    // cover that codec usage directly, independent of where the view sources the content from.
 
     @Test
     void testNodeFirstWorkflowStrategyInfoTableIsPreserved(){
@@ -106,9 +106,10 @@ class SanitizedHTMLCodecTest {
 
     @Test
     void testStaticTextValueWithInjectedScriptTagIsStripped(){
-        // Simulates a persisted STATIC_TEXT value that is no longer the pristine plugin
-        // default (the actual data this codepath renders is persisted job config, not a
-        // trusted plugin descriptor default -- see RUN-5000), containing an injected script.
+        // Defense in depth: the view sources STATIC_TEXT content from the trusted plugin
+        // descriptor default, not persisted job data, but the sanitizer itself must still
+        // strip dangerous content regardless of input -- this verifies that property on
+        // the codec directly, independent of the view's own data source.
         String tampered = '<table><tr><td>1.</td><td class="text-info">NodeA<script>alert(document.cookie)</script></td></tr></table>'
 
         String result = SanitizedHTMLCodec.encode(tampered)
