@@ -12,7 +12,7 @@ import { RootStore } from "../../src/library/stores/RootStore";
 import { RundeckToken } from "../../src/library/interfaces/rundeckWindow";
 import { EventBus } from "../../src/library";
 
-vi.setTimeout(60000);
+vi.setConfig({ testTimeout: 60000 });
 
 vi.mock("../../src/library/services/api", () => {
   const api = {

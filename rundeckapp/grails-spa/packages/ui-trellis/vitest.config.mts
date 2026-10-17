@@ -70,6 +70,7 @@ export default defineConfig({
       "src/**/*.spec.ts",
       "src/**/*.vitest.ts",
       "tests/**/*.test.ts",
+      "tests/**/*.spec.ts",
       "tests/**/*.vitest.ts",
     ],
     exclude: ["public/**"],
