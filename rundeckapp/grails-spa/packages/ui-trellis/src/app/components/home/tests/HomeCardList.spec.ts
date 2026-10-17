@@ -1,10 +1,11 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import HomeCardList from "../HomeCardList.vue";
 import HomeSearchBar from "../HomeSearchBar.vue";
 
-jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService.ts", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
   })),
 }));
 
@@ -21,7 +22,7 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
 
 describe("HomeCardList", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders HomeSearchBar and table header when no projects are available", async () => {

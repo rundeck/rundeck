@@ -1,17 +1,18 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import Chip from "primevue/chip";
 import ConfigSection from "../ConfigSection.vue";
 import PluginInfo from "../../../plugins/PluginInfo.vue";
 import StepCardContent from "../StepCardContent.vue";
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
   }),
 }));
 
-jest.mock("@/library/modules/rundeckClient", () => ({ client: {} }));
-jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+vi.mock("@/library/modules/rundeckClient", () => ({ client: {} }));
+vi.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   default: {
     name: "PluginConfig",
     inheritAttrs: false,
@@ -36,7 +37,7 @@ const createWrapper = async (props = {}): Promise<any> => {
 
 describe("StepCardContent", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("job reference vs plugin config display", () => {

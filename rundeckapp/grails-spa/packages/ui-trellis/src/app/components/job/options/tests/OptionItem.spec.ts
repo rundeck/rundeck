@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn } from "uiv";
 import OptionItem from "../OptionItem.vue";
@@ -20,7 +21,7 @@ const mountOptionItem = async (options: any): Promise<VueWrapper<any>> => {
 
 describe("OptionItem", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("non editable item has no controls", async () => {

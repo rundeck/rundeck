@@ -1,32 +1,32 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import axios from "axios";
 import ProjectPluginConfig from "../ProjectPluginConfig.vue";
 
-jest.mock("axios");
-jest.mock("@/library/modules/pluginService", () => ({
+vi.mock("axios");
+vi.mock("@/library/modules/pluginService", () => ({
   __esModule: true,
   default: {
-    getPluginProvidersForService: jest
-      .fn()
+    getPluginProvidersForService: vi.fn()
       .mockResolvedValue({ service: false }),
-    validatePluginConfig: jest.fn(),
+    validatePluginConfig: vi.fn(),
   },
 }));
-jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+vi.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   __esModule: true,
   default: {
     name: "PluginConfig",
     template: '<div class="plugin-config-stub"></div>',
   },
 }));
-jest.mock("@/library/services/api", () => ({
+vi.mock("@/library/services/api", () => ({
   api: {
-    get: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
-const mockedAxios = axios as unknown as jest.Mock;
+const mockedAxios = axios as unknown as vi.Mock;
 
 const setPluginResponse = (plugins: Record<string, any>[]) => {
   mockedAxios.mockResolvedValue({
@@ -68,7 +68,7 @@ describe("ProjectPluginConfig", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("rendering plugin config entries", () => {

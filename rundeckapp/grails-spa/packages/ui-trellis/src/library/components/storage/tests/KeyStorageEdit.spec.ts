@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import {
   storageKeyCreate,
@@ -6,24 +7,24 @@ import {
 } from "../../../services/storage";
 import KeyStorageEdit from "../KeyStorageEdit.vue";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440/",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../services/storage");
+vi.mock("../../../services/storage");
 
 const mockedStorageKeyGetMetadata =
-  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
+  storageKeyGetMetadata as vi.MockedFunction<typeof storageKeyGetMetadata>;
 mockedStorageKeyGetMetadata.mockResolvedValue({ resources: [] });
-const mockedStorageKeyExists = storageKeyExists as jest.MockedFunction<
+const mockedStorageKeyExists = storageKeyExists as vi.MockedFunction<
   typeof storageKeyExists
 >;
 mockedStorageKeyExists.mockResolvedValue(false);
-const mockedStorageKeyCreate = storageKeyCreate as jest.MockedFunction<
+const mockedStorageKeyCreate = storageKeyCreate as vi.MockedFunction<
   typeof storageKeyCreate
 >;
 
@@ -84,7 +85,7 @@ describe("KeyStorageEdit", () => {
       path: "/keys/test",
       type: "privateKey",
     });
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("emits cancelEditing when cancel button is clicked", async () => {

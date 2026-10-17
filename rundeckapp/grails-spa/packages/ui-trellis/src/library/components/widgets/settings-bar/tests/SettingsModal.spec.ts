@@ -1,18 +1,19 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import mitt from "mitt";
 import type { EventType, Emitter } from "mitt";
 
 let eventBus: Emitter<Record<EventType, any>>;
-const mockSetUserTheme = jest.fn();
-const mockGetPageUiMeta = jest.fn();
-const mockNotificationNotify = jest.fn();
+const mockSetUserTheme = vi.fn();
+const mockGetPageUiMeta = vi.fn();
+const mockNotificationNotify = vi.fn();
 const mockCookies = {
-  get: jest.fn(),
-  set: jest.fn(),
+  get: vi.fn(),
+  set: vi.fn(),
 };
 
-jest.mock("../../../../rundeckService", () => ({
-  getRundeckContext: jest.fn(() => ({
+vi.mock("../../../../rundeckService", () => ({
+  getRundeckContext: vi.fn(() => ({
     get eventBus() {
       return eventBus;
     },
@@ -29,11 +30,11 @@ jest.mock("../../../../rundeckService", () => ({
   })),
 }));
 
-jest.mock("../services/pageUiMetaService", () => ({
+vi.mock("../services/pageUiMetaService", () => ({
   getPageUiMeta: () => mockGetPageUiMeta(),
 }));
 
-jest.mock("uiv", () => ({
+vi.mock("uiv", () => ({
   Notification: {
     get notify() {
       return mockNotificationNotify;
@@ -66,7 +67,7 @@ describe("SettingsModal", () => {
     originalReload = window.location.reload;
     Object.defineProperty(window, "location", {
       writable: true,
-      value: { reload: jest.fn() },
+      value: { reload: vi.fn() },
     });
   });
 
@@ -86,7 +87,7 @@ describe("SettingsModal", () => {
 
   afterEach(() => {
     eventBus.all.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 

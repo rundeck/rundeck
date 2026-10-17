@@ -1,24 +1,25 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import ActivityFilter from "../activityFilter.vue";
 import SavedFilters from "../savedFilters.vue";
 
 type ActivityFilterInstance = InstanceType<typeof ActivityFilter>;
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({ projectName: "test" }),
 }));
-jest.mock("uiv", () => ({
+vi.mock("uiv", () => ({
   MessageBox: {
-    confirm: jest.fn().mockResolvedValue(true),
-    prompt: jest.fn().mockResolvedValue({ value: "test" }),
+    confirm: vi.fn().mockResolvedValue(true),
+    prompt: vi.fn().mockResolvedValue({ value: "test" }),
   },
   Notification: {
-    notify: jest.fn(),
+    notify: vi.fn(),
   },
 }));
 const mockEventBus = {
-  on: jest.fn(),
-  emit: jest.fn(),
-  off: jest.fn(),
+  on: vi.fn(),
+  emit: vi.fn(),
+  off: vi.fn(),
 };
 const mountActivityFilter = async (props = {}) => {
   const wrapper = mount(ActivityFilter, {
@@ -54,13 +55,13 @@ const mountActivityFilter = async (props = {}) => {
 };
 describe("ActivityFilter", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   describe("Filter Modal", () => {
     it("opens the filter modal", async () => {
@@ -76,7 +77,7 @@ describe("ActivityFilter", () => {
   describe("Query Handling", () => {
     it("updates the query when search is called", async () => {
       const wrapper = await mountActivityFilter();
-      const searchSpy = jest.spyOn(wrapper.vm, "search");
+      const searchSpy = vi.spyOn(wrapper.vm, "search");
       await wrapper.vm.search();
       expect(searchSpy).toHaveBeenCalled();
       expect(wrapper.vm.didSearch).toBe(true);
@@ -102,10 +103,10 @@ describe("ActivityFilter", () => {
     });
     it("saves a filter correctly", async () => {
       const wrapper = await mountActivityFilter();
-      const saveFilterSpy = jest.spyOn(wrapper.vm, "saveFilter");
-      const emitSpy = jest.spyOn(wrapper.vm.eventBus, "emit");
+      const saveFilterSpy = vi.spyOn(wrapper.vm, "saveFilter");
+      const emitSpy = vi.spyOn(wrapper.vm.eventBus, "emit");
       await wrapper.vm.saveFilter();
-      jest.runAllTimers();
+      vi.runAllTimers();
       expect(saveFilterSpy).toHaveBeenCalled();
       expect(wrapper.vm.didSearch).toBe(true);
       expect(wrapper.vm.filterOpen).toBe(false);
@@ -131,7 +132,7 @@ describe("ActivityFilter", () => {
     });
     it("handles cancel correctly", async () => {
       const wrapper = await mountActivityFilter();
-      const resetSpy = jest.spyOn(wrapper.vm, "reset");
+      const resetSpy = vi.spyOn(wrapper.vm, "reset");
       await wrapper.vm.cancel();
       expect(resetSpy).toHaveBeenCalled();
       expect(wrapper.vm.filterOpen).toBe(false);
@@ -143,7 +144,7 @@ describe("ActivityFilter", () => {
       await wrapper.vm.closing();
       expect(wrapper.vm.didSearch).toBe(false);
       wrapper.vm.didSearch = false;
-      const resetSpy = jest.spyOn(wrapper.vm, "reset");
+      const resetSpy = vi.spyOn(wrapper.vm, "reset");
       await wrapper.vm.closing();
       expect(resetSpy).toHaveBeenCalled();
       resetSpy.mockRestore();
@@ -262,7 +263,7 @@ describe("ActivityFilter", () => {
     });
     it("emits select_filter event correctly", async () => {
       const wrapper = await mountActivityFilter();
-      const selectFilterSpy = jest.spyOn(wrapper.vm, "selectFilter");
+      const selectFilterSpy = vi.spyOn(wrapper.vm, "selectFilter");
       const savedFiltersComponent = wrapper.findComponent(SavedFilters);
       savedFiltersComponent.vm.$emit("select_filter", {
         query: { jobFilter: "test" },
@@ -277,7 +278,7 @@ describe("ActivityFilter", () => {
     it("handles search click", async () => {
       const wrapper = await mountActivityFilter();
       await wrapper.vm.$nextTick();
-      const searchSpy = jest.spyOn(wrapper.vm, "search");
+      const searchSpy = vi.spyOn(wrapper.vm, "search");
       const btnElement = wrapper.find(".btn-primary");
       if (btnElement.exists()) {
         await btnElement.trigger("click");

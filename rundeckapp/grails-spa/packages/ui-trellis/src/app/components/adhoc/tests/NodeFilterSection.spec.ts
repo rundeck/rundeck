@@ -1,22 +1,23 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeFilterSection from "../NodeFilterSection.vue";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
 
-jest.mock("../../../../library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "http://localhost:4440",
     projectName: "test-project",
   }),
-  getAppLinks: jest.fn().mockReturnValue({
+  getAppLinks: vi.fn().mockReturnValue({
     frameworkNodesQueryAjax: "/api/nodes/query",
   }),
-  url: jest.fn((url: string) => ({ href: url })),
+  url: vi.fn((url: string) => ({ href: url })),
 }));
 
 describe("NodeFilterSection", () => {
   const mockNodeFilterStore = {
     selectedFilter: "name: test",
-    setSelectedFilter: jest.fn(),
+    setSelectedFilter: vi.fn(),
   } as unknown as NodeFilterStore;
 
   it("should render correctly", () => {

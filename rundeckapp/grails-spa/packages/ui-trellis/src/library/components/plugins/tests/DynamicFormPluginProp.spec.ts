@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, flushPromises, VueWrapper } from "@vue/test-utils";
 import DynamicFormPluginProp from "../DynamicFormPluginProp.vue";
 import { Btn, Modal, Alert } from "uiv";
@@ -60,7 +61,7 @@ const createWrapper = (props = {}) => {
 
 describe("DynamicFormPluginProp.vue", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("opens the modal when 'Add Field' button is clicked", async () => {
     const wrapper = createWrapper();

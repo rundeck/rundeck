@@ -1,18 +1,19 @@
+import { vi } from "vitest";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ExecutionEditor from "../ExecutionEditor.vue";
 import { executionLifecycle, pluginsInitialData } from "./mocks";
 import PluginConfig from "../../../../../library/components/plugins/pluginConfig.vue";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../../../library/services/projects");
-jest.mock("@/library/modules/rundeckClient", () => ({
+vi.mock("../../../../../library/services/projects");
+vi.mock("@/library/modules/rundeckClient", () => ({
   client: {},
 }));
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
@@ -67,7 +68,7 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
 
 describe("ExecutionEditor", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("emits update:modelValue with formatted data", async () => {

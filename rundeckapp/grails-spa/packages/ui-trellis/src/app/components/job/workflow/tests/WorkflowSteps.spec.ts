@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
@@ -14,32 +15,32 @@ import { createTestingPinia } from "@pinia/testing";
 import { getRundeckContext } from "../../../../../library";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 
-jest.mock("@/library/modules/pluginService", () => ({
-  getServiceProviderDescription: jest.fn(),
-  getPluginProvidersForService: jest.fn().mockReturnValue({
+vi.mock("@/library/modules/pluginService", () => ({
+  getServiceProviderDescription: vi.fn(),
+  getPluginProvidersForService: vi.fn().mockReturnValue({
     service: true,
     descriptions: ["descrip1", "descrip2"],
     labels: ["label1", "label2"],
   }),
-  validatePluginConfig: jest.fn().mockResolvedValue({
+  validatePluginConfig: vi.fn().mockResolvedValue({
     valid: true,
     errors: {},
   }),
 }));
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
 }));
-jest.mock("@/library/rundeckService", () => {
-  const mittLib = jest.requireActual("mitt");
+vi.mock("@/library/rundeckService", async () => {
+  const mittLib = await vi.importActual<typeof import("mitt")>("mitt");
   const mittFn = mittLib.default || mittLib;
   const _bus = mittFn();
   const eventBus = {
-    on: jest.fn(_bus.on.bind(_bus)),
-    off: jest.fn(_bus.off.bind(_bus)),
-    emit: jest.fn(_bus.emit.bind(_bus)),
+    on: vi.fn(_bus.on.bind(_bus)),
+    off: vi.fn(_bus.off.bind(_bus)),
+    emit: vi.fn(_bus.emit.bind(_bus)),
   };
   return {
-    getRundeckContext: jest.fn().mockImplementation(() => ({
+    getRundeckContext: vi.fn().mockImplementation(() => ({
       client: {},
       eventBus,
       rdBase: "http://localhost:4440",
@@ -47,17 +48,16 @@ jest.mock("@/library/rundeckService", () => {
       apiVersion: "44",
       rootStore: {
         plugins: {
-          load: jest.fn(),
-          getServicePlugins: jest.fn().mockReturnValue([]),
+          load: vi.fn(),
+          getServicePlugins: vi.fn().mockReturnValue([]),
         },
       },
     })),
   };
 });
-jest.mock("@/library/services/projects");
-jest.mock("@/library/modules/pluginService");
-jest.mock("@/library/stores/NodesStorePinia", () => ({
-  useNodesStore: jest.fn().mockImplementation(() => ({})),
+vi.mock("@/library/services/projects");
+vi.mock("@/library/stores/NodesStorePinia", () => ({
+  useNodesStore: vi.fn().mockImplementation(() => ({})),
 }));
 
 /**
@@ -130,7 +130,7 @@ const createWrapper = async (
 describe("WorkflowSteps", () => {
   let wrapper: VueWrapper<InstanceType<typeof WorkflowSteps>>;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("no commands initially available", () => {

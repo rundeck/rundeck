@@ -1,9 +1,10 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import PluginPropView from "../pluginPropView.vue";
 import * as Clipboard from "../../../utilities/Clipboard";
 
-jest.mock("../../../utilities/Clipboard");
-const mockedClipboard = Clipboard as jest.Mocked<typeof Clipboard>;
+vi.mock("../../../utilities/Clipboard");
+const mockedClipboard = Clipboard as vi.Mocked<typeof Clipboard>;
 
 interface MountOptions {
   props?: Record<string, any>;
@@ -40,14 +41,13 @@ const findByTestId = (wrapper: ReturnType<typeof mount>, testId: string) =>
 describe("PluginPropView", () => {
   beforeEach(() => {
     originalMutationObserver = global.MutationObserver;
-    global.MutationObserver = jest
-      .fn<MutationObserver, [MutationCallback]>()
+    global.MutationObserver = vi.fn<MutationObserver, [MutationCallback]>()
       .mockImplementation(() => ({
-        observe: jest.fn(),
-        disconnect: jest.fn(),
-        takeRecords: jest.fn(),
+        observe: vi.fn(),
+        disconnect: vi.fn(),
+        takeRecords: vi.fn(),
       }));
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockedClipboard.CopyToClipboard.mockResolvedValue(undefined);
   });
 

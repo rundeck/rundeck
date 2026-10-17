@@ -1,39 +1,42 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import SavedFilters from "../savedFilters.vue";
 import { ActivityFilterStore } from "../../../../library/stores/ActivityFilterStore";
 import { MessageBox } from "uiv";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({ projectName: "test" }),
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({ projectName: "test" }),
 }));
 
-jest.mock("uiv", () => ({
+vi.mock("uiv", () => ({
   MessageBox: {
-    confirm: jest.fn().mockResolvedValue(true),
-    prompt: jest.fn().mockResolvedValue({ value: "test" }),
+    confirm: vi.fn().mockResolvedValue(true),
+    prompt: vi.fn().mockResolvedValue({ value: "test" }),
   },
 }));
-const originalFilters = [
-  { filterName: "Filter 1" },
-  { filterName: "Filter 2" },
-  { filterName: "Filter 3" },
-];
 
-jest.mock("../../../../library/stores/ActivityFilterStore", () => {
-  const originalModule = jest.requireActual(
-    "../../../../library/stores/ActivityFilterStore",
-  );
+const { originalFilters } = vi.hoisted(() => ({
+  originalFilters: [
+    { filterName: "Filter 1" },
+    { filterName: "Filter 2" },
+    { filterName: "Filter 3" },
+  ],
+}));
+
+vi.mock("../../../../library/stores/ActivityFilterStore", async (importOriginal) => {
+  const originalModule = await importOriginal<
+    typeof import("../../../../library/stores/ActivityFilterStore")
+  >();
   return {
     __esModule: true,
     ...originalModule,
-    ActivityFilterStore: jest.fn().mockImplementation(() => {
+    ActivityFilterStore: vi.fn(function ActivityFilterStore() {
       return {
         filters: [...originalFilters],
-        loadForProject: jest.fn().mockImplementation(() => {
+        loadForProject: vi.fn().mockImplementation(() => {
           return { filters: [...originalFilters] };
         }),
-        removeFilter: jest
-          .fn()
+        removeFilter: vi.fn()
           .mockImplementation((projectName: string, filterName: string) => {
             const index = originalFilters.findIndex(
               (filter) => filter.filterName === filterName,
@@ -43,7 +46,7 @@ jest.mock("../../../../library/stores/ActivityFilterStore", () => {
             }
             return Promise.resolve();
           }),
-        saveFilter: jest.fn().mockResolvedValue({}),
+        saveFilter: vi.fn().mockResolvedValue({}),
       };
     }),
   };
@@ -62,9 +65,9 @@ const mountSavedFilters = (
       hasQuery: true,
       query: {},
       eventBus: {
-        on: jest.fn(),
-        emit: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        emit: vi.fn(),
+        off: vi.fn(),
         all: new Map(),
       },
       ...props,
@@ -72,7 +75,7 @@ const mountSavedFilters = (
     global: {
       mocks: {
         filterStore,
-        $confirm: jest.fn().mockResolvedValue(true),
+        $confirm: vi.fn().mockResolvedValue(true),
       },
     },
   });
@@ -81,12 +84,12 @@ describe("SavedFilters", () => {
   let originalRemoveFilter: typeof ActivityFilterStore.prototype.removeFilter;
   beforeEach(() => {
     originalRemoveFilter = ActivityFilterStore.prototype.removeFilter;
-    ActivityFilterStore.prototype.loadForProject = jest.fn().mockReturnValue({
+    ActivityFilterStore.prototype.loadForProject = vi.fn().mockReturnValue({
       filters: [...originalFilters],
     });
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     ActivityFilterStore.prototype.removeFilter = originalRemoveFilter;
   });
   describe("Component Mounting", () => {
@@ -142,7 +145,7 @@ describe("SavedFilters", () => {
       const wrapper = mountSavedFilters({
         hasQuery: true,
       });
-      const removeFilterSpy = jest.spyOn(
+      const removeFilterSpy = vi.spyOn(
         wrapper.vm.filterStore,
         "removeFilter",
       );

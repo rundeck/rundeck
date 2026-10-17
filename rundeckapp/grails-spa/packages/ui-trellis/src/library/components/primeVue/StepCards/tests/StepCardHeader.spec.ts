@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import PtButton from "../../PtButton/PtButton.vue";
 import StepCardHeader from "../StepCardHeader.vue";
@@ -11,7 +12,7 @@ const createWrapper = async (props = {}): Promise<any> => {
     },
     global: {
       stubs: {
-        PMenu: { template: "<div />", methods: { toggle: jest.fn() } },
+        PMenu: { template: "<div />", methods: { toggle: vi.fn() } },
       },
       components: { PtButton },
     },

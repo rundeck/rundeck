@@ -1,33 +1,34 @@
+import { vi } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import PluginConfig from "../pluginConfig.vue";
 import PluginPropView from "../pluginPropView.vue";
 import PluginPropEdit from "../pluginPropEdit.vue";
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
 }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     rootStore: {
       plugins: {
-        getPluginDetail: jest.fn().mockResolvedValue({ props: [] }),
+        getPluginDetail: vi.fn().mockResolvedValue({ props: [] }),
       },
     },
   }),
 }));
 
-jest.mock("@/library/modules/pluginService", () => ({
-  getPluginProvidersForService: jest.fn().mockResolvedValue({
+vi.mock("@/library/modules/pluginService", () => ({
+  getPluginProvidersForService: vi.fn().mockResolvedValue({
     service: true,
     descriptions: [],
     labels: [],
   }),
 }));
 
-jest.mock("@/library/modules/InputUtils", () => ({
-  cleanConfigInput: jest.fn((v) => v),
-  convertArrayInput: jest.fn((v) => v),
+vi.mock("@/library/modules/InputUtils", () => ({
+  cleanConfigInput: vi.fn((v) => v),
+  convertArrayInput: vi.fn((v) => v),
 }));
 
 interface MountOptions {
@@ -58,7 +59,7 @@ const createWrapper = async (options: MountOptions = {}) => {
 
 describe("PluginConfig", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("mode-based rendering", () => {

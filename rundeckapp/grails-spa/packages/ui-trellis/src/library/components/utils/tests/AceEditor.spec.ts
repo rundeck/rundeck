@@ -1,4 +1,4 @@
-import { describe, it, expect } from "@jest/globals";
+import { vi, describe, it, expect } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import AceEditor from "../AceEditor.vue";
 import AceEditorVue from "../AceEditorVue.vue";

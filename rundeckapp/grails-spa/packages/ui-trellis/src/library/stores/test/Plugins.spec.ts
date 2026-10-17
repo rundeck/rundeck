@@ -1,11 +1,4 @@
-import {
-  expect,
-  jest,
-  describe,
-  beforeEach,
-  afterEach,
-  it,
-} from "@jest/globals";
+import { vi, expect, describe, beforeEach, afterEach, it } from "vitest";
 import { AxiosResponse } from "axios";
 import { apiClient, api } from "../../services/api";
 import { Plugin, PluginStore, ServiceType } from "../Plugins";
@@ -19,31 +12,37 @@ import {
 } from "./mocks/mockPluginData";
 import { getPluginDetail } from "../../services/plugins";
 
-jest.mock("../../services/plugins");
-jest.mock("../../services/api", () => {
+vi.mock("../../services/plugins");
+vi.mock("../../services/api", () => {
   const api = {
-    get: jest.fn(),
-    put: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
+    post: vi.fn(),
   };
   return {
     api,
-    apiClient: jest.fn().mockImplementation(() => api),
+    apiClient: vi.fn().mockImplementation(() => api),
   };
 });
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     rdBase: "http://localhost:4440/",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
+vi.mock("../RootStore", () => ({
+  RootStore: class RootStore {},
+}));
+vi.mock("@rundeck/client", () => ({
+  RundeckClient: class RundeckClient {},
+}));
 
-const mockedGetPluginDetail = getPluginDetail as jest.MockedFunction<
+const mockedGetPluginDetail = getPluginDetail as vi.MockedFunction<
   typeof getPluginDetail
 >;
-const mockedApi = api as jest.Mocked<typeof api>;
-const mockedApiClient = apiClient as jest.MockedFunction<typeof apiClient>;
+const mockedApi = api as vi.Mocked<typeof api>;
+const mockedApiClient = apiClient as vi.MockedFunction<typeof apiClient>;
 const mockRootStore = {} as RootStore;
 
 const createMockResponse = (plugins: Plugin[]): AxiosResponse =>
@@ -58,8 +57,8 @@ describe("PluginStore", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
+    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("load", () => {

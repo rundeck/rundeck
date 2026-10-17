@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import EditPluginModal from "../EditPluginModal.vue";
 import { Modal, Btn } from "uiv";
@@ -6,34 +7,39 @@ import * as pluginService from "../../../modules/pluginService";
 interface MockPluginConfig {
   props?: any;
 }
-jest.mock("@/library/modules/pluginService", () => ({
-  ...jest.requireActual("@/library/modules/pluginService"),
-  getServiceProviderDescription: jest.fn().mockResolvedValue({
-    name: "MockProvider",
-    description: "Provider description",
+vi.mock(
+  "@/library/modules/pluginService",
+  async (importOriginal) => ({
+    ...(await importOriginal<typeof import("@/library/modules/pluginService")>()),
+    getServiceProviderDescription: vi.fn().mockResolvedValue({
+      name: "MockProvider",
+      description: "Provider description",
+    }),
+    getPluginData: vi.fn().mockResolvedValue({}),
   }),
-  getPluginData: jest.fn().mockResolvedValue({}),
-}));
+);
 
-jest.mock("@/library/modules/rundeckClient", () => ({
+vi.mock("@/library/modules/rundeckClient", () => ({
   client: {
-    sendRequest: jest.fn(),
+    sendRequest: vi.fn(),
     TOKEN: "mockToken",
     URI: "mockURI",
     rdBase: "mockBase",
   },
 }));
-jest.mock("../pluginConfig.vue", () => ({
-  name: "PluginConfig",
-  methods: {
-    loadPluginData: jest.fn().mockImplementation(function (
-      this: MockPluginConfig,
-      data: { props: any },
-    ) {
-      this.props = data.props;
-    }),
+vi.mock("../pluginConfig.vue", () => ({
+  default: {
+    name: "PluginConfig",
+    methods: {
+      loadPluginData: vi.fn().mockImplementation(function (
+        this: MockPluginConfig,
+        data: { props: any },
+      ) {
+        this.props = data.props;
+      }),
+    },
+    template: `<div data-testid="plugin-config">PluginConfig Mock</div>`,
   },
-  template: `<div data-testid="plugin-config">PluginConfig Mock</div>`,
 }));
 const createWrapper = async (props = {}) => {
   const wrapper = mount(EditPluginModal, {
@@ -58,12 +64,12 @@ const createWrapper = async (props = {}) => {
 };
 describe("EditPluginModal", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("displays loading text when loading", async () => {
     // Mocking getServiceProviderDescription to simulate a loading state
     (
-      pluginService.getServiceProviderDescription as jest.Mock
+      pluginService.getServiceProviderDescription as vi.Mock
     ).mockImplementationOnce(() => new Promise(() => {}));
     const wrapper = await createWrapper();
     expect(wrapper.find(".fa-spinner").exists()).toBe(true);
@@ -71,7 +77,7 @@ describe("EditPluginModal", () => {
   });
   it("displays plugin information when provider data is available", async () => {
     (
-      pluginService.getServiceProviderDescription as jest.Mock
+      pluginService.getServiceProviderDescription as vi.Mock
     ).mockResolvedValueOnce({
       name: "Test Plugin",
       description: "Plugin description",

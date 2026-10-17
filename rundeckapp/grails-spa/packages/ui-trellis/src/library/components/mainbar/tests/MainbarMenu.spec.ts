@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn, Dropdown } from "uiv";
 import { nextTick } from "vue";
@@ -69,7 +70,7 @@ const createWrapper = async (
 
 describe("MainbarMenu", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Data Loading", () => {
@@ -450,7 +451,7 @@ describe("MainbarMenu", () => {
     it("should stop click propagation on submenu toggle", async () => {
       const wrapper = await createWrapper({ props: { links: nestedLinks } });
 
-      const parentHandler = jest.fn();
+      const parentHandler = vi.fn();
       const submenuList = wrapper.find(
         '[data-testid="mainbar-submenu-list-0"]',
       );

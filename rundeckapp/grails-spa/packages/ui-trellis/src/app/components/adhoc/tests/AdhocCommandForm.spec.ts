@@ -1,25 +1,26 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import AdhocCommandForm from "../AdhocCommandForm.vue";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
 
-jest.mock("../../../../library/services/api", () => ({
-  apiClient: jest.fn(() => ({
-    get: jest.fn(),
-    post: jest.fn(),
+vi.mock("../../../../library/services/api", () => ({
+  apiClient: vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
   })),
   api: {
-    get: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
-jest.mock("../../../../library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     apiVersion: "44",
     rdBase: "http://localhost:4440",
     projectName: "test-project",
   }),
-  getAppLinks: jest.fn().mockReturnValue({
+  getAppLinks: vi.fn().mockReturnValue({
     adhocHistoryAjax: "/api/adhoc/history",
     scheduledExecutionRunAdhocInline: "/api/execution/runAdhoc",
   }),
@@ -27,14 +28,14 @@ jest.mock("../../../../library", () => ({
 
 describe("AdhocCommandForm", () => {
   const mockEventBus = {
-    on: jest.fn(),
-    emit: jest.fn(),
-    off: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
+    off: vi.fn(),
   };
 
   const mockNodeFilterStore = {
     selectedFilter: "name: test",
-    setSelectedFilter: jest.fn(),
+    setSelectedFilter: vi.fn(),
   } as unknown as NodeFilterStore;
 
   const mockPageParams = {

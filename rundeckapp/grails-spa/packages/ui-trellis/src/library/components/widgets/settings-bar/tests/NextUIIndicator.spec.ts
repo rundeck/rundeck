@@ -1,20 +1,21 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import NextUIIndicator from "../NextUIIndicator.vue";
 
-const mockEmit = jest.fn();
-const mockGetPageUiMeta = jest.fn();
+const mockEmit = vi.fn();
+const mockGetPageUiMeta = vi.fn();
 
-jest.mock("../../../../rundeckService", () => ({
-  getRundeckContext: jest.fn(() => ({
+vi.mock("../../../../rundeckService", () => ({
+  getRundeckContext: vi.fn(() => ({
     eventBus: {
       emit: mockEmit,
-      on: jest.fn(),
-      off: jest.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
     },
   })),
 }));
 
-jest.mock("../services/pageUiMetaService", () => ({
+vi.mock("../services/pageUiMetaService", () => ({
   getPageUiMeta: () => mockGetPageUiMeta(),
 }));
 
@@ -32,7 +33,7 @@ const mountNextUIIndicator = async () => {
 
 describe("NextUIIndicator", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("does not render when page is not nextUi capable", async () => {

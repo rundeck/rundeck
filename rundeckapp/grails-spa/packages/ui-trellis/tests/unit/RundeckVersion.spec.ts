@@ -1,4 +1,4 @@
-import "jest";
+import "vitest";
 
 import { RundeckVersion } from "../../src/library/utilities/RundeckVersion";
 

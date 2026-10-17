@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import DateFilter from "../dateFilter.vue";
 import DateTimePicker from "../dateTimePicker.vue";
@@ -34,14 +35,14 @@ const mountDateFilter = (options: MountOptions = {}): VueWrapper<any> => {
 let idCounter = 0;
 describe("DateFilter", () => {
   beforeEach(() => {
-    jest.spyOn(_, "uniqueId").mockImplementation(() => {
+    vi.spyOn(_, "uniqueId").mockImplementation(() => {
       const id = `uniqueId_${idCounter}`;
       idCounter++;
       return id;
     });
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   describe("Initialization", () => {
     it("sets uid correctly", () => {

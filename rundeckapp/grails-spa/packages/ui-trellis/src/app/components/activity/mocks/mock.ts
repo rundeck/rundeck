@@ -1,6 +1,7 @@
 import messages from "../../../../../src/app/utilities/locales/en_US";
 import { NavItem } from "../../../../library/stores/NavBar";
 import { RootStore } from "../../../../library/stores/RootStore";
+import { vi } from "vitest";
 
 export const i18nMocks = {
   $t: (msg: string, count: number): string => {
@@ -17,22 +18,22 @@ export const i18nMocks = {
   },
 };
 export const mockEventBus = {
-  on: jest.fn(),
-  emit: jest.fn(),
-  off: jest.fn(),
+  on: vi.fn(),
+  emit: vi.fn(),
+  off: vi.fn(),
   all: new Map(),
 };
 export const rundeckClientMock = {
-  RundeckBrowser: jest.fn().mockImplementation(() => ({
-    executionBulkDelete: jest.fn().mockResolvedValue({ allsuccessful: true }),
-    executionListRunning: jest.fn().mockResolvedValue({ executions: [] }),
+  RundeckBrowser: vi.fn().mockImplementation(() => ({
+    executionBulkDelete: vi.fn().mockResolvedValue({ allsuccessful: true }),
+    executionListRunning: vi.fn().mockResolvedValue({ executions: [] }),
   })),
-  executionBulkDelete: jest.fn().mockResolvedValue({ allsuccessful: true }),
-  executionListRunning: jest.fn().mockResolvedValue({ executions: [] }),
+  executionBulkDelete: vi.fn().mockResolvedValue({ allsuccessful: true }),
+  executionListRunning: vi.fn().mockResolvedValue({ executions: [] }),
 };
 
 export const rundeckServiceMock = {
-  getRundeckContext: jest.fn().mockReturnValue({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "mocked-rdBase",
     apiVersion: "47",
     projectName: "test",
@@ -64,19 +65,19 @@ export const rundeckServiceMock = {
     },
     rootStore: {} as RootStore,
   }),
-  url: jest.fn().mockImplementation((path) => `http://localhost${path}`),
+  url: vi.fn().mockImplementation((path) => `http://localhost${path}`),
 };
 
 export const axiosMock = {
-  get: jest.fn(),
-  post: jest.fn(),
+  get: vi.fn(),
+  post: vi.fn(),
 };
 // Ensure the mock context is set up for tests
 export const setupRundeckContext = () => {
   window._rundeck = rundeckServiceMock.getRundeckContext();
 };
-export const mockQueryRunning = jest.fn();
-export const mockQueryExecutions = jest.fn();
+export const mockQueryRunning = vi.fn();
+export const mockQueryExecutions = vi.fn();
 
 export const mockReports = [
   {

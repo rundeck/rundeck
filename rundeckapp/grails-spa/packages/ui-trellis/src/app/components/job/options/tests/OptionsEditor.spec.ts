@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn } from "uiv";
 import {
@@ -8,25 +9,32 @@ import { Operation } from "../model/ChangeEvents";
 import OptionsEditor from "../OptionsEditor.vue";
 
 // Mock pluginService methods
-jest.mock("@/library/modules/pluginService", () => ({
-  getPluginProvidersForService: jest.fn().mockResolvedValue({
-    service: "OptionValues",
-    descriptions: [],
-    labels: [],
-  }),
-}));
-jest.mock("@/library/modules/rundeckClient", () => ({
+vi.mock("@/library/modules/pluginService", () => {
+  const pluginService = {
+    getPluginProvidersForService: vi.fn().mockResolvedValue({
+      service: "OptionValues",
+      descriptions: [],
+      labels: [],
+    }),
+  };
+
+  return {
+    default: pluginService,
+    ...pluginService,
+  };
+});
+vi.mock("@/library/modules/rundeckClient", () => ({
   client: {},
 }));
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
   })),
 }));
-jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService.ts", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
   })),
 }));
@@ -134,7 +142,7 @@ const mountOptionsEditor = async (options: {
 
 describe("OptionsEditor", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("edit shows add button", async () => {
     const optionsData = {
@@ -414,10 +422,9 @@ describe("OptionsEditor", () => {
   ])(
     "operation %p calls correct method %p",
     async (op: Operation, method: string) => {
-      const spy = jest
-        .spyOn(OptionsEditor.methods, method)
+      const spy = vi.spyOn(OptionsEditor.methods, method)
         .mockImplementation(() => {});
-      const indexMock = jest.spyOn(OptionsEditor.methods, "updateIndexes");
+      const indexMock = vi.spyOn(OptionsEditor.methods, "updateIndexes");
       const wrapper = await mountBasicOptionsEditor();
       wrapper.vm.operation(op, { index: 0, operation: op, undo: op });
       await wrapper.vm.$nextTick();
@@ -428,7 +435,7 @@ describe("OptionsEditor", () => {
     },
   );
   it("mount calls updateIndexes", async () => {
-    const indexMock = jest.spyOn(OptionsEditor.methods, "updateIndexes");
+    const indexMock = vi.spyOn(OptionsEditor.methods, "updateIndexes");
     await mountBasicOptionsEditor();
     expect(indexMock).toHaveBeenCalled();
     indexMock.mockRestore();

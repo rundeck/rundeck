@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { EventBus } from "../../../../../library";
 import { RootStore } from "../../../../../library/stores/RootStore";
@@ -7,7 +8,7 @@ import NodeFilterLink from "../NodeFilterLink.vue";
 describe("NodeFilterLink Component", () => {
   beforeAll(() => {
     window._rundeck = {
-      eventBus: jest.fn() as unknown as typeof EventBus,
+      eventBus: vi.fn() as unknown as typeof EventBus,
       rdBase: "http://localhost",
       apiVersion: "mockApiVersion",
       projectName: "test-project",

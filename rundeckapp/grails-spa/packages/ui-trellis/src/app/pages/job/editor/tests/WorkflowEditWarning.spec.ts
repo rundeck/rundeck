@@ -1,18 +1,19 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import WorkflowEditWarning from "../WorkflowEditWarning.vue";
 import { getRundeckContext } from "../../../../../library";
 
-jest.mock("@/library", () => {
-  const mittLib = jest.requireActual("mitt");
+vi.mock("@/library", async () => {
+  const mittLib = await vi.importActual<typeof import("mitt")>("mitt");
   const mittFn = mittLib.default || mittLib;
   const bus = mittFn();
   const eventBus = {
-    on: jest.fn(bus.on.bind(bus)),
-    off: jest.fn(bus.off.bind(bus)),
-    emit: jest.fn(bus.emit.bind(bus)),
+    on: vi.fn(bus.on.bind(bus)),
+    off: vi.fn(bus.off.bind(bus)),
+    emit: vi.fn(bus.emit.bind(bus)),
   };
   return {
-    getRundeckContext: jest.fn(() => ({ eventBus })),
+    getRundeckContext: vi.fn(() => ({ eventBus })),
   };
 });
 
@@ -24,7 +25,7 @@ const createWrapper = async () => {
 
 describe("WorkflowEditWarning", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("initial state", () => {

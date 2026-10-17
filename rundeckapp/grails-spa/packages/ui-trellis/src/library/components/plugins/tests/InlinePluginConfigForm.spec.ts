@@ -1,29 +1,27 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import InlinePluginConfigForm from "../InlinePluginConfigForm.vue";
+import { getServiceProviderDescription } from "@/library/modules/pluginService";
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: { sendRequest: jest.fn() },
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: { sendRequest: vi.fn() },
 }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     apiVersion: "44",
   })),
 }));
 
-jest.mock("@/library/modules/pluginService", () => ({
-  getServiceProviderDescription: jest.fn().mockResolvedValue({
+vi.mock("@/library/modules/pluginService", () => ({
+  getServiceProviderDescription: vi.fn().mockResolvedValue({
     name: "exec",
     title: "Command",
     description: "Execute a command",
     props: [],
   }),
 }));
-
-const { getServiceProviderDescription } = jest.requireMock(
-  "@/library/modules/pluginService",
-);
 
 const mockErrorHandler = {
   type: "exec",
@@ -58,7 +56,7 @@ const createWrapper = async (props = {}, slots = {}) => {
 };
 
 describe("InlinePluginConfigForm", () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   it("user sees plugin title and description after form loads", async () => {
     const wrapper = await createWrapper();

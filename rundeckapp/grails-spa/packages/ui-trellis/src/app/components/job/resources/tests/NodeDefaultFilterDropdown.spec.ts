@@ -1,13 +1,16 @@
-const mockEventBus = {
-  emit: jest.fn(),
-  on: jest.fn(),
-  off: jest.fn(),
-};
+import { vi } from "vitest";
+const { mockEventBus } = vi.hoisted(() => ({
+  mockEventBus: {
+    emit: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+  },
+}));
 import { mount, VueWrapper } from "@vue/test-utils";
 import NodeDefaultFilterDropdown from "../NodeDefaultFilterDropdown.vue";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "mockRdBase",
     eventBus: mockEventBus,
   }),
@@ -41,7 +44,7 @@ const mountNodeDefaultFilterDropdown = async (props = {}) => {
 };
 describe("NodeDefaultFilterDropdown Component", () => {
   beforeEach(() => {
-    jest.clearAllMocks(); // Clear mocks to ensure isolated tests
+    vi.clearAllMocks(); // Clear mocks to ensure isolated tests
   });
   it("emits filter event when a saved filter is selected", async () => {
     const wrapper = await mountNodeDefaultFilterDropdown();

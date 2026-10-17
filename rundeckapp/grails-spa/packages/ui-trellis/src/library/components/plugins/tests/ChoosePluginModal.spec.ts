@@ -1,21 +1,22 @@
+import { vi } from "vitest";
 import { mount, VueWrapper, flushPromises } from "@vue/test-utils";
 import ChoosePluginModal from "../ChoosePluginModal.vue";
 import PluginSearch from "../PluginSearch.vue";
 import { Popover, Tabs, Tab } from "uiv";
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn(() => ({
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn(() => ({
     rootStore: {
       plugins: {
-        load: jest.fn(),
-        getServicePlugins: jest.fn((service) =>
+        load: vi.fn(),
+        getServicePlugins: vi.fn((service) =>
           service === "WorkflowStep"
             ? [
                 {
@@ -67,7 +68,7 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
 
 describe("ChoosePluginModal", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('emits "selected" event with correct data when a provider button is clicked', async () => {

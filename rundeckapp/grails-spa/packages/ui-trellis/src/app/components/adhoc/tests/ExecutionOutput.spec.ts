@@ -1,63 +1,64 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import ExecutionOutput from "../ExecutionOutput.vue";
 
 // Mock CancelToken before importing components that use logViewer
-jest.mock("@esfx/canceltoken", () => ({
+vi.mock("@esfx/canceltoken", () => ({
   CancelToken: {
-    source: jest.fn(() => ({
+    source: vi.fn(() => ({
       token: { signaled: false },
-      cancel: jest.fn(),
+      cancel: vi.fn(),
     })),
   },
 }));
 
-jest.mock("../../../../library/services/api", () => ({
-  apiClient: jest.fn(() => ({
-    get: jest.fn(),
-    post: jest.fn(),
+vi.mock("../../../../library/services/api", () => ({
+  apiClient: vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
   })),
   api: {
-    get: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
-jest.mock("../../../../library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     apiVersion: "44",
     rdBase: "http://localhost:4440",
     projectName: "test-project",
     rootStore: {
       theme: { theme: "dark" },
       executionOutputStore: {
-        createOrGet: jest.fn().mockReturnValue({ init: jest.fn() }),
+        createOrGet: vi.fn().mockReturnValue({ init: vi.fn() }),
       },
     },
   }),
 }));
 
-jest.mock("../../../../library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     apiVersion: "44",
     rdBase: "http://localhost:4440",
     projectName: "test-project",
     rootStore: {
       theme: { theme: "dark" },
       executionOutputStore: {
-        createOrGet: jest.fn().mockReturnValue({ init: jest.fn() }),
+        createOrGet: vi.fn().mockReturnValue({ init: vi.fn() }),
       },
     },
   }),
-  getAppLinks: jest.fn().mockReturnValue({
+  getAppLinks: vi.fn().mockReturnValue({
     executionOutputAjax: "/api/execution/output",
   }),
 }));
 
 describe("ExecutionOutput", () => {
   const mockEventBus = {
-    on: jest.fn(),
-    emit: jest.fn(),
-    off: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
+    off: vi.fn(),
   };
 
   const mockPageParams = {

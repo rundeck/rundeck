@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { JobPageStore } from "../JobPageStore";
 import { getRundeckContext } from "../../rundeckService";
 import {
@@ -9,18 +10,18 @@ import {
 import { JobBrowseItem, JobBrowseMeta } from "../../types/jobs/JobBrowse";
 
 // First, set up all mocks
-jest.mock("../../rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("../../rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     projectName: "TestProject",
     rdBase: "http://localhost:4440",
   })),
 }));
 
-jest.mock("../../services/jobBrowse", () => ({
-  bulkDeleteJobs: jest.fn(),
-  bulkExecutionEnableDisable: jest.fn(),
-  bulkScheduleEnableDisable: jest.fn(),
-  getProjectMeta: jest.fn(),
+vi.mock("../../services/jobBrowse", () => ({
+  bulkDeleteJobs: vi.fn(),
+  bulkExecutionEnableDisable: vi.fn(),
+  bulkScheduleEnableDisable: vi.fn(),
+  getProjectMeta: vi.fn(),
 }));
 
 describe("JobPageStore", () => {
@@ -80,9 +81,9 @@ describe("JobPageStore", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     store = new JobPageStore();
-    (getProjectMeta as jest.Mock).mockResolvedValue(mockMeta);
+    (getProjectMeta as vi.Mock).mockResolvedValue(mockMeta);
   });
 
   describe("Bulk Job Operations", () => {
@@ -146,13 +147,13 @@ describe("JobPageStore", () => {
     });
 
     it("should handle bulk delete successfully", async () => {
-      (bulkDeleteJobs as jest.Mock).mockResolvedValue({ allsuccessful: true });
+      (bulkDeleteJobs as vi.Mock).mockResolvedValue({ allsuccessful: true });
       await store.performBulkAction("delete");
       expect(bulkDeleteJobs).toHaveBeenCalledWith("TestProject", ["job1"]);
     });
 
     it("should throw error on failed bulk delete", async () => {
-      (bulkDeleteJobs as jest.Mock).mockResolvedValue({
+      (bulkDeleteJobs as vi.Mock).mockResolvedValue({
         allsuccessful: false,
         failed: [{ message: "Failed to delete" }],
       });
@@ -163,7 +164,7 @@ describe("JobPageStore", () => {
     });
 
     it("should handle schedule enable/disable", async () => {
-      (bulkScheduleEnableDisable as jest.Mock).mockResolvedValue({
+      (bulkScheduleEnableDisable as vi.Mock).mockResolvedValue({
         allsuccessful: true,
       });
       await store.performBulkAction("enable_schedule");
@@ -175,7 +176,7 @@ describe("JobPageStore", () => {
     });
 
     it("should handle execution enable/disable", async () => {
-      (bulkExecutionEnableDisable as jest.Mock).mockResolvedValue({
+      (bulkExecutionEnableDisable as vi.Mock).mockResolvedValue({
         allsuccessful: true,
       });
       await store.performBulkAction("enable_execution");
@@ -187,7 +188,7 @@ describe("JobPageStore", () => {
     });
 
     it("should throw error on failed schedule enable/disable", async () => {
-      (bulkScheduleEnableDisable as jest.Mock).mockResolvedValue({
+      (bulkScheduleEnableDisable as vi.Mock).mockResolvedValue({
         allsuccessful: false,
         failed: [{ id: "job1", message: "Failed to update schedule" }],
       });
@@ -198,7 +199,7 @@ describe("JobPageStore", () => {
     });
 
     it("should throw error on failed execution enable/disable", async () => {
-      (bulkExecutionEnableDisable as jest.Mock).mockResolvedValue({
+      (bulkExecutionEnableDisable as vi.Mock).mockResolvedValue({
         allsuccessful: false,
         failed: [{ id: "job1", message: "Failed to update execution" }],
       });
@@ -243,7 +244,7 @@ describe("JobPageStore", () => {
     });
 
     it("should handle missing meta data gracefully", async () => {
-      (getProjectMeta as jest.Mock).mockResolvedValue([]);
+      (getProjectMeta as vi.Mock).mockResolvedValue([]);
       await store.load();
       expect(store.jobAuthz).toEqual({});
       expect(store.projAuthz).toEqual({});

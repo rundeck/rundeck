@@ -1,79 +1,80 @@
+import { vi } from "vitest";
 import { shallowMount, flushPromises, VueWrapper } from "@vue/test-utils";
 
 // --- Mock setup (before imports) ---
 
-const mockGetServiceProviderDescription = jest.fn();
+const mockGetServiceProviderDescription = vi.fn();
 
-jest.mock("@/library/modules/pluginService", () => ({
+vi.mock("@/library/modules/pluginService", () => ({
   getServiceProviderDescription: (svcName: string, provider: string) =>
     mockGetServiceProviderDescription(svcName, provider),
-  validatePluginConfig: jest.fn(),
-  getPluginProvidersForService: jest.fn(),
+  validatePluginConfig: vi.fn(),
+  getPluginProvidersForService: vi.fn(),
 }));
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
 }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     rootStore: {
       plugins: {
-        getServicePlugins: jest.fn().mockReturnValue([]),
-        load: jest.fn(),
+        getServicePlugins: vi.fn().mockReturnValue([]),
+        load: vi.fn(),
       },
       projects: {
         projects: [{ name: "testProject" }],
         loaded: true,
-        load: jest.fn(),
+        load: vi.fn(),
       },
     },
     projectName: "testProject",
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     data: null,
   })),
 }));
 
-jest.mock("@/library/stores/Plugins", () => ({
+vi.mock("@/library/stores/Plugins", () => ({
   ServiceType: {
     WorkflowNodeStep: "WorkflowNodeStep",
     WorkflowStep: "WorkflowStep",
   },
-  PluginStore: jest.fn(),
+  PluginStore: vi.fn(),
 }));
 
-jest.mock("@/library/stores/contextVariables", () => ({
-  contextVariables: jest.fn().mockReturnValue({
+vi.mock("@/library/stores/contextVariables", () => ({
+  contextVariables: vi.fn().mockReturnValue({
     node: [],
     job: [],
   }),
   ContextVariable: {},
 }));
 
-jest.mock("@/library/stores/NodesStorePinia", () => ({
+vi.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: () => ({
     total: 0,
     nodeFilterStore: {
       filter: "",
-      setSelectedFilter: jest.fn(),
+      setSelectedFilter: vi.fn(),
     },
     currentNodes: [],
     lastCountFetched: 0,
     isResultsTruncated: false,
-    fetchNodes: jest.fn(),
+    fetchNodes: vi.fn(),
   }),
 }));
 
-jest.mock("@/library/components/utils/contextVariableUtils", () => ({
-  getContextVariables: jest.fn().mockReturnValue([]),
-  transformVariables: jest.fn().mockReturnValue([]),
+vi.mock("@/library/components/utils/contextVariableUtils", () => ({
+  getContextVariables: vi.fn().mockReturnValue([]),
+  transformVariables: vi.fn().mockReturnValue([]),
 }));
 
-jest.mock("@/library/services/projects");
-jest.mock("vue-scrollto", () => ({ scrollTo: jest.fn() }));
-jest.mock("@/app/utilities/loadJsonData", () => ({
-  loadJsonData: jest.fn().mockReturnValue(null),
+vi.mock("@/library/services/projects");
+vi.mock("vue-scrollto", () => ({ scrollTo: vi.fn() }));
+vi.mock("@/app/utilities/loadJsonData", () => ({
+  loadJsonData: vi.fn().mockReturnValue(null),
 }));
 
 // --- Import component after mocks ---
@@ -203,7 +204,7 @@ const mockPluginProvider: PluginDetails = {
 
 describe("EditStepCard", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetServiceProviderDescription.mockResolvedValue(mockPluginProvider);
   });
 

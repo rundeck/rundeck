@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import {
   contextVariables,
   createOptionVariables,
@@ -5,12 +6,12 @@ import {
 } from "../contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 
-jest.mock("../../rundeckService");
-const mockedRundeckContext = getRundeckContext as jest.Mock<unknown>;
+vi.mock("../../rundeckService");
+const mockedRundeckContext = getRundeckContext as vi.Mock<unknown>;
 
 describe("contextVariables", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockedRundeckContext.mockImplementation(() => {});
   });
 
@@ -32,7 +33,7 @@ describe("contextVariables", () => {
 });
 describe("createOptionVariables", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockedRundeckContext.mockImplementation(() => {});
   });
   it("creates options variables when with input", () => {

@@ -1,20 +1,21 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import App from "../App.vue";
 import { NodeFilterStore } from "../../../../library/stores/NodeFilterLocalstore";
 // AdhocCommandStore removed - state is now local to AdhocCommandForm
 
 // Mock CancelToken before importing components that use logViewer
-jest.mock("@esfx/canceltoken", () => ({
+vi.mock("@esfx/canceltoken", () => ({
   CancelToken: {
-    source: jest.fn(() => ({
+    source: vi.fn(() => ({
       token: { signaled: false },
-      cancel: jest.fn(),
+      cancel: vi.fn(),
     })),
   },
 }));
 
-jest.mock("../../../utilities/loadJsonData", () => ({
-  loadJsonData: jest.fn((id: string) => {
+vi.mock("../../../utilities/loadJsonData", () => ({
+  loadJsonData: vi.fn((id: string) => {
     if (id === "filterParamsJSON") {
       return { matchedNodesMaxCount: 50, filter: "", filterAll: false };
     }
@@ -36,44 +37,44 @@ jest.mock("../../../utilities/loadJsonData", () => ({
   }),
 }));
 
-jest.mock("../../../../library/services/api", () => ({
-  apiClient: jest.fn(() => ({
-    get: jest.fn(),
-    post: jest.fn(),
+vi.mock("../../../../library/services/api", () => ({
+  apiClient: vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
   })),
 }));
 
-jest.mock("../../../../library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     projectName: "test-project",
     apiVersion: "44",
     rdBase: "http://localhost:4440",
     rootStore: {
       theme: { theme: "dark" },
       executionOutputStore: {
-        createOrGet: jest.fn(),
+        createOrGet: vi.fn(),
       },
       ui: {
-        itemsForLocation: jest.fn(() => []),
-        addWatcher: jest.fn(),
+        itemsForLocation: vi.fn(() => []),
+        addWatcher: vi.fn(),
       },
     },
   }),
 }));
 
-jest.mock("../../../../library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     projectName: "test-project",
     apiVersion: "44",
     rdBase: "http://localhost:4440",
     rootStore: {
       theme: { theme: "dark" },
       executionOutputStore: {
-        createOrGet: jest.fn(),
+        createOrGet: vi.fn(),
       },
       ui: {
-        itemsForLocation: jest.fn(() => []),
-        addWatcher: jest.fn(),
+        itemsForLocation: vi.fn(() => []),
+        addWatcher: vi.fn(),
       },
     },
     data: {
@@ -81,16 +82,16 @@ jest.mock("../../../../library", () => ({
       runningDateFormatMoment: "YYYY-MM-DD HH:mm:ss",
     },
   }),
-  getAppLinks: jest.fn().mockReturnValue({
+  getAppLinks: vi.fn().mockReturnValue({
     frameworkNodesQueryAjax: "/api/nodes/query",
   }),
 }));
 
 describe("AdhocApp", () => {
   const mockEventBus = {
-    on: jest.fn(),
-    emit: jest.fn(),
-    off: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
+    off: vi.fn(),
   };
 
   beforeEach(() => {

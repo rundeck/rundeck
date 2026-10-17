@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it, jest } from "@jest/globals";
+import { vi, afterEach, beforeEach, describe, it } from "vitest";
 import axios from "axios";
 
 import KeyType from "../../types/KeyType";
@@ -13,21 +13,21 @@ import {
   storageKeyUpdate,
 } from "../storage";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440/",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../api");
-const axiosMock = api as jest.Mocked<typeof axios>;
+vi.mock("../api");
+const axiosMock = api as vi.Mocked<typeof axios>;
 describe("storage key service", () => {
   beforeEach(() => {});
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetAllMocks();
+    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it.each([

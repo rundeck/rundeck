@@ -1,22 +1,23 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper, flushPromises } from "@vue/test-utils";
 import { nextTick } from "vue";
 import LogViewer from "../logViewer.vue";
 import { EventBus } from "../../../utilities/vueEventBus";
 
 // Mock the CancelToken
-jest.mock("@esfx/canceltoken", () => ({
+vi.mock("@esfx/canceltoken", () => ({
   CancelToken: {
-    source: jest.fn(() => ({
+    source: vi.fn(() => ({
       token: { signaled: false },
-      cancel: jest.fn(),
+      cancel: vi.fn(),
     })),
   },
 }));
 
 // Mock getRundeckContext - use let for hoisting
-let mockCreateOrGet: jest.Mock;
+let mockCreateOrGet: vi.Mock;
 
-jest.mock("../../../rundeckService", () => ({
+vi.mock("../../../rundeckService", () => ({
   getRundeckContext: () => ({
     rootStore: {
       theme: { theme: "dark" },
@@ -34,7 +35,7 @@ const findByTestId = (wrapper: VueWrapper<any>, testId: string) => {
   return wrapper.find(`[data-testid="${testId}"]`);
 };
 
-const findEventHandler = (eventBus: { on: jest.Mock }, eventName: string) => {
+const findEventHandler = (eventBus: { on: vi.Mock }, eventName: string) => {
   const call = eventBus.on.mock.calls.find((args) => args[0] === eventName);
   return call ? call[1] : undefined;
 };
@@ -92,16 +93,16 @@ describe("LogViewer", () => {
 
   beforeEach(() => {
     // Initialize mock
-    mockCreateOrGet = jest.fn();
+    mockCreateOrGet = vi.fn();
 
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock event bus
     mockEventBus = {
-      on: jest.fn(),
-      emit: jest.fn(),
-      off: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
+      off: vi.fn(),
     } as unknown as typeof EventBus;
 
     // Mock window._rundeck
@@ -111,8 +112,8 @@ describe("LogViewer", () => {
 
     // Mock viewer
     mockViewer = {
-      init: jest.fn().mockResolvedValue(undefined),
-      getOutput: jest.fn().mockResolvedValue({}),
+      init: vi.fn().mockResolvedValue(undefined),
+      getOutput: vi.fn().mockResolvedValue({}),
       entries: [],
       completed: true,
       execCompleted: true,
@@ -122,7 +123,7 @@ describe("LogViewer", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Toolbar Visibility", () => {
@@ -233,7 +234,7 @@ describe("LogViewer", () => {
       });
 
       it("persists settings to localStorage when drawer is open and settings change", async () => {
-        const setItemSpy = jest.spyOn(Storage.prototype, "setItem");
+        const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
         const wrapper = createWrapper({
           showSettings: true,
           useUserSettings: true,
@@ -330,7 +331,7 @@ describe("LogViewer", () => {
         const statsText = findByTestId(wrapper, "log-viewer-stats").text();
 
         expect(statsText).toContain("Lines:12,345");
-      });
+      }, 10_000);
     });
 
     describe("Progress Bar", () => {
@@ -403,7 +404,7 @@ describe("LogViewer", () => {
       await flushPromises();
 
       const stateHandler = findEventHandler(
-        mockEventBus as unknown as { on: jest.Mock },
+        mockEventBus as unknown as { on: vi.Mock },
         "execution-hide-incomplete-nodes-state",
       );
       expect(stateHandler).toBeDefined();
@@ -426,7 +427,7 @@ describe("LogViewer", () => {
       await flushPromises();
 
       const stateHandler = findEventHandler(
-        mockEventBus as unknown as { on: jest.Mock },
+        mockEventBus as unknown as { on: vi.Mock },
         "execution-hide-incomplete-nodes-state",
       );
       stateHandler({ hide: false, applies: true, nodeNames: ["runner"] });

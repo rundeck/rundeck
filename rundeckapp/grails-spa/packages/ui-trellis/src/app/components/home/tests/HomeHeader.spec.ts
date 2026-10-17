@@ -1,9 +1,10 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import HomeHeader from "../HomeHeader.vue";
 
 // Mock getSummary method
-jest.mock("@/app/components/home/services/homeServices", () => ({
-  getSummary: jest.fn().mockResolvedValue({
+vi.mock("@/app/components/home/services/homeServices", () => ({
+  getSummary: vi.fn().mockResolvedValue({
     execCount: 3,
     totalFailedCount: 1,
     recentProjects: ["Project1", "Project2"],
@@ -11,12 +12,11 @@ jest.mock("@/app/components/home/services/homeServices", () => ({
   }),
 }));
 
-jest.mock("@/library", () => ({
-  getAppLinks: jest.fn().mockReturnValue({
+vi.mock("@/library", () => ({
+  getAppLinks: vi.fn().mockReturnValue({
     frameworkCreateProject: "/create-project-url", // Replace with the actual URL
   }),
-  getRundeckContext: jest
-    .fn()
+  getRundeckContext: vi.fn()
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
@@ -35,7 +35,7 @@ const createWrapper = (props = {}) => {
 
 describe("HomeHeader", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders project count and create project button when loadedProjectNames is true", async () => {

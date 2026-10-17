@@ -1,32 +1,35 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import EditProjectFile from "./EditProjectFile.vue";
 import * as editProjectFileService from "./editProjectFileService";
 
-jest.mock("@/library/rundeckService", () => ({
+vi.mock("@/library/rundeckService", () => ({
   getRundeckContext: () => ({
     rundeckClient: {},
   }),
-  url: jest.fn().mockImplementation((path: string) => {
+  url: vi.fn().mockImplementation((path: string) => {
     return {
       href: `http://localhost:4440/${path}`,
     };
   }),
 }));
-jest.mock("./editProjectFileService", () => ({
-  getFileText: jest.fn().mockResolvedValue({
+vi.mock("./editProjectFileService", () => ({
+  getFileText: vi.fn().mockResolvedValue({
     success: true,
     contents: "sample file content",
   }),
-  saveProjectFile: jest.fn().mockResolvedValue({
+  saveProjectFile: vi.fn().mockResolvedValue({
     success: true,
     message: "File saved successfully.",
   }),
 }));
 
-jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
-  name: "AceEditor",
-  props: ["modelValue"],
-  template: '<span class="ace_text ace_xml">{{modelValue }}</span>',
+vi.mock("../../../library/components/utils/AceEditor.vue", () => ({
+  default: {
+    name: "AceEditor",
+    props: ["modelValue"],
+    template: '<span class="ace_text ace_xml">{{modelValue }}</span>',
+  },
 }));
 const mountEditProjectFile = async (props = {}): Promise<VueWrapper<any>> => {
   return mount(EditProjectFile, {
@@ -41,7 +44,7 @@ const mountEditProjectFile = async (props = {}): Promise<VueWrapper<any>> => {
 
 describe("EditProjectFile", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it.each([
@@ -62,8 +65,8 @@ describe("EditProjectFile", () => {
   });
   it("handles failure when getFileText method fails", async () => {
     const wrapper = await mountEditProjectFile();
-    const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
-    (editProjectFileService.getFileText as jest.Mock).mockImplementationOnce(
+    const notifyErrorSpy = vi.spyOn(wrapper.vm, "notifyError");
+    (editProjectFileService.getFileText as vi.Mock).mockImplementationOnce(
       () => Promise.reject(new Error("Failed to fetch file")),
     );
     await wrapper.vm.getFileText();
@@ -72,9 +75,9 @@ describe("EditProjectFile", () => {
 
   it("handles failure when user edits the file and fails to save it", async () => {
     const wrapper = await mountEditProjectFile();
-    const notifyErrorSpy = jest.spyOn(wrapper.vm, "notifyError");
+    const notifyErrorSpy = vi.spyOn(wrapper.vm, "notifyError");
     (
-      editProjectFileService.saveProjectFile as jest.Mock
+      editProjectFileService.saveProjectFile as vi.Mock
     ).mockImplementationOnce(() =>
       Promise.reject(new Error("Failed to save file")),
     );

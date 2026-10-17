@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import LogEntryFlex from "../logEntryFlex.vue";
 import { EventBus } from "../../../utilities/vueEventBus";
@@ -6,10 +7,12 @@ import { IBuilderOpts } from "../logBuilder";
 import moment from "moment";
 
 // Mock UiSocket component
-jest.mock("../../utils/UiSocket.vue", () => ({
-  name: "UiSocket",
-  render() {
-    return null;
+vi.mock("../../utils/UiSocket.vue", () => ({
+  default: {
+    name: "UiSocket",
+    render() {
+      return null;
+    },
   },
 }));
 
@@ -60,8 +63,8 @@ describe("LogEntryFlex.vue", () => {
   ): VueWrapper<any> => {
     // Create mock eventBus if not provided in props
     const mockEventBus = {
-      on: jest.fn(),
-      emit: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
     };
 
     return shallowMount(LogEntryFlex, {
@@ -82,16 +85,16 @@ describe("LogEntryFlex.vue", () => {
   beforeEach(() => {
     // Setup mock event bus
     mockEventBus = {
-      on: jest.fn(),
-      emit: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
     };
 
     // Mock moment format function
-    jest.spyOn(moment.prototype, "format").mockReturnValue("10:30:00");
+    vi.spyOn(moment.prototype, "format").mockReturnValue("10:30:00");
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders correctly with default props", () => {
@@ -219,11 +222,11 @@ describe("LogEntryFlex.vue", () => {
   it("registers event listener on mount and handles settings changes", async () => {
     // Create a mock event bus that matches the EventBus interface
     const eventBus = {
-      on: jest.fn(),
-      emit: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
     };
 
-    const spy = jest.spyOn(eventBus, "on");
+    const spy = vi.spyOn(eventBus, "on");
 
     const wrapper = createWrapper({ eventBus });
     expect(spy).toHaveBeenCalledWith(

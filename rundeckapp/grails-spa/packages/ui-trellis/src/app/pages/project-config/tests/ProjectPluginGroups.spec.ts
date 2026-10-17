@@ -1,13 +1,14 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import ProjectPluginGroups from "../ProjectPluginGroups.vue";
 import { getRundeckContext } from "../../../../library/rundeckService";
 
 // eventBus is created once inside the factory closure (not referencing an
-// outer variable, which jest.mock hoisting would otherwise break) so every
+// outer variable, which vi.mock hoisting would otherwise break) so every
 // call to getRundeckContext() — including the one ProjectPluginGroups.vue
 // makes at its own module top-level — shares the same emit mock.
-jest.mock("@/library/rundeckService", () => {
-  const eventBus = { emit: jest.fn() };
+vi.mock("@/library/rundeckService", () => {
+  const eventBus = { emit: vi.fn() };
   return {
     getRundeckContext: () => ({
       rundeckClient: {},
@@ -17,38 +18,40 @@ jest.mock("@/library/rundeckService", () => {
   };
 });
 
-jest.mock("@/library/modules/pluginService", () => ({
+vi.mock("@/library/modules/pluginService", () => ({
   __esModule: true,
   default: {
-    getPluginProvidersForService: jest.fn().mockResolvedValue({
+    getPluginProvidersForService: vi.fn().mockResolvedValue({
       service: true,
       descriptions: [{ name: "test-plugin", title: "Test Plugin" }],
       labels: [],
     }),
-    validatePluginConfig: jest.fn().mockResolvedValue({ valid: true }),
+    validatePluginConfig: vi.fn().mockResolvedValue({ valid: true }),
   },
 }));
 
 // The real pluginConfig.vue drags in rundeckClient.ts, which reads a token
 // out of the DOM at module-load time and isn't relevant to this behavior.
-jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
-  name: "PluginConfig",
-  props: [
-    "mode",
-    "serviceName",
-    "provider",
-    "showDescription",
-    "showTitle",
-    "config",
-    "validation",
-    "validationWarningText",
-  ],
-  template: '<div><slot name="extra"></slot></div>',
+vi.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+  default: {
+    name: "PluginConfig",
+    props: [
+      "mode",
+      "serviceName",
+      "provider",
+      "showDescription",
+      "showTitle",
+      "config",
+      "validation",
+      "validationWarningText",
+    ],
+    template: '<div><slot name="extra"></slot></div>',
+  },
 }));
 
 import pluginService from "../../../../library/modules/pluginService";
 
-const mockEmit = getRundeckContext().eventBus.emit as jest.Mock;
+const mockEmit = getRundeckContext().eventBus.emit as vi.Mock;
 
 const mountWidget = async (
   props: Record<string, any> = {},

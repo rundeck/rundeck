@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import mitt, { Emitter, EventType } from "mitt";
 import Btn from "uiv";
@@ -34,7 +35,7 @@ const createWrapper = async (options: {
 
 describe("UndoRedo", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("undo and redo are disabled without changes", async () => {
@@ -73,7 +74,7 @@ describe("UndoRedo", () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
     const wrapper = await createWrapper({ eventBus });
     eventBus.emit("change", { test: "event" });
-    const undoHandler = jest.fn();
+    const undoHandler = vi.fn();
     eventBus.on("undo", undoHandler);
 
     await wrapper.vm.$nextTick();
@@ -98,7 +99,7 @@ describe("UndoRedo", () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
     const wrapper = await createWrapper({ eventBus });
     eventBus.emit("change", { test: "event" });
-    const redoHandler = jest.fn();
+    const redoHandler = vi.fn();
     eventBus.on("redo", redoHandler);
 
     await wrapper.vm.$nextTick();
@@ -122,7 +123,7 @@ describe("UndoRedo", () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
     const wrapper = await createWrapper({ eventBus, revertAllEnabled: true });
     eventBus.emit("change", { test: "event" });
-    const handler = jest.fn();
+    const handler = vi.fn();
     eventBus.on("revertAll", handler);
     await wrapper.vm.$nextTick();
 

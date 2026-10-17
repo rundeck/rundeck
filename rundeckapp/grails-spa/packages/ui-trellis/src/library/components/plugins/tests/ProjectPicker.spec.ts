@@ -1,10 +1,10 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import ProjectPicker from "../ProjectPicker.vue";
 import { client } from "../../../modules/rundeckClient";
-jest.mock("../../../modules/rundeckClient", () => ({
+vi.mock("../../../modules/rundeckClient", () => ({
   client: {
-    projectList: jest
-      .fn()
+    projectList: vi.fn()
       .mockResolvedValue([{ name: "Project A" }, { name: "Project B" }]),
   },
 }));
@@ -19,7 +19,7 @@ const createWrapper = async () => {
 };
 describe("ProjectPicker.vue", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("renders project options after fetching project list", async () => {
     const wrapper = await createWrapper();
@@ -38,7 +38,7 @@ describe("ProjectPicker.vue", () => {
     expect(wrapper.emitted("update:modelValue")![0][0]!).toBe("Project A");
   });
   it("renders only the default option when project list is empty", async () => {
-    (client.projectList as jest.Mock).mockResolvedValueOnce([]);
+    (client.projectList as vi.Mock).mockResolvedValueOnce([]);
     const wrapper = await createWrapper();
     await flushPromises();
     const options = wrapper.findAll('[data-testid="project-option"]');

@@ -1,13 +1,14 @@
+import { vi } from "vitest";
 import mitt from "mitt";
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { createTestingPinia } from "@pinia/testing";
 import { useNodesStore } from "../../../../../library/stores/NodesStorePinia";
 import JobRefForm from "../JobRefForm.vue";
 
-jest.mock("@/library/services/api", () => ({
+vi.mock("@/library/services/api", () => ({
   api: {
-    get: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
   rundeckService: {
     baseURL: "http://localhost:4440/api/41/",
@@ -18,8 +19,8 @@ jest.mock("@/library/services/api", () => ({
   },
 }));
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     rdBase: "http://localhost:4440",
     projectName: "TestProject",
     rootStore: {
@@ -35,14 +36,14 @@ jest.mock("@/library", () => ({
   })),
 }));
 
-jest.mock("@/library/modules/pluginService", () => ({
-  getServiceProviderDescription: jest.fn(),
-  validatePluginConfig: jest.fn(),
-  getPluginProvidersForService: jest.fn(),
+vi.mock("@/library/modules/pluginService", () => ({
+  getServiceProviderDescription: vi.fn(),
+  validatePluginConfig: vi.fn(),
+  getPluginProvidersForService: vi.fn(),
 }));
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
 }));
 
 const baseJobRef = {
@@ -100,7 +101,7 @@ const createWrapper = async (
     global: {
       plugins: [
         createTestingPinia({
-          createSpy: jest.fn(),
+          createSpy: vi.fn(),
           ...piniaOptions,
         }),
       ],
@@ -428,7 +429,7 @@ describe("JobRefForm", () => {
           initialState: {
             nodes: {
               nodeFilterStore: {
-                setSelectedFilter: jest.fn(),
+                setSelectedFilter: vi.fn(),
               },
             },
           },

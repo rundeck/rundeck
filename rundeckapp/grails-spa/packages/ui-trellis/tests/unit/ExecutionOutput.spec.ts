@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import "isomorphic-fetch";
 
 console.log(global.fetch);
@@ -11,40 +12,40 @@ import { RootStore } from "../../src/library/stores/RootStore";
 import { RundeckToken } from "../../src/library/interfaces/rundeckWindow";
 import { EventBus } from "../../src/library";
 
-jest.setTimeout(60000);
+vi.setTimeout(60000);
 
-jest.mock("../../src/library/services/api", () => {
+vi.mock("../../src/library/services/api", () => {
   const api = {
-    get: jest.fn(),
-    put: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
+    post: vi.fn(),
   };
   return {
     api,
-    apiClient: jest.fn().mockImplementation((vers) => api),
+    apiClient: vi.fn().mockImplementation((vers) => api),
   };
 });
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     client: {},
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
     rootStore: {
       plugins: {
-        load: jest.fn(),
-        getServicePlugins: jest.fn(),
+        load: vi.fn(),
+        getServicePlugins: vi.fn(),
       },
     },
   })),
 }));
-jest.mock("../../src/library/services/projects");
-jest.mock("../../src/library/stores/RootStore", () => {
+vi.mock("../../src/library/services/projects");
+vi.mock("../../src/library/stores/RootStore", () => {
   return {
     __esModule: true,
-    RootStore: jest.fn().mockImplementation(() => {
+    RootStore: vi.fn().mockImplementation(() => {
       return {};
     }),
   };
@@ -70,8 +71,8 @@ describe("ExecutionOutput Store", () => {
       token: {} as RundeckToken,
       tokens: {},
     };
-    jest.resetAllMocks();
-    (apiClient as jest.MockedFn<any>).mockImplementation((vers) => api);
+    vi.resetAllMocks();
+    (apiClient as vi.MockedFn<any>).mockImplementation((vers) => api);
   });
 
   it("Loads Output", async () => {
@@ -106,7 +107,7 @@ describe("ExecutionOutput Store", () => {
     };
 
     // Set up the api mocks
-    (api.get as jest.Mock).mockImplementation((url, params) => {
+    (api.get as vi.Mock).mockImplementation((url, params) => {
       if (url.includes("execution/900/output")) {
         return Promise.resolve(mockOutputResponse);
       } else if (url.includes("execution/900")) {

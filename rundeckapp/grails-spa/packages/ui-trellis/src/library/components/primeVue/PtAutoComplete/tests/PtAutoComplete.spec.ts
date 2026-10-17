@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import AutoComplete from "primevue/autocomplete";
 import { PtAutoComplete } from "../../index";
@@ -110,11 +111,11 @@ describe("PtAutoComplete", () => {
 
   describe("suggestion filtering", () => {
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("filters suggestions to those matching the typed query so the dropdown shows only relevant options", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper();
 
       // Simulate user typing "execid" – AutoComplete fires complete
@@ -123,7 +124,7 @@ describe("PtAutoComplete", () => {
         originalEvent: { target: { selectionStart: 6 } },
       });
 
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
       // tabFilteredSuggestions (the massaged prop) should contain only the matching entry
@@ -135,7 +136,7 @@ describe("PtAutoComplete", () => {
     });
 
     it("returns no suggestions when the query does not match anything", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper();
 
       await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
@@ -143,7 +144,7 @@ describe("PtAutoComplete", () => {
         originalEvent: { target: { selectionStart: 3 } },
       });
 
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
       // tabFilteredSuggestions returns undefined for empty results; PrimeVue normalises this to null
@@ -153,7 +154,7 @@ describe("PtAutoComplete", () => {
     });
 
     it("shows all suggestions when the user types just a dollar sign", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper();
 
       await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
@@ -161,7 +162,7 @@ describe("PtAutoComplete", () => {
         originalEvent: { target: { selectionStart: 1 } },
       });
 
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
       const suggestions = wrapper
@@ -172,7 +173,7 @@ describe("PtAutoComplete", () => {
     });
 
     it("refreshes the rendered options when the suggestions prop changes while the panel is already open (e.g. a consumer toggling an accordion group inside the list)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ showOptionsOnFocus: true });
 
       // Focus with an empty query shows everything (showOptionsOnFocus branch)
@@ -180,7 +181,7 @@ describe("PtAutoComplete", () => {
         query: "",
         originalEvent: { target: { selectionStart: 0 } },
       });
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
       expect(
@@ -204,7 +205,7 @@ describe("PtAutoComplete", () => {
     });
 
     it("restricts suggestions to the active tab's category when tabMode is enabled", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const tabSuggestions = [
         { name: "${job.execid}", title: "Execution ID", type: "job" },
@@ -236,7 +237,7 @@ describe("PtAutoComplete", () => {
         originalEvent: { target: { selectionStart: 1 } },
       });
 
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
       // Default active tab is index 0 ("Job") – only job suggestions should be passed to AutoComplete
@@ -285,51 +286,51 @@ describe("PtAutoComplete", () => {
 
   describe("clearing the input", () => {
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("re-shows the full option list when the focused input is emptied and reopenOnClear is set", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper(
         { showOptionsOnFocus: true, reopenOnClear: true },
         { attachTo: document.body },
       );
       const inner = wrapper.findComponent(AutoComplete);
-      const show = jest.spyOn(inner.vm as any, "show");
+      const show = vi.spyOn(inner.vm as any, "show");
       wrapper.find("input").element.focus();
 
       await inner.vm.$emit("clear");
-      jest.runAllTimers();
+      vi.runAllTimers();
 
       expect(show).toHaveBeenCalled();
       wrapper.unmount();
     });
 
     it("does not reopen when the input was cleared as it lost focus, so an option click is not swallowed", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper(
         { showOptionsOnFocus: true, reopenOnClear: true },
         { attachTo: document.body },
       );
       const inner = wrapper.findComponent(AutoComplete);
-      const show = jest.spyOn(inner.vm as any, "show");
+      const show = vi.spyOn(inner.vm as any, "show");
       wrapper.find("input").element.blur();
 
       await inner.vm.$emit("clear");
-      jest.runAllTimers();
+      vi.runAllTimers();
 
       expect(show).not.toHaveBeenCalled();
       wrapper.unmount();
     });
 
     it("leaves the panel closed when the input is emptied without reopenOnClear, even with showOptionsOnFocus", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ showOptionsOnFocus: true });
       const inner = wrapper.findComponent(AutoComplete);
-      const show = jest.spyOn(inner.vm as any, "show");
+      const show = vi.spyOn(inner.vm as any, "show");
 
       await inner.vm.$emit("clear");
-      jest.runAllTimers();
+      vi.runAllTimers();
 
       expect(show).not.toHaveBeenCalled();
     });
@@ -356,7 +357,7 @@ describe("PtAutoComplete", () => {
     ];
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("forwards optionDisabled to the underlying AutoComplete only in object mode", async () => {
@@ -397,7 +398,7 @@ describe("PtAutoComplete", () => {
     });
 
     it("passes ContextVariable objects through (not flattened to a name) when optionValue is set", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({
         suggestions: OBJECT_SUGGESTIONS,
         optionValue: "description",
@@ -408,7 +409,7 @@ describe("PtAutoComplete", () => {
         query: "Exit",
         originalEvent: { target: { selectionStart: 4 } },
       });
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
       const suggestions = wrapper

@@ -1,14 +1,40 @@
+import { vi } from "vitest";
 import { shallowMount, flushPromises, VueWrapper } from "@vue/test-utils";
 import { cloneDeep } from "lodash";
 
 // --- Mock setup (before imports) ---
 
-const mockEventBusOn = jest.fn();
-const mockEventBusOff = jest.fn();
-const mockEventBusEmit = jest.fn();
-const mockSetSelectedFilter = jest.fn();
-const mockFetchNodes = jest.fn();
-const mockSearchJobsByName = jest.fn();
+const {
+  mockEventBusOn,
+  mockEventBusOff,
+  mockEventBusEmit,
+  mockSetSelectedFilter,
+  mockFetchNodes,
+  mockSearchJobsByName,
+  mockRootStore,
+} = vi.hoisted(() => ({
+  mockEventBusOn: vi.fn(),
+  mockEventBusOff: vi.fn(),
+  mockEventBusEmit: vi.fn(),
+  mockSetSelectedFilter: vi.fn(),
+  mockFetchNodes: vi.fn(),
+  mockSearchJobsByName: vi.fn(),
+  mockRootStore: {
+    current: {
+      projects: {
+        projects: [{ name: "testProject" }, { name: "otherProject" }],
+        loaded: true,
+        load: vi.fn(),
+      },
+      ui: {
+        items: [],
+        itemsForLocation: vi.fn(),
+        addWatcher: vi.fn(),
+        removeWatcher: vi.fn(),
+      },
+    },
+  },
+}));
 
 const createMockRootStore = () => {
   const uiItems: Array<{
@@ -21,7 +47,7 @@ const createMockRootStore = () => {
     projects: {
       projects: [{ name: "testProject" }, { name: "otherProject" }],
       loaded: true,
-      load: jest.fn(),
+      load: vi.fn(),
     },
     ui: {
       items: uiItems,
@@ -30,17 +56,15 @@ const createMockRootStore = () => {
           (i) =>
             i.section === section && (!location || i.location === location),
         ),
-      addWatcher: jest.fn(),
-      removeWatcher: jest.fn(),
+      addWatcher: vi.fn(),
+      removeWatcher: vi.fn(),
     },
   };
 };
 
-let mockRootStore = createMockRootStore();
-
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    rootStore: mockRootStore,
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    rootStore: mockRootStore.current,
     projectName: "testProject",
     eventBus: {
       on: mockEventBusOn,
@@ -52,11 +76,11 @@ jest.mock("@/library/rundeckService", () => ({
   })),
 }));
 
-jest.mock("@/library/services/jobBrowse", () => ({
+vi.mock("@/library/services/jobBrowse", () => ({
   searchJobsByName: (...args: unknown[]) => mockSearchJobsByName(...args),
 }));
 
-jest.mock("@/library/stores/NodesStorePinia", () => ({
+vi.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: () => ({
     total: 5,
     nodeFilterStore: {
@@ -73,12 +97,12 @@ jest.mock("@/library/stores/NodesStorePinia", () => ({
   }),
 }));
 
-jest.mock("@/library/components/utils/contextVariableUtils", () => ({
-  getContextVariables: jest.fn().mockReturnValue([]),
-  transformVariables: jest.fn().mockReturnValue([]),
+vi.mock("@/library/components/utils/contextVariableUtils", () => ({
+  getContextVariables: vi.fn().mockReturnValue([]),
+  transformVariables: vi.fn().mockReturnValue([]),
 }));
 
-jest.mock("@/library/stores/contextVariables", () => ({
+vi.mock("@/library/stores/contextVariables", () => ({
   ContextVariable: {},
 }));
 
@@ -199,8 +223,8 @@ describe("JobRefFormFields", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockRootStore = createMockRootStore();
+    vi.clearAllMocks();
+    mockRootStore.current = createMockRootStore();
   });
 
   afterEach(() => {

@@ -1,11 +1,12 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import JobBulkEditControls from "../JobBulkEditControls.vue";
 import { JobPageStoreInjectionKey } from "../../../../../library/stores/JobPageStore";
 import { JobBrowserStoreInjectionKey } from "../../../../../library/stores/JobBrowser";
 
-jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService.ts", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
   })),
 }));

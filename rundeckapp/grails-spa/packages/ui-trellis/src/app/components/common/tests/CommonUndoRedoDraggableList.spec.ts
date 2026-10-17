@@ -1,9 +1,11 @@
+import { vi } from "vitest";
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import CommonUndoRedoDraggableList from "../CommonUndoRedoDraggableList.vue";
 import UndoRedo from "../../util/UndoRedo.vue";
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+import { getRundeckContext } from "@/library";
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
   })),
 }));
 
@@ -45,7 +47,7 @@ const assertRenderedItems = (
 
 describe("CommonUndoRedoDraggableList", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders loading spinner when loading is true", async () => {
@@ -141,7 +143,7 @@ describe("CommonUndoRedoDraggableList", () => {
     };
 
     it("records the move when the guard resolves true", async () => {
-      const beforeMove = jest.fn().mockResolvedValue(true);
+      const beforeMove = vi.fn().mockResolvedValue(true);
       const wrapper = await createWrapper({
         modelValue: [{ name: "Item 1" }, { name: "Item 2" }],
         beforeMove,
@@ -159,7 +161,7 @@ describe("CommonUndoRedoDraggableList", () => {
     });
 
     it("reverts the move and records nothing when the guard resolves false", async () => {
-      const beforeMove = jest.fn().mockResolvedValue(false);
+      const beforeMove = vi.fn().mockResolvedValue(false);
       const wrapper = await createWrapper({
         modelValue: [{ name: "Item 1" }, { name: "Item 2" }],
         beforeMove,
@@ -195,8 +197,7 @@ describe("CommonUndoRedoDraggableList", () => {
 
   describe("eventBus null guard in wasChanged", () => {
     it("does not throw and still emits update:modelValue when eventBus is undefined", async () => {
-      const { getRundeckContext } = jest.requireMock("@/library");
-      (getRundeckContext as jest.Mock).mockImplementationOnce(() => ({
+      (getRundeckContext as vi.Mock).mockImplementationOnce(() => ({
         eventBus: undefined,
       }));
 

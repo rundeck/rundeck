@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import {
   i18nMocks,
   mockEventBus,
@@ -14,21 +15,21 @@ import OffsetPagination from "../../../../library/components/utils/OffsetPaginat
 import axios from "axios";
 import { cloneDeep } from "lodash";
 import { Btn, Modal } from "uiv";
-jest.mock("../../../../library/services/executions", () => {
+vi.mock("../../../../library/services/executions", () => {
   return {
     queryRunning: mockQueryRunning,
     getExecutions: mockQueryExecutions,
   };
 });
-jest.mock("../../../../library/rundeckService", () => rundeckServiceMock);
-jest.mock("@rundeck/client", () => rundeckClientMock);
+vi.mock("../../../../library/rundeckService", () => rundeckServiceMock);
+vi.mock("@rundeck/client", () => rundeckClientMock);
 
 // Add this mock for the api service
-jest.mock("../../../../library/services/api", () => ({
+vi.mock("../../../../library/services/api", () => ({
   api: {
-    post: jest.fn(),
-    get: jest.fn(),
-    put: jest.fn(),
+    post: vi.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
   },
 }));
 
@@ -79,11 +80,11 @@ describe("ActivityList", () => {
     // Use real timers by default
   });
   afterAll(() => {
-    jest.restoreAllMocks();
-    jest.useRealTimers();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   beforeEach(() => {
     reports = cloneDeep(mockReports);
@@ -166,7 +167,7 @@ describe("ActivityList", () => {
       await checkboxes[1]!.setValue(true);
 
       // Mock the api post for bulk deletion
-      (api.post as jest.Mock).mockResolvedValue({
+      (api.post as vi.Mock).mockResolvedValue({
         data: { allsuccessful: true },
       });
 
@@ -247,7 +248,7 @@ describe("ActivityList", () => {
       await checkboxes[0]!.setValue(true);
 
       // Mock the api post to return an error response
-      (api.post as jest.Mock).mockResolvedValue({
+      (api.post as vi.Mock).mockResolvedValue({
         status: 400,
         data: { message: "Failed to delete executions" },
         statusText: "Bad Request",
@@ -295,7 +296,7 @@ describe("ActivityList", () => {
       await checkboxes[0]!.setValue(true);
 
       // Mock the api post to throw an exception
-      (api.post as jest.Mock).mockRejectedValue(new Error("Network error"));
+      (api.post as vi.Mock).mockRejectedValue(new Error("Network error"));
 
       // Trigger the delete action
       const confirmDeleteButton = wrapper.find(
@@ -339,11 +340,10 @@ describe("ActivityList", () => {
     // filters were only ever kept in component state, so opening an
     // execution and using the browser back button returned to the URL as it
     // was on the original page load, silently clearing any applied filter.
-    let replaceStateSpy: jest.SpyInstance;
+    let replaceStateSpy: vi.SpyInstance;
 
     beforeEach(() => {
-      replaceStateSpy = jest
-        .spyOn(window.history, "replaceState")
+      replaceStateSpy = vi.spyOn(window.history, "replaceState")
         .mockImplementation(() => {});
       // The component only syncs the URL when the browser is already on the
       // Activity page itself (see "does not touch the URL when embedded on
@@ -403,7 +403,7 @@ describe("ActivityList", () => {
       await wrapper.vm.$nextTick();
 
       // Force the "unsupported" branch: assigning undefined (rather than
-      // `delete`) is required here because `delete` on a jest.spyOn'd
+      // `delete`) is required here because `delete` on a vi.spyOn'd
       // property just removes the spy's own-property and falls through to
       // the real History.prototype.replaceState, which is still a function
       // -- so the component's `typeof history.replaceState !== "function"`
@@ -449,10 +449,10 @@ describe("ActivityList", () => {
   });
 
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     // Mock axios for the since.json endpoint
-    const axiosGetSpy = jest.spyOn(axios, "get");
+    const axiosGetSpy = vi.spyOn(axios, "get");
 
     mockQueryExecutions.mockResolvedValue({
       results: [],
@@ -483,7 +483,7 @@ describe("ActivityList", () => {
       },
     });
 
-    jest.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(5000);
     await flushPromises();
     await wrapper.vm.$nextTick();
 
@@ -492,7 +492,7 @@ describe("ActivityList", () => {
     expect(sinceCountData.text()).toContain("5");
 
     axiosGetSpy.mockRestore();
-    jest.clearAllTimers();
-    jest.useRealTimers();
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 });

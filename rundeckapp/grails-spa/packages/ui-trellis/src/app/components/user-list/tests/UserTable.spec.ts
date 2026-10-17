@@ -1,12 +1,12 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import UserTable from "../UserTable.vue";
 import messages from "../../../utilities/locales/en_US.js";
 
 const $t = (key: string) => (messages as Record<string, string>)[key] || key;
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest
-    .fn()
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn()
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 

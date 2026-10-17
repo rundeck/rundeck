@@ -1,18 +1,18 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import HomeView from "../HomeView.vue";
 import { getProjects, getProjectNames } from "../services/homeServices";
 
-jest.mock("@/app/components/home/services/homeServices");
-jest.mock("@/library", () => ({
-  getRundeckContext: jest
-    .fn()
+vi.mock("@/app/components/home/services/homeServices");
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn()
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
-const mockedGetProjects = getProjects as jest.MockedFunction<
+const mockedGetProjects = getProjects as vi.MockedFunction<
   typeof getProjects
 >;
-const mockedGetProjectNames = getProjectNames as jest.MockedFunction<
+const mockedGetProjectNames = getProjectNames as vi.MockedFunction<
   typeof getProjectNames
 >;
 
@@ -31,11 +31,11 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
 
 describe("HomeView", () => {
   beforeEach(() => {
-    console.warn = jest.fn();
+    console.warn = vi.fn();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders HomeHeader component when data is loaded and projectCount > 0", async () => {
@@ -72,8 +72,8 @@ describe("HomeView", () => {
   });
 
   it("calls getProjects and getProjectNames on component mount", async () => {
-    const getProjectsSpy = jest.spyOn(HomeView.methods, "getProjects");
-    const getPartialDataSpy = jest.spyOn(HomeView.methods, "getPartialData");
+    const getProjectsSpy = vi.spyOn(HomeView.methods, "getProjects");
+    const getPartialDataSpy = vi.spyOn(HomeView.methods, "getPartialData");
 
     await createWrapper();
 

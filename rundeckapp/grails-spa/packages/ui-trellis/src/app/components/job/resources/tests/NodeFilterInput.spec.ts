@@ -1,31 +1,36 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import mitt, { Emitter, EventType } from "mitt";
 import NodeFilterInput from "../NodeFilterInput.vue";
 import { NodeSummary } from "../types/nodeTypes";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
     eventBus: {
-      on: jest.fn(),
-      emit: jest.fn(),
-      off: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
+      off: vi.fn(),
     },
   }),
-  url: jest.fn().mockReturnValue({ href: "mockHref" }),
+  url: vi.fn().mockReturnValue({ href: "mockHref" }),
 }));
-const mockNodeFilterStore = {
-  saveFilter: jest.fn(),
-  removeFilter: jest.fn(),
-  setStoredDefaultFilter: jest.fn(),
-  loadStoredProjectNodeFilters: jest.fn().mockReturnValue({
-    filters: [{ filter: ".*", filterName: "All Nodes" }],
-    defaultFilter: null,
+const { mockNodeFilterStore } = vi.hoisted(() => ({
+  mockNodeFilterStore: {
+    saveFilter: vi.fn(),
+    removeFilter: vi.fn(),
+    setStoredDefaultFilter: vi.fn(),
+    loadStoredProjectNodeFilters: vi.fn().mockReturnValue({
+      filters: [{ filter: ".*", filterName: "All Nodes" }],
+      defaultFilter: null,
+    }),
+  },
+}));
+vi.mock("../../../../../library/stores/NodeFilterLocalstore", () => ({
+  NodeFilterStore: vi.fn(function NodeFilterStore() {
+    return mockNodeFilterStore;
   }),
-};
-jest.mock("../../../../../library/stores/NodeFilterLocalstore", () => ({
-  NodeFilterStore: jest.fn().mockImplementation(() => mockNodeFilterStore),
 }));
 const eventBus = mitt();
 const mockNodeSummary: NodeSummary = {
@@ -66,7 +71,7 @@ const mountNodeFilterInput = async (props = {}) => {
 };
 describe("NodeFilterInput Component", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("updates value on input and performs search on enter keydown", async () => {
     const wrapper = await mountNodeFilterInput({
@@ -82,7 +87,7 @@ describe("NodeFilterInput Component", () => {
   });
   it("saves a filter", async () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
-    const emitSpy = jest.spyOn(eventBus, "emit");
+    const emitSpy = vi.spyOn(eventBus, "emit");
     const wrapper = await mountNodeFilterInput({
       eventBus: eventBus,
     });

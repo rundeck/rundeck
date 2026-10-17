@@ -1,18 +1,19 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import CopyBox from "./CopyBox.vue";
 import { CopyToClipboard } from "../../../utilities/Clipboard";
-jest.mock("../../../utilities/Clipboard");
+vi.mock("../../../utilities/Clipboard");
 
-const mockedCopyToClipboard = CopyToClipboard as jest.MockedFunction<
+const mockedCopyToClipboard = CopyToClipboard as vi.MockedFunction<
   typeof CopyToClipboard
 >;
 
 describe("CopyBox", () => {
   beforeEach(() => {
-    console.error = jest.fn();
+    console.error = vi.fn();
   });
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   test("should copy text to clipboard when clicked", async () => {
     mockedCopyToClipboard.mockResolvedValueOnce(true);

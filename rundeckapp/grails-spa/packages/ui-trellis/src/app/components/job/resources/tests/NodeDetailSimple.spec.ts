@@ -1,11 +1,12 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
   }),
-  url: jest.fn().mockReturnValue({ href: "mockHref" }),
+  url: vi.fn().mockReturnValue({ href: "mockHref" }),
 }));
 
 const mockAttributes = {

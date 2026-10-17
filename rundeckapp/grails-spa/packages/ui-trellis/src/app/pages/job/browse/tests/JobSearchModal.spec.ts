@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import JobSearchModal from "../JobSearchModal.vue";
 import { JobPageStoreInjectionKey } from "../../../../../library/stores/JobPageStore";
@@ -5,8 +6,8 @@ import { JobListFilterStoreInjectionKey } from "../../../../../library/stores/Jo
 
 // JobPageStore transitively imports services/api.ts, which reads
 // getRundeckContext() at module load time.
-jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library/rundeckService.ts", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     apiVersion: 41,
     rdBase: "http://localhost:4440",
   })),

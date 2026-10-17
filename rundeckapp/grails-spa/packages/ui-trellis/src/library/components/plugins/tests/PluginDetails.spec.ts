@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import PluginDetails from "../PluginDetails.vue";
 
@@ -24,7 +25,7 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
 
 describe("PluginDetails", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders only short description by itself if showExtended is false", async () => {

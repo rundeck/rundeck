@@ -1,16 +1,17 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn, Dropdown } from "uiv";
 import { nextTick } from "vue";
 
-jest.mock("../../../utilities/loadJsonData", () => ({
-  loadJsonData: jest.fn(),
+vi.mock("../../../utilities/loadJsonData", () => ({
+  loadJsonData: vi.fn(),
 }));
 
 import { loadJsonData } from "../../../utilities/loadJsonData";
 import AppSysConfigMenu from "../sysconfig/AppSysConfigMenu.vue";
 import MainbarMenu from "../../../../library/components/mainbar/MainbarMenu.vue";
 
-const mockLoadJsonData = loadJsonData as jest.MockedFunction<
+const mockLoadJsonData = loadJsonData as vi.MockedFunction<
   typeof loadJsonData
 >;
 
@@ -38,7 +39,7 @@ const createWrapper = async (
 
 describe("AppSysConfigMenu", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Data Loading", () => {

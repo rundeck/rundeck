@@ -1,18 +1,18 @@
-import { describe, it, expect, jest, afterEach } from "@jest/globals";
+import { vi, describe, it, expect, afterEach } from "vitest";
 import { api } from "../api";
 import { getFeatureEnabled } from "../feature";
 
-jest.mock("../api", () => ({
+vi.mock("../api", () => ({
   api: {
-    get: jest.fn(),
+    get: vi.fn(),
   },
 }));
 
-const mockedApi = api as jest.Mocked<typeof api>;
+const mockedApi = api as vi.Mocked<typeof api>;
 
 describe("getFeatureEnabled", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("happy path", () => {
@@ -60,8 +60,7 @@ describe("getFeatureEnabled", () => {
     });
 
     it("logs a warning when API call fails", async () => {
-      const consoleSpy = jest
-        .spyOn(console, "warn")
+      const consoleSpy = vi.spyOn(console, "warn")
         .mockImplementation(() => {});
       const error = new Error("Network error");
       mockedApi.get.mockRejectedValue(error);

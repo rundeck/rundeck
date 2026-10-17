@@ -1,6 +1,6 @@
 import pluginPropEdit from "@/library/components/plugins/pluginPropEdit.vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   config,
   flushPromises,
@@ -8,17 +8,21 @@ import {
   shallowMount,
   VueWrapper,
 } from "@vue/test-utils";
-jest.mock("../../../modules/rundeckClient", () => ({}));
+vi.mock("../../../modules/rundeckClient", () => ({}));
 
-jest.mock("@/library/rundeckService", () => {
+const { mockGetRundeckContext } = vi.hoisted(() => ({
+  mockGetRundeckContext: vi.fn(),
+}));
+
+vi.mock("@/library/rundeckService", () => {
   return {
-    getRundeckContext: jest.fn().mockImplementation(() => ({
+    getRundeckContext: mockGetRundeckContext.mockImplementation(() => ({
       client: {},
-      eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+      eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
       rootStore: {
         plugins: {
-          load: jest.fn(),
-          getServicePlugins: jest.fn(),
+          load: vi.fn(),
+          getServicePlugins: vi.fn(),
         },
       },
       appMeta: {},
@@ -26,10 +30,6 @@ jest.mock("@/library/rundeckService", () => {
   };
 });
 
-const { getRundeckContext } = jest.requireMock("@/library/rundeckService") as {
-  getRundeckContext: jest.Mock;
-};
-const mockGetRundeckContext = getRundeckContext;
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(pluginPropEdit, {
     props: {
@@ -88,7 +88,7 @@ const createNumberWrapper = async (
 
 describe("pluginPropEdit aceEditor computed props", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("aceEditorMinLines", () => {

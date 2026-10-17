@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { Modal } from "uiv";
 import { ComponentPublicInstance } from "vue";
@@ -8,23 +9,23 @@ import {
 } from "../../../services/storage";
 import KeyStorageView from "../KeyStorageView.vue";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../services/projects");
-jest.mock("../../../services/storage");
+vi.mock("../../../services/projects");
+vi.mock("../../../services/storage");
 
-const mockedListProjects = listProjects as jest.MockedFunction<
+const mockedListProjects = listProjects as vi.MockedFunction<
   typeof listProjects
 >;
 mockedListProjects.mockResolvedValue([]);
 const mockedStorageKeyGetMetadata =
-  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
+  storageKeyGetMetadata as vi.MockedFunction<typeof storageKeyGetMetadata>;
 mockedStorageKeyGetMetadata.mockResolvedValue({
   resources: [
     {
@@ -41,7 +42,7 @@ mockedStorageKeyGetMetadata.mockResolvedValue({
     },
   ],
 });
-const mockedStorageKeyDelete = storageKeyDelete as jest.MockedFunction<
+const mockedStorageKeyDelete = storageKeyDelete as vi.MockedFunction<
   typeof storageKeyDelete
 >;
 mockedStorageKeyDelete.mockResolvedValue(true);
@@ -99,7 +100,7 @@ describe("KeyStorageView", () => {
         meta: { "Rundeck-key-type": "private" },
       },
     ];
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("emits openEditor when the Add or Upload a Key button is clicked", async () => {

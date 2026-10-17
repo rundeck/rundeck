@@ -1,4 +1,4 @@
-import "jest";
+import "vitest";
 
 import { RuleSetLex } from "../RuleSetLex";
 import { RuleSetParser } from "../RuleSetParser";

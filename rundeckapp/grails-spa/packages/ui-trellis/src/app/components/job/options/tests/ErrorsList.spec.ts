@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import ErrorsList from "../ErrorsList.vue";
 
@@ -19,7 +20,7 @@ const mountErrorsList = async (options: {
 
 describe("ErrorsList", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders a single string", async () => {

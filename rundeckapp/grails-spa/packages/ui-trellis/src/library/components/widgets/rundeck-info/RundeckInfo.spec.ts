@@ -1,8 +1,9 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import RundeckInfo from "./RundeckInfo.vue";
-jest.mock("../../../rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({ rdBase: "mocked-rdBase" }),
-  url: jest.fn().mockReturnValue("http://localhost"),
+vi.mock("../../../rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({ rdBase: "mocked-rdBase" }),
+  url: vi.fn().mockReturnValue("http://localhost"),
 }));
 const mountRundeckInfo = async (props = {}) => {
   return mount(RundeckInfo, {
@@ -38,7 +39,7 @@ const mountRundeckInfo = async (props = {}) => {
 
 describe("RundeckInfo", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("renders RundeckLogo when appInfo.title is 'Rundeck'", async () => {
     const wrapper = await mountRundeckInfo();

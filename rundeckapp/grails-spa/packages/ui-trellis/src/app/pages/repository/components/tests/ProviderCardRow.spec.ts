@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { createStore } from "vuex";
 import ProviderCardRow from "../ProviderCardRow.vue";
@@ -17,8 +18,8 @@ const createTestStore = (state: Record<string, any> = {}) =>
           ...state,
         }),
         actions: {
-          getProviderInfo: jest.fn(),
-          uninstallPlugin: jest.fn(),
+          getProviderInfo: vi.fn(),
+          uninstallPlugin: vi.fn(),
         },
       },
     },

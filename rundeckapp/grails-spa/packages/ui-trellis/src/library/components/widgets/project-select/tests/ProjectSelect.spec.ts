@@ -1,31 +1,39 @@
+import { vi } from "vitest";
 import { mount, VueWrapper, flushPromises } from "@vue/test-utils";
+import PerfectScrollbar from "perfect-scrollbar";
 import ProjectSelect from "../ProjectSelect.vue";
 import { EventBus } from "../../../../utilities/vueEventBus";
+import { RootStore } from "../../../../stores/RootStore";
 
-jest.mock("perfect-scrollbar", () => {
-  return jest.fn().mockImplementation(() => ({
-    update: jest.fn(),
-    destroy: jest.fn(),
-  }));
+vi.mock("perfect-scrollbar", () => {
+  return {
+    default: vi.fn(function PerfectScrollbar() {
+      return {
+        update: vi.fn(),
+        destroy: vi.fn(),
+      };
+    }),
+  };
 });
 
-jest.mock("../../../../rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({}),
+vi.mock("../../../../rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({}),
 
-  getAppLinks: jest.fn(() => ({
+  getAppLinks: vi.fn(() => ({
     menuHome: "http://localhost",
   })),
-  url: jest.fn((path: string) => ({ href: `http://localhost${path}` })),
+  url: vi.fn((path: string) => ({ href: `http://localhost${path}` })),
 }));
-jest.mock("../../../../stores/RootStore", () => ({
-  RootStore: jest.fn().mockImplementation(() => ({
+vi.mock("../../../../stores/RootStore", () => ({
+  RootStore: vi.fn(function RootStore() {
+    return {
     projects: {
       loaded: true,
       projects: [
         { name: "Project A", label: "Project A Label" },
         { name: "Project B", label: "Project B Label" },
       ],
-      search: jest.fn((term: string) =>
+      search: vi.fn((term: string) =>
         term
           ? [{ name: "Project A", label: "Project A Label" }]
           : [
@@ -33,9 +41,10 @@ jest.mock("../../../../stores/RootStore", () => ({
               { name: "Project B", label: "Project B Label" },
             ],
       ),
-      load: jest.fn(),
+      load: vi.fn(),
     },
-  })),
+    };
+  }),
 }));
 
 const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
@@ -70,16 +79,14 @@ describe("ProjectSelect.vue", () => {
       data: {},
       eventBus: EventBus,
       rundeckClient: {} as any,
-      rootStore: new (jest.requireMock(
-        "../../../../stores/RootStore",
-      ).RootStore)(),
+      rootStore: new RootStore(),
     };
   });
   afterAll(() => {
     Reflect.deleteProperty(window, "_rundeck");
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("creates a PerfectScrollbar on RecycleScroller update and destroys it on unmount", async () => {
@@ -91,9 +98,7 @@ describe("ProjectSelect.vue", () => {
     await searchInput.setValue("Project A");
     await flushPromises();
 
-    const PerfectScrollbarMock = jest.requireMock(
-      "perfect-scrollbar",
-    ) as jest.Mock;
+    const PerfectScrollbarMock = PerfectScrollbar as unknown as vi.Mock;
     expect(PerfectScrollbarMock).toHaveBeenCalled();
     const instance =
       PerfectScrollbarMock.mock.results[

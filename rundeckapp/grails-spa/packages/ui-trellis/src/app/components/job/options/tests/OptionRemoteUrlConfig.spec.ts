@@ -1,15 +1,16 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import OptionRemoteUrlConfig from "../OptionRemoteUrlConfig.vue";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../../../library/services/projects");
+vi.mock("../../../../../library/services/projects");
 
 const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionRemoteUrlConfig, {
@@ -27,7 +28,7 @@ const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
 
 describe("OptionRemoteUrlConfig", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it.each([

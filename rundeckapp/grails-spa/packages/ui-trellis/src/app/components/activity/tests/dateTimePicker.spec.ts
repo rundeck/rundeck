@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import DateTimePicker from "../dateTimePicker.vue";
 import moment from "moment";
@@ -39,7 +40,7 @@ const mountDateTimePicker = async (
 };
 describe("DateTimePicker.vue", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("emits update:modelValue when time changes", async () => {
     const wrapper = await mountDateTimePicker();

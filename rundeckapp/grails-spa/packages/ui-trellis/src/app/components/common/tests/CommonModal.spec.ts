@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import CommonModal from "../CommonModal.vue";
 import { Modal } from "uiv";
@@ -22,7 +23,7 @@ const createWrapper = async (
 
 describe("CommonModal", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders title correctly when title prop is provided", async () => {
@@ -62,13 +63,13 @@ describe("CommonModal", () => {
         id: "button1",
         message: "Button 1",
         css: "btn-primary",
-        js: jest.fn(),
+        js: vi.fn(),
       },
       {
         id: "button2",
         messageCode: "button.title",
         css: "btn-secondary",
-        js: jest.fn(),
+        js: vi.fn(),
       },
     ];
     const links = [
@@ -77,14 +78,14 @@ describe("CommonModal", () => {
         href: "https://example.com",
         message: "Link 1",
         css: "btn-link",
-        js: jest.fn(),
+        js: vi.fn(),
       },
       {
         id: "link2",
         href: "https://example2.com",
         message: "Link 2",
         css: "btn-link",
-        js: jest.fn(),
+        js: vi.fn(),
       },
     ];
 

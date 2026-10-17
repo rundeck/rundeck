@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import OptionUsagePreview from "../OptionUsagePreview.vue";
 
@@ -19,7 +20,7 @@ const mountOptionUsagePreview = async (
 
 describe("OptionUsagePreview", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("file option shows variables", async () => {

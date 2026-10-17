@@ -1,62 +1,99 @@
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import AceEditorVue from "../AceEditorVue.vue";
 
-const mockSetOptions = jest.fn();
-const mockSetTheme = jest.fn();
-const mockSetValue = jest.fn();
-const mockGetValue = jest.fn().mockReturnValue("");
-const mockOn = jest.fn();
-const mockDestroy = jest.fn();
-const mockContainerRemove = jest.fn();
-const mockSessionSetUseWorker = jest.fn();
-const mockSessionSetMode = jest.fn();
-const mockSessionSetValue = jest.fn();
-const mockSessionSetUseWrapMode = jest.fn();
-const mockGetSession = jest.fn(() => ({
-  setUseWorker: mockSessionSetUseWorker,
-  setMode: mockSessionSetMode,
-  setValue: mockSessionSetValue,
-  setUseWrapMode: mockSessionSetUseWrapMode,
+const {
+  mockSetOptions,
+  mockSetTheme,
+  mockSetValue,
+  mockGetValue,
+  mockOn,
+  mockDestroy,
+  mockContainerRemove,
+  mockSessionSetUseWorker,
+  mockSessionSetMode,
+  mockSessionSetValue,
+  mockSessionSetUseWrapMode,
+  mockGetSession,
+  mockEditor,
+} = vi.hoisted(() => {
+  const mockSetOptions = vi.fn();
+  const mockSetTheme = vi.fn();
+  const mockSetValue = vi.fn();
+  const mockGetValue = vi.fn().mockReturnValue("");
+  const mockOn = vi.fn();
+  const mockDestroy = vi.fn();
+  const mockContainerRemove = vi.fn();
+  const mockSessionSetUseWorker = vi.fn();
+  const mockSessionSetMode = vi.fn();
+  const mockSessionSetValue = vi.fn();
+  const mockSessionSetUseWrapMode = vi.fn();
+  const mockGetSession = vi.fn(() => ({
+    setUseWorker: mockSessionSetUseWorker,
+    setMode: mockSessionSetMode,
+    setValue: mockSessionSetValue,
+    setUseWrapMode: mockSessionSetUseWrapMode,
+  }));
+  const mockEditor = {
+    setOptions: mockSetOptions,
+    setTheme: mockSetTheme,
+    setValue: mockSetValue,
+    getValue: mockGetValue,
+    getSession: mockGetSession,
+    on: mockOn,
+    destroy: mockDestroy,
+    container: { remove: mockContainerRemove },
+    completers: [],
+  };
+
+  return {
+    mockSetOptions,
+    mockSetTheme,
+    mockSetValue,
+    mockGetValue,
+    mockOn,
+    mockDestroy,
+    mockContainerRemove,
+    mockSessionSetUseWorker,
+    mockSessionSetMode,
+    mockSessionSetValue,
+    mockSessionSetUseWrapMode,
+    mockGetSession,
+    mockEditor,
+  };
+});
+
+vi.mock("ace-builds", () => ({
+  default: {
+    edit: vi.fn(() => mockEditor),
+    require: vi.fn(() => ({ escapeHTML: vi.fn((s: string) => s) })),
+  },
 }));
 
-const mockEditor = {
-  setOptions: mockSetOptions,
-  setTheme: mockSetTheme,
-  setValue: mockSetValue,
-  getValue: mockGetValue,
-  getSession: mockGetSession,
-  on: mockOn,
-  destroy: mockDestroy,
-  container: { remove: mockContainerRemove },
-  completers: [],
-};
-
-jest.mock("ace-builds", () => ({
-  edit: jest.fn(() => mockEditor),
-  require: jest.fn(() => ({ escapeHTML: jest.fn((s: string) => s) })),
-}));
-
-jest.mock("ace-builds/src-noconflict/ext-emmet", () => ({}));
+vi.mock("ace-builds/src-noconflict/ext-emmet", () => ({}));
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: jest.fn(() => ({
+  value: vi.fn(() => ({
     matches: false,
-    addEventListener: jest.fn(),
-    addListener: jest.fn(),
+    addEventListener: vi.fn(),
+    addListener: vi.fn(),
   })),
 });
 
-global.MutationObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  disconnect: jest.fn(),
-})) as unknown as typeof MutationObserver;
+global.MutationObserver = vi.fn(function MutationObserver() {
+  return {
+    observe: vi.fn(),
+    disconnect: vi.fn(),
+  };
+}) as unknown as typeof MutationObserver;
 
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  disconnect: jest.fn(),
-})) as unknown as typeof ResizeObserver;
+global.ResizeObserver = vi.fn(function ResizeObserver() {
+  return {
+    observe: vi.fn(),
+    disconnect: vi.fn(),
+  };
+}) as unknown as typeof ResizeObserver;
 
 const createWrapper = async (options: { props?: Record<string, any> } = {}) => {
   const wrapper = shallowMount(AceEditorVue, {
@@ -71,7 +108,7 @@ const createWrapper = async (options: { props?: Record<string, any> } = {}) => {
 
 describe("AceEditorVue", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("minLines prop", () => {
@@ -96,7 +133,7 @@ describe("AceEditorVue", () => {
 
     it("calls setOptions when minLines prop changes away from 0", async () => {
       const wrapper = await createWrapper({ props: { minLines: 5 } });
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       await wrapper.setProps({ minLines: 20 });
       await wrapper.vm.$nextTick();
@@ -106,7 +143,7 @@ describe("AceEditorVue", () => {
 
     it("does not call setOptions for minLines when staying resizable (minLines 0)", async () => {
       const wrapper = await createWrapper();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       await wrapper.setProps({ minLines: 0 });
       await wrapper.vm.$nextTick();
@@ -126,7 +163,7 @@ describe("AceEditorVue", () => {
 
     it("calls setOptions when maxLines prop changes and the editor is not resizable", async () => {
       const wrapper = await createWrapper({ props: { minLines: 5 } });
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       await wrapper.setProps({ maxLines: 50 });
       await wrapper.vm.$nextTick();
@@ -136,7 +173,7 @@ describe("AceEditorVue", () => {
 
     it("does not call setOptions when maxLines prop changes while resizable (minLines 0)", async () => {
       const wrapper = await createWrapper();
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       await wrapper.setProps({ maxLines: 50 });
       await wrapper.vm.$nextTick();
@@ -173,8 +210,8 @@ describe("AceEditorVue", () => {
       await createWrapper();
 
       expect(global.ResizeObserver).toHaveBeenCalled();
-      const instance = (global.ResizeObserver as jest.Mock).mock.results[0]
-        .value as { observe: jest.Mock };
+      const instance = (global.ResizeObserver as vi.Mock).mock.results[0]
+        .value as { observe: vi.Mock };
       expect(instance.observe).toHaveBeenCalled();
     });
 

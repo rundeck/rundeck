@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Modal } from "uiv";
 import { listProjects } from "../../../services/projects";
@@ -6,19 +7,19 @@ import KeyStorageEdit from "../../storage/KeyStorageEdit.vue";
 import KeyStorageView from "../../storage/KeyStorageView.vue";
 import KeyStorageSelector from "../KeyStorageSelector.vue";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440/",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../services/projects");
-jest.mock("../../../services/storage");
+vi.mock("../../../services/projects");
+vi.mock("../../../services/storage");
 const mockedStorageKeyGetMetadata =
-  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
-const mockedListProjects = listProjects as jest.MockedFunction<
+  storageKeyGetMetadata as vi.MockedFunction<typeof storageKeyGetMetadata>;
+const mockedListProjects = listProjects as vi.MockedFunction<
   typeof listProjects
 >;
 mockedListProjects.mockResolvedValue([]);
@@ -93,7 +94,7 @@ const mountKeyStorageSelector = async (
 
 describe("KeyStorageSelector", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it.each([

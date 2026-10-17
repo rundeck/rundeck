@@ -1,40 +1,41 @@
+import { vi } from "vitest";
 import type { EditStepData } from "../types/workflowTypes";
 
-const mockValidatePluginConfig = jest.fn();
-const mockGetServicePlugins = jest.fn().mockReturnValue([]);
+const mockValidatePluginConfig = vi.fn();
+const mockGetServicePlugins = vi.fn().mockReturnValue([]);
 
-jest.mock("@/library/modules/pluginService", () => ({
+vi.mock("@/library/modules/pluginService", () => ({
   validatePluginConfig: (...args: any[]) => mockValidatePluginConfig(...args),
-  getServiceProviderDescription: jest.fn(),
-  getPluginProvidersForService: jest.fn(),
+  getServiceProviderDescription: vi.fn(),
+  getPluginProvidersForService: vi.fn(),
 }));
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
 }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     rootStore: {
       plugins: {
         getServicePlugins: (...args: any[]) => mockGetServicePlugins(...args),
-        load: jest.fn(),
+        load: vi.fn(),
       },
     },
     projectName: "testProject",
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
   })),
 }));
 
-jest.mock("@/library/stores/Plugins", () => ({
+vi.mock("@/library/stores/Plugins", () => ({
   ServiceType: {
     WorkflowNodeStep: "WorkflowNodeStep",
     WorkflowStep: "WorkflowStep",
   },
-  PluginStore: jest.fn(),
+  PluginStore: vi.fn(),
 }));
 
-jest.mock("@/library/services/projects");
+vi.mock("@/library/services/projects");
 
 // Import after mocks are set up
 import {
@@ -54,7 +55,7 @@ const ServiceType = {
 
 describe("stepEditorUtils", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("resetValidation", () => {

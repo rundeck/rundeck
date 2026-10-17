@@ -1,28 +1,25 @@
+import { vi } from "vitest";
 import { mount, shallowMount, VueWrapper } from "@vue/test-utils";
 import { Btn } from "uiv";
 import OptionEdit from "../OptionEdit.vue";
+import { validateJobOption } from "@/library/services/jobEdit";
 
-jest.mock("@/library/services/jobEdit", () => ({
-  validateJobOption: jest.fn(),
+vi.mock("@/library/services/jobEdit", () => ({
+  validateJobOption: vi.fn(),
 }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
   })),
 }));
-jest.mock("@/library/modules/rundeckClient", () => ({
+vi.mock("@/library/modules/rundeckClient", () => ({
   client: {},
 }));
 
-// Import mocked function
-const { validateJobOption } = jest.requireMock("@/library/services/jobEdit");
-
-const mockedValidateJobOption = validateJobOption as jest.MockedFunction<
-  typeof validateJobOption
->;
+const mockedValidateJobOption = vi.mocked(validateJobOption);
 
 const mountOptionEdit = async (options: any): Promise<VueWrapper<any>> => {
   const wrapper = mount(OptionEdit, {
@@ -83,7 +80,7 @@ const shallowMountOptionEdit = async (
 
 describe("OptionEdit", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it.each([

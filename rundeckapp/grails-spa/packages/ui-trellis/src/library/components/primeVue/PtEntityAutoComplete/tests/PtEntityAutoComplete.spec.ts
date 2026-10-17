@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import AutoComplete from "primevue/autocomplete";
 import { PtEntityAutoComplete } from "../../index";
@@ -85,7 +86,7 @@ describe("PtEntityAutoComplete", () => {
 
   describe("loading suggestions", () => {
     it("shows the entities returned for the typed query", async () => {
-      const search = jest.fn().mockResolvedValue(JOBS);
+      const search = vi.fn().mockResolvedValue(JOBS);
       const wrapper = await createWrapper({ search });
 
       await typeQuery(wrapper, "Depl");
@@ -97,7 +98,7 @@ describe("PtEntityAutoComplete", () => {
     });
 
     it("keeps entity names containing spaces intact so multi-word jobs can be found", async () => {
-      const search = jest.fn().mockResolvedValue(JOBS);
+      const search = vi.fn().mockResolvedValue(JOBS);
       const wrapper = await createWrapper({ search });
 
       await typeQuery(wrapper, "Deploy Web");
@@ -110,7 +111,7 @@ describe("PtEntityAutoComplete", () => {
     });
 
     it("loads suggestions for an empty query so the list opens on focus", async () => {
-      const search = jest.fn().mockResolvedValue(JOBS);
+      const search = vi.fn().mockResolvedValue(JOBS);
       const wrapper = await createWrapper({ search, minChars: 0 });
 
       await typeQuery(wrapper, "");
@@ -119,7 +120,7 @@ describe("PtEntityAutoComplete", () => {
     });
 
     it("does not search until the query reaches minChars", async () => {
-      const search = jest.fn().mockResolvedValue(JOBS);
+      const search = vi.fn().mockResolvedValue(JOBS);
       const wrapper = await createWrapper({ search, minChars: 3 });
 
       await typeQuery(wrapper, "De");
@@ -145,8 +146,7 @@ describe("PtEntityAutoComplete", () => {
       const first = new Promise((resolve) => {
         resolveFirst = resolve;
       });
-      const search = jest
-        .fn()
+      const search = vi.fn()
         .mockReturnValueOnce(first)
         .mockResolvedValueOnce([JOBS[1]]);
       const wrapper = await createWrapper({ search });
@@ -169,7 +169,7 @@ describe("PtEntityAutoComplete", () => {
       const pending = new Promise((resolve) => {
         resolvePending = resolve;
       });
-      const search = jest.fn().mockReturnValueOnce(pending);
+      const search = vi.fn().mockReturnValueOnce(pending);
       const wrapper = await createWrapper({ search, minChars: 3 });
 
       // Query long enough to search, then shortened back below the minimum.
@@ -188,8 +188,8 @@ describe("PtEntityAutoComplete", () => {
     });
 
     it("shows no suggestions when the search fails", async () => {
-      jest.spyOn(console, "error").mockImplementation(() => {});
-      const search = jest.fn().mockRejectedValue(new Error("boom"));
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const search = vi.fn().mockRejectedValue(new Error("boom"));
       const wrapper = await createWrapper({ search });
 
       await typeQuery(wrapper, "Depl");
@@ -197,7 +197,7 @@ describe("PtEntityAutoComplete", () => {
       expect(
         wrapper.findComponent(AutoComplete).props("suggestions"),
       ).toBeFalsy();
-      (console.error as jest.Mock).mockRestore();
+      (console.error as vi.Mock).mockRestore();
     });
   });
 
@@ -257,7 +257,7 @@ describe("PtEntityAutoComplete", () => {
     });
 
     it("does not load suggestions while readonly", async () => {
-      const search = jest.fn().mockResolvedValue(JOBS);
+      const search = vi.fn().mockResolvedValue(JOBS);
       const wrapper = await createWrapper({ search, readOnly: true });
 
       await typeQuery(wrapper, "Depl");

@@ -1,50 +1,49 @@
+import { vi } from "vitest";
 import { shallowMount, flushPromises } from "@vue/test-utils";
 import LogFilterControls from "../LogFilterControls.vue";
 import EditPluginModal from "../../../../../library/components/plugins/EditPluginModal.vue";
 
-jest.mock("@/library/modules/pluginService", () => ({
-  validatePluginConfig: jest
-    .fn()
+vi.mock("@/library/modules/pluginService", () => ({
+  validatePluginConfig: vi.fn()
     .mockResolvedValue({ valid: true, errors: {} }),
-  getPluginProvidersForService: jest
-    .fn()
+  getPluginProvidersForService: vi.fn()
     .mockResolvedValue({ service: "LogFilter", descriptions: [], labels: {} }),
 }));
 
-jest.mock("@/library/modules/rundeckClient", () => ({ client: jest.fn() }));
+vi.mock("@/library/modules/rundeckClient", () => ({ client: vi.fn() }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     rootStore: {
       plugins: {
-        getServicePlugins: jest.fn().mockReturnValue([]),
-        load: jest.fn(),
+        getServicePlugins: vi.fn().mockReturnValue([]),
+        load: vi.fn(),
       },
     },
     projectName: "testProject",
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     apiVersion: 46,
   }),
 }));
 
-jest.mock("@/library/services/projects");
+vi.mock("@/library/services/projects");
 
-jest.mock("@/library/stores/Plugins", () => ({
+vi.mock("@/library/stores/Plugins", () => ({
   ServiceType: { LogFilter: "LogFilter" },
 }));
 
-jest.mock("../stepEditorUtils", () => ({
-  resetValidation: jest.fn().mockReturnValue({ errors: {}, valid: true }),
+vi.mock("../stepEditorUtils", () => ({
+  resetValidation: vi.fn().mockReturnValue({ errors: {}, valid: true }),
 }));
 
 import { resetValidation } from "../stepEditorUtils";
 import { validatePluginConfig } from "../../../../../library/modules/pluginService";
 
 const createMockEventBus = () => ({
-  on: jest.fn(),
-  off: jest.fn(),
-  emit: jest.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
+  emit: vi.fn(),
 });
 
 const createWrapper = async (props = {}) => {
@@ -65,8 +64,8 @@ const createWrapper = async (props = {}) => {
 
 describe("LogFilterControls", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (resetValidation as jest.Mock).mockReturnValue({ errors: {}, valid: true });
+    vi.clearAllMocks();
+    (resetValidation as vi.Mock).mockReturnValue({ errors: {}, valid: true });
   });
 
   describe("add filter button", () => {
@@ -122,7 +121,7 @@ describe("LogFilterControls", () => {
     it("calls resetValidation() with errors as an object not an array", async () => {
       await createWrapper();
 
-      const result = (resetValidation as jest.Mock).mock.results[0]?.value;
+      const result = (resetValidation as vi.Mock).mock.results[0]?.value;
       expect(result).toEqual({ errors: {}, valid: true });
       expect(Array.isArray(result.errors)).toBe(false);
     });
@@ -163,7 +162,7 @@ describe("LogFilterControls", () => {
     });
 
     it("does not emit and passes errors to the modal when validation fails", async () => {
-      jest.mocked(validatePluginConfig).mockResolvedValueOnce({
+      vi.mocked(validatePluginConfig).mockResolvedValueOnce({
         valid: false,
         errors: { regex: "required" },
       });

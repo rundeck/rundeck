@@ -1,28 +1,98 @@
+import { vi } from "vitest";
 import { flushPromises, VueWrapper, shallowMount } from "@vue/test-utils";
-import WorkflowEditor from "../WorkflowEditor.vue";
-import WorkflowBasic from "@/app/components/job/workflow/WorkflowBasic.vue";
-import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue";
-import WorkflowGlobalLogFilters from "@/app/components/job/workflow/WorkflowGlobalLogFilters.vue";
-import UiSocket from "@/library/components/utils/UiSocket.vue";
 import { createTestingPinia } from "@pinia/testing";
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("../WorkflowBasic.vue", () => ({
+  default: { name: "WorkflowBasic", template: "<div />", props: ["modelValue"] },
+}));
+vi.mock("@/app/components/job/workflow/WorkflowStrategy.vue", () => ({
+  default: {
+    name: "WorkflowStrategy",
+    template: "<div />",
+    props: ["modelValue"],
+  },
+}));
+vi.mock("@/app/components/job/workflow/WorkflowGlobalLogFilters.vue", () => ({
+  default: {
+    name: "WorkflowGlobalLogFilters",
+    template: "<div />",
+    props: ["modelValue"],
+  },
+}));
+vi.mock("@/library/components/utils/UiSocket.vue", () => ({
+  default: { name: "UiSocket", template: "<div />", props: ["modelValue"] },
+}));
+vi.mock("@/app/pages/job/editor/OptionsEditorSection.vue", () => ({
+  default: { name: "OptionsEditorSection", template: "<div />" },
+}));
+vi.mock("@/library/components/plugins/pluginPropEdit.vue", () => ({
+  default: { name: "PluginPropEdit", template: "<div />" },
+}));
+vi.mock("lodash", () => ({
+  cloneDeep: <T>(value: T): T => JSON.parse(JSON.stringify(value)),
+}));
+vi.mock("../types/workflowTypes", () => ({
+  createBasicData: ({ keepgoing }: { keepgoing?: boolean }) => ({
+    keepgoing: !!keepgoing,
+  }),
+  createStrategyData: (workflow: {
+    strategy?: string;
+    pluginConfig?: Record<string, Record<string, unknown>>;
+  }) => ({
+    type: workflow.strategy || "",
+    config: workflow.pluginConfig?.WorkflowStrategy?.[workflow.strategy || ""] || {},
+  }),
+  createLogFiltersData: (workflow: {
+    pluginConfig?: { LogFilter?: unknown[] };
+  }) => ({
+    LogFilter: workflow.pluginConfig?.LogFilter || [],
+  }),
+  createStepsData: ({ commands }: { commands?: unknown[] }) => ({
+    commands: commands || [],
+  }),
+  exportPluginData: (
+    strategy: { type: string; config: unknown },
+    logFilters: { LogFilter?: unknown[] },
+  ) => ({
+    strategy: strategy.type,
+    pluginConfig: {
+      WorkflowStrategy: { [strategy.type]: strategy.config },
+      ...(logFilters.LogFilter?.length ? { LogFilter: logFilters.LogFilter } : {}),
+    },
+  }),
 }));
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
+}));
+
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("@/library/services/projects");
+vi.mock("@/library/services/projects", () => ({}));
 
-jest.mock("@/library/stores/NodesStorePinia", () => ({
-  useNodesStore: jest.fn().mockImplementation(() => ({})),
+vi.mock("@/library/stores/NodesStorePinia", () => ({
+  useNodesStore: vi.fn().mockImplementation(() => ({})),
 }));
+
+const { default: WorkflowEditor } = await import("../WorkflowEditor.vue");
+const { default: WorkflowBasic } = await import(
+  "@/app/components/job/workflow/WorkflowBasic.vue"
+);
+const { default: WorkflowStrategy } = await import(
+  "@/app/components/job/workflow/WorkflowStrategy.vue"
+);
+const { default: WorkflowGlobalLogFilters } = await import(
+  "@/app/components/job/workflow/WorkflowGlobalLogFilters.vue"
+);
+const { default: UiSocket } = await import(
+  "@/library/components/utils/UiSocket.vue"
+);
 
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(WorkflowEditor, {
@@ -49,7 +119,7 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
 
 describe("WorkflowEditor", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("initializes data correctly on mount", async () => {

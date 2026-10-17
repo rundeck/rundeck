@@ -1,22 +1,23 @@
+import { vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useJobStore } from "../JobsStore";
 import { mockJobDefinition } from "./mocks/mockJobData";
 import { getJobDefinition, postJobDefinition } from "../../services/jobEdit";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
 }));
-jest.mock("../../services/jobEdit");
+vi.mock("../../services/jobEdit");
 
-const mockedGetJobDefinition = getJobDefinition as jest.MockedFunction<
+const mockedGetJobDefinition = getJobDefinition as vi.MockedFunction<
   typeof getJobDefinition
 >;
-const mockedPostJobDefinition = postJobDefinition as jest.MockedFunction<
+const mockedPostJobDefinition = postJobDefinition as vi.MockedFunction<
   typeof postJobDefinition
 >;
 
@@ -29,7 +30,7 @@ describe("Jobs Store", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("initializes without an activeId", async () => {

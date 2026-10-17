@@ -1,9 +1,10 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import JobScmStatus from "../tree/JobScmStatus.vue";
 
-jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService.ts", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
   })),
 }));

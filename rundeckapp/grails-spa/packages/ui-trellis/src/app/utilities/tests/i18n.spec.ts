@@ -1,4 +1,5 @@
-jest.mock("vue-i18n", () => ({ createI18n: jest.fn() }));
+import { vi } from "vitest";
+vi.mock("vue-i18n", () => ({ createI18n: vi.fn() }));
 
 import { commonAddUiMessages, updateLocaleMessages } from "../i18n";
 import type { UiMessage } from "../../../library/stores/UIStore";
@@ -7,13 +8,13 @@ const createMockI18n = () => {
   const store: Record<string, Record<string, any>> = {};
   return {
     global: {
-      mergeLocaleMessage: jest.fn(
+      mergeLocaleMessage: vi.fn(
         (locale: string, messages: Record<string, any>) => {
           store[locale] = { ...(store[locale] || {}), ...messages };
         },
       ),
-      getLocaleMessage: jest.fn((locale: string) => store[locale] || {}),
-      setLocaleMessage: jest.fn(
+      getLocaleMessage: vi.fn((locale: string) => store[locale] || {}),
+      setLocaleMessage: vi.fn(
         (locale: string, messages: Record<string, any>) => {
           store[locale] = messages;
         },

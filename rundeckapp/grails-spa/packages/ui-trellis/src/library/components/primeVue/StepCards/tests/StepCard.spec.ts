@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import BaseStepCard from "../BaseStepCard.vue";
 import StepCardHeader from "../StepCardHeader.vue";
@@ -7,17 +8,17 @@ import PluginInfo from "../../../plugins/PluginInfo.vue";
 import PtButton from "../../PtButton/PtButton.vue";
 import StepCard from "../StepCard.vue";
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
-    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
+    eventBus: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
   }),
 }));
 
-jest.mock("@/library/modules/rundeckClient", () => ({ client: {} }));
-jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+vi.mock("@/library/modules/rundeckClient", () => ({ client: {} }));
+vi.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   default: { name: "PluginConfig", template: "<div />" },
 }));
-jest.mock("@/library/components/plugins/pluginPropView.vue", () => ({
+vi.mock("@/library/components/plugins/pluginPropView.vue", () => ({
   default: {
     name: "PluginPropView",
     template: "<div />",
@@ -34,7 +35,7 @@ const createWrapper = async (props = {}): Promise<any> => {
     },
     global: {
       stubs: {
-        PMenu: { template: "<div />", methods: { toggle: jest.fn() } },
+        PMenu: { template: "<div />", methods: { toggle: vi.fn() } },
       },
       components: {
         BaseStepCard,
@@ -52,7 +53,7 @@ const createWrapper = async (props = {}): Promise<any> => {
 
 describe("StepCard", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("service name", () => {

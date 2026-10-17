@@ -1,9 +1,10 @@
+import { vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import axios from "axios";
 import InstallButton from "../InstallButton.vue";
 
-jest.mock("axios");
-const mockedAxios = axios as jest.MockedFunction<typeof axios>;
+vi.mock("axios");
+const mockedAxios = axios as vi.MockedFunction<typeof axios>;
 
 const remotePlugin = {
   object_id: "plugin-1",
@@ -35,7 +36,7 @@ describe("InstallButton", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("shows Update Available when the remote version is newer than the installed one", async () => {

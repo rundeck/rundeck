@@ -1,16 +1,17 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import ActivitySection from "../ActivitySection.vue";
 import ActivityList from "../../activity/activityList.vue";
 
-jest.mock("../../../../library/services/api", () => ({
-  apiClient: jest.fn(() => ({
-    get: jest.fn(),
-    post: jest.fn(),
+vi.mock("../../../../library/services/api", () => ({
+  apiClient: vi.fn(() => ({
+    get: vi.fn(),
+    post: vi.fn(),
   })),
 }));
 
-jest.mock("../../../../library", () => ({
-  getRundeckContext: jest.fn().mockReturnValue({
+vi.mock("../../../../library", () => ({
+  getRundeckContext: vi.fn().mockReturnValue({
     apiVersion: "44",
     projectName: "test-project",
     rdBase: "http://localhost:4440",
@@ -23,9 +24,9 @@ jest.mock("../../../../library", () => ({
 
 describe("ActivitySection", () => {
   const mockEventBus = {
-    on: jest.fn(),
-    emit: jest.fn(),
-    off: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
+    off: vi.fn(),
   };
 
   it("should render correctly", () => {

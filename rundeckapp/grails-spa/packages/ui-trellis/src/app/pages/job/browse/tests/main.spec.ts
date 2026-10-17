@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 /**
  * Tests for job browse main.ts - ensures ui-socket widgets are registered for
  * both the jobs list page and the job editor "Choose a job" modal.
@@ -12,11 +13,41 @@ import { RootStore } from "../../../../../library/stores/RootStore";
 import { loadJsonData } from "../../../../utilities/loadJsonData";
 import JobRefFormFields from "../../../../components/job/workflow/JobRefFormFields.vue";
 
-import "../main";
+const { componentStub } = vi.hoisted(() => ({
+  componentStub: (name: string, template = "<div />") => ({
+    default: { name, template },
+  }),
+}));
 
-const mockClient = {
-  projectList: jest.fn().mockResolvedValue([]),
-} as any;
+vi.mock("../JobListPage.vue", () =>
+  componentStub("JobListPage", "<div class=\"job_list_browser\" />"),
+);
+vi.mock("../JobsPage.vue", () => componentStub("JobsPage"));
+vi.mock("../JobsPageHeader.vue", () => componentStub("JobsPageHeader"));
+vi.mock("../tree/BulkSelectCheckbox.vue", () => componentStub("BulkSelectCheckbox"));
+vi.mock("../tree/JobActionsMenu.vue", () => componentStub("JobActionsMenu"));
+vi.mock("../tree/JobRunButton.vue", () => componentStub("JobRunButton"));
+vi.mock("../tree/JobExecutionAclWarningDisplay.vue", () =>
+  componentStub("JobExecutionAclWarningDisplay"),
+);
+vi.mock("../tree/JobScheduleInfo.vue", () => componentStub("JobScheduleInfo"));
+vi.mock("../tree/JobScmStatus.vue", () => componentStub("JobScmStatus"));
+vi.mock("@/library/components/plugins/pluginPropEdit.vue", () =>
+  componentStub("PluginPropEdit"),
+);
+vi.mock("vue3-markdown", () => componentStub("VMarkdownView"));
+
+const { mockClient, mockContext } = vi.hoisted(() => ({
+  mockClient: {
+    projectList: vi.fn().mockResolvedValue([]),
+  },
+  mockContext: {
+    eventBus: { on: vi.fn(), emit: vi.fn(), off: vi.fn() },
+    rdBase: "http://test/",
+    projectName: "testProject",
+    rootStore: undefined as RootStore | undefined,
+  },
+}));
 let rootStore: RootStore;
 
 function setupJsonDataElement(id: string, data: unknown) {
@@ -36,49 +67,45 @@ function triggerInit() {
   window.dispatchEvent(new Event("DOMContentLoaded"));
 }
 
-jest.mock("@rundeck/client", () => ({
-  RundeckClient: jest.fn().mockImplementation(() => mockClient),
+vi.mock("@rundeck/client", () => ({
+  RundeckClient: vi.fn().mockImplementation(() => mockClient),
 }));
 
-jest.mock("@/library/services/api", () => ({
+vi.mock("@/library/services/api", () => ({
   api: {
-    get: jest.fn().mockResolvedValue({ status: 200, data: [] }),
+    get: vi.fn().mockResolvedValue({ status: 200, data: [] }),
   },
 }));
 
-jest.mock("@/library", () => {
-  const context: Record<string, unknown> = {
-    eventBus: { on: jest.fn(), emit: jest.fn(), off: jest.fn() },
-    rdBase: "http://test/",
-    projectName: "testProject",
-  };
+vi.mock("@/library", () => {
   return {
-    getRundeckContext: () => context,
-    __testContext: context,
+    getRundeckContext: () => mockContext,
   };
 });
 
-jest.mock("@/library/stores/NodesStorePinia", () => ({
+vi.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: () => ({
     total: 0,
-    nodeFilterStore: { filter: "", setSelectedFilter: jest.fn() },
+    nodeFilterStore: { filter: "", setSelectedFilter: vi.fn() },
     currentNodes: [],
     lastCountFetched: 0,
     isResultsTruncated: false,
-    fetchNodes: jest.fn(),
+    fetchNodes: vi.fn(),
   }),
 }));
 
-jest.mock("@/library/components/utils/contextVariableUtils", () => ({
-  getContextVariables: jest.fn().mockReturnValue([]),
-  transformVariables: jest.fn().mockReturnValue([]),
+vi.mock("@/library/components/utils/contextVariableUtils", () => ({
+  getContextVariables: vi.fn().mockReturnValue([]),
+  transformVariables: vi.fn().mockReturnValue([]),
 }));
 
-jest.mock("@/library/services/jobBrowse", () => ({
-  getProjectMeta: jest.fn().mockResolvedValue([]),
-  browsePath: jest.fn().mockResolvedValue({ items: [] }),
-  queryPath: jest.fn().mockResolvedValue({ items: [] }),
+vi.mock("@/library/services/jobBrowse", () => ({
+  getProjectMeta: vi.fn().mockResolvedValue([]),
+  browsePath: vi.fn().mockResolvedValue({ items: [] }),
+  queryPath: vi.fn().mockResolvedValue({ items: [] }),
 }));
+
+await import("../main");
 
 describe("job browse main", () => {
   beforeEach(() => {
@@ -86,7 +113,7 @@ describe("job browse main", () => {
       navbar: { items: [] },
       rdBase: "http://test/",
       projectName: "testProject",
-      eventBus: { on: jest.fn(), emit: jest.fn(), off: jest.fn() },
+      eventBus: { on: vi.fn(), emit: vi.fn(), off: vi.fn() },
     };
 
     rootStore = new RootStore(mockClient);
@@ -96,8 +123,7 @@ describe("job browse main", () => {
 
     (window as any)._rundeck.rootStore = rootStore;
 
-    const { __testContext } = jest.requireMock("@/library");
-    __testContext.rootStore = rootStore;
+    mockContext.rootStore = rootStore;
   });
 
   afterEach(() => {

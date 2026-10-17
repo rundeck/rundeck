@@ -1,14 +1,15 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import SettingsCogButton from "../SettingsCogButton.vue";
 
-const mockEmit = jest.fn();
+const mockEmit = vi.fn();
 
-jest.mock("../../../../rundeckService", () => ({
-  getRundeckContext: jest.fn(() => ({
+vi.mock("../../../../rundeckService", () => ({
+  getRundeckContext: vi.fn(() => ({
     eventBus: {
       emit: mockEmit,
-      on: jest.fn(),
-      off: jest.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
     },
   })),
 }));
@@ -25,7 +26,7 @@ const mountSettingsCogButton = async () => {
 
 describe("SettingsCogButton", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders a button with settings icon", async () => {

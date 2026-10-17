@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { JobOption } from "../../../../../library/types/jobs/JobEdit";
 import { Btn } from "uiv";
@@ -38,7 +39,7 @@ const mountOptionView = async (options: {
 
 describe("OptionView", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("shows option name", async () => {
     const option = { name: "optionName", type: "text" } as JobOption;

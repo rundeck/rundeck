@@ -1,12 +1,13 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import ActivityRunningIndicator from "../activityRunningIndicator.vue";
 import mitt, { Emitter, EventType } from "mitt";
 
 const mountActivityRunningIndicator = async (props = {}) => {
   const mockEventBus = {
-    on: jest.fn(),
-    emit: jest.fn(),
-    off: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
+    off: vi.fn(),
     all: new Map(),
   };
 
@@ -21,7 +22,7 @@ const mountActivityRunningIndicator = async (props = {}) => {
 
 describe("ActivityRunningIndicator.vue", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders correctly when count is 0", async () => {
@@ -43,7 +44,7 @@ describe("ActivityRunningIndicator.vue", () => {
 
   it("emits the right event and updates the count correctly", async () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
-    const emitSpy = jest.spyOn(eventBus, "emit");
+    const emitSpy = vi.spyOn(eventBus, "emit");
     const wrapper = await mountActivityRunningIndicator({
       eventBus: eventBus,
     });

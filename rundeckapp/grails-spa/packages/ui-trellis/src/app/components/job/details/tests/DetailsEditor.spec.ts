@@ -1,11 +1,12 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import DetailsEditor from "../DetailsEditor.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
 import mitt from "mitt";
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     eventBus: mitt(),
   })),
 }));
@@ -34,7 +35,7 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
 
 describe("DetailsEditor.vue", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("loads existing data correctly", async () => {
@@ -75,7 +76,7 @@ describe("DetailsEditor.vue", () => {
     // to sanitize the data and calls a callbacks once data is formatted (none of the methods are exported)
     // therefore this test just checks that the preview tab gets rendered once wrapper.vm.preview isn't null anymore
     (window as any).markdeep = {
-      format: jest.fn().mockImplementation(() =>
+      format: vi.fn().mockImplementation(() =>
         Promise.resolve().then(
           () =>
             (wrapper.vm.preview = `<section class="md"><p></p><p>

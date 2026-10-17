@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { ComponentPublicInstance } from "vue";
 import { listProjects } from "../../../services/projects";
@@ -7,25 +8,25 @@ import {
   storageKeyDelete,
 } from "../../../services/storage";
 import { Modal } from "uiv";
-jest.mock("../../../rundeckService", () => {
+vi.mock("../../../rundeckService", () => {
   return {
-    getRundeckContext: jest.fn().mockReturnValue({
+    getRundeckContext: vi.fn().mockReturnValue({
       rdBase: "mockRdBase",
       projectName: "test-project",
     }),
-    url: jest.fn().mockReturnValue({ href: "mockHref" }),
+    url: vi.fn().mockReturnValue({ href: "mockHref" }),
   };
 });
-jest.mock("../../../services/storage");
-jest.mock("../../../services/projects");
+vi.mock("../../../services/storage");
+vi.mock("../../../services/projects");
 
-const mockedListProjects = listProjects as jest.MockedFunction<
+const mockedListProjects = listProjects as vi.MockedFunction<
   typeof listProjects
 >;
 mockedListProjects.mockResolvedValue([]);
 
 const mockedStorageKeyGetMetadata =
-  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
+  storageKeyGetMetadata as vi.MockedFunction<typeof storageKeyGetMetadata>;
 mockedStorageKeyGetMetadata.mockResolvedValue({
   resources: [
     {
@@ -40,7 +41,7 @@ interface KeyStoragePageData {
   modalEdit: boolean;
   selectedKey: Record<string, any>;
 }
-const mockedStorageKeyDelete = storageKeyDelete as jest.MockedFunction<
+const mockedStorageKeyDelete = storageKeyDelete as vi.MockedFunction<
   typeof storageKeyDelete
 >;
 mockedStorageKeyDelete.mockResolvedValue(true);
@@ -70,7 +71,7 @@ const mountKeyStoragePage = async (props = {}) => {
 
 describe("KeyStoragePage.vue", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("opens the editor when the open-editor event is emitted", async () => {

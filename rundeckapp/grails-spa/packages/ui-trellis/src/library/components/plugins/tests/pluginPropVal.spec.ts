@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import PluginPropVal from "../pluginPropVal.vue";
 
@@ -14,7 +15,7 @@ const createWrapper = (prop = {}, value: string | boolean = "") => {
 };
 describe("PluginPropVal.vue", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("renders 'Add' or 'Don't Add' for Boolean type properties", () => {
     const wrapperTrue = createWrapper(

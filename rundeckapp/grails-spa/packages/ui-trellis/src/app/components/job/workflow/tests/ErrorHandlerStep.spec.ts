@@ -1,24 +1,47 @@
+import { vi } from "vitest";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
-import ErrorHandlerStep from "../ErrorHandlerStep.vue";
-import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 
-jest.mock("@/library/modules/pluginService", () => ({
-  getPluginProvidersForService: jest.fn().mockResolvedValue({
+vi.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+  default: {
+    name: "PluginConfig",
+    template: "<div><slot /><slot name=\"iconSuffix\" /></div>",
+  },
+}));
+vi.mock("@/app/components/job/workflow/JobRefStep.vue", () => ({
+  default: { name: "JobRefStep", template: "<div />", props: ["step"] },
+}));
+vi.mock("@/library/components/plugins/pluginPropEdit.vue", () => ({
+  default: { name: "PluginPropEdit", template: "<div />" },
+}));
+vi.mock("vue3-markdown", () => ({
+  default: { name: "VMarkdownView", template: "<div />" },
+}));
+vi.mock("../types/workflowTypes", () => ({}));
+
+vi.mock("@/library/modules/pluginService", () => ({
+  getPluginProvidersForService: vi.fn().mockResolvedValue({
     service: "OptionValues",
     descriptions: [],
     labels: [],
   }),
 }));
-jest.mock("@/library/modules/rundeckClient", () => ({
+vi.mock("@/library/modules/rundeckClient", () => ({
   client: {},
 }));
-jest.mock("@/library/rundeckService.ts", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
   })),
 }));
+
+const { default: ErrorHandlerStep } = await import("../ErrorHandlerStep.vue");
+const { default: PluginConfig } = await import(
+  "@/library/components/plugins/pluginConfig.vue"
+);
+const { default: JobRefStep } = await import(
+  "@/app/components/job/workflow/JobRefStep.vue"
+);
 
 const step = {
   errorhandler: {

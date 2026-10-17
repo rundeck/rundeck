@@ -1,16 +1,16 @@
+import { vi } from "vitest";
 import { mount, DOMWrapper } from "@vue/test-utils";
 import NodeTable from "../NodeTable.vue";
 import NodeDetailsSimple from "../NodeDetailsSimple.vue";
 import { mockNodeSet } from "./mocks/apiData";
 
-jest.mock("@/library", () => ({
-  getAppLinks: jest
-    .fn()
+vi.mock("@/library", () => ({
+  getAppLinks: vi.fn()
     .mockReturnValue({ frameworkNodes: "/resources/nodes" }),
-  getRundeckContext: jest.fn().mockReturnValue({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "mockRdBase",
   }),
-  url: jest.fn().mockReturnValue({ href: "mockHref" }),
+  url: vi.fn().mockReturnValue({ href: "mockHref" }),
 }));
 
 const mountNodeTable = (propsData = {}): any => {
@@ -41,7 +41,7 @@ const mountNodeTable = (propsData = {}): any => {
 
 describe("NodeTable Component", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   it("renders health status from attributes", async () => {
     const wrapper = await mountNodeTable();

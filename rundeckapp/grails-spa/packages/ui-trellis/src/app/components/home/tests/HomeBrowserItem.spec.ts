@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeBrowserItem from "../HomeBrowserItem.vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
@@ -8,9 +9,8 @@ const dropdownStub = {
   template: "<div></div>",
 };
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest
-    .fn()
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn()
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
@@ -69,7 +69,7 @@ const mountHomeBrowserItem = async (options = {}): Promise<VueWrapper<any>> => {
 
 describe("HomeBrowserItem", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders project details correctly", async () => {

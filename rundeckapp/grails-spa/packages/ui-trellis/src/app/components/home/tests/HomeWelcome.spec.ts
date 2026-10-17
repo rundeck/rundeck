@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import HomeWelcome from "../HomeWelcome.vue";
 import messages from "../../../../app/utilities/locales/en_US.js";
@@ -8,9 +9,8 @@ const VMarkdownViewStub = {
   template: "<div>{{content}}</div>",
 };
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest
-    .fn()
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn()
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
@@ -50,7 +50,7 @@ const mountHomeWelcome = async (
 
 describe("HomeWelcome", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders with the correct app title, build identifier, logo image, and help link URL", async () => {

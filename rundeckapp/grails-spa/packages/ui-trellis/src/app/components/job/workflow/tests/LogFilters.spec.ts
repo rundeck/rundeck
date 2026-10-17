@@ -1,19 +1,20 @@
+import { vi } from "vitest";
 import { shallowMount, flushPromises } from "@vue/test-utils";
 import LogFilters from "../LogFilters.vue";
 import LogFilterButton from "@/app/components/job/workflow/LogFilterButton.vue";
 import LogFilterControls from "../LogFilterControls.vue";
 import { getRundeckContext } from "../../../../../library";
 
-jest.mock("@/library/modules/rundeckClient", () => ({
-  client: jest.fn(),
+vi.mock("@/library/modules/rundeckClient", () => ({
+  client: vi.fn(),
 }));
 
-jest.mock("@/library/rundeckService", () => {
-  const on = jest.fn();
-  const off = jest.fn();
-  const emit = jest.fn();
+vi.mock("@/library/rundeckService", () => {
+  const on = vi.fn();
+  const off = vi.fn();
+  const emit = vi.fn();
   return {
-    getRundeckContext: jest.fn().mockReturnValue({
+    getRundeckContext: vi.fn().mockReturnValue({
       eventBus: { on, off, emit },
       rdBase: "http://localhost:4440/",
       projectName: "testProject",
@@ -22,18 +23,18 @@ jest.mock("@/library/rundeckService", () => {
   };
 });
 
-jest.mock("@/library/services/projects");
+vi.mock("@/library/services/projects");
 
-jest.mock("@/library/modules/pluginService", () => ({
-  getPluginProvidersForService: jest.fn().mockResolvedValue({
+vi.mock("@/library/modules/pluginService", () => ({
+  getPluginProvidersForService: vi.fn().mockResolvedValue({
     service: true,
     descriptions: [{ name: "filterType" }],
     labels: ["Filter Type"],
   }),
 }));
 
-jest.mock("../stepEditorUtils", () => ({
-  resetValidation: jest.fn().mockReturnValue({ errors: {}, valid: true }),
+vi.mock("../stepEditorUtils", () => ({
+  resetValidation: vi.fn().mockReturnValue({ errors: {}, valid: true }),
 }));
 
 import { resetValidation } from "../stepEditorUtils";
@@ -61,9 +62,9 @@ const createWrapper = async (props: Record<string, any> = {}) => {
 
 describe("LogFilters", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     (
-      resetValidation as jest.MockedFunction<typeof resetValidation>
+      resetValidation as vi.MockedFunction<typeof resetValidation>
     ).mockReturnValue({ errors: {}, valid: true });
   });
 

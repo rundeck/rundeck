@@ -1,16 +1,17 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn, Dropdown } from "uiv";
 import { nextTick } from "vue";
 
-jest.mock("../../../../library", () => ({
-  getRundeckContext: jest.fn(),
+vi.mock("../../../../library", () => ({
+  getRundeckContext: vi.fn(),
 }));
 
 import { getRundeckContext } from "../../../../library";
 import AppUserMenu from "../user-menu/AppUserMenu.vue";
 import MainbarMenu from "../../../../library/components/mainbar/MainbarMenu.vue";
 
-const mockGetRundeckContext = getRundeckContext as jest.MockedFunction<
+const mockGetRundeckContext = getRundeckContext as vi.MockedFunction<
   typeof getRundeckContext
 >;
 
@@ -33,7 +34,7 @@ const createWrapper = async (): Promise<VueWrapper<any>> => {
 
 describe("AppUserMenu", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("Context data available", () => {

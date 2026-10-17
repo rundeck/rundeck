@@ -1,34 +1,35 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
 import NodeTable from "../NodeTable.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
 import * as nodeServices from "../services/nodeServices";
 
-const mockedGetNodeSummary = nodeServices.getNodeSummary as jest.MockedFunction<
+const mockedGetNodeSummary = nodeServices.getNodeSummary as vi.MockedFunction<
   typeof nodeServices.getNodeSummary
 >;
-const mockedGetNodes = nodeServices.getNodes as jest.MockedFunction<
+const mockedGetNodes = nodeServices.getNodes as vi.MockedFunction<
   typeof nodeServices.getNodes
 >;
-jest.mock("@/library", () => ({
-  getAppLinks: jest.fn().mockReturnValue({
+vi.mock("@/library", () => ({
+  getAppLinks: vi.fn().mockReturnValue({
     frameworkNodes: "/resources/nodes",
     frameworkNodesQueryAjax: "/resources/nodes",
   }),
-  getRundeckContext: jest.fn().mockReturnValue({
+  getRundeckContext: vi.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
     eventBus: {
-      on: jest.fn(),
-      off: jest.fn(),
-      emit: jest.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+      emit: vi.fn(),
     },
   }),
-  url: jest.fn().mockReturnValue({ href: "mockHref" }),
+  url: vi.fn().mockReturnValue({ href: "mockHref" }),
 }));
-jest.mock("../services/nodeServices", () => ({
-  getNodeSummary: jest.fn(),
-  getNodes: jest.fn(),
+vi.mock("../services/nodeServices", () => ({
+  getNodeSummary: vi.fn(),
+  getNodes: vi.fn(),
 }));
 const mockNodeSummary = {
   tags: [
@@ -102,7 +103,7 @@ describe("NodeCard Component", () => {
     });
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
   describe("Paging Behavior", () => {
     it("syncs pagingMax from server response when getNodes returns a non-default max", async () => {

@@ -1,8 +1,9 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import Popper from "../RdPopper.vue";
 
-jest.mock("@popperjs/core", () => ({
-  createPopper: jest.fn(() => ({ destroy: jest.fn() })),
+vi.mock("@popperjs/core", () => ({
+  createPopper: vi.fn(() => ({ destroy: vi.fn() })),
 }));
 
 interface MountOptions {

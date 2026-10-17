@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import Select from "primevue/select";
 import { PtSelect } from "../../index";
@@ -17,7 +18,7 @@ const createWrapper = async (props = {}): Promise<any> => {
 
 describe("PtSelect", () => {
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe("label", () => {
@@ -88,7 +89,7 @@ describe("PtSelect", () => {
     });
 
     it("debounces the update:modelValue emission when debounceMs is set so rapid selections do not flood the parent", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ debounceMs: 300 });
 
       await wrapper
@@ -98,7 +99,7 @@ describe("PtSelect", () => {
       // Should not emit immediately
       expect(wrapper.emitted("update:modelValue")).toBeFalsy();
 
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
@@ -106,7 +107,7 @@ describe("PtSelect", () => {
     });
 
     it("only emits the last selection when the user changes rapidly within the debounce window", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ debounceMs: 300 });
 
       await wrapper
@@ -119,7 +120,7 @@ describe("PtSelect", () => {
         .findComponent(Select)
         .vm.$emit("update:modelValue", "Option 3");
 
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
       await wrapper.vm.$nextTick();
 
       // Only the last value should be emitted once

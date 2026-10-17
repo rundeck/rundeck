@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 import PluginSearch from "../PluginSearch.vue";
 import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
@@ -17,7 +18,7 @@ const createWrapper = async (options: { props?: Record<string, any> } = {}) => {
 
 describe("PluginSearch", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("non-EA mode (default)", () => {
@@ -119,7 +120,7 @@ describe("PluginSearch", () => {
     });
 
     it("emits searching=true immediately when typing", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ props: { ea: true } });
 
       const ptInput = wrapper.findComponent(PtInput);
@@ -129,59 +130,59 @@ describe("PluginSearch", () => {
       expect(wrapper.emitted("searching")).toBeTruthy();
       expect(wrapper.emitted("searching")![0]).toEqual([true]);
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("emits search event with the typed value after debounce", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ props: { ea: true } });
 
       const ptInput = wrapper.findComponent(PtInput);
       await ptInput.vm.$emit("update:modelValue", "debounced-filter");
       await wrapper.vm.$nextTick();
 
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
       await flushPromises();
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("search")).toHaveLength(1);
       expect(wrapper.emitted("search")![0]).toEqual(["debounced-filter"]);
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("emits searching=false after the debounce timer fires", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ props: { ea: true } });
 
       const ptInput = wrapper.findComponent(PtInput);
       await ptInput.vm.$emit("update:modelValue", "text");
       await wrapper.vm.$nextTick();
 
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
       await flushPromises();
       await wrapper.vm.$nextTick();
 
       const searchingEmits = wrapper.emitted("searching") as any[][];
       expect(searchingEmits[searchingEmits.length - 1]).toEqual([false]);
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("resets debounce timer when typing occurs before it fires", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       const wrapper = await createWrapper({ props: { ea: true } });
 
       const ptInput = wrapper.findComponent(PtInput);
       await ptInput.vm.$emit("update:modelValue", "fir");
       await wrapper.vm.$nextTick();
 
-      jest.advanceTimersByTime(100);
+      vi.advanceTimersByTime(100);
 
       await ptInput.vm.$emit("update:modelValue", "first");
       await wrapper.vm.$nextTick();
 
-      jest.advanceTimersByTime(300);
+      vi.advanceTimersByTime(300);
       await flushPromises();
       await wrapper.vm.$nextTick();
 
@@ -189,7 +190,7 @@ describe("PluginSearch", () => {
       expect(wrapper.emitted("search")).toHaveLength(1);
       expect(wrapper.emitted("search")![0]).toEqual(["first"]);
 
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 });

@@ -1,10 +1,11 @@
+import { vi } from "vitest";
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import LogNodeChunk from "../LogNodeChunk.vue";
 import { EventBus } from "../../../utilities/vueEventBus";
 import { ExecutionOutputEntry } from "../../../stores/ExecutionOutput";
 
 // Mock components used by LogNodeChunk
-jest.mock("vue-virtual-scroller", () => ({
+vi.mock("vue-virtual-scroller", () => ({
   DynamicScroller: {
     name: "DynamicScroller",
     render(this: { $slots: Record<string, Function | undefined> }) {
@@ -26,10 +27,12 @@ jest.mock("vue-virtual-scroller", () => ({
 }));
 
 // Mock LogEntryFlex component
-jest.mock("../logEntryFlex.vue", () => ({
-  name: "LogEntryFlex",
-  render() {
-    return null;
+vi.mock("../logEntryFlex.vue", () => ({
+  default: {
+    name: "LogEntryFlex",
+    render() {
+      return null;
+    },
   },
 }));
 
@@ -104,13 +107,13 @@ describe("LogNodeChunk.vue", () => {
 
   beforeEach(() => {
     mockEventBus = {
-      on: jest.fn(),
-      emit: jest.fn(),
+      on: vi.fn(),
+      emit: vi.fn(),
     } as unknown as typeof EventBus;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders when entries are provided", () => {
@@ -254,7 +257,7 @@ describe("LogNodeChunk.vue", () => {
   it.each([true, false])(
     "scrolls to bottom when follow is %p",
     (follow: boolean) => {
-      const scrollToBottomMock = jest.fn();
+      const scrollToBottomMock = vi.fn();
       const wrapper = createWrapper({ follow });
 
       // Mock the $refs.scroller
@@ -273,16 +276,14 @@ describe("LogNodeChunk.vue", () => {
 
     it("returns false when the last entry has not been measured yet", () => {
       const wrapper = createWrapper();
-      (wrapper.vm as any).$refs.scroller.getItemSize = jest
-        .fn()
+      (wrapper.vm as any).$refs.scroller.getItemSize = vi.fn()
         .mockReturnValue(0);
       expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(false);
     });
 
     it("returns true once the last entry has been measured", () => {
       const wrapper = createWrapper();
-      (wrapper.vm as any).$refs.scroller.getItemSize = jest
-        .fn()
+      (wrapper.vm as any).$refs.scroller.getItemSize = vi.fn()
         .mockReturnValue(20);
       expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(true);
     });
@@ -315,7 +316,7 @@ describe("LogNodeChunk.vue", () => {
     it("does not re-enable follow at the bottom while the last entry is still unmeasured", () => {
       const wrapper = createWrapper({ follow: false });
       const vm = wrapper.vm as any;
-      vm.$refs.scroller.getItemSize = jest.fn().mockReturnValue(0);
+      vm.$refs.scroller.getItemSize = vi.fn().mockReturnValue(0);
 
       vm.onScrollerScroll(scrollEvent(490)); // primes _prevScrollTop
       vm.onScrollerScroll(scrollEvent(500)); // 500 + 500 >= 1000 - 10 -> at bottom
@@ -326,7 +327,7 @@ describe("LogNodeChunk.vue", () => {
     it("re-enables follow at the bottom once the last entry has been measured", () => {
       const wrapper = createWrapper({ follow: false });
       const vm = wrapper.vm as any;
-      vm.$refs.scroller.getItemSize = jest.fn().mockReturnValue(20);
+      vm.$refs.scroller.getItemSize = vi.fn().mockReturnValue(20);
 
       vm.onScrollerScroll(scrollEvent(490)); // primes _prevScrollTop
       vm.onScrollerScroll(scrollEvent(500)); // 500 + 500 >= 1000 - 10 -> at bottom

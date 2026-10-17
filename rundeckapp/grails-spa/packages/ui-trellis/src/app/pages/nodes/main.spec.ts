@@ -1,43 +1,43 @@
+import { vi } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn(() => ({
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn(() => ({
     projectName: "testProject",
     rootStore: {
-      ui: { addItems: jest.fn() },
+      ui: { addItems: vi.fn() },
     },
   })),
 }));
 
-jest.mock("@/library/stores/NodeFilterLocalstore", () => ({
-  NodeFilterStore: jest.fn().mockImplementation(() => ({
+vi.mock("@/library/stores/NodeFilterLocalstore", () => ({
+  NodeFilterStore: vi.fn().mockImplementation(() => ({
     selectedFilter: "",
-    setSelectedFilter: jest.fn(),
+    setSelectedFilter: vi.fn(),
   })),
 }));
 
-jest.mock("@/app/utilities/uiSocketObserver", () => ({
-  observer: { observe: jest.fn() },
+vi.mock("@/app/utilities/uiSocketObserver", () => ({
+  observer: { observe: vi.fn() },
 }));
 
-jest.mock("@/app/components/job/resources/NodeFilterInput.vue", () => ({
+vi.mock("@/app/components/job/resources/NodeFilterInput.vue", () => ({
   default: { name: "NodeFilterInput", template: "<div />" },
 }));
 
-jest.mock("@/app/components/job/resources/NodeCard.vue", () => ({
+vi.mock("@/app/components/job/resources/NodeCard.vue", () => ({
   default: { name: "NodeCard", template: "<div />" },
 }));
 
 import { FilterInputComp } from "./main";
 
 function makeKoFilter(filterVal = "") {
-  const filterObservable = jest.fn().mockReturnValue(filterVal) as any;
-  filterObservable.subscribe = jest
-    .fn()
-    .mockReturnValue({ dispose: jest.fn() });
+  const filterObservable = vi.fn().mockReturnValue(filterVal) as any;
+  filterObservable.subscribe = vi.fn()
+    .mockReturnValue({ dispose: vi.fn() });
   return {
     filter: filterObservable,
-    selectNodeFilter: jest.fn(),
+    selectNodeFilter: vi.fn(),
   };
 }
 
@@ -83,7 +83,7 @@ describe("FilterInputComp attachKnockout", () => {
   });
 
   it("retries attachKnockout when KO is not yet available", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const koFilter = makeKoFilter("retry-filter");
 
     const wrapper = mountComp("");
@@ -92,11 +92,11 @@ describe("FilterInputComp attachKnockout", () => {
     expect(koFilter.selectNodeFilter).not.toHaveBeenCalled();
 
     (window as any).nodeFilter = koFilter;
-    jest.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(1000);
     await flushPromises();
 
     expect(wrapper.vm.filterValue).toBe("retry-filter");
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 });

@@ -1,4 +1,4 @@
-import "jest";
+import "vitest";
 
 import {
   RuleSetParser,

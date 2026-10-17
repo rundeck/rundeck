@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import axios from "axios";
 
 import { api } from "../../../../../library/services/api";
@@ -10,21 +11,21 @@ import {
 } from "../services/nodeServices";
 
 // Mock all external dependencies
-jest.mock("axios");
-jest.mock("../../../../../library/services/api", () => ({
+vi.mock("axios");
+vi.mock("../../../../../library/services/api", () => ({
   api: {
-    get: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
-jest.mock("../../../../../library", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("../../../../../library", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     projectName: "TestProject",
     rdBase: "http://localhost:4440",
     apiVersion: "41",
   })),
-  getAppLinks: jest.fn().mockImplementation(() => ({
+  getAppLinks: vi.fn().mockImplementation(() => ({
     frameworkNodeSummaryAjax: "/framework/nodeSummary",
     frameworkNodesQueryAjax: "/framework/nodesQuery",
   })),
@@ -32,14 +33,14 @@ jest.mock("../../../../../library", () => ({
 
 describe("Node Services", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getConfigMetaForExecutionMode", () => {
     const mockConfigMeta = [{ key: "executionMode", value: "active" }];
 
     it("should fetch config meta successfully", async () => {
-      (axios.request as jest.Mock).mockResolvedValue({
+      (axios.request as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockConfigMeta,
       });
@@ -58,7 +59,7 @@ describe("Node Services", () => {
     });
 
     it("should throw error for non-successful response", async () => {
-      (axios.request as jest.Mock).mockResolvedValue({
+      (axios.request as vi.Mock).mockResolvedValue({
         status: 400,
         data: { error: "Bad Request" },
       });
@@ -72,7 +73,7 @@ describe("Node Services", () => {
     });
 
     it("should accept custom meta parameter", async () => {
-      (axios.request as jest.Mock).mockResolvedValue({
+      (axios.request as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockConfigMeta,
       });
@@ -91,7 +92,7 @@ describe("Node Services", () => {
     const mockSummary = { total: 10, active: 8 };
 
     it("should fetch node summary successfully", async () => {
-      (axios.get as jest.Mock).mockResolvedValue({
+      (axios.get as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockSummary,
       });
@@ -106,7 +107,7 @@ describe("Node Services", () => {
     });
 
     it("should throw error for failed request", async () => {
-      (axios.get as jest.Mock).mockRejectedValue({
+      (axios.get as vi.Mock).mockRejectedValue({
         message: "Network Error",
         response: { status: 500 },
       });
@@ -127,7 +128,7 @@ describe("Node Services", () => {
     };
 
     it("should fetch nodes successfully", async () => {
-      (axios.request as jest.Mock).mockResolvedValue({
+      (axios.request as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockNodes,
       });
@@ -147,7 +148,7 @@ describe("Node Services", () => {
     });
 
     it("should handle error response with message", async () => {
-      (axios.request as jest.Mock).mockResolvedValue({
+      (axios.request as vi.Mock).mockResolvedValue({
         status: 400,
         data: { message: "Invalid filter" },
       });
@@ -159,7 +160,7 @@ describe("Node Services", () => {
     });
 
     it("should handle error response without message", async () => {
-      (axios.request as jest.Mock).mockResolvedValue({
+      (axios.request as vi.Mock).mockResolvedValue({
         status: 500,
         data: {},
       });
@@ -178,7 +179,7 @@ describe("Node Services", () => {
     };
 
     it("should fetch node resources successfully", async () => {
-      (api.get as jest.Mock).mockResolvedValue({
+      (api.get as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockNodes,
       });
@@ -192,7 +193,7 @@ describe("Node Services", () => {
     });
 
     it("should throw error for non-200 response", async () => {
-      (api.get as jest.Mock).mockResolvedValue({
+      (api.get as vi.Mock).mockResolvedValue({
         status: 400,
         data: { message: "Bad Request" },
       });
@@ -204,7 +205,7 @@ describe("Node Services", () => {
     });
 
     it("should use provided project parameter", async () => {
-      (api.get as jest.Mock).mockResolvedValue({
+      (api.get as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockNodes,
       });
@@ -227,7 +228,7 @@ describe("Node Services", () => {
     };
 
     it("should fetch node tags successfully", async () => {
-      (api.get as jest.Mock).mockResolvedValue({
+      (api.get as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockTags,
       });
@@ -239,7 +240,7 @@ describe("Node Services", () => {
     });
 
     it("should throw error for non-200 response", async () => {
-      (api.get as jest.Mock).mockResolvedValue({
+      (api.get as vi.Mock).mockResolvedValue({
         status: 400,
         data: { message: "Bad Request" },
       });
@@ -251,7 +252,7 @@ describe("Node Services", () => {
     });
 
     it("should use provided project parameter", async () => {
-      (api.get as jest.Mock).mockResolvedValue({
+      (api.get as vi.Mock).mockResolvedValue({
         status: 200,
         data: mockTags,
       });

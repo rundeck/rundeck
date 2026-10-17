@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useNodesStore } from "../NodesStorePinia";
 import { getAppLinks } from "../../rundeckService";
@@ -7,23 +8,23 @@ import {
 } from "../../../app/components/job/resources/services/nodeServices";
 
 // Mock external dependencies
-jest.mock("@/library", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
     rdBase: "http://localhost:4440/",
     apiVersion: "41",
     contextPath: "",
     projectName: "TestProject",
   })),
 }));
-jest.mock("@/library/services/api", () => ({
+vi.mock("@/library/services/api", () => ({
   rundeckService: {
-    get: jest.fn(),
-    post: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
-jest.mock("../../../app/components/job/resources/services/nodeServices");
-jest.mock("../../rundeckService");
-jest.mock("../NodeFilterLocalstore");
+vi.mock("../../../app/components/job/resources/services/nodeServices");
+vi.mock("../../rundeckService");
+vi.mock("../NodeFilterLocalstore");
 
 describe("NodesStore", () => {
   const mockNodes = [
@@ -41,12 +42,12 @@ describe("NodesStore", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     // Reset all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Setup default mock implementations
-    (getNodes as jest.Mock).mockResolvedValue({ allnodes: mockNodes });
-    (getNodeTags as jest.Mock).mockResolvedValue(mockTags);
-    (getAppLinks as jest.Mock).mockReturnValue({
+    (getNodes as vi.Mock).mockResolvedValue({ allnodes: mockNodes });
+    (getNodeTags as vi.Mock).mockResolvedValue(mockTags);
+    (getAppLinks as vi.Mock).mockReturnValue({
       frameworkNodesQueryAjax: "mock-url",
     });
   });
@@ -157,7 +158,7 @@ describe("NodesStore", () => {
 
       it("should throw error when fetch fails", async () => {
         const errorMessage = "Network error";
-        (getNodes as jest.Mock).mockRejectedValue(new Error(errorMessage));
+        (getNodes as vi.Mock).mockRejectedValue(new Error(errorMessage));
 
         const store = useNodesStore();
         await expect(store.fetchNodes()).rejects.toThrow(
@@ -193,7 +194,7 @@ describe("NodesStore", () => {
 
       it("should throw error when fetch fails", async () => {
         const errorMessage = "Network error";
-        (getNodeTags as jest.Mock).mockRejectedValue(new Error(errorMessage));
+        (getNodeTags as vi.Mock).mockRejectedValue(new Error(errorMessage));
 
         const store = useNodesStore();
         await expect(store.fetchTags()).rejects.toThrow(

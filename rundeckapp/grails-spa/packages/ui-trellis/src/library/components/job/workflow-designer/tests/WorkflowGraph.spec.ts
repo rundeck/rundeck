@@ -1,46 +1,47 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 
 import WorkflowGraph from "../WorkflowGraph.vue";
 
-const mockGraphApplyRules = jest.fn();
-const mockGraphSetNodes = jest.fn();
-const mockGraphGraph = jest.fn(() => ({ nodes: () => [] }));
-const mockGenerateRulesFromGraphlib = jest.fn(() => ({
+const mockGraphApplyRules = vi.fn();
+const mockGraphSetNodes = vi.fn();
+const mockGraphGraph = vi.fn(() => ({ nodes: () => [] }));
+const mockGenerateRulesFromGraphlib = vi.fn(() => ({
   withDirectives: () => [],
   withConditions: () => [],
 }));
-const mockDiaGetElements = jest.fn(() => []);
-const mockDiaRemoveLinks = jest.fn();
-const mockDiaFromGraphLib = jest.fn();
-const mockDiaOn = jest.fn();
-const mockPaperOn = jest.fn();
-const mockPaperTransformToFitContent = jest.fn();
+const mockDiaGetElements = vi.fn(() => []);
+const mockDiaRemoveLinks = vi.fn();
+const mockDiaFromGraphLib = vi.fn();
+const mockDiaOn = vi.fn();
+const mockPaperOn = vi.fn();
+const mockPaperTransformToFitContent = vi.fn();
 
 let mockPaperCurrentScale = 1;
-const mockPaperScale = jest.fn(() => ({ sx: mockPaperCurrentScale }));
-const mockPaperTranslate = jest.fn(() => ({ tx: 0, ty: 0 }));
-const mockPaperMatrix = jest.fn((ctm?: { a: number; d: number }) => {
+const mockPaperScale = vi.fn(() => ({ sx: mockPaperCurrentScale }));
+const mockPaperTranslate = vi.fn(() => ({ tx: 0, ty: 0 }));
+const mockPaperMatrix = vi.fn((ctm?: { a: number; d: number }) => {
   if (ctm) {
     mockPaperCurrentScale = ctm.a;
     return ctm;
   }
   return { a: mockPaperCurrentScale, d: mockPaperCurrentScale };
 });
-const mockPaperClientToLocalPoint = jest.fn((x: number, y: number) => ({
+const mockPaperClientToLocalPoint = vi.fn((x: number, y: number) => ({
   x,
   y,
 }));
 
-jest.mock("jointjs", () => {
+vi.mock("jointjs", () => {
   class MockGraph {
     getElements = mockDiaGetElements;
     removeLinks = mockDiaRemoveLinks;
     fromGraphLib = mockDiaFromGraphLib;
     on = mockDiaOn;
-    getNeighbors = jest.fn(() => []);
-    getConnectedLinks = jest.fn(() => []);
-    remove = jest.fn();
-    getCell = jest.fn(() => undefined);
+    getNeighbors = vi.fn(() => []);
+    getConnectedLinks = vi.fn(() => []);
+    remove = vi.fn();
+    getCell = vi.fn(() => undefined);
   }
 
   class MockPaper {
@@ -60,7 +61,7 @@ jest.mock("jointjs", () => {
     },
     layout: {
       DirectedGraph: {
-        layout: jest.fn(),
+        layout: vi.fn(),
       },
     },
     shapes: {
@@ -74,7 +75,7 @@ jest.mock("jointjs", () => {
     },
     util: {
       timing: {
-        inout: jest.fn(),
+        inout: vi.fn(),
       },
     },
     g: {
@@ -84,25 +85,25 @@ jest.mock("jointjs", () => {
   };
 });
 
-jest.mock("../Graph", () => ({
+vi.mock("../Graph", () => ({
   WorkflowGraph: class {
     applyRules = mockGraphApplyRules;
     setNodes = mockGraphSetNodes;
     graph = mockGraphGraph;
     generateRulesFromGraphlib = mockGenerateRulesFromGraphlib;
-    getNode = jest.fn();
-    setEdge = jest.fn();
-    removeEdge = jest.fn();
+    getNode = vi.fn();
+    setEdge = vi.fn();
+    removeEdge = vi.fn();
   },
 }));
 
-jest.mock("../RuleSetParser", () => ({
+vi.mock("../RuleSetParser", () => ({
   RuleSetParser: {
-    ParseRules: jest.fn(() => ({})),
+    ParseRules: vi.fn(() => ({})),
   },
 }));
 
-jest.mock("../elements/Step", () => ({
+vi.mock("../elements/Step", () => ({
   WorkflowStep: class {
     addTo() {
       return this;
@@ -151,15 +152,14 @@ const setContainerWidth = (wrapper: WorkflowGraphWrapper, width: number) => {
 };
 
 describe("WorkflowGraph", () => {
-  const requestAnimationFrameSpy = jest
-    .spyOn(window, "requestAnimationFrame")
+  const requestAnimationFrameSpy = vi.spyOn(window, "requestAnimationFrame")
     .mockImplementation((callback: FrameRequestCallback) => {
       callback(0);
       return 0;
     });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     document.body.style.userSelect = "";
     document.body.style.cursor = "";
     mockPaperCurrentScale = 1;

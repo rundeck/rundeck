@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeActionsMenu from "../HomeActionsMenu.vue";
 import { AuthzMeta } from "../types/projectTypes";
@@ -7,9 +8,8 @@ const createDefaultMeta = (): AuthzMeta => ({
   data: { project: { admin: true }, types: { job: { create: true } } },
 });
 
-jest.mock("@/library", () => ({
-  getRundeckContext: jest
-    .fn()
+vi.mock("@/library", () => ({
+  getRundeckContext: vi.fn()
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
@@ -34,7 +34,7 @@ const mountHomeActionsMenu = async (
 
 describe("HomeActionsMenu", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("displays edit configuration link for admin", async () => {

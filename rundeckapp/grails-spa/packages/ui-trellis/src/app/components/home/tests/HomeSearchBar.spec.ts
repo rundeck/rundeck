@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeSearchBar from "../HomeSearchBar.vue";
 
@@ -14,7 +15,7 @@ const mountHomeSearchBar = async (
 
 describe("HomeSearchBar", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders the input with the correct placeholder", async () => {

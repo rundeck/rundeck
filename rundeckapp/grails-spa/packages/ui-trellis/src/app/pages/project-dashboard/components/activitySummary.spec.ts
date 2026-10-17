@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import ActivitySummary from "./activitySummary.vue";
 
@@ -27,7 +28,7 @@ const mountActivitySummary = async (props = {}) => {
 
 describe("ActivitySummary", () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("links to project activity", async () => {

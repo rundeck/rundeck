@@ -1,11 +1,12 @@
+import { vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import axios from "axios";
 import MessageOfTheDay from "../motd.vue";
 
-jest.mock("axios");
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+vi.mock("axios");
+const mockedAxios = axios as vi.Mocked<typeof axios>;
 
-const mockEventBus = { on: jest.fn(), emit: jest.fn() };
+const mockEventBus = { on: vi.fn(), emit: vi.fn() };
 
 const createWrapper = async (motdHTML: string) => {
   mockedAxios.get.mockResolvedValue({
@@ -22,7 +23,7 @@ const createWrapper = async (motdHTML: string) => {
     props: { eventBus: mockEventBus, tabPage: "home" },
     global: {
       stubs: { Drawer: true },
-      mocks: { $cookies: { get: jest.fn(), set: jest.fn() } },
+      mocks: { $cookies: { get: vi.fn(), set: vi.fn() } },
     },
   });
   await flushPromises();
@@ -44,7 +45,7 @@ describe("MessageOfTheDay", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("publishes the heading text as the title when the message starts with a heading", async () => {

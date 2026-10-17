@@ -1,12 +1,13 @@
+import { vi } from "vitest";
 import { contextVariables } from "../../../stores/contextVariables";
 import {
   isAutoCompleteField,
   getContextVariables,
 } from "../contextVariableUtils";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: { on: jest.fn(), emit: jest.fn() },
+vi.mock("@/library/rundeckService", () => ({
+  getRundeckContext: vi.fn().mockImplementation(() => ({
+    eventBus: { on: vi.fn(), emit: vi.fn() },
     rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
@@ -25,8 +26,8 @@ jest.mock("@/library/rundeckService", () => ({
   })),
 }));
 
-jest.mock("../../../stores/JobsStore", () => ({
-  useJobStore: jest.fn().mockImplementation(() => ({
+vi.mock("../../../stores/JobsStore", () => ({
+  useJobStore: vi.fn().mockImplementation(() => ({
     activeId: "",
     jobs: [],
     contextVariables: contextVariables(),
