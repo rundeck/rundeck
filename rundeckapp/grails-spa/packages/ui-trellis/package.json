@@ -157,7 +157,7 @@
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "uuid": "14.0.2",
-    "vite": "8.3.4",
+    "vite": "7.1.11",
     "vitest": "5.0.4",
     "vue-eslint-parser": "9.4.3",
     "vue-loader": "17.4.2",
