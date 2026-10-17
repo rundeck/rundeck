@@ -312,4 +312,19 @@ class PluginStepTests  extends Specification implements DataTest{
             [scripturl: 'something',args:'asdf']  | [adhocFilepath: 'something',argString: 'asdf', interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
             [scripturl: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: true,expandTokenInScriptFile: true,fileExtension: 'sh',args:'asdf']  | [adhocFilepath: 'something',scriptInterpreter: 'bash',interpreterArgsQuoted: 'true',expandTokenInScriptFile: 'true',fileExtension: 'sh',argString:'asdf']
     }
+
+    def "summarize command step"() {
+        when:
+        PluginStep step = PluginStep.fromMap([exec: 'echo hello'])
+        then:
+        step.type == ExecCommand.EXEC_COMMAND_TYPE
+        step.summarize() == 'echo hello'
+    }
+
+    def "summarize other plugin step"() {
+        when:
+        PluginStep step = new PluginStep(type: 'blah', configuration: [elf: 'hello'], nodeStep: true)
+        then:
+        step.summarize() == 'Plugin[blah, nodeStep: true]'
+    }
 }
