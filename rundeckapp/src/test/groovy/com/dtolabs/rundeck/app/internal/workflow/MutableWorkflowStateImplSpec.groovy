@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.app.internal.workflow
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepContextId
+import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -425,6 +426,78 @@ class MutableWorkflowStateImplSpec extends Specification {
         wf.getRunnerNode(mutableStep2) == serverNode
         wf.getRunnerNode(mutableStep3) == 'runner2'
     }
+
+    /**
+     * Issue #10243: a node step job reference (run on localhost) whose referenced job runs on another node
+     * and itself contains a node step job reference. The referenced workflows are pre-built with an empty
+     * node set because their node filters cannot be resolved before execution.
+     */
+    def "nested node step job reference on a remote node should not be ABORTED when the workflow succeeds"() {
+        given: "a pre-built state: 1 command, 2 job ref (restart) -> [1 job ref (fetch package) -> [1 command], 2 command]"
+        def fetchStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        fetchStep1.nodeStep = true
+        def fetchWorkflow = new MutableWorkflowStateImpl([], 1, [0: fetchStep1], null, 'localhost')
+
+        def restartStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1), fetchWorkflow)
+        restartStep1.nodeStep = true
+        def restartStep2 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        restartStep2.nodeStep = true
+        def restartWorkflow = new MutableWorkflowStateImpl([], 2, [0: restartStep1, 1: restartStep2], null, 'localhost')
+
+        def step1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        step1.nodeStep = true
+        def step2 = new MutableWorkflowStepStateImpl(stepIdentifier(2), restartWorkflow)
+        step2.nodeStep = true
+        def state = new MutableWorkflowStateImpl(['localhost'], 2, [0: step1, 1: step2], null, 'localhost')
+        def date = new Date()
+
+        when: "the state changes emitted for a successful execution are applied"
+        state.updateWorkflowState(ExecutionState.RUNNING, date, ['localhost'])
+        nodeStepRuns(state, '1', 'localhost', date)
+        stepChange(state, '2', ExecutionState.RUNNING, null, date)
+        stepChange(state, '2', ExecutionState.RUNNING, 'localhost', date)
+        subWorkflowChange(state, '2@node=localhost', ExecutionState.RUNNING, ['node-0'], date)
+        stepChange(state, '2@node=localhost/1', ExecutionState.RUNNING, null, date)
+        stepChange(state, '2@node=localhost/1', ExecutionState.RUNNING, 'node-0', date)
+        subWorkflowChange(state, '2@node=localhost/1@node=node-0', ExecutionState.RUNNING, ['node-0'], date)
+        nodeStepRuns(state, '2@node=localhost/1@node=node-0/1', 'node-0', date)
+        subWorkflowChange(state, '2@node=localhost/1@node=node-0', ExecutionState.SUCCEEDED, null, date)
+        stepChange(state, '2@node=localhost/1@node=node-0', ExecutionState.SUCCEEDED, 'node-0', date)
+        nodeStepRuns(state, '2@node=localhost/2', 'node-0', date)
+        subWorkflowChange(state, '2@node=localhost', ExecutionState.SUCCEEDED, null, date)
+        stepChange(state, '2@node=localhost', ExecutionState.SUCCEEDED, 'localhost', date)
+        state.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then: "the job reference step on node-0 succeeded"
+        state.executionState == ExecutionState.SUCCEEDED
+        restartStep1.nodeStateMap['node-0'].executionState == ExecutionState.SUCCEEDED
+        restartStep1.stepState.executionState == ExecutionState.SUCCEEDED
+
+        and: "the parameterized copy for node-0 and its sub step are finalized, not ABORTED"
+        def nodeCopy = restartStep1.parameterizedStateMap['node=node-0']
+        nodeCopy.stepState.executionState == ExecutionState.SUCCEEDED
+        nodeCopy.subWorkflowState.stepStates[0].stepState.executionState == ExecutionState.SUCCEEDED
+
+        and: "every step shown for node-0 in the nodes view succeeded"
+        def nodeSteps = new StateMapping().mapOf(1L, state).nodes['node-0'].findAll { !it.stepctx.contains('@') }
+        nodeSteps*.stepctx == ['2/1', '2/1/1', '2/2']
+        nodeSteps*.executionState.every { it == 'SUCCEEDED' }
+    }
+
+    private static void nodeStepRuns(MutableWorkflowStateImpl state, String ident, String node, Date date) {
+        stepChange(state, ident, ExecutionState.RUNNING, null, date)
+        stepChange(state, ident, ExecutionState.RUNNING, node, date)
+        stepChange(state, ident, ExecutionState.SUCCEEDED, node, date)
+    }
+
+    private static void stepChange(MutableWorkflowStateImpl state, String ident, ExecutionState executionState,
+                                   String node, Date date) {
+        def change = node ? stepStateChange(stepState(executionState), node) : stepStateChange(stepState(executionState))
+        state.updateStateForStep(stepIdentifierFromString(ident), 0, change, date)
+    }
+
+    private static void subWorkflowChange(MutableWorkflowStateImpl state, String ident, ExecutionState executionState,
+                                          List<String> nodes, Date date) {
+        state.updateSubWorkflowState(stepIdentifierFromString(ident), 0, false, executionState, date, nodes, null)
+    }
 }
-
-
