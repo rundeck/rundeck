@@ -55,6 +55,7 @@ import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeFilter
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
@@ -5581,8 +5582,74 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         val != null
         val.nodeSelector != null
-        val.nodeSelector.excludes.name == "nodea"
+        val.nodeSelector.acceptNode(new NodeEntryImpl(nodename: 'nodeb', tags: ['running'] as Set))
+        !val.nodeSelector.acceptNode(new NodeEntryImpl(nodename: 'nodea', tags: ['running'] as Set))
         val.frameworkProject == "testproj"
+    }
+
+    /**
+     * Issue #9895: the exclude filter must remove nodes independently of the exclusions in the node filter,
+     * as scheduled executions rely on the filters alone to select nodes.
+     */
+    def "Create execution context applies exclude filter independently of node filter exclusions"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                executionType: 'scheduled',
+                filter: 'tags: qa+businessunit+system !tags: db,lab2',
+                filterExclude: 'hostname: testhost1.domain.com,testhost2.domain.com'
+        )
+        def nodes = new NodeSetImpl()
+        nodes.putNode(new NodeEntryImpl(nodename: 'app1', hostname: 'app1.domain.com', tags: ['qa', 'businessunit', 'system'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'db1', hostname: 'db1.domain.com', tags: ['qa', 'businessunit', 'system', 'db'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'test1', hostname: 'testhost1.domain.com', tags: ['qa', 'businessunit', 'system'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'other1', hostname: 'other1.domain.com', tags: ['prod'] as Set))
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+
+        then:
+        NodeFilter.filterNodes(val.nodeSelector, nodes).nodeNames as Set == ['app1'] as Set
+    }
+
+    /**
+     * Issue #9895: exclusions in the node filter and the exclude filter are both applied
+     */
+    def "filtersAsNodeSet applies exclude filter independently of node filter exclusions"() {
+        given:
+        def nodes = new NodeSetImpl()
+        nodes.putNode(new NodeEntryImpl(nodename: 'app1', hostname: 'app1.domain.com', tags: ['web'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'db1', hostname: 'db1.domain.com', tags: ['web', 'db'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'test1', hostname: 'testhost1.domain.com', tags: ['web'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'legacy1', hostname: 'legacy1.domain.com', tags: ['web', 'legacy'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'other1', hostname: 'other1.domain.com', tags: ['prod'] as Set))
+
+        when:
+        def nodeset = ExecutionService.filtersAsNodeSet(
+                [filter: filter, filterExclude: filterExclude, nodeExcludePrecedence: true]
+        )
+
+        then:
+        NodeFilter.filterNodes(nodeset, nodes).nodeNames as Set == expected as Set
+
+        where:
+        filter                 | filterExclude                       | expected
+        'tags: web'            | null                                | ['app1', 'db1', 'test1', 'legacy1']
+        'tags: web !tags: db'  | null                                | ['app1', 'test1', 'legacy1']
+        'tags: web'            | 'hostname: testhost1.domain.com'    | ['app1', 'db1', 'legacy1']
+        'tags: web !tags: db'  | 'hostname: testhost1.domain.com'    | ['app1', 'legacy1']
+        'tags: web !tags: db'  | 'tags: legacy'                      | ['app1', 'test1']
+        'tags: web'            | 'tags: web !name: app1'             | ['app1']
+        null                   | 'tags: web'                         | ['other1']
     }
 
     def "get Global Plugin Configurations"() {
