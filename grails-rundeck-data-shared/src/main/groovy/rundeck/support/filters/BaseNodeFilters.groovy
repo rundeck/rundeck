@@ -153,10 +153,20 @@ public class BaseNodeFilters implements Validateable{
         if (filters.filter) {
             nodeMap.putAll(NodeSet.parseFilter(filters.filter).exclude)
         }
-        if (filters.filterExclude && !filters.excludeFilterUncheck) {
-            nodeMap.putAll(NodeSet.parseFilter(filters.filterExclude).include)
-        }
         return nodeMap
+    }
+
+    /**
+     * Node set selecting the nodes matched by the exclude filter. They are removed from the results of the node
+     * filter, independently of the exclusions in the node filter itself.
+     * @param filters node filters
+     * @return node set for the exclude filter, or null if there is no exclude filter to apply
+     */
+    public static NodeSet asExcludeFilterNodeSet(filters) {
+        if (filters.filterExclude && !filters.excludeFilterUncheck) {
+            return NodeSet.fromFilter(filters.filterExclude)
+        }
+        return null
     }
     public static Map<String, String> asIncludeUnselectedMap(filters) {
         def nodeMap = [:]
@@ -200,9 +210,6 @@ public class BaseNodeFilters implements Validateable{
         nodeMap[NodeSet.OS_VERSION] = filters.nodeIncludeOsVersion
         if (filters.filter) {
             nodeMap.putAll(NodeSet.parseFilter(filters.filter).include)
-        }
-        if (filters.filterExclude && !filters.excludeFilterUncheck) {
-            nodeMap.putAll(NodeSet.parseFilter(filters.filterExclude).exclude)
         }
         return nodeMap
     }
