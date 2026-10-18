@@ -122,6 +122,17 @@ abstract class BasePage {
     }
 
     /**
+     * Waits for a previously-captured element reference to be removed from the DOM.
+     * Use this to detect that an async reload has started replacing a Vue-rendered
+     * subtree (e.g. a v-if toggling off during a "loading" state), as a precondition
+     * for then waiting on the replacement element to appear.
+     */
+    void waitForStaleness(WebElement element) {
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.stalenessOf(element))
+    }
+
+    /**
      * Waits until the element located by {@code locator} is present and clickable.
      * Uses {@link ExpectedConditions#elementToBeClickable(By)} so the wait is actually evaluated
      * (unlike returning a condition object from a raw closure).
