@@ -99,7 +99,7 @@ class NodesSpec extends BaseContainer {
             Map response = client.get("/project/$project/resources", Map)
 
         then:
-            response.keySet() == ['RUN-4832-safe-0'] as Set
+            response.keySet() == ['RUN-4832-safe--0'] as Set
 
         cleanup:
             deleteProject(project)
