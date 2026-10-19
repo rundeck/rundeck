@@ -12,6 +12,43 @@ RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
     git checkout $REMCO_COMMIT && \
     GOTOOLCHAIN=auto go build -o /go/bin/remco ./cmd/remco
 
+# Build the JDK timezone database (tzdb.dat) from OpenJDK's tzdata
+###################################################################
+# Distro and vendor JDK builds still ship an older tzdb that misses the 2026
+# Canadian time zone changes (Alberta, Northwest Territories, Manitoba), which
+# would shift Quartz schedules in those zones by one hour from 2026-11-01.
+# Compile tzdb.dat with OpenJDK's own build tool and data, using the same
+# distro JDK as the image (the JDK package matching JRE_VERSION, for javac).
+# The file is architecture independent, so this stage runs on the build platform.
+# Remove this stage once the distro openjdk package ships tzdb >= 2026e.
+FROM --platform=$BUILDPLATFORM ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401 AS tzdb
+
+ARG JRE_VERSION
+RUN if [ -z "$JRE_VERSION" ]; then echo "Error: JRE_VERSION is not set"; exit 1; fi && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
+        ca-certificates curl "$(echo "$JRE_VERSION" | sed 's/-jre-/-jdk-/')" && \
+    rm -rf /var/lib/apt/lists/*
+
+# openjdk/jdk17u-dev commit carrying tzdata2026e
+ENV JDK17U_COMMIT=d34607dc995ff876a4cff4c4d6777cb380e34149
+ENV TZDATA_FILES="africa antarctica asia australasia europe northamerica southamerica backward etcetera gmt jdk11_backward"
+
+WORKDIR /tzdb
+RUN set -e; \
+    base="https://raw.githubusercontent.com/openjdk/jdk17u-dev/${JDK17U_COMMIT}"; \
+    mkdir -p data src out; \
+    for f in VERSION $TZDATA_FILES; do curl -sSfL "$base/make/data/tzdata/$f" -o "data/$f"; done; \
+    for f in TzdbZoneRulesCompiler TzdbZoneRulesProvider; do \
+        curl -sSfL "$base/make/jdk/src/classes/build/tools/tzdb/$f.java" -o "src/$f.java"; done; \
+    # Same copy step as OpenJDK's make/CopyInterimTZDB.gmk
+    for f in ZoneRules ZoneOffsetTransition ZoneOffsetTransitionRule Ser; do \
+        curl -sSfL "$base/src/java.base/share/classes/java/time/zone/$f.java" \
+            | sed -e "s/package java.time.zone/package build.tools.tzdb/" > "src/$f.java"; done; \
+    javac -nowarn -d out src/*.java; \
+    cd data && java -cp ../out build.tools.tzdb.TzdbZoneRulesCompiler -srcdir . -dstfile /tzdb/tzdb.dat $TZDATA_FILES; \
+    echo "Built tzdb.dat from $(tail -1 VERSION)"
+
 # Build base container
 ######################
 FROM ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
@@ -46,6 +83,14 @@ RUN apt-get update && \
         unzip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Replace the JDK timezone database and fail the build if the zones are still stale
+COPY --from=tzdb /tzdb/tzdb.dat /tmp/tzdb.dat
+COPY TzdbCheck.java /tmp/TzdbCheck.java
+RUN JAVA_HOME_DIR="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")" && \
+    install -m 644 /tmp/tzdb.dat "$JAVA_HOME_DIR/lib/tzdb.dat" && \
+    java /tmp/TzdbCheck.java && \
+    rm /tmp/tzdb.dat /tmp/TzdbCheck.java
 
 # Setup rundeck user
 RUN adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck && \

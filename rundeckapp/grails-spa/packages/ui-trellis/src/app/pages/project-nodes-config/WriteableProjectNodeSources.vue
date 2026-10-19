@@ -110,7 +110,7 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss">
+<style scoped lang="scss">
 .item-section {
   margin-top: 0.5em;
 }

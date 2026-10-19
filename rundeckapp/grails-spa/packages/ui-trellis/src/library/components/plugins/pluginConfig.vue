@@ -102,50 +102,53 @@
           </div>
         </div>
         <div v-for="(group, gindex) in groupedProperties" :key="group.name">
-          <div
-            v-for="(prop, pindex) in group.props"
-            v-if="!group.name"
-            :key="'g_' + gindex + '/' + prop.name"
-          >
-            <input
-              v-if="isPropHidden(prop)"
-              type="hidden"
-              :value="inputValues[prop.name]"
-              :data-hidden-field-identity="prop.options['hidden_identity']"
-              :data-testid="`prop-hidden-${prop.name}`"
-              class="_config_prop_display_hidden"
-            />
-
+          <template v-if="!group.name">
             <div
-              v-else
-              :class="
-                'form-group ' +
-                (prop.required ? 'required' : '') +
-                (validation && validation.errors[prop.name] ? ' has-error' : '')
-              "
-              :data-prop-name="prop.name"
-              :data-testid="`prop-field-${prop.name}`"
+              v-for="(prop, pindex) in group.props"
+              :key="'g_' + gindex + '/' + prop.name"
             >
-              <plugin-prop-edit
-                v-model="inputValues[prop.name]"
-                :prop="prop"
-                :event-bus="eventBus"
-                :input-values="inputValues"
-                :use-runner-selector="useRunnerSelector"
-                :context-autocomplete="inputContextAutocomplete"
-                :validation="validation"
-                :rkey="'g_' + gindex + '_' + rkey"
-                :read-only="readOnly"
-                :pindex="pindex"
-                :selector-data="propsComputedSelectorData"
-                :autocomplete-callback="autocompleteCallback"
-                :step-type="serviceName"
-                :plugin-type="modelValue.type"
-                :extra-autocomplete-vars="extraAutocompleteVars"
-                @plugin-props-mounted="notifyHandleAutoComplete"
+              <input
+                v-if="isPropHidden(prop)"
+                type="hidden"
+                :value="inputValues[prop.name]"
+                :data-hidden-field-identity="prop.options['hidden_identity']"
+                :data-testid="`prop-hidden-${prop.name}`"
+                class="_config_prop_display_hidden"
               />
+
+              <div
+                v-else
+                :class="
+                  'form-group ' +
+                  (prop.required ? 'required' : '') +
+                  (validation && validation.errors[prop.name]
+                    ? ' has-error'
+                    : '')
+                "
+                :data-prop-name="prop.name"
+                :data-testid="`prop-field-${prop.name}`"
+              >
+                <plugin-prop-edit
+                  v-model="inputValues[prop.name]"
+                  :prop="prop"
+                  :event-bus="eventBus"
+                  :input-values="inputValues"
+                  :use-runner-selector="useRunnerSelector"
+                  :context-autocomplete="inputContextAutocomplete"
+                  :validation="validation"
+                  :rkey="'g_' + gindex + '_' + rkey"
+                  :read-only="readOnly"
+                  :pindex="pindex"
+                  :selector-data="propsComputedSelectorData"
+                  :autocomplete-callback="autocompleteCallback"
+                  :step-type="serviceName"
+                  :plugin-type="modelValue.type"
+                  :extra-autocomplete-vars="extraAutocompleteVars"
+                  @plugin-props-mounted="notifyHandleAutoComplete"
+                />
+              </div>
             </div>
-          </div>
+          </template>
           <details
             v-if="group.name"
             :open="!group.secondary"
@@ -715,6 +718,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles third-party component internals -->
 <style lang="scss">
 .configprop + .configprop:before {
   content: " ";

@@ -5,7 +5,7 @@
 import { defineComponent, markRaw } from "vue";
 import { getRundeckContext, getAppLinks } from "../../../library";
 
-import News from "../../../library/components/widgets/news/News.vue";
+import News from "../../../library/components/widgets/news/NewsWidget.vue";
 
 import moment from "moment";
 // Component Files

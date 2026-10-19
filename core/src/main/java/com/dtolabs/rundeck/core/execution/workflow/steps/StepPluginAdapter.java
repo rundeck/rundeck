@@ -132,7 +132,7 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                     + stringWriter.toString()
             );
 
-            return new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
+            return StepExecutionResultImpl.wrapStepException(e);
         } catch (Throwable e) {
             final StringWriter stringWriter = new StringWriter();
             e.printStackTrace(new PrintWriter(stringWriter));
