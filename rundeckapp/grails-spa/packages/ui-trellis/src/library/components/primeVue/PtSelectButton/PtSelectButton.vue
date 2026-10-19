@@ -96,6 +96,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
 .p-selectbutton .p-togglebutton {
   // Unselected state - based on Figma design

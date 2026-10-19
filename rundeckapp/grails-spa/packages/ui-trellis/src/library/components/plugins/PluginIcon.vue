@@ -5,6 +5,7 @@
       data-testid="plugin-icon-image"
       class="plugin-icon"
       :src="iconUrl"
+      alt=""
     />
     <i
       v-else-if="glyphicon"

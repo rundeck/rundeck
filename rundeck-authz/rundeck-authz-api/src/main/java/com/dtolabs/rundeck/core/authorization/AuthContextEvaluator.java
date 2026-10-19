@@ -36,6 +36,19 @@ public interface AuthContextEvaluator {
     Map<String,String> authResourceForJob(String name, String jobGroup, String uuid);
 
     /**
+     * Return the ACL resource used to authorize read/view of a job-less execution, by its execution
+     * type. Implementations may consult registered resolvers so a feature's execution type is gated
+     * behind its own resource kind; the default returns {@code null}, meaning the caller should fall
+     * back to the built-in adhoc resource.
+     *
+     * @param executionType the execution's {@code executionType}, which may be null
+     * @return the ACL resource map, or {@code null} to use the default adhoc resource
+     */
+    default Map<String, String> authResourceForExecutionType(String executionType) {
+        return null;
+    }
+
+    /**
      * return true if all of the actions are authorized for the resource type in the application context
      *
      * @param resourceType

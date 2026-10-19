@@ -12,7 +12,7 @@
         </p>
       </div>
       <div class="main-section">
-        <div v-for="trigger in notifyTypes">
+        <div v-for="trigger in notifyTypes" :key="trigger">
           <div :id="'job-notifications-' + trigger" class="list-group">
             <div
               class="list-group-item flex-container flex-align-items-baseline flex-justify-space-between"
@@ -94,6 +94,7 @@
             <template v-if="getNotificationsForTrigger(trigger)">
               <div
                 v-for="(notif, i) in getNotificationsForTrigger(trigger)"
+                :key="i"
                 class="list-group-item flex-container flex-justify-start"
               >
                 <div style="margin-right: 10px">
@@ -176,6 +177,7 @@
               <template #dropdown>
                 <li
                   v-for="trigger in notifyTypes"
+                  :key="trigger"
                   :data-trigger="trigger"
                   @click="setEditNotificationTrigger(trigger)"
                 >
@@ -224,6 +226,7 @@
                   <li v-for="plugin in sortedProviders" :key="plugin.name">
                     <a
                       role="button"
+                      :aria-label="plugin.title"
                       :data-plugin-type="plugin.name"
                       @click="setEditNotificationType(plugin.name)"
                     >
@@ -308,7 +311,6 @@ import { defineComponent } from "vue";
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../../library/modules/pluginService";
-import ExtendedDescription from "../../../../library/components/utils/ExtendedDescription.vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import MarkdownView from "../../../../library/components/utils/MarkdownView.vue";
 import mitt from "mitt";
@@ -318,7 +320,6 @@ export default defineComponent({
   components: {
     PluginInfo,
     PluginConfig,
-    ExtendedDescription,
     UndoRedo,
     MarkdownView,
   },

@@ -11,7 +11,7 @@ const createWrapper = async (props = {}): Promise<any> => {
     },
     global: {
       stubs: {
-        Menu: { template: "<div />", methods: { toggle: jest.fn() } },
+        PMenu: { template: "<div />", methods: { toggle: jest.fn() } },
       },
       components: { PtButton },
     },
