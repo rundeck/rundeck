@@ -57,10 +57,12 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
         super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
         final IRundeckProject frameworkProject = frameworkInstance.getFrameworkProjectMgr().createFrameworkProject(
-                PROJ_NAME,
-                generateProjectResourcesFile(
-                        new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml")
-                )
+                PROJ_NAME
+        );
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject,
+                true
         );
         extResourcesfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
 

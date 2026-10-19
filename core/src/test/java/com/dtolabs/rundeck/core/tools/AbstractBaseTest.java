@@ -72,12 +72,24 @@ public abstract class AbstractBaseTest extends TestCase {
     public static void generateProjectResourcesFile(final File source, final IRundeckProject frameworkProject){
         generateProjectResourcesFile(source, frameworkProject, false);
     }
-    public static void generateProjectResourcesFile(final File source, final IRundeckProject frameworkProject, boolean localExecutor){
-        //copy test nodes to resources file
-        File resourcesfile = null;
+    /**
+     * Copies test nodes into the project directory and configures the project's file source.
+     *
+     * @param source source node definition fixture
+     * @param frameworkProject owning project
+     * @param localExecutor whether to configure the local node executor and source
+     */
+    public static void generateProjectResourcesFile(
+            final File source,
+            final IRundeckProject frameworkProject,
+            final boolean localExecutor
+    ) {
+        File resourcesfile = new File(
+                ((IFrameworkResource) frameworkProject).getBaseDir(),
+                "etc/resources.xml"
+        );
         try {
-            resourcesfile = File.createTempFile("resources", ".xml");
-            resourcesfile.deleteOnExit();
+            resourcesfile.getParentFile().mkdirs();
             FileUtils.copyFileStreams(source, resourcesfile);
         } catch (IOException e) {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
@@ -95,25 +107,6 @@ public abstract class AbstractBaseTest extends TestCase {
         Set<String> prefixes=new HashSet<String>();
         prefixes.add("resources.source");
         frameworkProject.mergeProjectProperties(properties,prefixes);
-    }
-    public static Properties generateProjectResourcesFile(final File source){
-        //copy test nodes to resources file
-        File resourcesfile = null;
-        try {
-            resourcesfile = File.createTempFile("resources", ".xml");
-            resourcesfile.deleteOnExit();
-            FileUtils.copyFileStreams(source, resourcesfile);
-        } catch (IOException e) {
-            throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
-        }
-        Properties properties = new Properties();
-        properties.put("resources.source.1.type", "file");
-        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
-        properties.put("resources.source.1.config.generateFileAutomatically", "false");
-        properties.put("resources.source.1.config.includeServerNode", "true");
-        properties.put("resources.source.2.type", "local");
-        properties.put("service.NodeExecutor.default.provider", "local");
-        return properties;
     }
     protected String getExistingFilePath(String filename, String type)
             throws BuildException {
