@@ -47,8 +47,18 @@ class ImportSpec extends BaseContainer {
         when: "We try to read readme content"
         String readmeContent
         try(def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")) {
-            assert readmeResponse.successful
+            // A 404 here has two unrelated causes and only the body tells them apart.
+            // apiProjectFileGet answers api.error.item.doesnotexist with args ['resource', filename],
+            // so "resource: null" means the mapping's static filename parameter never reached params
+            // -- the family described in rundeckpro/.claude/rules/grails-command-object-binding.md --
+            // while "resource: readme.md" means the import stored nothing, which it can do silently:
+            // the md-file branch is skipped when mdfilestemp is empty and import_status stays
+            // 'successful' because it only reflects job, execution and ACL errors.
+            // Read once, then assert: the assert message is evaluated eagerly here, so building it
+            // from the body consumes it and the next read fails with "closed".
             readmeContent = readmeResponse.body().string()
+            assert readmeResponse.successful :
+                    "readme not readable (${readmeResponse.code()}): ${readmeContent}"
         }
 
         then: "The content: "
