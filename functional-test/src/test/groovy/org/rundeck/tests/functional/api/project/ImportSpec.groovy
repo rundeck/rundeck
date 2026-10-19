@@ -32,11 +32,17 @@ class ImportSpec extends BaseContainer {
                 getClass().getResource(RESOURCE_ARCHIVE_TEST_README_DIR).getPath()
             )
         )
-        client.put(
+        def importResponse = client.put(
             "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
             archiveJar,
             'application/zip'
         )
+        // The endpoint answers 200 even when the import fails -- the outcome is in the body, as
+        // import_status, and RdClient.put only checks the HTTP status. Without this check a failed
+        // import is invisible here and surfaces three lines down as a 404 on readme.md, with the
+        // errors that explain it already discarded. The other imports in this spec keep their
+        // response; this one did not.
+        assert importResponse.import_status == 'successful' : "import did not succeed: ${importResponse}"
 
         when: "We try to read readme content"
         String readmeContent
