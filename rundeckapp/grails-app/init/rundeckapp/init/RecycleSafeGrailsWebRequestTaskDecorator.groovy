@@ -18,7 +18,6 @@ package rundeckapp.init
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.web.servlet.mvc.GrailsWebRequest
-import org.grails.web.util.WebUtils
 import org.springframework.core.task.TaskDecorator
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
@@ -95,7 +94,21 @@ class RecycleSafeGrailsWebRequestTaskDecorator implements TaskDecorator {
                     task.run()
                     return
                 }
-                WebUtils.storeGrailsWebRequest(taskRequest)
+                // Bind the task request to this thread only. WebUtils.storeGrailsWebRequest would
+                // also do
+                //
+                //     webRequest.getRequest().setAttribute('org.grails.WEB_REQUEST', webRequest)
+                //
+                // and that attribute lives on the *shared* HttpServletRequest, not on this thread.
+                // The task request is a second GrailsWebRequest built over the same underlying
+                // request, and its params are created from the raw servlet parameter map -- the URL
+                // mapping never populated them. Writing it into the attribute therefore replaces the
+                // request thread's own web request with one that has no mapping variables, and Jetty
+                // reuses request objects, so the victim can even be the *next* request on that
+                // object. That is the shape of the intermittent parameter loss: the mapping matches
+                // and params still equals the raw servlet map. The ThreadLocal alone is what the
+                // task actually needs, and the finally below already restores it.
+                RequestContextHolder.setRequestAttributes(taskRequest)
                 try {
                     task.run()
                 }
