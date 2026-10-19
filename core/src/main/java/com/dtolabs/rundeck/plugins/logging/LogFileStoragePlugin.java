@@ -25,6 +25,7 @@ import java.util.Map;
  * Plugin interface for Log file storage
  * @deprecated no longer used, replaced by {@link ExecutionFileStoragePlugin}
  */
+@Deprecated
 public interface LogFileStoragePlugin extends LogFileStorage {
     /**
      * Initializes the plugin with contextual data

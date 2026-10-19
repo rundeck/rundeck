@@ -62,6 +62,7 @@ public interface PluginStepContext {
      *
      * @deprecated use {@link #getDataContextObject()}
      */
+    @Deprecated
     public Map<String, Map<String, String>> getDataContext();
 
     /**
@@ -83,6 +84,7 @@ public interface PluginStepContext {
      * @return the Framework object
      * @deprecated use {@link #getIFramework()}
      */
+    @Deprecated
     public Framework getFramework();
 
     /**

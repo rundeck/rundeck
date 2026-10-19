@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -232,6 +233,9 @@ class BaseWorkflowExecutorSpec extends Specification {
                 getExecutionService()>>Mock(ExecutionService){
 
                     1 * executeStep(_, item)>> {
+                        StepExecutionContext ctx = (StepExecutionContext)it[0]
+                        // RUN-4837: the main step's own execution must not carry the error handler marker
+                        assert !ctx.componentForType(WorkflowItemErrorHandlerContext).present
                         return NodeDispatchStepExecutor.wrapDispatcherResult(
                             Mock(DispatcherResult) {
                                 isSuccess() >> false
@@ -243,6 +247,10 @@ class BaseWorkflowExecutorSpec extends Specification {
                         StepExecutionContext ctx = (StepExecutionContext)it[0]
                         assert !ctx.nodeSelector.acceptNode(testnode2)
                         assert ctx.nodeSelector.acceptNode(testnode1)
+                        // RUN-4837: the error handler's own execution must carry the marker, so
+                        // components that cannot otherwise distinguish it from the main step's
+                        // execution (e.g. Runner selection) can resolve handler-specific configuration
+                        assert ctx.componentForType(WorkflowItemErrorHandlerContext).present
                         return NodeDispatchStepExecutor.wrapDispatcherResult(
                             Mock(DispatcherResult) {
                                 isSuccess() >> true
@@ -305,5 +313,60 @@ class BaseWorkflowExecutorSpec extends Specification {
             threadCount<<[1,2]
     }
     static interface HandlerTestItem extends NodeStepExecutionItem, HasFailureHandler{
+    }
+
+    /**
+     * A step that throws a StepException carrying failure data must expose that data to its error handler
+     * as ${result.*}, e.g. ${result.resultCode}.
+     */
+    def "error handler context has result.resultCode #expected from the failed step's StepException"() {
+        given:
+            StepExecutionItem handlerItem = Mock(StepExecutionItem)
+            Map<String, String> handlerResultData = null
+            def testFramework = Mock(IFramework) {
+                getExecutionService() >> Mock(ExecutionService) {
+                    executeStep(_, { it != handlerItem }) >> {
+                        throw new StepException('Script result code was: 1', NodeStepFailureReason.NonZeroResultCode, failureData)
+                    }
+                    executeStep(_, handlerItem) >> { StepExecutionContext ctx, StepExecutionItem item ->
+                        handlerResultData = ctx.dataContext.get('result')
+                        new StepExecutionResultImpl()
+                    }
+                }
+            }
+            BaseWorkflowExecutor instance = new BaseWorkflowExecutor(testFramework) {
+                @Override
+                WorkflowExecutionResult executeWorkflowImpl(StepExecutionContext executionContext, WorkflowExecutionItem item) {
+                    return null
+                }
+            }
+            def context = ExecutionContextImpl.builder()
+                                              .frameworkProject('atest')
+                                              .framework(testFramework)
+                                              .executionListener(Mock(ExecutionListener))
+                                              .user('blah')
+                                              .threadCount(1)
+                                              .build()
+            ExecCommand command = new ExecCommandBase() {
+                String[] getCommand() { ['exit', '1'] as String[] }
+
+                @Override
+                StepExecutionItem getFailureHandler() { handlerItem }
+            }
+
+        when:
+            def result = instance.executeWorkflowStep(context, [:], [], false, null, 1, command)
+
+        then:
+            !result.stepResult.success
+            result.stepResult.failureData == failureData
+            handlerResultData.reason == 'NonZeroResultCode'
+            handlerResultData.resultCode == expected
+
+        where:
+            failureData                                                  || expected
+            [(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE): 1]       || '1'
+            [(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE): 1, x: null] || '1'
+            [:]                                                          || null
     }
 }

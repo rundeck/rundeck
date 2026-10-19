@@ -6,6 +6,12 @@
     border-bottom-color: $bg-subheader;
   }
 
+  // dark: default bottom-popover arrow follows the popover body background.
+  // Zero-specificity :where() wrapper keeps the variant rules below winning.
+  :where(*[data-color-theme="dark"]) &.bottom .arrow:after {
+    border-bottom-color: var(--background-color-lvl2);
+  }
+
   .popover-content {
     border: none;
     border-radius: 6px;

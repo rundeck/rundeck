@@ -23,9 +23,9 @@
         :footer="false"
       >
         <key-storage-edit
+          v-model:upload-setting="uploadSetting"
           :project="project"
           :root-path="rootPath"
-          :upload-setting="uploadSetting"
           :storage-filter="storageFilter"
           @key-created="updateSelectedKey"
           @cancel-editing="handleCancelEditing"
@@ -79,8 +79,9 @@ export default defineComponent({
   },
   methods: {
     handleFinishEditing(selectedKey: any) {
-      // @ts-ignore
-      this.$refs.keyStorageViewRef.loadKeys(selectedKey);
+      (
+        this.$refs.keyStorageViewRef as { loadKeys(key: unknown): void }
+      ).loadKeys(selectedKey);
       this.modalEdit = false;
     },
     handleCancelEditing() {
@@ -90,7 +91,7 @@ export default defineComponent({
       this.uploadSetting = uploadSetting;
       this.modalEdit = true;
     },
-    updateSelectedKey(key: {}) {
+    updateSelectedKey(key: Record<string, unknown>) {
       this.selectedKey = key;
     },
   },

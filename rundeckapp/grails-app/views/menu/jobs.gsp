@@ -527,6 +527,7 @@ search
                             wasfiltered       : wasfiltered ? true : false,
                             clusterMap        : clusterMap,
                             nextExecutions    : nextExecutions,
+                            executionAclValid : executionAclValid,
                             jobauthorizations : jobauthorizations,
                             authMap           : authMap,
                             nowrunningtotal   : nowrunningtotal,

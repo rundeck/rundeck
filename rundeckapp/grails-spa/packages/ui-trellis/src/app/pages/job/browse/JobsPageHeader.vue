@@ -27,7 +27,7 @@
                 <i class="glyphicon glyphicon-filter" />
                 {{ jobPageStore.selectedFilter }}
               </template>
-              <template v-for="qparam in wasFiltered" v-else>
+              <template v-for="qparam in wasFiltered" v-else :key="qparam">
                 <template v-if="jobPageStore.query[qparam]">
                   <span class="text-secondary query-item"
                     >{{ $t(`jobquery.title.${qparam}`) }}:
@@ -101,7 +101,7 @@ import {
   JobPageStore,
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
-import { defineComponent, ref, inject, unref } from "vue";
+import { defineComponent, ref, inject } from "vue";
 import JobSearchModal from "./JobSearchModal.vue";
 
 const eventBus = getRundeckContext().eventBus;
@@ -121,7 +121,7 @@ export default defineComponent({
       },
     },
   },
-  setup(props) {
+  setup() {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,
     ) as JobPageStore;

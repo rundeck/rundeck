@@ -57,4 +57,17 @@ class JobMetadataServiceSpec extends Specification implements ServiceUnitTest<Jo
         where:
             project = 'aproj'
     }
+
+    void "load project plugin metadata with uncached provider query"() {
+        given:
+        def matching = new PluginMeta(
+                key: 'job-1/scm-import',
+                project: 'aproj',
+                jsonData: '{"commitId":"abc"}'
+        ).save(flush: true)
+        new PluginMeta(key: 'job-2/scm-import', project: 'other').save(flush: true)
+
+        expect:
+        service.getJobsPluginMeta('aproj', 'scm-import') == [matching]
+    }
 }

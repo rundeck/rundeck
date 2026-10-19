@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
+import org.rundeck.jaas.PasswordCredential
 import org.rundeck.jaas.RundeckPrincipal
 import org.rundeck.jaas.RundeckRole
 import org.rundeck.jaas.UserInfo
@@ -482,6 +483,69 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         'auser'  | _
     }
 
+    def "findUser requests demographic and password attributes explicitly"() {
+        // Some directories (e.g. Active Directory over JNDI) return null for every attribute
+        // when no returning-attribute list is set on the search, even though the same
+        // attributes are readable via ldapsearch. findUser() must request them by name.
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        })  // Use setter instead of @field access (Groovy 4)
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> Mock(Attributes) {
+                get(module._userFirstNameAttribute) >> new BasicAttribute(module._userFirstNameAttribute, "First")
+                get(module._userLastNameAttribute) >> new BasicAttribute(module._userLastNameAttribute, "Last")
+                get(module._userEmailAttribute) >> new BasicAttribute(module._userEmailAttribute, "user@example.com")
+            }
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username],
+                { SearchControls ctls ->
+                    ctls.getReturningAttributes() as List == [
+                        module._userIdAttribute,
+                        module._userPasswordAttribute,
+                        module._userFirstNameAttribute,
+                        module._userLastNameAttribute,
+                        module._userEmailAttribute,
+                    ]
+                }
+            ) >> {new EnumImpl<SearchResult>(found)}
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        DirContext userDir = Mock(DirContext) {
+            _ * search(*_) >> {new EnumImpl<SearchResult>([])}
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+        when:
+        boolean result = module.login()
+
+        then:
+        result
+        module._userFirstName == "First"
+        module._userLastName == "Last"
+        module._userEmail == "user@example.com"
+
+        where:
+        username | _
+        'auser'  | _
+    }
+
     def "bindingLogin searches with the normalized username when case-insensitive matching is enabled"() {
         // Regression test: findUser() in the search-based bindingLogin path used the raw,
         // un-normalized username, while the role lookup and cached/returned UserInfo it feeds
@@ -533,7 +597,6 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         // rawUsername. If bindingLogin regresses to passing the raw username, this
         // fails with the raw (wrong-case) value instead.
         capturedFilterArgs[2] == normalizedUsername
-
         where:
         rawUsername | normalizedUsername
         'AUser'     | 'auser'
@@ -640,6 +703,143 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | passwordvalue
         'auser'  | 'apassword'
+    }
+
+    def "bindingLogin does not cache plaintext password credential"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._cacheDuration = Integer.MAX_VALUE
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = passwordvalue }
+        })  // Use setter instead of @field access (Groovy 4)
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >> {new EnumImpl<SearchResult>(found)}
+
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        DirContext userDir = Mock(DirContext) {
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+
+        when:
+        boolean result = module.login()
+        def cacheToken = PasswordCredential.md5Digest(username + ":" + passwordvalue)
+        def cached = JettyCachingLdapLoginModule.USERINFOCACHE.get(cacheToken)
+
+        then:
+        result
+        cached != null
+        cached.userInfo.getCredential() == null
+
+        where:
+        username             | passwordvalue
+        'credentialcacheuser' | 'credentialcachepassword'
+    }
+
+    def "bindingLogin cache key is stable when password arrives as char[] via PasswordCallback"() {
+        // Regression test: outside of these unit tests, the password callback is populated by
+        // Spring Security's default JaasPasswordCallbackHandler, which only fills the standard
+        // PasswordCallback (not the custom ObjectCallback the other tests here use), so
+        // bindingLogin() receives a char[]. Object.toString() on an array is identity-based and
+        // differs per instance even for equal content, so the cache key derived from it used to
+        // change on every login attempt -- meaning cached entries were written but never read
+        // back, and LDAP caching never actually engaged. Each simulated login below gets its own
+        // fresh char[] (as a real client's callback handler would produce), so a cache hit here
+        // proves the key is derived from the password's content, not the array's identity.
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._cacheDuration = Integer.MAX_VALUE
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            2 * handle(_) >> { it[0][0].name = username; it[0][2].password = passwordvalue.toCharArray() }
+        })  // Use setter instead of @field access (Groovy 4); object callback left unset on purpose
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >> {new EnumImpl<SearchResult>(found)}
+
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        DirContext userDir = Mock(DirContext) {
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+
+        when:
+        boolean result = module.login()
+        boolean result2 = module.login()
+
+        then:
+        result
+        result2
+
+        where:
+        username           | passwordvalue
+        'charcachekeyuser'  | 'charcachekeypassword'
     }
 
     @Unroll

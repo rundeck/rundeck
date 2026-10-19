@@ -21,7 +21,9 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -30,6 +32,7 @@ import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
+import com.dtolabs.rundeck.plugins.descriptions.PluginOutput
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
@@ -169,6 +172,46 @@ class NodeStepPluginAdapterSpec extends Specification {
         ) throws NodeStepException
         {
             impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+
+    @Plugin(name = "test5", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test5Plugin implements NodeStepPlugin {
+        NodeStepPlugin impl
+
+        @PluginProperty(title = "Environment Name")
+        private String environmentName
+
+        // No @PluginProperty: a computed, node-scoped value exposed for conditional logic.
+        @PluginOutput(name = "outputResult", description = "Computed result exposed for conditional logic")
+        private String outputResult
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            outputResult = "production".equals(environmentName) ? "PROD_READY" : "NOT_READY"
+            impl.executeNodeStep(context, configuration, entry)
+        }
+    }
+
+    @Plugin(name = "test6", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test6Plugin implements NodeStepPlugin {
+        @PluginOutput(name = "outputResult")
+        private String outputResult
+
+        @Override
+        void executeNodeStep(
+                final PluginStepContext context,
+                final Map<String, Object> configuration,
+                final INodeEntry entry
+        ) throws NodeStepException
+        {
+            outputResult = "SET_BEFORE_FAILURE"
+            throw new NodeStepException("failed", StepFailureReason.PluginFailed, entry.getNodename())
         }
     }
 
@@ -545,5 +588,78 @@ class NodeStepPluginAdapterSpec extends Specification {
         wrap.test == '7890'
     }
 
+    def "captures a computed output-only @PluginOutput value into the node-scoped output context after executeNodeStep runs"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        // Mirrors how SequentialNodeDispatcher/ParallelNodeDispatcher scope the per-node output
+        // context to ContextView.nodeStep(stepNum, nodeName) before invoking the adapter.
+        def outputContext = new DataOutput(ContextView.nodeStep(2, 'anode'))
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getOutputContext() >> outputContext
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('anode')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new Test5Plugin(impl: plugin)
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def config = [environmentName: 'production']
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        1 * plugin.executeNodeStep(!null as PluginStepContext, [:], node)
+        result.isSuccess()
+        wrap.environmentName == 'production'
+        wrap.outputResult == 'PROD_READY'
+        // only outputResult (the @PluginOutput-only field) is captured; environmentName has no
+        // @PluginOutput and is therefore not exposed
+        outputContext.getSharedContext().getData(ContextView.nodeStep(2, 'anode')).getData() == [data: [outputResult: 'PROD_READY']]
+    }
+
+    def "does not capture output when the node step execution throws"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        def outputContext = new DataOutput(ContextView.nodeStep(2, 'anode'))
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getOutputContext() >> outputContext
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('anode')
+        def wrap = new Test6Plugin()
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: [:],
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        !result.isSuccess()
+        // the field was set to a value before the plugin threw, but since the step failed,
+        // nothing should have been captured into the output context
+        wrap.outputResult == 'SET_BEFORE_FAILURE'
+        outputContext.getSharedContext().getData(ContextView.nodeStep(2, 'anode')) == null
+    }
 
 }

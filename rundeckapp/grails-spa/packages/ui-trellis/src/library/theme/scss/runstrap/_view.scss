@@ -7,6 +7,11 @@ body.view {
 }
 body.ui-type-current,
 body.ui-type-legacy {
+  // #section-main's top margin would otherwise collapse through <body>, which is
+  // position: relative, shifting the containing block of body-appended overlays
+  // (PrimeVue computes their offsets in document coordinates) down by that margin.
+  display: flow-root;
+
   &.view > section,
   .view > section {
     overflow: hidden;

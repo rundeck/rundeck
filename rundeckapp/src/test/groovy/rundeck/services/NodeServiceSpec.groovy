@@ -32,7 +32,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.AsyncTaskExecutor
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -240,7 +240,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     @Unroll
     def "get nodes when project cache with preload #defFirstLoadAsynch ignores config asynch"() {
         given:
-        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
         service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
@@ -315,7 +315,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     @Unroll
     def "get nodes with first load asynch defAsynch project value projAsynch"() {
         given:
-        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
         service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
@@ -427,7 +427,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
     def "get nodes with project cache without preload with forced synchronous behavior"( ) {
         given:
-        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true
             getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> false
@@ -516,7 +516,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
     def "get nodes with project cache without preload with forced asynchronous behavior"( ) {
         given:
-        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
         service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService) {
             getBoolean('nodeService.nodeCache.enabled', true) >> true

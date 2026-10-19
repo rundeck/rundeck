@@ -20,7 +20,11 @@
         <hr />
         <workflow-global-log-filters v-model="logFiltersData" />
         <hr />
-        <ui-socket section="workflow-editor" location="steps" v-model="stepsData">
+        <ui-socket
+          section="workflow-editor"
+          location="steps"
+          v-model="stepsData"
+        >
           <workflow-steps v-model="stepsData" />
         </ui-socket>
       </div>

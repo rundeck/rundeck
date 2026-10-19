@@ -6,10 +6,9 @@ import "../../../stories/setup";
 
 import { RootStore } from "../../../stores/RootStore";
 
-import News from "./News.vue";
+import News from "./NewsWidget.vue";
 
-// @ts-ignore
-window._rundeck.rundeckClient = new Rundeck(
+(window as any)._rundeck.rundeckClient = new Rundeck(
   new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN),
   {
     baseUri: process.env.STORYBOOK_RUNDECK_URL,

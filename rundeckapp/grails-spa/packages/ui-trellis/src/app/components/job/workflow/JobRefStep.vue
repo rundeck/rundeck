@@ -14,7 +14,9 @@
           <code v-if="entry" class="optvalue">{{ entry }}</code>
         </template>
       </template>
-      <code v-else class="optvalue" data-testid="non-parsed-args">{{ step.jobref.args }}</code>
+      <code v-else class="optvalue" data-testid="non-parsed-args">{{
+        step.jobref.args
+      }}</code>
     </p>
     <p v-if="step.jobref.nodeStep">
       <i class="fas fa-hdd"></i>
@@ -47,7 +49,7 @@ export default defineComponent({
           this.step.jobref.name
         );
       }
-      return this.step.jobref?.uuid || '';
+      return this.step.jobref?.uuid || "";
     },
     parsed() {
       if (!this.step.jobref?.args) {

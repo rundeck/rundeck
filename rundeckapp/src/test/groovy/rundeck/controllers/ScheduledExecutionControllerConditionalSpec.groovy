@@ -10,6 +10,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.workflow.ConditionalDefinitionImpl
 import org.rundeck.app.data.workflow.ConditionalSetImpl
@@ -48,6 +49,9 @@ class ScheduledExecutionControllerConditionalSpec extends Specification implemen
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
         controller.featureService = Mock(FeatureService)
+        controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
+            _ * validateExecutionAcl(_) >> true
+        }
         controller.apiService = Mock(ApiService)
     }
 

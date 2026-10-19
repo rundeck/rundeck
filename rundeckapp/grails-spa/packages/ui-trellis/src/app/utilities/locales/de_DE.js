@@ -37,8 +37,8 @@ const messages = {
   "Expand All": "Alle ausklappen",
   "collapse.all": "Alle einklappen",
   "Collapse All": "Alle einklappen",
-  "Modules": "Module",
-  "Executions": "Ausfuehrungen",
+  Modules: "Module",
+  Executions: "Ausfuehrungen",
   execution: "Ausführung | Ausführungen",
   "execution.count": "1 Ausführung | {0} Ausführungen",
   Execution: "{n} Ausführungen | {n} Ausführung | {n} Ausführungen",
@@ -71,7 +71,7 @@ const messages = {
   "Workflow.strategy.description.step-first":
     "Führe einen Schritt auf allen Nodes aus, bevor mit dem nächsten Schritt fortgefahren wird.",
   "Node First": "Node-zentriert",
-  "Explain": "Erklärung",
+  Explain: "Erklärung",
   explain: "Erklärung",
   "global.log.filters": "Globale Log-Filter",
   "workflow.all.steps": "Alle Workflow-Schritte",
@@ -109,8 +109,7 @@ const messages = {
   "Node Enhancers can modify the data loaded from Node Sources.":
     "Node-Enhancer können die aus Node-Quellen geladenen Daten ändern.",
   "use.the.node.sources.tab.1": "Verwenden Sie den ",
-  "use.the.node.sources.tab.2":
-    "Tab, um Ihre Node-Quellen zu aktualisieren.",
+  "use.the.node.sources.tab.2": "Tab, um Ihre Node-Quellen zu aktualisieren.",
   "none.configured.click.plugin.to.add.a.new.plugin":
     "Nichts konfiguriert. Klicken Sie auf {0}, um ein neues Plugin hinzuzufügen.",
   "None configured. Click ResourceModelSource to add a new plugin.":
@@ -182,7 +181,8 @@ const messages = {
   "scheduledExecution.property.retry.delay.label": "Wiederholungsverzögerung",
   "scheduledExecution.property.retry.delay.description":
     "Zeit zwischen fehlgeschlagener Ausführung und Wiederholung. Zeit in Sekunden oder mit Zeiteinheiten wie \"120m\", \"2h\", \"3d\". Leer oder 0 bedeutet keine Verzögerung. Kann Optionsreferenzen enthalten wie \"{'$'}{'{'}option{'.'}delay{'}'}\".",
-  "scheduledExecution.property.nodeKeepgoing.prompt": "Wenn ein Node fehlschlägt",
+  "scheduledExecution.property.nodeKeepgoing.prompt":
+    "Wenn ein Node fehlschlägt",
   "scheduledExecution.property.nodeKeepgoing.true.description":
     "Auf allen verbleibenden Nodes weiter ausführen, bevor der Schritt fehlschlägt.",
   "scheduledExecution.property.nodeKeepgoing.false.description":
@@ -220,7 +220,8 @@ const messages = {
   "scheduledExecution.property.defaultTab.label": "Standard-Tab",
   "scheduledExecution.property.defaultTab.description":
     "Standard-Tab, der beim Öffnen einer Ausführung angezeigt wird.",
-  "scheduledExecution.property.nodefiltereditable.label": "Bearbeitbarer Filter",
+  "scheduledExecution.property.nodefiltereditable.label":
+    "Bearbeitbarer Filter",
   "scheduledExecution.property.excludeFilterUncheck.label":
     "Ausgeschlossene Nodes anzeigen",
   "scheduledExecution.property.excludeFilterUncheck.description":
@@ -229,7 +230,7 @@ const messages = {
     "Sekundärer Filter, der Nodes aus dem Ergebnis des Node-Filters ausschließt.",
   "scheduledExecution.property.timezone.prompt": "Zeitzone",
   "scheduledExecution.property.timezone.description":
-    "Gültige Zeitzone, z. B. \"PST\", ein vollständiger Name wie \"Europe/Berlin\" oder eine benutzerdefinierte ID wie \"GMT-8:00\".",
+    'Gültige Zeitzone, z. B. "PST", ein vollständiger Name wie "Europe/Berlin" oder eine benutzerdefinierte ID wie "GMT-8:00".',
   "Allow this Job to be scheduled?": "Darf dieser Job geplant werden?",
   "Allow this Job to be executed?": "Darf dieser Job ausgeführt werden?",
   "notification.event.onstart": "Beim Start",
@@ -268,7 +269,7 @@ const messages = {
   "Search Activity": "Aktivität durchsuchen",
   "button.cancel": "Abbrechen",
   "button.create": "Erstellen",
-  "message_cancel": "Abbrechen",
+  message_cancel: "Abbrechen",
 
   notifications: {
     helpText:
@@ -333,10 +334,8 @@ const messages = {
   none: "Keine",
   "resource.metadata.entity.tags": "Tags",
   "enter.a.node.filter": "Node-Filter eingeben oder .* für alle Nodes",
-  "run.a.command.on.count.nodes.ellipsis":
-    "Befehl auf {0} {1} ausführen",
-  "create.a.job.for.count.nodes.ellipsis":
-    "Job für {0} {1} erstellen",
+  "run.a.command.on.count.nodes.ellipsis": "Befehl auf {0} {1} ausführen",
+  "create.a.job.for.count.nodes.ellipsis": "Job für {0} {1} erstellen",
   "all.nodes": "Alle Nodes",
   "all.nodes.menu.item": "-Alle Nodes-",
   "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter":

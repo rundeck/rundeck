@@ -1,8 +1,17 @@
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="settings-modal-overlay" data-testid="settings-modal-overlay" @click.self="close">
+    <div
+      v-if="isOpen"
+      class="settings-modal-overlay"
+      data-testid="settings-modal-overlay"
+      @click.self="close"
+    >
       <div class="settings-modal" data-testid="settings-modal">
-        <button class="settings-modal__close" data-testid="settings-modal-close" @click="close">
+        <button
+          class="settings-modal__close"
+          data-testid="settings-modal-close"
+          @click="close"
+        >
           <i class="fas fa-times"></i>
         </button>
 
@@ -18,7 +27,9 @@
             </button>
             <button
               class="settings-modal__tab"
-              :class="{ 'settings-modal__tab--active': currentTab === 'ui-early-access' }"
+              :class="{
+                'settings-modal__tab--active': currentTab === 'ui-early-access',
+              }"
               data-testid="settings-tab-ui-early-access"
               @click="changeTab('ui-early-access')"
             >
@@ -27,29 +38,57 @@
           </nav>
 
           <div class="settings-modal__panel" data-testid="settings-modal-panel">
-            <div v-if="currentTab === 'theme'" class="settings-panel" data-testid="settings-panel-theme">
-              <h2 class="settings-panel__title" data-testid="settings-panel-title">{{ $t("settings.theme.title") }}</h2>
+            <div
+              v-if="currentTab === 'theme'"
+              class="settings-panel"
+              data-testid="settings-panel-theme"
+            >
+              <h2
+                class="settings-panel__title"
+                data-testid="settings-panel-title"
+              >
+                {{ $t("settings.theme.title") }}
+              </h2>
               <p class="settings-panel__description">
                 {{ $t("settings.theme.description") }}
               </p>
               <div class="settings-panel__control">
-                <select v-model="theme" class="form-control select" data-testid="theme-select">
-                  <option v-for="themeOpt in themes" :key="themeOpt" :value="themeOpt">
+                <select
+                  v-model="theme"
+                  class="form-control select"
+                  data-testid="theme-select"
+                >
+                  <option
+                    v-for="themeOpt in themes"
+                    :key="themeOpt"
+                    :value="themeOpt"
+                  >
                     {{ $t(`settings.theme.options.${themeOpt}`) }}
                   </option>
                 </select>
               </div>
             </div>
 
-            <div v-if="currentTab === 'ui-early-access'" class="settings-panel" data-testid="settings-panel-ui-early-access">
-              <h2 class="settings-panel__title" data-testid="settings-panel-title">{{ $t("settings.uiEarlyAccess.title") }}</h2>
+            <div
+              v-if="currentTab === 'ui-early-access'"
+              class="settings-panel"
+              data-testid="settings-panel-ui-early-access"
+            >
+              <h2
+                class="settings-panel__title"
+                data-testid="settings-panel-title"
+              >
+                {{ $t("settings.uiEarlyAccess.title") }}
+              </h2>
               <p class="settings-panel__description">
                 {{ $t("settings.uiEarlyAccess.description") }}
               </p>
 
               <div class="settings-panel__toggle">
                 <label class="settings-toggle">
-                  <span class="settings-toggle__label">{{ $t("settings.uiEarlyAccess.enableLabel") }}</span>
+                  <span class="settings-toggle__label">{{
+                    $t("settings.uiEarlyAccess.enableLabel")
+                  }}</span>
                   <input
                     type="checkbox"
                     v-model="nextUiEnabled"
@@ -98,10 +137,11 @@ export default defineComponent({
       isOpen: false,
       currentTab: "theme" as SettingsTab,
       themes: ["system", "light", "dark"] as ThemeOption[],
-      theme: (themeStore?.userPreferences?.theme ||
-          "system") as ThemeOption,
+      theme: (themeStore?.userPreferences?.theme || "system") as ThemeOption,
       themeStore,
-      nextUiEnabled: cookieEnabled ? cookieEnabled === "true" : pageUiMeta.isNextUiPage,
+      nextUiEnabled: cookieEnabled
+        ? cookieEnabled === "true"
+        : pageUiMeta.isNextUiPage,
     };
   },
   computed: {
@@ -143,15 +183,7 @@ export default defineComponent({
         this.$cookies.set(COOKIE_NAME, "true", "1y", "/", "", false, "Strict");
         localStorage.setItem(TOAST_MESSAGE_KEY, "enabled");
       } else {
-        this.$cookies.set(
-          COOKIE_NAME,
-          "false",
-          "1y",
-          "/",
-          "",
-          false,
-          "Strict",
-        );
+        this.$cookies.set(COOKIE_NAME, "false", "1y", "/", "", false, "Strict");
         localStorage.setItem(TOAST_MESSAGE_KEY, "disabled");
       }
       window.location.reload();
@@ -193,7 +225,11 @@ export default defineComponent({
 .settings-modal {
   background: var(--colors-white, #ffffff);
   border-radius: var(--radii-md, 6px);
-  box-shadow: var(--shadows-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
+  box-shadow: var(
+    --shadows-lg,
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05)
+  );
   width: 600px;
   max-width: 90vw;
   max-height: 80vh;
@@ -225,7 +261,7 @@ export default defineComponent({
 
 *[data-color-theme="dark"] .settings-modal__close {
   color: var(--font-color);
-  
+
   &:hover {
     color: var(--text-secondary-color);
   }
@@ -262,11 +298,11 @@ export default defineComponent({
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #E9ECEF;
+    background-color: #e9ecef;
   }
 
   &--active {
-    background-color: #E9ECEF;
+    background-color: #e9ecef;
     color: var(--colors-gray-900);
     font-weight: var(--fontWeights-regular);
   }

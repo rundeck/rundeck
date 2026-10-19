@@ -7,7 +7,7 @@
   </template>
   <template v-else-if="errors.length > 1">
     <ul>
-      <li v-for="err in errors">{{ err }}</li>
+      <li v-for="(err, i) in errors" :key="i">{{ err }}</li>
     </ul>
   </template>
 </template>

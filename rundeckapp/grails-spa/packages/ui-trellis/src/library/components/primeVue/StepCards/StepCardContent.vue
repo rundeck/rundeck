@@ -1,6 +1,10 @@
 <template>
   <div class="step-card-content">
-    <div v-if="config.jobref" class="plugin-config-section" data-testid="step-card-content-jobref-section">
+    <div
+      v-if="config.jobref"
+      class="plugin-config-section"
+      data-testid="step-card-content-jobref-section"
+    >
       <span v-for="prop in jobRefProps" :key="prop.name" class="configprop">
         <plugin-prop-view
           :prop="prop"
@@ -78,8 +82,7 @@
 </template>
 
 <script lang="ts">
-//@ts-nocheck
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import ConfigSection from "./ConfigSection.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
@@ -112,7 +115,7 @@ export default defineComponent({
       default: () => [],
     },
     errorHandler: {
-      type: Array,
+      type: Array as PropType<Record<string, any>[]>,
       default: () => [],
     },
     errorHandlerConfig: {
@@ -170,7 +173,7 @@ export default defineComponent({
       if (handler.jobref) {
         return {
           ...handler,
-          title: this.$t('Job reference')
+          title: this.$t("Job reference"),
         };
       }
 
@@ -282,6 +285,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 .plugin-config-section {
   border-bottom: 1px solid var(--p-accordion-panel-border-color);
@@ -305,6 +309,16 @@ export default defineComponent({
   }
 }
 
+/* Dark mode (Figma: label grey-200, value white) */
+*[data-color-theme="dark"] .configpair {
+  color: var(--grey-200);
+
+  .text-success,
+  .copy-icon {
+    color: var(--white, #fff);
+  }
+}
+
 .configprop {
   display: block;
   margin-bottom: var(--sizes-2);
@@ -316,5 +330,18 @@ export default defineComponent({
   + .col-sm-12 {
     display: none;
   }
+}
+
+// pluginConfig.vue's show-mode template always renders a
+// `.col-sm-12` wrapper for its `extraProperties` slot, even when the
+// caller (StepCardContent, here) never fills it — an always-empty,
+// full-width floated Bootstrap column nested directly inside another
+// `.col-*` (no intermediate `.row`), which squeezes/skews the real
+// property content next to it. The `.configprop + .col-sm-12` rule
+// above only hid it when it rendered *after* the props loop; pluginConfig.vue
+// now renders it *before* instead (property display order fix), so it needs
+// hiding by its own emptiness, not by sibling position.
+.plugin-config-section .col-sm-12:empty {
+  display: none;
 }
 </style>

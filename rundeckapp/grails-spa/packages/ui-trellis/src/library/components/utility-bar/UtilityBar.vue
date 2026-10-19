@@ -15,7 +15,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import type { PropType } from "vue";
 import UtilItem from "./UtilityBarItem.vue";
 
 export default defineComponent({
@@ -68,6 +67,7 @@ ul {
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 .utility-bar__item {
   display: flex;

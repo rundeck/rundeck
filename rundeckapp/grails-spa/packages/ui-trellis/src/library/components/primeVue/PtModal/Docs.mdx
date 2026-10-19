@@ -1,0 +1,64 @@
+import {
+  Meta,
+  Subtitle,
+  Title,
+  Canvas,
+  Controls,
+  Description,
+  Stories,
+} from "@storybook/blocks";
+import * as PtModalStories from "./PtModal.stories";
+
+<Meta of={PtModalStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://primevue.org/dialog/)
+
+## Import
+
+```ts
+import PtModal from "@rundeck/ui-trellis/src/library/components/primeVue/PtModal/PtModal.vue";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={PtModalStories.Playground} sourceState="shown" />
+<Controls of={PtModalStories.Playground} />
+
+## How to use
+
+Bind `v-model` to open and close it. Footer buttons come from the `buttons` prop and
+clicking one emits `button-click` with its `id`; the modal never closes itself, so the
+parent decides what each button does. Use the default slot for the body, `header` for a
+custom title and `footer` to replace the generated buttons.
+
+```vue
+<PtModal
+  v-model="open"
+  header="Discard this step?"
+  :buttons="[
+    {
+      id: 'keep',
+      label: 'Keep editing',
+      severity: 'secondary',
+      outlined: true,
+    },
+    { id: 'discard', label: 'Discard', severity: 'danger' },
+  ]"
+  @button-click="onButton"
+>
+  Your progress will be lost.
+</PtModal>
+```
+
+<Description of={PtModalStories} />
+
+<Stories title="" includePrimary={false} />
+
+## Accessibility
+
+{/* Bring in accessibility notes from primeVue here and\/or add aspects important for accessibility */}

@@ -181,9 +181,9 @@ const messages = {
     "Clear all {0} selected items, or only items shown on this page?",
   "bulk.selected.count": "{0} selected",
   "results.empty.text": "No results for the query",
-  "noResultsFound": "No results found",
-  "noMatchesFound": "No matches found",
-  "noMatchesFoundSecondary": "Please try another search.",
+  noResultsFound: "No results found",
+  noMatchesFound: "No matches found",
+  noMatchesFoundSecondary: "Please try another search.",
   "Only shown executions": "Only shown executions",
   "Clear bulk selection": "Clear Bulk Selection",
   "Click to edit Search Query": "Click to edit Search Query",
@@ -297,7 +297,7 @@ const messages = {
   "execution.status.aborted": "Aborted",
   "execution.status.waiting": "Waiting",
   "kill.job": "Kill job",
-  "killing": "Killing...",
+  killing: "Killing...",
   filter: "Filter",
   "loading.matched.nodes": "Loading matched nodes...",
   "loading.text": "Loading...",
@@ -496,7 +496,7 @@ const messages = {
   "gui.menu.Scm": "Setup SCM",
   "import.archive": "Import Archive",
   "import.archive.ellipsis": "Import Archive...",
-  "message_cancel": "Cancel",
+  message_cancel: "Cancel",
   "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter":
     "No Nodes selected. Match nodes by selecting or entering a filter.",
   "none.configured.click.plugin.to.add.a.new.plugin":
@@ -520,8 +520,7 @@ const messages = {
   "scheduledExecution.property.retry.label": "Retry",
   "scheduledExecution.property.timeout.label": "Timeout",
   "scheduledExecution.property.timeout.title": "Timeout",
-  "step.type.jobreference.nodestep.description":
-    "Run a job on the remote node",
+  "step.type.jobreference.nodestep.description": "Run a job on the remote node",
   "step.type.jobreference.title": "Job Reference",
   Enhancers: "Enhancers",
   Yes: "Yes",
@@ -592,8 +591,10 @@ const messages = {
   "adhoc.server.response.invalid": "Server response was invalid",
   "adhoc.request.failed": "Request failed",
   "adhoc.execution.output.load.failed": "Failed to load execution output",
-  "adhoc.execution.polling.timeout": "Execution polling timeout - execution may be stuck on server",
-  "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter": "No nodes selected. Match nodes by selecting or entering a filter",
+  "adhoc.execution.polling.timeout":
+    "Execution polling timeout - execution may be stuck on server",
+  "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter":
+    "No nodes selected. Match nodes by selecting or entering a filter",
   "view.in.nodes.page.prompt": "View in Nodes page",
   Node: "Node",
   "Node.plural": "Nodes",
@@ -602,7 +603,8 @@ const messages = {
   "node.dispatch.settings": "Node Dispatch Settings",
   "run.on.count.nodes": "Run a command on {0} {1}",
   running1: "Running…",
-  "maximum.number.of.parallel.threads.to.use": "Maximum number of parallel threads to use",
+  "maximum.number.of.parallel.threads.to.use":
+    "Maximum number of parallel threads to use",
   "thread.count": "Thread Count",
   "maximum.threadcount.for.nodes": "Maximum threadcount for nodes",
   "on.node.failure": "On node failure",
@@ -765,6 +767,10 @@ const messages = {
   "project.schedule.disabled": "Project schedule is disabled",
   "project.execution.disabled": "Project execution is disabled",
   "job.schedule.will.never.fire": "Job schedule will never fire",
+  "job.execution.acl.invalid.warning.title":
+    "Scheduled runs use the saved user '{user}', who is not authorized to run this job. The schedule still runs, but a future release may enforce this check. Grant that user run access, or re-save the job as a user who has it.",
+  "job.execution.acl.missing.owner.warning.title":
+    "This schedule has no saved user, so nothing authorizes it to run this job. The schedule still runs, but a future release may enforce this check. Re-save the job as a user who can run it.",
   "scm.import.status.UNKNOWN.display.text": "Import Status: Not Tracked",
   "scm.import.status.LOADING.description": "Import: Job status is loading",
   "scm.export.status.DELETED.display.text": "Deleted",
@@ -828,7 +834,8 @@ const messages = {
   "settings.support.title": "Support",
   "settings.support.label": "Support",
   "settings.theme.title": "Theme",
-  "settings.theme.description": "Select your preferred visual theme for the interface.",
+  "settings.theme.description":
+    "Select your preferred visual theme for the interface.",
   "settings.theme.options.system": "System",
   "settings.theme.options.light": "Light",
   "settings.theme.options.dark": "Dark",
@@ -838,13 +845,17 @@ const messages = {
   "settings.nextUi.available": "Next UI available",
   "settings.nextUi.enabled": "Next UI enabled",
   "settings.uiEarlyAccess.title": "UI Early Access",
-  "settings.uiEarlyAccess.description": "We're incrementally improving the Rundeck UI. Enable early access below to try new features as they're released. Please note: Early access features may contain bugs or incomplete functionality. We strongly encourage you to submit feedback or report issues through a support ticket.",
+  "settings.uiEarlyAccess.description":
+    "We're incrementally improving the Rundeck UI. Enable early access below to try new features as they're released. Please note: Early access features may contain bugs or incomplete functionality. We strongly encourage you to submit feedback or report issues through a support ticket.",
   "settings.uiEarlyAccess.enableLabel": "Enable Next UI",
-  "settings.uiEarlyAccess.feature1": "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
+  "settings.uiEarlyAccess.feature1":
+    "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
   "settings.uiEarlyAccess.learnMore": "Learn more",
   "settings.uiEarlyAccess.feedbackLink": "Give feedback on Early Access",
-  "settings.uiEarlyAccess.toast.enabled": "Next UI early access enabled. You can switch back anytime.",
-  "settings.uiEarlyAccess.toast.disabled": "Next UI has been turned off. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.enabled":
+    "Next UI early access enabled. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.disabled":
+    "Next UI has been turned off. You can switch back anytime.",
   "page.section.title.AllJobs": "All Jobs",
   "advanced.search": "Advanced",
   "jobs.advanced.search.title": "Click to modify filter",
@@ -1167,7 +1178,8 @@ const messages = {
       label: "Job Steps",
     },
     logFilters: "Log Filters",
-    logFiltersTooltip: "Filters that will affect the logs produced by these steps",
+    logFiltersTooltip:
+      "Filters that will affect the logs produced by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",
@@ -1181,7 +1193,8 @@ const messages = {
     setSteps: "Set the Steps",
     conditional: {
       defineCondition: "Define the Condition",
-      conditionDescription: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
+      conditionDescription:
+        "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
       conditionGroups: "Condition Set",
       addCondition: "+ Add",
       addconditionGroups: "+ Add Condition Set",
@@ -1199,12 +1212,13 @@ const messages = {
         greaterThan: "Greater than",
         greaterThanOrEqual: "Greater than or equal",
         lessThan: "Less than",
-        lessThanOrEqual: "Less than or equal"
+        lessThanOrEqual: "Less than or equal",
       },
     },
     stepLabel: "Step label",
     noSteps: "No workflow steps",
-    clickAddStep: "Add steps to define what this job will do. Click “Add Step” to get started.",
+    clickAddStep:
+      "Add steps to define what this job will do. Click “Add Step” to get started.",
     addErrorHandler: "Add Error Handler",
     errorHandler: "Error handler",
     errorHandlerDescription:
@@ -1245,7 +1259,7 @@ const messages = {
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
   "job.label": "Job",
-  "Project": "Project",
+  Project: "Project",
   "Workflow.Step.jobreference.title": "Select job by",
   "Workflow.Step.jobreference.name.label": "Name",
   "Workflow.Step.jobreference.name.description":
@@ -1439,7 +1453,8 @@ const messages = {
   searchForStep: "Search for a step",
   learnMoreSearchPatterns: "to search using specific patterns",
   nodeSteps: "Node Steps",
-  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter.",
+  nodeStepsDescription:
+    "Node steps execute once for each node targeted by the Job's node-filter.",
   workflowSteps: "Workflow Steps",
   workflowStepsDescription: "Workflow Steps execute once per Job execution.",
   commonNodeSteps: "Common Node Steps",
@@ -1449,6 +1464,23 @@ const messages = {
   hideIncompleteNodes: "Hide incomplete nodes",
   hideIncompleteNodesDescription:
     "Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.",
+  "markdown.help.link.label": "Markdown syntax help",
+  "job.tree.browse.group.label": "Browse job group: {0}",
+  "repository.plugin.sourceLink.label": "Plugin source code",
+  "repository.plugin.pageLink.label": "Plugin page",
+  "repository.plugin.docsLink.label": "Plugin documentation",
+  "storage.path.link.label": "Link to storage path",
+  "user.list.title": "Users",
+  "user.list.newProfile": "New Profile …",
+  "user.list.edit": "edit",
+  "user.list.toggleDetails": "Toggle details for user {0}",
+  "domain.User.email.label": "Email",
+  "domain.User.firstName.label": "First Name",
+  "domain.User.lastName.label": "Last Name",
+  "security.groups.label": "Groups",
+  "security.groups.description":
+    "The list of groups/roles names provided by the login system. (Cannot be modified via User Profile.)",
+  "not.set": "Not set",
 };
 
 export default messages;

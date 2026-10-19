@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
 
 import UiSocket from "../utils/UiSocket.vue";
 import { RundeckVersion } from "../../utilities/RundeckVersion";

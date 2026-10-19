@@ -8,11 +8,7 @@
 
 <script>
 import axios from "axios";
-import Trellis, {
-  getRundeckContext,
-  getSynchronizerToken,
-  RundeckBrowser,
-} from "../../../library";
+import { getRundeckContext } from "../../../library";
 
 export default {
   name: "CommunityNewsNotification",
@@ -56,7 +52,7 @@ export default {
       const appRundeckGatewayUrl =
         this.RundeckContext.appMeta.appRundeckGatewayUrl;
 
-      return new Promise(function (resolve, reject) {
+      return new Promise(function (resolve) {
         axios
           .get(appRundeckGatewayUrl + "/news/v1/blog/list", {
             params: {
@@ -87,6 +83,7 @@ export default {
   line-height: 1em;
 }
 </style>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- root/body-level selectors -->
 <style lang="scss">
 .sidebar-mini {
   #community-news-notification {

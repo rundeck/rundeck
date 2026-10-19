@@ -1,7 +1,6 @@
 import { createApp } from "vue";
 
 import { getRundeckContext } from "../../../library/rundeckService";
-import { getAppLinks } from "../../../library";
 
 import FirstRun from "../../../library/components/first-run/FirstRun.vue";
 

@@ -1,5 +1,9 @@
 <template>
-  <li v-if="item.inline" :id="item.id" class="utility-bar__item utility-bar__item--inline">
+  <li
+    v-if="item.inline"
+    :id="item.id"
+    class="utility-bar__item utility-bar__item--inline"
+  >
     <component :is="item.widget" />
   </li>
   <li v-else :id="item.id" class="utility-bar__item" @click="handleClick">
@@ -21,7 +25,7 @@ import { defineComponent, PropType } from "vue";
 
 import { UtilityWidgetItem } from "../../stores/UtilityBar";
 
-import Popper from "./Popper.vue";
+import Popper from "./RdPopper.vue";
 
 export default defineComponent({
   name: "UtilityWidgetItem",
@@ -61,7 +65,7 @@ export default defineComponent({
 .utility-bar__item--inline {
   padding: 0;
   cursor: default;
-  
+
   &:hover {
     background-color: transparent;
   }

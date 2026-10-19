@@ -34,7 +34,13 @@
     </div>
     <div v-if="error" id="remoteEditError" class="error note"></div>
     <div v-if="remoteUrl" id="remoteEditTarget">
-      <iframe :key="remoteUrl" width="640" height="480" :src="remoteUrl" />
+      <iframe
+        :key="remoteUrl"
+        width="640"
+        height="480"
+        :src="remoteUrl"
+        :title="`${$t('node.remoteEdit.edit')} ${nodename}`"
+      />
     </div>
   </div>
 </template>
@@ -94,8 +100,7 @@ export default defineComponent({
       this.remoteEditExpect = true;
       this.remoteSite = this.remoteUrl as string;
       this.remoteEditStarted = false;
-      //@ts-ignore
-      Event.observe(window, "message", this._rdeckNodeEditOnmessage);
+      (Event as any).observe(window, "message", this._rdeckNodeEditOnmessage);
     },
     remoteEditCompleted() {
       this.remoteEditClear();
@@ -110,8 +115,7 @@ export default defineComponent({
     remoteEditStop() {
       this.remoteEditExpect = false;
       this.remoteSite = null;
-      //@ts-ignore
-      Event.observe(window, "message", this._rdeckNodeEditOnmessage);
+      (Event as any).observe(window, "message", this._rdeckNodeEditOnmessage);
 
       this.$emit("remoteEditStop");
     },

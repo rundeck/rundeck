@@ -27,7 +27,7 @@ describe("NodeFilterLink Component", () => {
     };
   });
   afterAll(() => {
-    Reflect.deleteProperty(window, '_rundeck');
+    Reflect.deleteProperty(window, "_rundeck");
   });
   const mountNodeFilterLink = async (propsData = {}) => {
     const wrapper = mount(NodeFilterLink, {
@@ -38,7 +38,6 @@ describe("NodeFilterLink Component", () => {
         exclude: false,
         ...propsData,
       },
-
     });
     await wrapper.vm.$nextTick();
     return wrapper;
@@ -126,11 +125,7 @@ describe("NodeFilterLink Component", () => {
         "osFamily: unix",
         "osFamily: unix",
       ],
-      [
-        "does not modify the all-nodes wildcard",
-        ".*",
-        ".*",
-      ],
+      ["does not modify the all-nodes wildcard", ".*", ".*"],
       [
         "does not quote multi-attribute exclude filter",
         "name: node1 !tags: windows",

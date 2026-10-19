@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.api.tag.TagsForNodesResponse
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -299,7 +300,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     return
                 }
 
-                if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
+                //An ad hoc step is not an adhoc command: it has its own page, so it must not be
+                //offered back here as a rerunnable command. Null executionType reads as not-equal.
+                if (e && !e.scheduledExecution && e.executionType != ExecutionTypes.ADHOC_STEP &&
+                    e.workflow.commands.size() == 1) {
                     def cmd = e.workflow.commands[0]
                     String adhocRemoteString = null
                     if (cmd instanceof CommandExec) {
@@ -361,7 +365,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             def execWorkflowData = e?.getWorkflowData()
-            if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
+            //An ad hoc step is not an adhoc command: it has its own page, so it must not be
+            //offered back here as a rerunnable command. Null executionType reads as not-equal.
+            if (e && !e.scheduledExecution && e.executionType != ExecutionTypes.ADHOC_STEP &&
+                execWorkflowData?.commands?.size() == 1) {
                 def cmd = execWorkflowData.commands[0]
                 String adhocRemoteString = null
 
@@ -693,6 +700,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         result.remove('query')
         result.remove('params')
         def nodes=result.remove('allnodes')
+        if (result.nodeserror) {
+            // Reduce to plain message strings: some ResourceModelSource plugins wrap third-party SDK
+            // exceptions whose internal object graph can't be safely reflected over by the JSON/XML
+            // converters (e.g. AWS SDK's non-public DefaultSdkHttpFullResponse), which would otherwise
+            // throw IllegalAccessException and turn a node-source error into an HTTP 500 for this request.
+            result.nodeserror = result.nodeserror.collect { Throwable t -> t.message ?: t.toString() }
+        }
         def controller = this
         withFormat {
             '*' {

@@ -53,7 +53,9 @@
                                 data-crontabstring="false"
                                 href="#cronsimple"
                                 @click="showSimpleCron"
-                                >{{ $t("scheduledExecution.crontab.tab.simple") }}</a
+                                >{{
+                                  $t("scheduledExecution.crontab.tab.simple")
+                                }}</a
                               >
                             </li>
                             <li
@@ -66,7 +68,9 @@
                                 data-crontabstring="true"
                                 href="#cronstrtab"
                                 @click="showCronExpression"
-                                >{{ $t("scheduledExecution.crontab.tab.crontab") }}</a
+                                >{{
+                                  $t("scheduledExecution.crontab.tab.crontab")
+                                }}</a
                               >
                             </li>
                           </ul>
@@ -83,7 +87,9 @@
                                   for="hourNumber"
                                   aria-hidden="false"
                                   style="display: none"
-                                  >{{ $t("scheduledExecution.crontab.field.hour") }}</label
+                                  >{{
+                                    $t("scheduledExecution.crontab.field.hour")
+                                  }}</label
                                 >
                                 <select
                                   id="hourNumber"
@@ -105,7 +111,11 @@
                                   for="minuteNumber"
                                   aria-hidden="false"
                                   style="display: none"
-                                  >{{ $t("scheduledExecution.crontab.field.minute") }}</label
+                                  >{{
+                                    $t(
+                                      "scheduledExecution.crontab.field.minute",
+                                    )
+                                  }}</label
                                 >
                                 <select
                                   id="minuteNumber"
@@ -141,6 +151,7 @@
                                   <template v-if="!modelData.everyDayOfWeek">
                                     <div
                                       v-for="(day, n) in days"
+                                      :key="day.shortName"
                                       class="_defaultInput checkbox"
                                     >
                                       <input
@@ -179,6 +190,7 @@
                                   <template v-if="!modelData.allMonths">
                                     <div
                                       v-for="(month, n) in months"
+                                      :key="month.shortName"
                                       class="_defaultInput checkbox"
                                     >
                                       <input
@@ -210,6 +222,7 @@
                                 <div class="row">
                                   <div class="col-sm-6">
                                     <div class="form-group">
+                                      <!-- eslint-disable vuejs-accessibility/no-autofocus -- intentional initial focus on the crontab expression input -->
                                       <input
                                         ref="crontabInput"
                                         v-model="modelData.crontabString"
@@ -223,6 +236,7 @@
                                         @change="validateCronExpression"
                                         @blur="crontabBlur"
                                       />
+                                      <!-- eslint-enable vuejs-accessibility/no-autofocus -->
                                       <input
                                         v-model="modelData.useCrontabString"
                                         type="hidden"
@@ -244,34 +258,48 @@
                                   <div class="text-strong col-sm-12">
                                     <div>
                                       <p>
-                                        {{ $t("scheduledExecution.crontab.help.ranges") }}
+                                        {{
+                                          $t(
+                                            "scheduledExecution.crontab.help.ranges",
+                                          )
+                                        }}
                                         <code>1-3</code>.
-                                        {{ $t("scheduledExecution.crontab.help.lists") }}
+                                        {{
+                                          $t(
+                                            "scheduledExecution.crontab.help.lists",
+                                          )
+                                        }}
                                         <code>1,4,6</code>.
-                                        {{ $t("scheduledExecution.crontab.help.increments") }}
+                                        {{
+                                          $t(
+                                            "scheduledExecution.crontab.help.increments",
+                                          )
+                                        }}
                                         <code>0/15</code>
                                         {{
                                           $t(
-                                            "scheduledExecution.crontab.help.increments.description"
+                                            "scheduledExecution.crontab.help.increments.description",
                                           )
                                         }}
                                       </p>
                                       <p>
                                         {{
                                           $t(
-                                            "scheduledExecution.crontab.help.validDayOfWeek"
+                                            "scheduledExecution.crontab.help.validDayOfWeek",
                                           )
                                         }}
                                       </p>
                                       <p>
                                         {{
                                           $t(
-                                            "scheduledExecution.crontab.help.validMonth"
+                                            "scheduledExecution.crontab.help.validMonth",
                                           )
                                         }}
                                       </p>
                                     </div>
-                                    {{ $t("scheduledExecution.crontab.help.see") }}
+                                    {{
+                                      $t("scheduledExecution.crontab.help.see")
+                                    }}
                                     <a
                                       :href="
                                         $t('documentation.reference.cron.url')
@@ -280,7 +308,11 @@
                                       target="_blank"
                                       >Cron reference</a
                                     >
-                                    {{ $t("scheduledExecution.crontab.help.formatting") }}
+                                    {{
+                                      $t(
+                                        "scheduledExecution.crontab.help.formatting",
+                                      )
+                                    }}
                                   </div>
                                 </div>
                               </div>
@@ -301,6 +333,7 @@
             {{ $t("scheduledExecution.property.timezone.prompt") }}
           </div>
           <div class="col-sm-5">
+            <!-- eslint-disable vuejs-accessibility/no-autofocus -- intentional initial focus on the time zone input -->
             <input
               id="timeZone"
               v-model="modelData.timeZone"
@@ -310,6 +343,7 @@
               class="form-control input-sm"
               size="50"
             />
+            <!-- eslint-enable vuejs-accessibility/no-autofocus -->
             <typeahead
               v-model="modelData.timeZone"
               target="#timeZone"
@@ -592,14 +626,12 @@ function getCrontabSection(pos: number, text: string): number {
  */
 function getCaretPos() {
   const el = document.getElementsByName("crontabString")[0] as HTMLInputElement;
-  let rng,
-    ii = -1;
+  let rng;
+  const ii = -1;
   if (typeof el.selectionStart == "number") {
     return el.selectionStart;
-    //@ts-ignore
-  } else if (document.selection && el.createTextRange) {
-    //@ts-ignore
-    rng = document.selection.createRange();
+  } else if ((document as any).selection && (el as any).createTextRange) {
+    rng = (document as any).selection.createRange();
     rng.collapse(true);
     rng.moveStart("character", -el.value.length);
     return rng.text.length;

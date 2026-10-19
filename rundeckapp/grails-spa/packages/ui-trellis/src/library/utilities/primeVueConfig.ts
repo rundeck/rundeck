@@ -1,7 +1,7 @@
-import PrimeVue from 'primevue/config';
-import Tooltip from 'primevue/tooltip';
-import Lara from '@primeuix/themes/lara';
-import type { App } from 'vue';
+import PrimeVue from "primevue/config";
+import Tooltip from "primevue/tooltip";
+import Lara from "@primeuix/themes/lara";
+import type { App } from "vue";
 
 export interface PrimeVueConfigOptions {
   includeTooltip?: boolean;
@@ -13,22 +13,21 @@ export interface PrimeVueConfigOptions {
  */
 export function configurePrimeVue(
   app: App,
-  options: PrimeVueConfigOptions = {}
+  options: PrimeVueConfigOptions = {},
 ): void {
-
   app.use(PrimeVue, {
     theme: {
       preset: Lara,
       options: {
-        prefix: 'p',
+        prefix: "p",
         cssLayer: true,
-        darkModeSelector: '.dark',
+        darkModeSelector: ".dark",
       },
     },
   });
 
   if (options.includeTooltip) {
-    app.directive('tooltip', Tooltip);
+    app.directive("tooltip", Tooltip);
   }
 }
 

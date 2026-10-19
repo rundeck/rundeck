@@ -47,7 +47,7 @@ export default defineComponent({
     };
   },
   watch: {
-    supportType: function (newVal, oldVal) {
+    supportType: function (newVal) {
       this.setSupportTypeFilter(newVal);
     },
   },

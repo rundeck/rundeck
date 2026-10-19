@@ -50,8 +50,7 @@ export default defineComponent({
         return this.message || "confirm";
       }
       if (typeof orighandler === "function") {
-        //@ts-ignore
-        return orighandler(ev);
+        return (orighandler as (ev: BeforeUnloadEvent) => unknown)(ev);
       }
     };
   },

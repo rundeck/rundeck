@@ -1,11 +1,6 @@
-import * as Util from "util";
-
 import * as Joint from "jointjs";
 
-import {
-  WorkflowGraph,
-  layoutGraph,
-} from "../Graph";
+import { WorkflowGraph, layoutGraph } from "../Graph";
 import {
   RuleBuilder,
   RuleSet,
@@ -36,15 +31,15 @@ describe("Graph", () => {
     });
   });
   it("apply rules without labels", () => {
-    let graph = new WorkflowGraph(new Map([]));
+    const graph = new WorkflowGraph(new Map([]));
     graph.setNodes(
       new Map([
         ["0", { identifier: "0", height: 20, width: 20 }],
         ["1", { identifier: "1", height: 20, width: 20 }],
       ]),
     );
-    let rules = "[a] run-at-start\n[b] run-after:a\n";
-    let ruleSet = RuleSetParser.ParseRules(rules);
+    const rules = "[a] run-at-start\n[b] run-after:a\n";
+    const ruleSet = RuleSetParser.ParseRules(rules);
     //expect error
     try {
       graph.applyRules(ruleSet);
@@ -53,19 +48,19 @@ describe("Graph", () => {
     }
   });
   it("generate rules from graphlib empty", () => {
-    let graph = new WorkflowGraph(new Map([]));
+    const graph = new WorkflowGraph(new Map([]));
     graph.setNodes(
       new Map([
         ["0", { identifier: "0", label: "a", height: 20, width: 20 }],
         ["1", { identifier: "1", label: "b", height: 20, width: 20 }],
       ]),
     );
-    let rules = "";
-    let ruleSet = RuleSetParser.ParseRules(rules);
+    const rules = "";
+    const ruleSet = RuleSetParser.ParseRules(rules);
     graph.applyRules(ruleSet);
 
-    let result = graph.generateRulesFromGraphlib();
-    let rulestring =
+    const result = graph.generateRulesFromGraphlib();
+    const rulestring =
       result
         .withDirectives()
         .map((r) => r.toString())
@@ -78,7 +73,7 @@ describe("Graph", () => {
     expect(rulestring).toEqual("[0] run-at-start\n[1] run-after:0\n");
   });
   it("generate rules from graphlib loses labels", () => {
-    let graph = new WorkflowGraph(new Map([]));
+    const graph = new WorkflowGraph(new Map([]));
     graph.setNodes(
       new Map([
         ["0", { identifier: "0", label: "a", height: 20, width: 20 }],
@@ -86,13 +81,14 @@ describe("Graph", () => {
         ["2", { identifier: "2", label: "c", height: 20, width: 20 }],
       ]),
     );
-    let rules = "[a] run-at-start\n[b] run-after:a\n[c] run-after:a\n";
-    let unlabeledrules = "[0] run-at-start\n[1] run-after:0\n[2] run-after:0\n";
-    let ruleSet = RuleSetParser.ParseRules(rules);
+    const rules = "[a] run-at-start\n[b] run-after:a\n[c] run-after:a\n";
+    const unlabeledrules =
+      "[0] run-at-start\n[1] run-after:0\n[2] run-after:0\n";
+    const ruleSet = RuleSetParser.ParseRules(rules);
     graph.applyRules(ruleSet);
 
-    let result = graph.generateRulesFromGraphlib();
-    let rulestring =
+    const result = graph.generateRulesFromGraphlib();
+    const rulestring =
       result
         .withDirectives()
         .map((r) => r.toString())
@@ -105,7 +101,7 @@ describe("Graph", () => {
     expect(rulestring).toEqual(unlabeledrules);
   });
   it("generate rules from graphlib keeps conditions", () => {
-    let graph = new WorkflowGraph(new Map([]));
+    const graph = new WorkflowGraph(new Map([]));
     graph.setNodes(
       new Map([
         ["0", { identifier: "0", label: "a", height: 20, width: 20 }],
@@ -113,14 +109,14 @@ describe("Graph", () => {
         ["2", { identifier: "2", label: "c", height: 20, width: 20 }],
       ]),
     );
-    let rules = "[a] run-at-start\n[b] if:option.x=y\n[c] if:option.z=p\n";
-    let expectedrules =
+    const rules = "[a] run-at-start\n[b] if:option.x=y\n[c] if:option.z=p\n";
+    const expectedrules =
       "[0] run-at-start\n[1] run-after:0\n[2] run-after:1\n[b] if:option.x=y\n[c] if:option.z=p";
-    let ruleSet = RuleSetParser.ParseRules(rules);
+    const ruleSet = RuleSetParser.ParseRules(rules);
     graph.applyRules(ruleSet);
 
-    let result = graph.generateRulesFromGraphlib();
-    let rulestring =
+    const result = graph.generateRulesFromGraphlib();
+    const rulestring =
       result
         .withDirectives()
         .map((r) => r.toString())

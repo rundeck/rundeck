@@ -9,7 +9,8 @@
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
       <div
         v-if="
-          (!option.secure || option.valueExposed) && !(option.type === 'multiline' && features.multilineJobOptions)
+          (!option.secure || option.valueExposed) &&
+          !(option.type === 'multiline' && features.multilineJobOptions)
         "
         class="col-sm-10 form-control-static"
       >
@@ -123,11 +124,9 @@
 <script lang="ts">
 import { JobOption } from "../../../../library/types/jobs/JobEdit";
 import { defineComponent, PropType } from "vue";
-import { VMarkdownView } from "vue3-markdown";
 
 const BashVarPrefix = "RD_";
 export default defineComponent({
-  components: { VMarkdownView },
   props: {
     option: {
       type: Object as PropType<JobOption>,

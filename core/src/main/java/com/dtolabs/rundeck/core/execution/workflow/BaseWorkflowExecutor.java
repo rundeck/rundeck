@@ -317,6 +317,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      *
      * @deprecated should invoke engine workflow executor
      */
+    @Deprecated
     protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
             final StepExecutionContext executionContext,
             final Map<Integer, StepExecutionResult> failedMap,
@@ -384,9 +385,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         HashMap<String, String>
                 resultData = new HashMap<>();
         if (null != stepResult.getFailureData()) {
-            //convert values to string
+            //convert values to string, skipping null values that plugins may put in StepException failure data
             for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
-                resultData.put(entry.getKey(), entry.getValue().toString());
+                if (null != entry.getValue()) {
+                    resultData.put(entry.getKey(), entry.getValue().toString());
+                }
             }
         }
         FailureReason reason = stepResult.getFailureReason();
@@ -714,6 +717,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
 
                     ExecutionContextImpl.Builder wfHandlerContext = new ExecutionContextImpl.Builder(executionContext);
+                    //mark this context branch as an error handler execution, so components that
+                    //cannot otherwise distinguish a handler's context from its parent step's context
+                    //(e.g. runner/agent selection) can resolve their own, handler-specific configuration
+                    wfHandlerContext.addComponent(
+                            "WorkflowItemErrorHandlerContext",
+                            WorkflowItemErrorHandlerContext.INSTANCE,
+                            WorkflowItemErrorHandlerContext.class
+                    );
                     replaceFailedNodesListenerInContext(
                             wfHandlerContext,
                             handlerCaptureFailedNodesListener,

@@ -41,10 +41,12 @@ $link-hover-decoration: underline !default;
 //
 //## Font, line-height, and color for body text, headings, and more.
 
-$font-family-sans-serif: "Helvetica Neue", Helvetica, Arial, sans-serif !default;
+$font-family-sans-serif:
+  "Helvetica Neue", Helvetica, Arial, sans-serif !default;
 $font-family-serif: Georgia, "Times New Roman", Times, serif !default;
 //** Default monospace fonts for `<code>`, `<kbd>`, and `<pre>`.
-$font-family-monospace: Menlo, Monaco, Consolas, "Courier New", monospace !default;
+$font-family-monospace:
+  Menlo, Monaco, Consolas, "Courier New", monospace !default;
 $font-family-base: $font-family-sans-serif !default;
 
 //== Components
@@ -1113,6 +1115,12 @@ Theme colors
   --link-primary-color: var(--link-color);
   --link-secondary-color: var(--grey-700);
   --link-disabled-color: var(--grey-500);
+}
+
+// RUN-4965: the error input background has no dark variant, so `.has-error`
+// inputs (see _inputs.scss) keep rendering their light pink.
+*[data-color-theme="dark"] {
+  --danger-input-bg: var(--red-900);
 }
 
 // General Colors

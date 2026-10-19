@@ -58,7 +58,7 @@
     <!-- name (all)-->
     <div
       class="form-group"
-      data-test="option.name"
+      data-test="option-name"
       :class="{
         'has-error': validationErrors['name'],
         'has-warning': validationWarnings['name'],
@@ -97,7 +97,7 @@
     <!-- label (all)-->
     <div
       class="form-group"
-      data-test="option.label"
+      data-test="option-label"
       :class="{ 'has-error': hasError('label') }"
     >
       <label for="opt_label" class="col-sm-2 control-label">
@@ -126,7 +126,7 @@
     <!-- description (all) -->
     <div
       class="form-group"
-      data-test="option.description"
+      data-test="option-description"
       :class="{ 'has-error': hasError('description') }"
     >
       <label class="col-sm-2 control-label" for="optdesc_">{{
@@ -150,6 +150,7 @@
             href="http://en.wikipedia.org/wiki/Markdown"
             target="_blank"
             class="text-info"
+            :aria-label="$t('markdown.help.link.label')"
           >
             <i class="glyphicon glyphicon-question-sign"></i>
           </a>
@@ -163,7 +164,7 @@
       <div
         v-if="showDefaultValue"
         class="form-group"
-        data-test="option.value"
+        data-test="option-value"
         :class="{ 'has-error': hasError('value') }"
       >
         <label class="col-sm-2 control-label" for="opt_defaultValue">{{
@@ -201,7 +202,7 @@
       <div
         v-if="shouldShowDefaultStorage"
         class="opt_sec_enabled form-group"
-        data-test="option.storagePath"
+        data-test="option-storagePath"
         :class="{ 'has-error': hasError('storagePath') }"
       >
         <label class="col-sm-2 control-label">
@@ -243,7 +244,7 @@
       </div>
 
       <!-- input type -->
-      <div v-if="showInputType" class="form-group" data-test="option.inputType">
+      <div v-if="showInputType" class="form-group" data-test="option-inputType">
         <label class="col-sm-2 control-label">{{
           $t("form.option.inputType.label")
         }}</label>
@@ -339,7 +340,7 @@
       <div
         v-if="showAllowedValues"
         class="form-group"
-        data-test="option.valuesType"
+        data-test="option-valuesType"
       >
         <label class="col-sm-2 control-label">{{
           $t("form.option.values.label")
@@ -379,7 +380,10 @@
               </label>
             </div>
             <template v-if="features['optionValuesPlugin']">
-              <template v-for="optionValPlugin in optionValuesPlugins">
+              <template
+                v-for="optionValPlugin in optionValuesPlugins"
+                :key="optionValPlugin.name"
+              >
                 <div class="radio">
                   <input
                     :id="'optvalplugin_' + optionValPlugin.name"
@@ -396,6 +400,7 @@
                     <img
                       v-if="optionValPlugin.iconUrl"
                       :src="optionValPlugin.iconUrl"
+                      alt=""
                       style="width: 16px; height: 16px; margin-right: 5px"
                     />
                     {{ optionValPlugin.title || optionValPlugin.name }}
@@ -409,7 +414,7 @@
           <div
             v-if="option.valuesType === 'list'"
             id="vlist_section"
-            data-test="option.values"
+            data-test="option-values"
             :class="{ 'has-error': hasError('values') }"
           >
             <input
@@ -453,7 +458,7 @@
       <div
         v-if="showAllowedValues"
         class="form-group"
-        data-test="option.sortValues"
+        data-test="option-sortValues"
       >
         <label class="col-sm-2 control-label">{{
           $t("form.option.sort.label")
@@ -489,7 +494,7 @@
 
         <div
           class="input-group col-sm-3"
-          data-test="option.valuesListDelimiter"
+          data-test="option-valuesListDelimiter"
           :class="{ 'has-error': hasError('valuesListDelimiter') }"
         >
           <div class="input-group-addon" style="background-color: #e0e0e0">
@@ -517,7 +522,7 @@
       <div
         v-if="!isSecureInput"
         class="form-group opt_keystorage_disabled"
-        data-test="option.regex"
+        data-test="option-regex"
         :class="{ 'has-error': hasError('regex') }"
       >
         <label class="col-sm-2 control-label">{{
@@ -601,7 +606,7 @@
     <!-- required (all) -->
     <div
       class="form-group"
-      data-test="option.required"
+      data-test="option-required"
       :class="{ 'has-error': hasError('required') }"
     >
       <label class="col-sm-2 control-label">{{
@@ -645,7 +650,7 @@
     <div
       v-if="option.type !== 'file'"
       class="form-group"
-      data-test="option.hidden"
+      data-test="option-hidden"
       :class="{ 'has-error': hasError('hidden') }"
     >
       <label class="col-sm-2 control-label">{{
@@ -690,7 +695,7 @@
     <div
       v-if="!isFileType && !isMultilineType"
       class="form-group"
-      data-test="option.delimiter"
+      data-test="option-delimiter"
       :class="{ 'has-error': hasError('multivalued') || hasError('delimiter') }"
     >
       <label class="col-sm-2 control-label">
@@ -840,7 +845,11 @@ import PluginConfig from "../../../../library/components/plugins/pluginConfig.vu
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
-import { Validations, ValidationConfig, type ValidationSet } from "./model/Validations";
+import {
+  Validations,
+  ValidationConfig,
+  type ValidationSet,
+} from "./model/Validations";
 import {
   JobOption,
   JobOptionEdit,
@@ -1074,7 +1083,9 @@ export default defineComponent({
       delete this.validationErrors[field];
     },
     getProviderFor(name: string) {
-      return (this.optionValuesPlugins as Plugin[]).find((p: Plugin) => p.name === name);
+      return (this.optionValuesPlugins as Plugin[]).find(
+        (p: Plugin) => p.name === name,
+      );
     },
     validateLen(field: string, max: number): boolean {
       return !(this.option[field] && this.option[field].length > max);
@@ -1086,7 +1097,10 @@ export default defineComponent({
     validateFieldName(field: string): boolean {
       if (field in Validations) {
         this.clearValidation(field);
-        return this.validateField(field, Validations[field as keyof ValidationSet]);
+        return this.validateField(
+          field,
+          Validations[field as keyof ValidationSet],
+        );
       }
       return true;
     },

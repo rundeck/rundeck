@@ -1,13 +1,21 @@
 import { ContextVariable } from "../../stores/contextVariables";
 import { useJobStore } from "../../stores/JobsStore";
 
-export type WorkflowStepType = "WorkflowNodeStep" | "WorkflowStep" | "Notification";
-const workflowStepTypes = ["WorkflowNodeStep", "WorkflowStep", "Notification"] as const;
+export type WorkflowStepType =
+  "WorkflowNodeStep" | "WorkflowStep" | "Notification";
+const workflowStepTypes = [
+  "WorkflowNodeStep",
+  "WorkflowStep",
+  "Notification",
+] as const;
 
 type DelimiterType = "$" | "@";
 type FieldType = "input" | "script";
 
-const stepTypeContextVarMap: Record<WorkflowStepType, ContextVariable["type"][]> = {
+const stepTypeContextVarMap: Record<
+  WorkflowStepType,
+  ContextVariable["type"][]
+> = {
   WorkflowNodeStep: ["job", "node"],
   WorkflowStep: ["job"],
   Notification: ["job", "execution"],
@@ -45,7 +53,9 @@ export const transformVariables = (
   return formatVars(variables, include_at_symbol_vars, include_env_vars);
 };
 
-const getVariablesByTypes = (types: ContextVariable["type"][]): Array<ContextVariable> => {
+const getVariablesByTypes = (
+  types: ContextVariable["type"][],
+): Array<ContextVariable> => {
   const contextVariables =
     (useJobStore().contextVariables as Record<string, ContextVariable[]>) || [];
   return [...types].flatMap((type) => contextVariables[type]);
@@ -80,12 +90,18 @@ const formatAsEnvVars: VariableFormatter = (variables, delimiter = "$") => {
   }));
 };
 
-const formatWithDelimiters: VariableFormatter = (variables, delimiter = "$") => {
+const formatWithDelimiters: VariableFormatter = (
+  variables,
+  delimiter = "$",
+) => {
   return variables.flatMap(({ name, type, ...rest }) => {
-    const baseName = delimiter === "$" ? `\${${type}.${name}}` : `@${type}.${name}@`;
+    const baseName =
+      delimiter === "$" ? `\${${type}.${name}}` : `@${type}.${name}@`;
 
     const unquotedName =
-      delimiter === "$" ? `\${unquoted${type}.${name}}` : `@unquoted${type}.${name}@`;
+      delimiter === "$"
+        ? `\${unquoted${type}.${name}}`
+        : `@unquoted${type}.${name}@`;
 
     return [
       { name: baseName, type, ...rest },

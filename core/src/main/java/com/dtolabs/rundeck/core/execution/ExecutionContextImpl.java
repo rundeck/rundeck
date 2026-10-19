@@ -665,6 +665,19 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.componentList.addAll(components);
             return this;
         }
+
+        /**
+         * Remove any registered components assignable to the given type. Components otherwise
+         * propagate to every descendant context built from this one (e.g. via the copy
+         * constructor), so this is used to scope a component to a single execution boundary
+         * instead of letting it leak into unrelated descendant executions.
+         * @param type component type to remove
+         * @return this builder
+         */
+        public Builder removeComponentsOfType(Class<?> type) {
+            ctx.componentList.removeIf(component -> type.isAssignableFrom(component.getType()));
+            return this;
+        }
         
         public Builder execution(ExecutionReference execution) {
             ctx.execution = execution;

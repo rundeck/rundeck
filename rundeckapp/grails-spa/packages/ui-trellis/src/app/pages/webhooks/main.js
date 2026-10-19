@@ -7,6 +7,7 @@ import App from "./App.vue";
 import { getRundeckContext } from "../../../library";
 import AceEditor from "../../../library/components/utils/AceEditor.vue";
 import { initI18n } from "../../utilities/i18n";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const rootStore = getRundeckContext().rootStore;
 
@@ -26,4 +27,6 @@ app.use(VueCookies);
 app.use(VueScrollTo);
 app.use(uiv);
 app.use(i18n);
+// Plugin config forms rendered here use PrimeVue inputs for numeric properties
+configurePrimeVue(app);
 app.mount("#webhook-vue");

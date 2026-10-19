@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -215,6 +216,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final String status
         final String user
         final String execType
+        /** Normalized to a String to keep the all-Strings/Boolean invariant above. */
+        final String execTypeExclude
         final Boolean adhoc
         final String recentFilter
         final String olderFilter
@@ -225,6 +228,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             this.status = args.status
             this.user = args.user
             this.execType = args.execType
+            this.execTypeExclude = args.execTypeExclude
             this.adhoc = args.adhoc
             this.recentFilter = args.recentFilter
             this.olderFilter = args.olderFilter
@@ -248,6 +252,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 status: query.statusFilter,
                 user: query.userFilter,
                 execType: query.executionTypeFilter,
+                execTypeExclude: query.excludeExecutionTypeFilter?.sort()?.join(','),
                 adhoc: query.adhoc,
                 recentFilter: query.recentFilter,
                 olderFilter: query.olderFilter,
@@ -627,6 +632,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
+                //Execution types to leave out, NULL-safe for rows predating the column
+                if (query.excludeExecutionTypeFilter) {
+                    or {
+                        isNull('executionType')
+                        not { inList('executionType', query.excludeExecutionTypeFilter) }
+                    }
+                }
+
                 //running status filter.
                 if (query.runningFilter) {
                     Date now = new Date()
@@ -734,6 +747,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                  }
                              }
                          }
+                     }
+                 }
+
+                 //Execution types to leave out, NULL-safe for rows predating the column
+                 if (query.excludeExecutionTypeFilter) {
+                     or {
+                         isNull('executionType')
+                         not { inList('executionType', query.excludeExecutionTypeFilter) }
                      }
                  }
 
@@ -1181,16 +1202,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
     /**
      * Absolute server base URL exposed as the {@code job.serverUrl} context variable.
-     * The link generator resolves the root URL mapping, which always yields a trailing slash;
-     * it is stripped so the value can be safely concatenated with an absolute path such as
-     * {@code ${job.serverUrl}/api/50/projects} without producing a double slash, which Jetty 12 rejects.
+     * The link generator resolves the root URL mapping, so the value ends with a trailing slash
+     * (e.g. {@code http://host:4440/}). Concatenating it with an absolute path produces a double slash,
+     * which the server tolerates (see {@code EmptySegmentCompactingCustomizer}).
      *
      * @param grailsLinkGenerator link generator used to build the absolute URL
-     * @return server base URL without trailing slashes, or null if no link could be generated
+     * @return server base URL, or null if no link could be generated
      */
     @CompileStatic
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {
-        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)?.replaceAll('/+$', '')
+        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
 
     @CompileStatic
@@ -1407,6 +1428,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
             def wfStepMetricsListener = new WorkflowExecutionListenerStepMetrics(new WorkflowMetricsWriterImpl(metricService))
+            def stepNodeUsageListener = new StepNodeUsageWorkflowListener(execution.id)
             def listenersList = [
                     contextmanager,
                     executionListener, //manages context for logging
@@ -1415,6 +1437,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
                     wfStepMetricsListener, //collects step metrics
+                    stepNodeUsageListener, //accumulates per-step-node elapsed time and dispatch count
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
@@ -1968,6 +1991,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //start a sub context
             builder.pushContextStep(1)
         }
+        //this context is about to become a referenced job's own top-level execution context.
+        //Any WorkflowItemErrorHandlerContext marker on origContext only describes how THIS job
+        //was invoked by its caller (e.g. as an error handler) - it must not leak into the
+        //referenced job's own internal steps, which are not error handlers of anything.
+        builder.removeComponentsOfType(WorkflowItemErrorHandlerContext)
         return builder.build()
     }
 
@@ -2388,7 +2416,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflowData:params.workflow,
                                       argString:params.argString,
-                                      executionType: params.executionType ?: 'scheduled',
+                                      executionType: params.executionType ?: ExecutionTypes.SCHEDULED,
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
@@ -2397,7 +2425,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
                                       excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
-                                      extraMetadataMap: params.extraMetadataMap?:null
+                                      extraMetadataMap: params.extraMetadataMap?:null,
+                                      note: params.note?:null
             )
 
             execution.userRoles = params.userRoles
@@ -2478,7 +2507,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def props =[:]
         props.putAll(params)
 
-        props.executionType = 'scheduled'
+        //Callers that build this map themselves (e.g. the Ad Hoc Step plugin) can type the
+        //execution. Callers passing a bound request params map must set it explicitly rather
+        //than rely on this default, so a request parameter can't choose the type.
+        props.executionType = params.executionType ?: ExecutionTypes.SCHEDULED
 
         Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
         execution.dateStarted = new Date()
@@ -2799,7 +2831,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId','note']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -3592,6 +3624,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // cleanupExecution), so recording here (rather than in
             // ExecutionUtilService.finishExecutionMetrics) captures all of them exactly once.
             micrometerExecutionMetricsService?.recordExecution(execution)
+            // Read once: StepNodeUsageStore.takeFinishedBreakdown is read-and-remove, so a
+            // second call below (e.g. when building the completion event) would see null.
+            Map<String, StepNodeUsageWorkflowListener.StepNodeUsageEntry> stepNodeUsageBreakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(execution.id)
+            // Sum nanoseconds across every step, then round once here -- rounding each step's
+            // own duration individually first would undercount many small steps that each
+            // round to zero but sum to a real total.
+            Long totalNanos = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nanos.sum() ?: 0L) as Long
+            Long stepNodeSeconds = totalNanos == null ? null : Math.round(totalNanos / 1_000_000_000.0) as Long
+            Long stepNodeCount = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nodeCount.sum() ?: 0L) as Long
+            micrometerExecutionMetricsService?.recordStepNodeSeconds(execution, stepNodeSeconds)
+            micrometerExecutionMetricsService?.recordStepNodeCount(execution, stepNodeCount)
 
             //summarize node success
             String node=null
@@ -3639,7 +3682,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: execution,
                     job: scheduledExecution,
                     nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
-                    context: context?.dataContext
+                    context: context?.dataContext,
+                    stepNodeUsageBreakdown: stepNodeUsageBreakdown
             )
 
             notify('executionComplete', completedEvent)

@@ -43,7 +43,8 @@ public enum Features implements FeaturesDefinition{
     EXECUTION_CLEANUP_ENABLE("defaultExecutionCleanup"),
     MULTILINE_JOB_OPTIONS("multilineJobOptions"),
     EARLY_ACCESS_JOB_CONDITIONAL("earlyAccessJobConditional"),
-    ACTIVITY_DEFAULT_TIME_FILTER("activityDefaultTimeFilter");
+    ACTIVITY_DEFAULT_TIME_FILTER("activityDefaultTimeFilter"),
+    AD_HOC_STEP("adHocStep");
 
     private final String propertyName;
 

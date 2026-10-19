@@ -61,6 +61,21 @@ class JettyServletContainerCustomizerSpec extends Specification {
         factory.session.cookie.secure == null
     }
 
+    def "applySecureSessionCookieDefault leaves cookie secure unset when serverUrl is https but this Jetty listener is behind a forwarded-headers proxy"() {
+        given:
+        JettyServletContainerCustomizer customizer = new JettyServletContainerCustomizer(
+                serverUrl: 'https://rundeck.example.com/rundeck',
+                useForwardHeaders: true
+        )
+        JettyServletWebServerFactory factory = new JettyServletWebServerFactory()
+
+        when:
+        customizer.applySecureSessionCookieDefault(factory)
+
+        then:
+        factory.session.cookie.secure == null
+    }
+
     @Unroll
     def "isHttpsUrl(#url) == #expected"() {
         expect:

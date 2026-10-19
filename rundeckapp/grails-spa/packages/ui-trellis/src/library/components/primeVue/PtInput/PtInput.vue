@@ -9,11 +9,40 @@
       {{ label }}
     </label>
 
-    <p v-if="helpText" class="text-body--sm pt-input__help" data-testid="pt-input-help">
+    <p
+      v-if="helpText"
+      class="text-body--sm pt-input__help"
+      data-testid="pt-input-help"
+    >
       {{ helpText }}
     </p>
 
-    <IconField v-if="leftIcon || rightIcon" class="pt-input__field" data-testid="pt-input-icon-container">
+    <Textarea
+      v-if="multiline"
+      :id="inputId"
+      v-model="internalValue"
+      data-testid="pt-input-textarea"
+      class="pt-input__field"
+      :rows="rows"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :invalid="invalid"
+      :name="name"
+      :readonly="readonly"
+      :maxlength="maxlength"
+      :autocomplete="autocomplete"
+      :aria-label="ariaLabel"
+      :aria-labelledby="ariaLabelledby"
+      @focus="onFocus"
+      @blur="onBlur"
+      @input="onInput"
+    />
+
+    <IconField
+      v-else-if="leftIcon || rightIcon"
+      class="pt-input__field"
+      data-testid="pt-input-icon-container"
+    >
       <InputIcon v-if="leftIcon" :class="leftIcon" />
       <InputText
         :id="inputId"
@@ -56,7 +85,11 @@
       @input="onInput"
     />
 
-    <p v-if="invalid && errorText" class="text-body--sm pt-input__error" data-testid="pt-input-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-input__error"
+      data-testid="pt-input-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -65,6 +98,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
 import InputText from "primevue/inputtext";
+import Textarea from "primevue/textarea";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 
@@ -72,6 +106,8 @@ export default defineComponent({
   name: "PtInput",
   components: {
     InputText,
+    // eslint-disable-next-line vue/no-reserved-component-names
+    Textarea,
     IconField,
     InputIcon,
   },
@@ -144,6 +180,14 @@ export default defineComponent({
       type: String as PropType<string>,
       default: "text",
     },
+    multiline: {
+      type: Boolean,
+      default: false,
+    },
+    rows: {
+      type: Number,
+      default: 3,
+    },
   },
   emits: ["update:modelValue", "focus", "blur", "input"],
   computed: {
@@ -170,6 +214,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
 @import "../_form-inputs.scss";
 
@@ -198,22 +243,22 @@ export default defineComponent({
   position: relative;
 
   .p-inputtext {
-    // When icons present, add padding for icon space (icon 14px + gap 10px + padding 10px = 34px)
-    padding-left: calc(14px + 10px + 10px);
-    padding-right: calc(14px + 10px + 10px);
+    // When icons present, add padding for icon space (icon 14px + gap 10.5px + padding 10.5px = 35px)
+    padding-left: calc(var(--sizes-6) + var(--sizes-4) + var(--sizes-4));
+    padding-right: calc(var(--sizes-6) + var(--sizes-4) + var(--sizes-4));
   }
 
   // When only left icon
   &:has(.p-inputicon:first-child):not(:has(.p-inputicon:last-child)) {
     .p-inputtext {
-      padding-right: 10px;
+      padding-right: var(--sizes-4);
     }
   }
 
   // When only right icon
   &:has(.p-inputicon:last-child):not(:has(.p-inputicon:first-child)) {
     .p-inputtext {
-      padding-left: 10px;
+      padding-left: var(--sizes-4);
     }
   }
 }
@@ -224,8 +269,8 @@ export default defineComponent({
   top: 50%;
   transform: translateY(-25%);
   color: var(--colors-gray-500);
-  width: 14px;
-  height: 14px;
+  width: var(--sizes-6);
+  height: var(--sizes-6);
   font-size: 14px;
   z-index: 1;
   display: flex;
@@ -234,18 +279,18 @@ export default defineComponent({
 
   // Left icon positioning
   &:first-child {
-    left: 10px;
+    left: var(--sizes-4);
   }
 
   // Right icon positioning
   &:last-child:not(:first-child) {
-    right: 10px;
+    right: var(--sizes-4);
     left: auto;
   }
 
   // Only one icon (right position)
   &:only-child {
-    right: 10px;
+    right: var(--sizes-4);
     left: auto;
   }
 }
@@ -255,11 +300,11 @@ export default defineComponent({
   color: var(--colors-gray-300-original);
 }
 
-// InputText styles
-.p-inputtext {
+.p-inputtext,
+.p-textarea {
   width: 100%;
   @include form-input-base;
-  padding: 10px;
+  padding: var(--sizes-4);
   font-family: Inter, var(--fonts-body2);
   font-size: 14px;
   font-weight: var(--fontWeights-regular);
@@ -290,6 +335,34 @@ export default defineComponent({
     background: var(--colors-gray-50);
     color: var(--colors-gray-500);
     cursor: not-allowed;
+  }
+}
+
+.p-textarea {
+  resize: none;
+}
+
+// Dark mode
+*[data-color-theme="dark"] {
+  .p-inputtext {
+    @include form-input-dark;
+
+    &.p-invalid {
+      @include form-input-dark-invalid;
+    }
+
+    &:disabled {
+      background: var(--grey-700);
+      color: var(--grey-300);
+    }
+  }
+
+  .p-inputicon {
+    color: var(--grey-300);
+  }
+
+  .pt-input__error {
+    color: #e55b5b;
   }
 }
 </style>

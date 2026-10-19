@@ -19,7 +19,12 @@
       :auto-option-focus="true"
       :disabled="readOnly"
       :show-empty-message="false"
+      :force-selection="selectOnly"
+      :option-label="isObjectMode ? optionLabel : undefined"
+      :option-disabled="isObjectMode ? optionDisabled : undefined"
+      :complete-on-focus="showOptionsOnFocus"
       @complete="onComplete"
+      @clear="onClear"
       @option-select="handleOptionSelect"
       @keydown.enter.prevent
       @change="onChange"
@@ -30,12 +35,16 @@
             v-for="(tab, index) in tabs"
             :key="index"
             type="button"
-            :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
+            :class="[
+              'autocomplete-tab',
+              { 'autocomplete-tab-active': selectedTabIndex === index },
+            ]"
             :disabled="tab.getCount(allSuggestions) === 0"
             @click="selectTab(index)"
           >
             <span class="autocomplete-tab-label">{{ tab.label }}</span>
             <Badge
+              v-if="showTabBadges"
               :value="tab.getCount(allSuggestions).toString()"
               :severity="selectedTabIndex === index ? undefined : 'secondary'"
               size="small"
@@ -43,16 +52,29 @@
           </button>
         </div>
       </template>
-      <template #option="slotProps">
+      <template v-if="$slots.option" #option="slotProps">
+        <slot name="option" v-bind="slotProps" />
+      </template>
+      <template v-else #option="slotProps">
         <div class="autocomplete-option-content">
-          <span v-if="getSuggestionTitle(slotProps.option)" class="autocomplete-option-title">
+          <span
+            v-if="getSuggestionTitle(slotProps.option)"
+            class="autocomplete-option-title"
+          >
             {{ getSuggestionTitle(slotProps.option) }}
           </span>
-          <span class="autocomplete-option-name" v-html="highlightQueryMatch(slotProps.option)"></span>
+          <span
+            class="autocomplete-option-name"
+            v-html="highlightQueryMatch(slotProps.option)"
+          ></span>
         </div>
       </template>
     </AutoComplete>
-    <p v-if="invalid && errorText" class="text-body--sm pt-autocomplete__error" data-testid="pt-autocomplete-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-autocomplete__error"
+      data-testid="pt-autocomplete-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -63,11 +85,20 @@ import { defineComponent, type PropType } from "vue";
 import AutoComplete, {
   AutoCompleteCompleteEvent,
   AutoCompleteChangeEvent,
+  AutoCompleteOptionSelectEvent,
 } from "primevue/autocomplete";
 import Badge from "primevue/badge";
 import "../Badge/badge.scss";
 import { ContextVariable } from "../../../stores/contextVariables";
 import type { TabConfig } from "./PtAutoCompleteTypes";
+
+// Resolves either the display label or the underlying committed value for a
+// suggestion, via one of ContextVariable's own fields (e.g. "name"/"title")
+// or a custom function. No new suggestion shape is introduced — every
+// suggestion is still a ContextVariable, just with configurable label/value
+// fields instead of the hard-coded name/title pair used by the legacy flow.
+type OptionResolver =
+  keyof ContextVariable | ((option: ContextVariable) => string);
 
 export default defineComponent({
   name: "PtAutoComplete",
@@ -89,9 +120,66 @@ export default defineComponent({
       type: String,
       default: "",
     },
+    // Which ContextVariable field (or custom function) supplies the display
+    // text. Only consulted when `optionValue` is set (see below); otherwise
+    // display always comes from `.title` via the built-in rendering, exactly
+    // as before.
     optionLabel: {
-      type: String,
-      default: "label",
+      type: [String, Function] as PropType<OptionResolver>,
+      default: "title",
+    },
+    // Which ContextVariable field (or custom function) supplies the
+    // underlying committed value. When unset, behavior is unchanged
+    // (selecting a suggestion commits its `.name`). When set, selecting a
+    // suggestion resolves the committed value through this instead — e.g. so
+    // an option can display a friendly label (via optionLabel) while
+    // committing a different underlying token (via optionValue).
+    optionValue: {
+      type: [String, Function] as PropType<OptionResolver | undefined>,
+      default: undefined,
+    },
+    // Object mode only, opt-in: keep showing the selected option's display
+    // label in the input after selection, while `update:modelValue` still
+    // emits the resolved optionValue. When false (default), the input shows
+    // the committed value, as before.
+    displaySelectedLabel: {
+      type: Boolean,
+      default: false,
+    },
+    // With displaySelectedLabel: label to show for a committed value that has
+    // no matching option (e.g. a stale reference). Return undefined to fall
+    // back to the raw value.
+    fallbackLabel: {
+      type: Function as PropType<
+        ((committed: string) => string | undefined) | undefined
+      >,
+      default: undefined,
+    },
+    optionDisabled: {
+      type: Function as PropType<
+        ((option: ContextVariable) => boolean) | undefined
+      >,
+      default: undefined,
+    },
+    // Closed-list enforcement: revert to the last valid value if the user's
+    // typed text doesn't match a current suggestion on blur/hide.
+    selectOnly: {
+      type: Boolean,
+      default: false,
+    },
+    // Reveals the full suggestion list on focus, without requiring the user
+    // to type first and without adding a visible dropdown button — keeps
+    // the field looking identical to a plain, type-to-search PtAutoComplete.
+    showOptionsOnFocus: {
+      type: Boolean,
+      default: false,
+    },
+    // Opt-in: when the user empties the input, show the full option list
+    // again instead of leaving the panel closed. Requires showOptionsOnFocus
+    // (the full list is only the "empty" state when that is set).
+    reopenOnClear: {
+      type: Boolean,
+      default: false,
     },
     invalid: {
       type: Boolean,
@@ -125,6 +213,12 @@ export default defineComponent({
       type: Array as PropType<TabConfig[]>,
       default: undefined,
     },
+    // Shows/hides the per-tab result-count Badge, independent of tabMode
+    // itself, for consumers that want the tab bar without the counts.
+    showTabBadges: {
+      type: Boolean,
+      default: true,
+    },
     replaceOnSelect: {
       type: Boolean,
       default: false,
@@ -138,6 +232,10 @@ export default defineComponent({
   data() {
     return {
       value: (this.modelValue || this.defaultValue) as string,
+      // value -> label for every option seen so far (displaySelectedLabel
+      // only). Kept across `suggestions` changes so a committed value still
+      // resolves to its label while its option is absent from the list.
+      labelByValue: {} as Record<string, string>,
       filteredSuggestions: [] as ContextVariable[],
       allSuggestions: [] as ContextVariable[],
       suggestion: null as string | null,
@@ -145,32 +243,65 @@ export default defineComponent({
       currentQuery: "",
       filterDebounceTimer: null as ReturnType<typeof setTimeout> | null,
       debounceTimer: null as ReturnType<typeof setTimeout> | null,
+      reopenTimer: null as ReturnType<typeof setTimeout> | null,
     };
+  },
+  computed: {
+    // True when callers want closed-list, object-shaped suggestions
+    // (display via optionLabel, commit via optionValue) rather than the
+    // legacy flat-string ContextVariable behavior.
+    isObjectMode(): boolean {
+      return this.optionValue !== undefined;
+    },
+    // True when the input text is the option label rather than the committed value.
+    showsLabel(): boolean {
+      return this.isObjectMode && this.displaySelectedLabel;
+    },
+    tabFilteredSuggestions(): (string | ContextVariable)[] | undefined {
+      const tabFiltered =
+        this.tabMode && this.tabs && this.tabs.length > 0
+          ? this.tabs[this.selectedTabIndex]
+          : undefined;
+
+      if (this.tabMode && this.tabs && this.tabs.length > 0 && !tabFiltered) {
+        return undefined;
+      }
+
+      const base = tabFiltered
+        ? this.filteredSuggestions.filter(tabFiltered.filter)
+        : this.filteredSuggestions;
+
+      // Object mode: pass the ContextVariable objects through as-is;
+      // PrimeVue displays them via `optionLabel` and the `#option` slot
+      // handles custom rendering. Legacy mode: flatten to `.name`, unchanged
+      // from prior behavior.
+      const suggestions: (string | ContextVariable)[] = this.isObjectMode
+        ? base
+        : base.map((suggestion) => suggestion.name);
+
+      // Return undefined instead of empty array to prevent dropdown from showing
+      return suggestions.length > 0 ? suggestions : undefined;
+    },
+  },
+  created() {
+    if (this.showsLabel) {
+      this.rememberLabels();
+      this.value = this.displayFor(this.value);
+    }
   },
   watch: {
     modelValue(newVal: string) {
-      this.value = newVal;
+      this.value = this.displayFor(newVal);
     },
-  },
-  computed: {
-    tabFilteredSuggestions(): string[] | undefined {
-      let suggestions: string[];
-      
-      if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
-        suggestions = this.filteredSuggestions.map((suggestion: ContextVariable) => suggestion.name);
-      } else {
-        const activeTab = this.tabs[this.selectedTabIndex];
-        if (!activeTab) {
-          return undefined;
-        }
-
-        suggestions = this.filteredSuggestions
-          .filter(activeTab.filter)
-          .map((suggestion: ContextVariable) => suggestion.name);
-      }
-      
-      // Return undefined instead of empty array to prevent dropdown from showing
-      return suggestions.length > 0 ? suggestions : undefined;
+    // filterSuggestions() only runs off PrimeVue's own @complete event
+    // (typing/focus), so once the panel is already open, replacing the
+    // `suggestions` prop (e.g. a consumer toggling an accordion group inside
+    // the list) never reached the rendered list on its own. Re-apply the
+    // same filter against the already-known query whenever the source data
+    // changes underneath it.
+    suggestions() {
+      this.rememberLabels();
+      this.applySuggestionFilter(this.currentQuery);
     },
   },
   beforeUnmount() {
@@ -181,19 +312,46 @@ export default defineComponent({
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
+    if (this.reopenTimer) {
+      clearTimeout(this.reopenTimer);
+    }
   },
   methods: {
     onComplete(event: AutoCompleteCompleteEvent): void {
       this.$emit("onComplete", event);
       this.debouncedFilterSuggestions(event);
     },
-    
+
+    // PrimeVue hides the panel (and emits `clear`, not `complete`) when the
+    // input is emptied. When reopenOnClear is set, show the full list again
+    // instead of leaving the panel closed.
+    onClear(): void {
+      if (!this.reopenOnClear || !this.showOptionsOnFocus) {
+        return;
+      }
+      if (this.reopenTimer) {
+        clearTimeout(this.reopenTimer);
+      }
+      // AutoComplete hides via setTimeout(0); re-show once that has run.
+      this.reopenTimer = setTimeout(() => {
+        this.reopenTimer = null;
+        const auto = this.$refs.autoInput as
+          | { show?: () => void; $refs?: { focusInput?: { $el?: Element } } }
+          | undefined;
+        if (document.activeElement !== auto?.$refs?.focusInput?.$el) {
+          return;
+        }
+        this.applySuggestionFilter("");
+        auto?.show?.();
+      }, 0);
+    },
+
     debouncedFilterSuggestions(event: AutoCompleteCompleteEvent): void {
       // Clear any existing timer
       if (this.filterDebounceTimer) {
         clearTimeout(this.filterDebounceTimer);
       }
-      
+
       // Set a new timer to filter after a short delay
       this.filterDebounceTimer = setTimeout(() => {
         this.filterSuggestions(event);
@@ -205,32 +363,87 @@ export default defineComponent({
       this.updateValue();
     },
 
+    // Records each suggestion's value -> display label (displaySelectedLabel only).
+    rememberLabels(): void {
+      if (!this.showsLabel) {
+        return;
+      }
+      for (const option of this.suggestions) {
+        const optionValue = this.resolveOptionValue(option);
+        const label = this.resolveOptionLabel(option);
+        if (optionValue && label) {
+          this.labelByValue[optionValue] = label;
+        }
+      }
+    },
+
+    // Input text for a committed value: its option label when known,
+    // otherwise the value itself (also the behavior when the mode is off).
+    displayFor(committed: string): string {
+      if (!this.showsLabel) {
+        return committed;
+      }
+      if (this.labelByValue[committed] === undefined && this.fallbackLabel) {
+        const fallback = this.fallbackLabel(committed);
+        if (fallback) {
+          // Remembered so the shown label maps back to this value in committedFor.
+          this.labelByValue[committed] = fallback;
+        }
+      }
+      return this.labelByValue[committed] ?? committed;
+    },
+
+    // Value to emit for the current input text: the committed value of the
+    // option whose label is shown, or the raw text if none matches.
+    committedFor(display: string): string {
+      if (!this.showsLabel) {
+        return display;
+      }
+      const match = Object.keys(this.labelByValue).find(
+        (key) => this.labelByValue[key] === display,
+      );
+      return match ?? display;
+    },
+
     updateValue(): void {
+      const committed = this.committedFor(this.value);
       if (this.debounceMs > 0) {
         // Debounce the update
         if (this.debounceTimer) {
           clearTimeout(this.debounceTimer);
         }
         this.debounceTimer = setTimeout(() => {
-          this.$emit("update:modelValue", this.value);
+          this.$emit("update:modelValue", committed);
           this.debounceTimer = null;
         }, this.debounceMs);
       } else {
         // Emit immediately if no debounce
-        this.$emit("update:modelValue", this.value);
+        this.$emit("update:modelValue", committed);
       }
     },
 
     filterSuggestions(event: AutoCompleteCompleteEvent): void {
       const target = event?.originalEvent?.target as HTMLInputElement | null;
-      const cursorPos = target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
+      const cursorPos =
+        target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
       const currentWordRegex = /[^\s]*$/;
       const textToCursor = event.query?.slice(0, cursorPos) || "";
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
+      this.applySuggestionFilter(currentWord);
+    },
+
+    // The actual filtering logic, factored out of filterSuggestions() so it
+    // can also be re-run reactively (see the `suggestions` watcher above)
+    // without needing a live AutoCompleteCompleteEvent.
+    applySuggestionFilter(currentWord: string): void {
       this.currentQuery = currentWord;
       try {
-        // If user types just "$", show all suggestions
-        if (currentWord === "$") {
+        // If user types just "$" (legacy mode), or opens the full-list
+        // dropdown affordance with an empty query, show everything.
+        if (
+          currentWord === "$" ||
+          (this.showOptionsOnFocus && currentWord === "")
+        ) {
           this.filteredSuggestions = this.suggestions;
           this.allSuggestions = this.suggestions;
           this.autoSwitchToTabWithResults();
@@ -244,24 +457,42 @@ export default defineComponent({
           return;
         }
 
+        // Object mode: match against the resolved display label instead of
+        // the ContextVariable-specific `.name`/`${}` token conventions.
+        if (this.isObjectMode) {
+          const filtered = this.suggestions.filter((suggestion) => {
+            const label = this.resolveOptionLabel(suggestion);
+            return !!label && this.isPartialWordMatch(currentWord, label);
+          });
+          this.filteredSuggestions = filtered;
+          this.allSuggestions = filtered;
+          this.autoSwitchToTabWithResults();
+          return;
+        }
+
         // Filter suggestions based on the current word
-        const filtered = this.suggestions.filter((suggestion: ContextVariable) => {
-          const name = suggestion?.name;
-          if (!name) return false;
-          
-          // If currentWord starts with "${", match against the full suggestion name
-          if (currentWord.startsWith("${")) {
-            return this.isPartialWordMatch(currentWord, name);
-          }
-          
-          // Otherwise, match against the suggestion name without the ${} wrapper
-          // Extract the inner part (e.g., "job.id" from "${job.id}")
-          const innerName = name.replace(/^\$\{|\}$/g, "");
-          return this.isPartialWordMatch(currentWord, innerName) || this.isPartialWordMatch(currentWord, name);
-        });
+        const filtered = this.suggestions.filter(
+          (suggestion: ContextVariable) => {
+            const name = suggestion?.name;
+            if (!name) return false;
+
+            // If currentWord starts with "${", match against the full suggestion name
+            if (currentWord.startsWith("${")) {
+              return this.isPartialWordMatch(currentWord, name);
+            }
+
+            // Otherwise, match against the suggestion name without the ${} wrapper
+            // Extract the inner part (e.g., "job.id" from "${job.id}")
+            const innerName = name.replace(/^\$\{|\}$/g, "");
+            return (
+              this.isPartialWordMatch(currentWord, innerName) ||
+              this.isPartialWordMatch(currentWord, name)
+            );
+          },
+        );
         this.filteredSuggestions = filtered;
         this.allSuggestions = filtered;
-        
+
         // Auto-switch to tab with results if current tab has no results
         this.autoSwitchToTabWithResults();
       } catch (e) {
@@ -281,7 +512,8 @@ export default defineComponent({
       }
 
       // Check if current tab has any matching suggestions
-      const currentTabHasResults = this.filteredSuggestions.filter(activeTab.filter).length > 0;
+      const currentTabHasResults =
+        this.filteredSuggestions.filter(activeTab.filter).length > 0;
 
       // If current tab has results, don't switch
       if (currentTabHasResults) {
@@ -291,8 +523,9 @@ export default defineComponent({
       // Current tab has no results, find first tab with results
       for (let i = 0; i < this.tabs.length; i++) {
         const tab = this.tabs[i];
-        const tabHasResults = this.filteredSuggestions.filter(tab.filter).length > 0;
-        
+        const tabHasResults =
+          this.filteredSuggestions.filter(tab.filter).length > 0;
+
         if (tabHasResults) {
           this.selectedTabIndex = i;
           return;
@@ -301,7 +534,9 @@ export default defineComponent({
     },
 
     getSuggestionTitle(suggestionName: string): string | null {
-      const suggestion = this.filteredSuggestions.find((s: ContextVariable) => s.name === suggestionName);
+      const suggestion = this.filteredSuggestions.find(
+        (s: ContextVariable) => s.name === suggestionName,
+      );
       return suggestion?.title || null;
     },
 
@@ -309,20 +544,25 @@ export default defineComponent({
       if (!this.currentQuery) {
         return suggestionName;
       }
-      
+
       // Extract the actual query part (remove special characters like {, $, etc.)
       // This handles cases like "{job" or "${job" where we want to match "job"
-      const queryForMatch = this.currentQuery.replace(/^[^a-zA-Z0-9]*/, "").toLowerCase();
+      const queryForMatch = this.currentQuery
+        .replace(/^[^a-zA-Z0-9]*/, "")
+        .toLowerCase();
       if (!queryForMatch) {
         return suggestionName;
       }
-      
+
       // Use case-insensitive regex to find and highlight the match anywhere in the suggestion name
       // This handles both cases:
       // - User types "execid" → highlights "execid" in "${job.execid}"
       // - User types "${job.execid" → highlights "${job.execid" in "${job.execid}"
       const regex = new RegExp(`(${this.escapeRegex(queryForMatch)})`, "gi");
-      return suggestionName.replace(regex, '<span class="autocomplete-query-match">$1</span>');
+      return suggestionName.replace(
+        regex,
+        '<span class="autocomplete-query-match">$1</span>',
+      );
     },
 
     escapeRegex(str: string): string {
@@ -337,31 +577,75 @@ export default defineComponent({
       // Normalize both strings to lowercase for case-insensitive matching
       const normalizedInput = textInput.toLowerCase();
       const normalizedSuggestion = suggestion.toLowerCase();
-      
+
       // If input is empty, don't match
       if (!normalizedInput) return false;
-      
+
       // If input exactly matches the suggestion, return true
       if (normalizedInput === normalizedSuggestion) return true;
-      
+
       // Check if the suggestion starts with the input (for progressive typing like "${job" matching "${job.execid}")
       if (normalizedSuggestion.startsWith(normalizedInput)) return true;
-      
+
       // Check if the input is contained anywhere in the suggestion (for cases like "execid" matching "job.execid")
       if (normalizedSuggestion.includes(normalizedInput)) return true;
-      
-    // Check if input ends with any prefix of the suggestion (backwards matching)
-    // This handles cases like typing from the end of a variable name
-    // Require minimum prefix length of 2, except allow "$" as a single character match
-    const suggestionPrefixes = normalizedSuggestion
-      .split("")
-      .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index))
-      .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
 
-    return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
+      // Check if input ends with any prefix of the suggestion (backwards matching)
+      // This handles cases like typing from the end of a variable name
+      // Require minimum prefix length of 2, except allow "$" as a single character match
+      const suggestionPrefixes = normalizedSuggestion
+        .split("")
+        .map((_element, index) =>
+          normalizedSuggestion.slice(0, normalizedSuggestion.length - index),
+        )
+        .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
+
+      return suggestionPrefixes.some((prefix) =>
+        normalizedInput.endsWith(prefix),
+      );
     },
 
-    handleOptionSelect(event: any): void {
+    // Resolves the display text for a ContextVariable, via a function, one
+    // of its own field names, or (legacy fallback) `.title`.
+    resolveOptionLabel(option: ContextVariable): string {
+      if (typeof this.optionLabel === "function") {
+        return this.optionLabel(option);
+      }
+      const resolved = option[this.optionLabel];
+      return (typeof resolved === "string" ? resolved : option.title) ?? "";
+    },
+
+    // Resolves the underlying committed value for a ContextVariable, via a
+    // function or one of its own field names. Only meaningful in object mode.
+    resolveOptionValue(option: ContextVariable): string {
+      if (typeof this.optionValue === "function") {
+        return this.optionValue(option);
+      }
+      if (this.optionValue) {
+        const resolved = option[this.optionValue];
+        if (typeof resolved === "string") {
+          return resolved;
+        }
+      }
+      return option.name;
+    },
+
+    handleOptionSelect(event: AutoCompleteOptionSelectEvent): void {
+      // Object mode always commits the resolved underlying value as a
+      // whole-value replacement — partial in-string splicing only makes
+      // sense for the legacy free-text ContextVariable flow.
+      if (this.isObjectMode) {
+        const selected = event.value as ContextVariable;
+        if (this.showsLabel) {
+          this.rememberLabels();
+          this.value = this.resolveOptionLabel(selected);
+        } else {
+          this.value = this.resolveOptionValue(selected);
+        }
+        this.updateValue();
+        return;
+      }
+
       // If replaceOnSelect is true, use default PrimeVue behavior (replace entire value)
       // PrimeVue will automatically update the v-model value
       if (this.replaceOnSelect) {
@@ -370,7 +654,7 @@ export default defineComponent({
         this.updateValue();
         return;
       }
-      
+
       // Otherwise, use custom replacement logic (partial replacement)
       this.replaceSelection();
     },
@@ -378,7 +662,9 @@ export default defineComponent({
     replaceSelection(): void {
       const fullInputText = this.modelValue;
       const selectedSuggestion = this.value;
-      const autoCompleteInput = (this.$refs.autoInput as any)?.$el?.querySelector("input");
+      const autoCompleteInput = (
+        this.$refs.autoInput as any
+      )?.$el?.querySelector("input");
       if (!autoCompleteInput) return;
       const cursorPosition = autoCompleteInput.selectionStart;
       const cursorOffset = this.findSuggestionStart(
@@ -411,7 +697,9 @@ export default defineComponent({
       let offset = cursorPosition - 1;
       while (
         offset >= 0 &&
-        !selectedSuggestion.startsWith(fullInputText.slice(offset, cursorPosition))
+        !selectedSuggestion.startsWith(
+          fullInputText.slice(offset, cursorPosition),
+        )
       ) {
         offset--;
       }
@@ -445,8 +733,9 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
-@import "../_form-inputs.scss";
+@import "../_autocomplete-overlay.scss";
 
 .pt-autocomplete-wrapper {
   display: flex;
@@ -460,54 +749,44 @@ export default defineComponent({
   color: var(--colors-red-500);
 }
 
-.p-autocomplete-overlay {
-  z-index: 1200 !important;
-  color: var(--colors-gray-800);
-  margin-top: 0;
-}
-
-// Remove any spacing from PrimeVue's header container
-.p-autocomplete-overlay .p-autocomplete-header {
-  padding: 0;
-  margin: 0;
-}
-
-.p-autocomplete-list {
-  padding: 0;
-  margin: 0;
-  min-height: 40px;
-
-  li {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
+*[data-color-theme="dark"] {
+  .pt-autocomplete__error {
+    color: #e55b5b;
   }
-}
 
-.p-autocomplete-option {
-  color: var(--colors-gray-800);
-  padding: 10px 17px;
-  transition: background-color 0.2s, color 0.2s;
-}
+  .p-autocomplete-option .autocomplete-option-title {
+    color: var(--white, #fff);
+  }
 
-.p-autocomplete-option:hover:not(.p-disabled):not(.p-autocomplete-option-selected) {
-  background-color: var(--colors-cardNumber);
-  color: var(--colors-gray-800);
-}
+  .p-autocomplete-option .autocomplete-option-name {
+    color: var(--grey-200);
+  }
 
-.p-autocomplete-option.p-focus:not(.p-disabled) {
-  background-color: var(--colors-cardNumber);
-  color: var(--colors-gray-800);
-}
+  // Tabs (Figma: grey-900 strip, grey-100 bold labels, white + red underline when active)
+  .autocomplete-tabs {
+    background: var(--grey-900);
+    border-bottom-color: #cbd5e0;
+  }
 
-.p-autocomplete-option-selected {
-  background-color: var(--colors-blue-50);
-  color: var(--colors-blue-500);
-}
+  // Inactive tabs keep the continuous strip border (their own bg would hide it)
+  .autocomplete-tab {
+    background: var(--grey-900);
+    border-bottom-color: #cbd5e0;
+    color: var(--grey-100);
 
-.p-autocomplete-option-selected.p-focus {
-  background-color: var(--colors-blue-50);
-  color: var(--colors-blue-500);
+    &:not(.autocomplete-tab-active):hover {
+      color: var(--white, #fff);
+    }
+
+    .autocomplete-tab-label {
+      font-weight: var(--fontWeights-bold, 700);
+    }
+  }
+
+  .autocomplete-tab-active {
+    color: var(--white, #fff);
+    border-bottom-color: #de3434;
+  }
 }
 
 .p-autocomplete-option .autocomplete-option-content {
@@ -540,12 +819,6 @@ export default defineComponent({
   font-weight: var(--fontWeights-semibold);
 }
 
-.p-autocomplete-list-container {
-  background-color: var(--colors-white);
-  border: 1px solid var(--colors-gray-300-original);
-  border-radius: var(--radii-base);
-}
-
 .autocomplete-tabs {
   display: flex;
   gap: var(--sizes-2);
@@ -574,7 +847,10 @@ export default defineComponent({
   font-size: 14px;
   line-height: 20px;
   color: var(--colors-gray-600);
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
   margin-bottom: -2px;
   position: relative;
   outline: none;
@@ -611,41 +887,5 @@ export default defineComponent({
 
 .autocomplete-tab-active .autocomplete-tab-label {
   font-weight: var(--fontWeights-semibold);
-}
-
-
-.p-autocomplete {
-  width: 100%;
-
-  .p-inputtext {
-    @include form-input-base;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: var(--fontWeights-regular);
-    line-height: normal;
-    color: var(--colors-gray-800);
-    background: var(--colors-white);
-
-    @include form-input-placeholder;
-
-    &:hover:not(:focus):not(:disabled):not(.p-invalid) {
-      @include form-input-hover;
-    }
-
-    &:focus {
-      @include form-input-focus;
-    }
-
-    &.p-invalid {
-      @include form-input-invalid;
-    }
-
-    &:disabled {
-      @include form-input-disabled;
-      background: var(--colors-gray-50);
-      color: var(--colors-gray-500);
-      cursor: not-allowed;
-    }
-  }
 }
 </style>

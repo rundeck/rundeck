@@ -110,7 +110,7 @@ class ApiService implements WebUtilService{
         Date expiration = tokenData.getExpiration()
 
         AuthTokenType tokenType = tokenData.type ?: AuthTokenType.USER
-        AuthTokenMode tokenMode = (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+        AuthTokenMode tokenMode = AuthTokenMode.SECURED
 
         def uuid = UUID.randomUUID().toString()
         String newtoken = tokenData.token?:genRandomString()
@@ -830,6 +830,9 @@ class ApiService implements WebUtilService{
                 }
                 if(execdata.retryExecution){
                     execMap.retriedExecution=execdata.retryExecution
+                }
+                if(e.note){
+                    execMap.note=e.note
                 }
                 execMap.jobDeleted = e.isJobDeleted()
                 execMap
