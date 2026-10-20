@@ -191,6 +191,12 @@ const SIDE_PANEL_DEFAULT_WIDTH_RATIO = 0.6;
 
 const TRANSITION_SPEED = 300;
 
+type LegacyWheelEvent = WheelEvent & {
+  axis?: number;
+  HORIZONTAL_AXIS?: number;
+  wheelDeltaY?: number;
+};
+
 /**
  * Run callback during future animation frame.
  */
@@ -585,7 +591,7 @@ export default defineComponent({
       editor.appendChild(this.editorElm);
 
       setTimeout(() => {
-        const win = window as any;
+        const win = window as Window & { ace: typeof Ace };
         this.editor = win.ace.edit(
           document.getElementById("_id1"),
         ) as Ace.Ace.Editor;
@@ -647,8 +653,8 @@ export default defineComponent({
         this.updateGraph(transition);
         // this.layout()
         this.error = "";
-      } catch (e: any) {
-        this.error = e.message;
+      } catch (e: unknown) {
+        this.error = e instanceof Error ? e.message : String(e);
       }
     },
     updateOutputRules() {
@@ -675,8 +681,8 @@ export default defineComponent({
         });
         const nodeMap = new Map(nodeMapFrom);
         this.graph.setNodes(nodeMap);
-      } catch (e: any) {
-        this.error = e.message;
+      } catch (e: unknown) {
+        this.error = e instanceof Error ? e.message : String(e);
       }
     },
     stopTransitions() {
@@ -730,12 +736,8 @@ export default defineComponent({
 
         const cellView = el.findView(this.paper as Joint.dia.Paper);
 
-        const label = cellView.findBySelector(
-          "label",
-        )[0] as any as SVGGraphicsElement;
-        const title = cellView.findBySelector(
-          "title",
-        )[0] as any as SVGGraphicsElement;
+        const label = cellView.findBySelector("label")[0] as SVGGraphicsElement;
+        const title = cellView.findBySelector("title")[0] as SVGGraphicsElement;
 
         const bbox = [
           label.getBBox(),
@@ -891,7 +893,10 @@ export default defineComponent({
           const icon = {
             class: node.icon.image ? "" : node.icon.class,
             style: { display: !node.icon.image ? "block" : "none" },
-          } as any;
+          } as {
+            class: string;
+            style: { display: string; fontSize?: string };
+          };
           if (
             node.icon.class?.indexOf("glyphicon") >= 0 ||
             node.icon.class?.indexOf("fas") >= 0 ||
@@ -925,13 +930,13 @@ export default defineComponent({
           const cellView = el.findView(this.paper as Joint.dia.Paper);
           const elLabel = cellView.findBySelector(
             "label",
-          )[0] as any as SVGGraphicsElement;
+          )[0] as SVGGraphicsElement;
 
           /** Detect change in label element size */
           const reszObs = new ResizeObserver(() => {});
           reszObs.observe(elLabel);
         },
-        importEdge: (edge: any, gl: Graph, g: Joint.dia.Graph) => {
+        importEdge: (edge: graphlib.Edge, gl: Graph, g: Joint.dia.Graph) => {
           const src = g.getCell(edge.v);
           const target = g.getCell(edge.w);
 
@@ -1051,10 +1056,15 @@ export default defineComponent({
     zoomOut() {
       this.zoomBy(-ZOOM_STEP);
     },
-    handleCanvasMouseWheel(e: any, x: number, y: number, delta: number) {
+    handleCanvasMouseWheel(
+      e: Joint.dia.Event,
+      x: number,
+      y: number,
+      delta: number,
+    ) {
       e.preventDefault();
 
-      const { originalEvent } = e;
+      const originalEvent = e.originalEvent as LegacyWheelEvent;
 
       /** FireFox may throw in horizontal scroll events which we discard */
       if (

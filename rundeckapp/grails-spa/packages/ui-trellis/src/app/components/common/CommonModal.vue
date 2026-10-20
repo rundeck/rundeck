@@ -110,7 +110,7 @@ export default defineComponent({
     },
   },
   methods: {
-    getText(elem: any, defaultMessage: string = "") {
+    getText(elem: ModalButtons | ModalLinks, defaultMessage: string = "") {
       return elem.message || elem.messageCode
         ? elem.message || this.$t(elem.messageCode)
         : defaultMessage;

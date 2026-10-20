@@ -15,9 +15,27 @@
  */
 
 import { client } from "./rundeckClient";
+import type PluginValidation from "../interfaces/PluginValidation";
 
-const ServicesCache: { [svc: string]: { [provider: string]: any } } = {};
-const ServiceProvidersCache: { [provider: string]: any } = {};
+export interface PluginProviderDescription {
+  name: string;
+  title: string;
+  description?: string;
+  configSet?: boolean;
+  [key: string]: unknown;
+}
+
+export interface PluginProvidersResponse {
+  service?: string;
+  descriptions: PluginProviderDescription[];
+  labels?: Record<string, string>;
+}
+
+const ServicesCache: Record<string, PluginProvidersResponse> = {};
+const ServiceProvidersCache: Record<
+  string,
+  { providers: Record<string, unknown> }
+> = {};
 
 const getParameters = (): Promise<{ [key: string]: string }> => {
   return new Promise((resolve, reject) => {
@@ -36,7 +54,9 @@ const getParameters = (): Promise<{ [key: string]: string }> => {
     }
   });
 };
-export const getPluginProvidersForService = async (svcName: string) => {
+export const getPluginProvidersForService = async (
+  svcName: string,
+): Promise<PluginProvidersResponse | undefined> => {
   if (ServicesCache[svcName]) {
     return new Promise((resolve) => {
       resolve(ServicesCache[svcName]);
@@ -54,11 +74,13 @@ export const getPluginProvidersForService = async (svcName: string) => {
     if (!resp.parsedBody) {
       throw new Error(`Error getting service providers list for ${svcName}`);
     } else {
-      ServicesCache[svcName] = resp.parsedBody;
-      return resp.parsedBody;
+      const body: PluginProvidersResponse = resp.parsedBody;
+      ServicesCache[svcName] = body;
+      return body;
     }
   } catch (e) {
-    return console.warn("Error getting service providers list", e);
+    console.warn("Error getting service providers list", e);
+    return undefined;
   }
 };
 
@@ -75,7 +97,7 @@ export const getServiceProviderDescription = async (
     });
   }
   const params = await getParameters();
-  const qparams: any = {};
+  const qparams: Record<string, string> = {};
   if (params.project) {
     qparams.project = params.project;
   }
@@ -106,9 +128,9 @@ export const getServiceProviderDescription = async (
 export const validatePluginConfig = async (
   svcName: string,
   provider: string,
-  config: any,
+  config: object,
   ignoredScope: string | null = null,
-) => {
+): Promise<PluginValidation> => {
   const params = await getParameters();
   const qparams = {} as { [key: string]: string };
   if (ignoredScope != null) {

@@ -61,6 +61,13 @@ export interface CommandExecData {
 export interface CommandExecPluginConfig {
   adhocRemoteString: string;
 }
+
+export type StepPluginConfig =
+  | ScriptInlinePluginConfig
+  | ScriptFilePluginConfig
+  | CommandExecPluginConfig
+  | Record<string, unknown>;
+
 export interface JobRefDefinition {
   group: string;
   name: string;
@@ -91,19 +98,19 @@ export interface JobRefData {
 }
 export interface PluginStepData {
   type?: string;
-  configuration?: any;
+  configuration?: StepPluginConfig;
   nodeStep?: boolean;
 }
 export interface CommandData {
   description?: string;
-  plugins?: { [key: string]: any };
+  plugins?: Record<string, unknown>;
 }
 export interface BasicData {
   keepgoing: boolean;
 }
 
 export interface WorkflowStrategyPluginConfig {
-  WorkflowStrategy?: { [key: string]: any };
+  WorkflowStrategy?: Record<string, Record<string, unknown>>;
 }
 
 export interface WorkflowLogFilterConfig {
@@ -111,7 +118,9 @@ export interface WorkflowLogFilterConfig {
 }
 
 export interface WorkflowPluginConfig {
-  pluginConfig?: WorkflowStrategyPluginConfig & WorkflowLogFilterConfig & any;
+  pluginConfig?: WorkflowStrategyPluginConfig &
+    WorkflowLogFilterConfig &
+    Record<string, unknown>;
 }
 
 export interface StrategyConfig {
@@ -119,7 +128,7 @@ export interface StrategyConfig {
 }
 
 export interface ErrorHandlerDefinition {
-  config: any;
+  config: StepPluginConfig;
   keepgoingOnSuccess?: boolean;
   nodeStep: boolean;
   jobref?: JobRefDefinition;
@@ -146,7 +155,7 @@ export type StepData = CommandData &
 export interface StepsData {
   commands: StepData[];
 }
-export interface CommandEditData extends PluginConfig {
+export interface CommandEditData extends PluginConfig<StepPluginConfig> {
   nodeStep: boolean;
   description?: string;
   jobref?: JobRefDefinition;
@@ -161,9 +170,13 @@ export interface StepsEditData {
 }
 
 export interface WorkflowData
-  extends BasicData, StrategyConfig, WorkflowPluginConfig, StepsData {}
+  extends
+    Partial<BasicData>,
+    StrategyConfig,
+    WorkflowPluginConfig,
+    Partial<StepsData> {}
 
-export function createBasicData({ keepgoing }: any): BasicData {
+export function createBasicData({ keepgoing }: Partial<BasicData>): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
@@ -177,11 +190,11 @@ export function createStrategyData(workflowData: WorkflowData): PluginConfig {
 export function exportPluginData(
   strategy: PluginConfig,
   logFilters: GlobalLogFiltersData,
-): any {
+): WorkflowPluginConfig & StrategyConfig {
   const obj: {
     pluginConfig: {
-      WorkflowStrategy: { [x: string]: any };
-      [key: string]: any;
+      WorkflowStrategy: Record<string, Record<string, unknown>>;
+      LogFilter?: PluginConfig[];
     };
     strategy: string;
   } = {
@@ -191,13 +204,13 @@ export function exportPluginData(
     strategy: strategy.type,
   };
   if (logFilters && logFilters.LogFilter && logFilters.LogFilter.length > 0) {
-    obj.pluginConfig["LogFilter"] = logFilters.LogFilter;
+    obj.pluginConfig.LogFilter = logFilters.LogFilter;
   }
   return obj;
 }
 export function createLogFiltersData({
   pluginConfig,
-}: any): GlobalLogFiltersData {
+}: WorkflowPluginConfig): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
 }
 

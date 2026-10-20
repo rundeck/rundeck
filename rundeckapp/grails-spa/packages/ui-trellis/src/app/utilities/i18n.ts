@@ -16,7 +16,7 @@ import { createI18n, type I18n } from "vue-i18n";
 
 export type { LocaleMessageValue, LocalizedMessages };
 
-const internationalization: Record<string, any> = {
+const internationalization: LocalizedMessages = {
   en_US: en_US,
   de_DE: de_DE,
   es_419: es_419,
@@ -55,7 +55,7 @@ const updateLocaleMessages = async (
   i18n: I18n,
   locale: string,
   _lang: string,
-  messages: Record<string, any>,
+  messages: Record<string, LocaleMessageValue>,
 ) => {
   i18n.global.mergeLocaleMessage(locale, messages);
   return nextTick();
@@ -89,8 +89,9 @@ const commonAddUiMessages = async (
     }
   } else {
     const flat = messages.reduce(
-      (acc: any, m: UiMessage) => (m ? { ...acc, ...m } : acc),
-      {},
+      (acc: Record<string, LocaleMessageValue>, m: UiMessage) =>
+        m ? { ...acc, ...m } : acc,
+      {} as Record<string, LocaleMessageValue>,
     );
     await updateLocaleMessages(i18n, locale, lang, flat);
   }

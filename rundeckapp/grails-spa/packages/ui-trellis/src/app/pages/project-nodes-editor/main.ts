@@ -7,6 +7,14 @@ import { getRundeckContext } from "../../../library";
 
 // include any i18n injected in the page by the app
 const context = getRundeckContext();
+
+interface ProjectNodeSourcePageData {
+  editProjectNodeSourceData?: {
+    index: number;
+    nextPageUrl: string;
+  };
+}
+
 // Create VueI18n instance with options
 
 context.rootStore.ui.addItems([
@@ -30,11 +38,12 @@ context.rootStore.ui.addItems([
         },
         mounted() {
           const context = getRundeckContext();
+          const pageData = context.data as
+            ProjectNodeSourcePageData | undefined;
 
-          if (context.data && context.data.editProjectNodeSourceData) {
-            this.index = context.data.editProjectNodeSourceData.index;
-            this.nextPageUrl =
-              context.data.editProjectNodeSourceData.nextPageUrl;
+          if (pageData?.editProjectNodeSourceData) {
+            this.index = pageData.editProjectNodeSourceData.index;
+            this.nextPageUrl = pageData.editProjectNodeSourceData.nextPageUrl;
           } else {
             const data = loadJsonData("editProjectNodeSourceData");
             this.index = data.index;

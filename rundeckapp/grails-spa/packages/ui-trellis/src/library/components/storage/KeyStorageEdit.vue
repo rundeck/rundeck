@@ -248,6 +248,7 @@ import {
   storageKeyExists,
   storageKeyGetMetadata,
   storageKeyUpdate,
+  type StorageKeyMetadata,
 } from "../../services/storage";
 import type { PropType } from "vue";
 import { defineComponent } from "vue";
@@ -262,12 +263,12 @@ export interface UploadSetting {
   inputType: InputType;
   fileName?: null | string;
   file?: null | string;
-  fileContent: "";
-  textArea: "";
-  password: "";
+  fileContent: string;
+  textArea: string;
+  password: string;
   status: "new" | string;
   errorMsg: null | string;
-  dontOverwrite: boolean;
+  dontOverwrite?: boolean;
 }
 
 export default defineComponent({
@@ -293,9 +294,9 @@ export default defineComponent({
       modalEdit: false,
       path: "",
       errorMsg: "",
-      directories: [] as any,
-      files: [] as any,
-      createdKey: {} as any,
+      directories: [] as StorageKeyMetadata[],
+      files: [] as StorageKeyMetadata[],
+      createdKey: {} as StorageKeyMetadata,
       keyTypes: [
         { text: "Private Key", value: "privateKey" },
         { text: "Public Key", value: "publicKey" },
@@ -404,7 +405,7 @@ export default defineComponent({
         }
       }
 
-      let value = null as any;
+      let value = "";
 
       switch (this.localUploadSetting.keyType) {
         case KeyType.Password:
@@ -488,17 +489,20 @@ export default defineComponent({
       }
       return browse;
     },
-    handleFileUpload(e: any) {
-      const files = e.target.files || e.dataTransfer.files;
-      if (!files.length) return;
+    handleFileUpload(e: Event | DragEvent) {
+      const files =
+        (e.target as HTMLInputElement | null)?.files ||
+        (e as DragEvent).dataTransfer?.files;
+      if (!files?.length) return;
 
       const file = files[0];
       this.localUploadSetting.file = file.name;
 
       const reader = new FileReader();
-      reader.onload = (event: any) => {
-        const text = event.target.result;
-        this.localUploadSetting.fileContent = text;
+      reader.onload = (event: ProgressEvent<FileReader>) => {
+        this.localUploadSetting.fileContent = String(
+          event.target?.result ?? "",
+        );
         if (this.localUploadSetting.errorMsg != null) {
           this.localUploadSetting.errorMsg = null;
         }

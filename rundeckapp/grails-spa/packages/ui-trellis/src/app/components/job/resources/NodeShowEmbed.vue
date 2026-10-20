@@ -74,6 +74,11 @@ import NodeStatus from "../../job/resources/NodeStatus.vue";
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 import { styleForNode } from "../../../utilities/nodeUi";
+import type {
+  Node,
+  NodeAttributes,
+  NodeFilterSelection,
+} from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeShowEmbed",
@@ -85,7 +90,7 @@ export default defineComponent({
   },
   props: {
     node: {
-      type: Object as PropType<any>,
+      type: Object as PropType<Node>,
       required: true,
     },
     showExcludeFilterLinks: {
@@ -101,10 +106,10 @@ export default defineComponent({
     };
   },
   methods: {
-    styleForNode(node: any) {
-      return styleForNode(node);
+    styleForNode(attributes: NodeAttributes) {
+      return styleForNode(attributes);
     },
-    filterClick(filter: any) {
+    filterClick(filter: NodeFilterSelection) {
       this.popoverVisible = false;
       this.$emit("filter", filter);
     },

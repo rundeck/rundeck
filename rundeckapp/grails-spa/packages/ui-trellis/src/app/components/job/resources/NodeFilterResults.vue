@@ -72,6 +72,11 @@ import axios from "axios";
 import { defineComponent, ref, computed } from "vue";
 
 import { getRundeckContext, getAppLinks } from "../../../../library";
+import type {
+  NodeFilterSelection,
+  NodeQueryResponse,
+  NodeSet,
+} from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeFilterResults",
@@ -117,8 +122,8 @@ export default defineComponent({
     const view = ref("");
     const error = ref("");
     const truncated = ref(false);
-    const colkeys = ref([]);
-    const nodeSet = ref({ nodes: [], tagsummary: {} });
+    const colkeys = ref<string[]>([]);
+    const nodeSet = ref<NodeSet>({ nodes: [], tagsummary: {} });
 
     const viewInNodesPageUrl = computed(() => {
       if (!props.nodeFilter) return "#";
@@ -188,7 +193,7 @@ export default defineComponent({
       this.colkeys = [];
       this.nodeSet = { nodeset: [], tagsummary: {} };
     },
-    handleFilter(val: any) {
+    handleFilter(val: NodeFilterSelection) {
       this.$emit("filter", val);
     },
     async update() {
@@ -201,7 +206,7 @@ export default defineComponent({
         : {};
       const page = this.page;
       const view = this.view ? this.view : "table";
-      const basedata: any = {
+      const basedata: Record<string, string | number | boolean> = {
         view: view,
         declarenone: true,
         fullresults: true,
@@ -233,7 +238,7 @@ export default defineComponent({
       this.total = 0;
 
       axios
-        .request({
+        .request<NodeQueryResponse>({
           method: "GET",
           headers: {
             "x-rundeck-ajax": "true",

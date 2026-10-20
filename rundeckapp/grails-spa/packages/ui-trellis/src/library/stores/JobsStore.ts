@@ -1,5 +1,9 @@
 import { defineStore } from "pinia";
-import { getJobDefinition, postJobDefinition } from "../services/jobEdit";
+import {
+  getJobDefinition,
+  JobImportOptions,
+  postJobDefinition,
+} from "../services/jobEdit";
 import { JobDefinition, LogLevel } from "../types/jobs/JobDefinition";
 import { JobStore } from "../types/stores/JobsStoreTypes";
 import { contextVariables, ContextVariablesByType } from "./contextVariables";
@@ -8,7 +12,7 @@ export const useJobStore = defineStore("jobs", {
   state: (): JobStore => {
     return {
       activeId: "",
-      jobs: {} as any,
+      jobs: {},
       contextVariables: contextVariables() as ContextVariablesByType,
     };
   },
@@ -52,7 +56,9 @@ export const useJobStore = defineStore("jobs", {
     },
     async fetchJobDefinition(jobId: string, setJobAsActive: boolean = true) {
       try {
-        const jobDefinition = await getJobDefinition(jobId);
+        const jobDefinition = (await getJobDefinition(
+          jobId,
+        )) as JobDefinition[];
         if (jobDefinition.length > 0) {
           this.updateJobDefinition(jobDefinition[0], jobId);
           if (setJobAsActive) {
@@ -63,7 +69,10 @@ export const useJobStore = defineStore("jobs", {
         console.warn(e);
       }
     },
-    async saveJobDefinition(job: JobDefinition, options: any = {}) {
+    async saveJobDefinition(
+      job: JobDefinition,
+      options: JobImportOptions = {},
+    ) {
       try {
         const resp = await postJobDefinition([job], options);
         if (resp.succeeded && resp.succeeded.length === 1) {

@@ -1,7 +1,17 @@
 import { RundeckBrowser } from "@rundeck/client";
+import type { JobOptionsData } from "../types/jobs/JobEdit";
 import { NavItem } from "../stores/NavBar";
-import { RootStore } from "../stores/RootStore";
+import { AppMeta, RootStore } from "../stores/RootStore";
 import { EventBus } from "../utilities/vueEventBus";
+
+interface RundeckContextData extends Record<string, unknown> {
+  otherData?: {
+    uuid?: string;
+    [key: string]: unknown;
+  };
+  features?: Record<string, boolean>;
+  optionsData?: JobOptionsData;
+}
 
 export interface RundeckContext {
   eventBus: typeof EventBus;
@@ -10,14 +20,14 @@ export interface RundeckContext {
   projectName: string;
   activeTour: string;
   activeTourStep: string;
-  appMeta: { [key: string]: any };
+  appMeta: AppMeta;
   token: RundeckToken;
   tokens: {
     [key: string]: RundeckToken;
   };
   rundeckClient: RundeckBrowser;
-  data: { [key: string]: any };
-  profile?: { [key: string]: any };
+  data: RundeckContextData;
+  profile?: Record<string, unknown>;
   feature: { [key: string]: RundeckFeature };
   navbar: {
     items: Array<NavItem>;

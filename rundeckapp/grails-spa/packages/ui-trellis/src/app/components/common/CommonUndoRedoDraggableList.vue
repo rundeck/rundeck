@@ -71,12 +71,19 @@ import { defineComponent, PropType } from "vue";
 import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
 import { getRundeckContext } from "../../../library";
-import mitt, { Emitter, EventType } from "mitt";
+import mitt, { Emitter } from "mitt";
 import { ChangeEvent, Operation } from "../job/options/model/ChangeEvents";
 import { cloneDeep } from "lodash";
 
-const emitter = mitt();
-const localEB: Emitter<Record<EventType, any>> = emitter;
+type UndoRedoEvents = {
+  undo: ChangeEvent;
+  redo: ChangeEvent;
+  revertAll: void;
+  change: ChangeEvent;
+};
+
+const emitter = mitt<UndoRedoEvents>();
+const localEB: Emitter<UndoRedoEvents> = emitter;
 
 export default defineComponent({
   name: "CommonUndoRedoDraggableList",
@@ -133,7 +140,7 @@ export default defineComponent({
      */
     beforeMove: {
       type: Function as PropType<
-        (proposed: any[]) => boolean | Promise<boolean>
+        (proposed: unknown[]) => boolean | Promise<boolean>
       >,
       default: null,
     },
@@ -143,8 +150,8 @@ export default defineComponent({
     return {
       eventBus: getRundeckContext().eventBus,
       localEB,
-      internalData: null as any[] | null,
-      originalData: null as any[] | null,
+      internalData: null as unknown[] | null,
+      originalData: null as unknown[] | null,
     };
   },
   watch: {
@@ -162,8 +169,8 @@ export default defineComponent({
   },
   async mounted() {
     if (this.modelValue) {
-      this.originalData = cloneDeep(this.modelValue) as any[];
-      this.internalData = cloneDeep(this.modelValue) as any[];
+      this.originalData = cloneDeep(this.modelValue) as unknown[];
+      this.internalData = cloneDeep(this.modelValue) as unknown[];
     }
 
     this.localEB.on("undo", this.doUndo);
@@ -197,7 +204,7 @@ export default defineComponent({
       this.internalData.splice(index, 1);
       return oldval;
     },
-    operationModify(index: number, data: any) {
+    operationModify(index: number, data: unknown) {
       if (!this.internalData) return undefined;
       const orig = this.internalData[index];
       this.internalData[index] = cloneDeep(data);
@@ -209,11 +216,14 @@ export default defineComponent({
       this.internalData.splice(index, 1);
       this.internalData.splice(dest, 0, orig);
     },
-    operationInsert(index: number, value: any) {
+    operationInsert(index: number, value: unknown) {
       if (!this.internalData) return;
       this.internalData.splice(index, 0, cloneDeep(value));
     },
-    operation(op: Operation, data: any) {
+    operation(
+      op: Operation,
+      data: { index: number; dest: number; value?: unknown },
+    ) {
       if (op === Operation.Insert) {
         this.operationInsert(data.index, data.value);
       } else if (op === Operation.Remove) {

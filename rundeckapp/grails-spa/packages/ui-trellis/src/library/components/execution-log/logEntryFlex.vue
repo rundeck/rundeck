@@ -161,7 +161,7 @@ export default defineComponent({
     onLineSelect() {
       this.$emit("line-select", this.logEntry.lineNumber);
     },
-    handleSettingsChanged(newSettings: any) {
+    handleSettingsChanged(newSettings: Partial<IBuilderOpts>) {
       Object.assign(this.cfg, newSettings);
     },
   },

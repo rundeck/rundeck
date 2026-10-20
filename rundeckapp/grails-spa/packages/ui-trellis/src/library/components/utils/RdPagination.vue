@@ -141,7 +141,7 @@ export default defineComponent({
      * Create list of page links to display
      */
     pageList() {
-      const pages: any[] = [];
+      const pages: Array<{ page: number } | { skip: true }> = [];
       let skipped = false;
 
       // creates sliding window of size pagingWindowSize

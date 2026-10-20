@@ -1,4 +1,6 @@
-const messages: any = {
+import type { LocalizedMessages } from "../../../";
+
+const messages: LocalizedMessages = {
   en_US: {
     graph: {
       stepLabel: {

@@ -88,6 +88,25 @@ import PluginConfig from "../../plugins/pluginConfig.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
 import PluginPropView from "../../plugins/pluginPropView.vue";
 import { getRundeckContext } from "../../../../library";
+import type { PluginConfig } from "../../../interfaces/PluginConfig";
+import type { JobRefDefinition } from "../../../../app/components/job/workflow/types/workflowTypes";
+
+interface StepCardConfig extends PluginConfig {
+  id?: string;
+  jobref?: JobRefDefinition;
+}
+
+interface StepCardHandler extends PluginConfig {
+  jobref?: JobRefDefinition;
+  title?: string;
+}
+
+interface JobRefProperty {
+  name: string;
+  title: string;
+  desc: string;
+  type: "String" | "Boolean";
+}
 
 export default defineComponent({
   name: "StepCardContent",
@@ -99,7 +118,7 @@ export default defineComponent({
   },
   props: {
     config: {
-      type: Object,
+      type: Object as PropType<StepCardConfig>,
       required: true,
     },
     serviceName: {
@@ -111,11 +130,11 @@ export default defineComponent({
       default: "",
     },
     logFilters: {
-      type: Array,
+      type: Array as PropType<PluginConfig[]>,
       default: () => [],
     },
     errorHandler: {
-      type: Array as PropType<Record<string, any>[]>,
+      type: Array as PropType<StepCardHandler[]>,
       default: () => [],
     },
     errorHandlerConfig: {
@@ -189,7 +208,7 @@ export default defineComponent({
       }
       return this.config.jobref.uuid || "";
     },
-    jobRefProps(): any[] {
+    jobRefProps(): JobRefProperty[] {
       if (!this.config.jobref) return [];
       const props = [];
 
@@ -238,7 +257,7 @@ export default defineComponent({
 
       return props;
     },
-    jobRefConfig(): any {
+    jobRefConfig(): Record<string, unknown> {
       if (!this.config.jobref) return {};
       return {
         job: this.jobRefFullName,
@@ -257,11 +276,11 @@ export default defineComponent({
       // Emit to parent - parent will handle opening modal
       this.$emit("add-log-filter", this.elementId);
     },
-    handleEditLogFilter(filter: any, index: number) {
+    handleEditLogFilter(filter: PluginConfig, index: number) {
       // Find the index in the logFilters array if not provided
       let filterIndex = index;
       if (filterIndex === undefined || filterIndex === null) {
-        filterIndex = this.logFilters.findIndex((f: any) => {
+        filterIndex = this.logFilters.findIndex((f: PluginConfig) => {
           // Match by type or by object reference
           return (
             f === filter || (f.type && filter.type && f.type === filter.type)

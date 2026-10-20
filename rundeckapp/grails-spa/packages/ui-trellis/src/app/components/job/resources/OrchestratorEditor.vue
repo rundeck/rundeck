@@ -97,6 +97,13 @@ import type { PropType } from "vue";
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../../library/modules/pluginService";
+import type { PluginProviderDescription } from "../../../../library/modules/pluginService";
+import type PluginValidation from "../../../../library/interfaces/PluginValidation";
+
+interface OrchestratorValue {
+  type: string | null;
+  config: Record<string, unknown>;
+}
 
 export default defineComponent({
   name: "OrchestratorEditor",
@@ -109,7 +116,7 @@ export default defineComponent({
       /**
        * Orchestrator type and config value
        */
-      type: Object as PropType<any>,
+      type: Object as PropType<OrchestratorValue>,
       required: true,
     },
     labelColClass: {
@@ -123,16 +130,19 @@ export default defineComponent({
       default: "col-sm-10",
     },
     editValidation: {
-      type: Object as PropType<any>,
+      type: Object as PropType<Partial<PluginValidation>>,
       required: false,
       default: () => {},
     },
   },
   emits: ["update:modelValue"],
   setup() {
-    const pluginProviders = ref<any[]>([]);
+    const pluginProviders = ref<PluginProviderDescription[]>([]);
     const pluginLabels = ref<{ [name: string]: string }>({});
-    const updatedValue = ref<{ [name: string]: string }>({});
+    const updatedValue = ref<OrchestratorValue>({
+      type: null,
+      config: {},
+    });
     return {
       pluginProviders,
       pluginLabels,
@@ -170,7 +180,7 @@ export default defineComponent({
         await pluginService.getPluginProvidersForService("Orchestrator");
       if (data.service) {
         this.pluginProviders = data.descriptions;
-        this.pluginLabels = data.labels;
+        this.pluginLabels = data.labels || {};
       }
     },
   },

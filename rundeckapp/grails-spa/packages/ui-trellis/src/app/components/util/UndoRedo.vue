@@ -34,6 +34,7 @@
 <script lang="ts">
 import { PropType, defineComponent } from "vue";
 import { EventBus } from "../../../library";
+import { ChangeEvent } from "../job/options/model/ChangeEvents";
 
 export default defineComponent({
   name: "UndoRedo",
@@ -46,7 +47,7 @@ export default defineComponent({
   },
   data() {
     return {
-      stack: <any>[],
+      stack: [] as ChangeEvent[],
       index: 0,
       revertAllConfirm: false,
     };
@@ -60,7 +61,7 @@ export default defineComponent({
     },
   },
   methods: {
-    addChange(val: any) {
+    addChange(val: ChangeEvent) {
       if (this.index > 0) {
         this.stack.splice(0, this.index);
         this.index = 0;

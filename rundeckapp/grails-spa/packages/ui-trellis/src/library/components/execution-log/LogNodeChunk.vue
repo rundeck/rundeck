@@ -114,6 +114,8 @@ export default defineComponent({
   data() {
     return {
       emitResize: true as boolean,
+      scrollListenerAdded: false,
+      prevScrollTop: undefined as number | undefined,
     };
   },
   watch: {
@@ -121,7 +123,11 @@ export default defineComponent({
       if (!this.follow || !newEntries || newEntries.length === 0) return;
       this.$nextTick(() => {
         if (this.follow) {
-          (this.$refs.scroller as any)?.scrollToBottom?.();
+          (
+            this.$refs.scroller as {
+              scrollToBottom?: () => void;
+            }
+          )?.scrollToBottom?.();
         }
       });
     },
@@ -131,7 +137,11 @@ export default defineComponent({
       if (newVal) {
         this.$nextTick(() => {
           if (this.follow) {
-            (this.$refs.scroller as any)?.scrollToBottom?.();
+            (
+              this.$refs.scroller as {
+                scrollToBottom?: () => void;
+              }
+            )?.scrollToBottom?.();
           }
         });
       }
@@ -183,12 +193,13 @@ export default defineComponent({
     this._tryAttachScrollListener();
   },
   beforeUnmount() {
-    const scrollerEl = (this.$refs.scroller as any)?.$el as
-      HTMLElement | undefined;
+    const scrollerEl = (
+      this.$refs.scroller as { $el?: HTMLElement } | undefined
+    )?.$el;
     if (scrollerEl) {
       scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
-    (this as any)._scrollListenerAdded = false;
+    this.scrollListenerAdded = false;
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
@@ -224,7 +235,7 @@ export default defineComponent({
       const lastStep = newEntry.renderedStep[newEntry.renderedStep.length - 1];
       return lastStep ? lastStep.type : "";
     },
-    buildEntry(entry, index) {
+    buildEntry(entry: ExecutionOutputEntry, index: number) {
       const newEntry: ExecutionOutputEntry = {
         executionOutput: entry.executionOutput,
         meta: entry.meta,
@@ -243,12 +254,13 @@ export default defineComponent({
       return newEntry;
     },
     _tryAttachScrollListener() {
-      if ((this as any)._scrollListenerAdded) return;
-      const scrollerEl = (this.$refs.scroller as any)?.$el as
-        HTMLElement | undefined;
+      if (this.scrollListenerAdded) return;
+      const scrollerEl = (
+        this.$refs.scroller as { $el?: HTMLElement } | undefined
+      )?.$el;
       if (scrollerEl) {
         scrollerEl.addEventListener("scroll", this.onScrollerScroll);
-        (this as any)._scrollListenerAdded = true;
+        this.scrollListenerAdded = true;
       }
     },
     onSelectLine(index: number) {
@@ -256,9 +268,9 @@ export default defineComponent({
     },
     onScrollerScroll(ev: Event) {
       const el = ev.target as HTMLElement;
-      const prevScrollTop = (this as any)._prevScrollTop as number | undefined;
+      const prevScrollTop = this.prevScrollTop;
       const currentScrollTop = el.scrollTop;
-      (this as any)._prevScrollTop = currentScrollTop;
+      this.prevScrollTop = currentScrollTop;
 
       if (prevScrollTop === undefined) return;
 
@@ -288,7 +300,11 @@ export default defineComponent({
     _isLastEntryMeasured(): boolean {
       const entries = this.entryOutputs;
       if (entries.length === 0) return true;
-      const scroller = this.$refs.scroller as any;
+      const scroller = this.$refs.scroller as
+        | {
+            getItemSize?: (entry: ExecutionOutputEntry) => number | undefined;
+          }
+        | undefined;
       const lastEntry = entries[entries.length - 1];
       return !!scroller?.getItemSize?.(lastEntry);
     },

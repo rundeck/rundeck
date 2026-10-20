@@ -49,6 +49,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import type { Ace } from "ace-builds";
 
 import Ace from "./AceEditorVue.vue";
 
@@ -105,7 +106,7 @@ export default defineComponent({
       valueInternal: this.modelValue || "",
       modeInternal: this.lang || "text",
       wrapInternal: false,
-      localAce: null,
+      localAce: null as Ace.Editor | null,
       aceModes: [
         "batchfile",
         "diff",
@@ -142,7 +143,7 @@ export default defineComponent({
     },
   },
   methods: {
-    aceEditorInit(ace: any) {
+    aceEditorInit(ace: Ace.Editor) {
       this.localAce = ace;
       if (this.readOnly) {
         ace.setReadOnly(true);

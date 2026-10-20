@@ -6,15 +6,22 @@ interface Tag {
 }
 
 interface NodeSummary extends ProjectFilters {
+  active?: number;
+  selectedFilter?: string;
   tags?: Tag[];
+  total?: number;
   totalCount?: number;
 }
 
+type NodeAttributes = Record<string, string>;
+
 interface Node {
-  attributes?: { [key: string]: string };
+  attributes?: NodeAttributes;
   isLocal?: boolean;
+  islocal?: boolean;
   authrun?: boolean;
   nodename: string;
+  name?: string;
   tags?: Tag[] | string;
   hostname?: string;
   username?: string;
@@ -24,6 +31,7 @@ interface Node {
   osName?: string;
   editUrl?: string;
   remoteUrl?: string;
+  unselected?: boolean;
 }
 
 interface Nodes {
@@ -42,4 +50,38 @@ interface NodeTags {
   tags: NodeTag[] | Tag[];
 }
 
-export { Node, Nodes, NodeSummary, Tag, NodeTag, NodeTags };
+interface NodeFilterSelection {
+  filter?: string;
+  filterExclude?: string;
+  filterName?: string;
+  filterNameExclude?: string;
+}
+
+interface NodeQueryResponse {
+  allcount: number;
+  allnodes: Node[];
+  colkeys: string[];
+  max: number;
+  message?: string;
+  tagsummary: Tag[] | Record<string, unknown>;
+  total: number;
+  truncated: boolean;
+}
+
+interface NodeSet {
+  nodes: Node[];
+  tagsummary: Tag[] | Record<string, unknown>;
+}
+
+export {
+  Node,
+  NodeAttributes,
+  NodeFilterSelection,
+  NodeQueryResponse,
+  Nodes,
+  NodeSet,
+  NodeSummary,
+  Tag,
+  NodeTag,
+  NodeTags,
+};

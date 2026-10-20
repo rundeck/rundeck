@@ -663,7 +663,7 @@ export default defineComponent({
       const fullInputText = this.modelValue;
       const selectedSuggestion = this.value;
       const autoCompleteInput = (
-        this.$refs.autoInput as any
+        this.$refs.autoInput as { $el?: Element } | undefined
       )?.$el?.querySelector("input");
       if (!autoCompleteInput) return;
       const cursorPosition = autoCompleteInput.selectionStart;

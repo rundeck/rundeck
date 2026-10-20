@@ -108,7 +108,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue) as { type: string; config: any };
+    this.model = cloneDeep(this.modelValue) as PluginConfig;
     this.eventBus.on("edit", () => {
       if (!this.addFilterModal) {
         this.editFilterModal = true;

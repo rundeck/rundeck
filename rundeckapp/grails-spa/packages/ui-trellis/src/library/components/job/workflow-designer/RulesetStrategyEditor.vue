@@ -34,6 +34,12 @@ import { defineComponent } from "vue";
 import WorkflowGraph from "./WorkflowGraph.vue";
 import messages from "./i18n";
 import type { LocalizedMessages } from "../../../";
+import type {
+  CommandExecPluginConfig,
+  EditStepData,
+  StepsEditData,
+} from "../../../../app/components/job/workflow/types/workflowTypes";
+import type { Plugin } from "../../../stores/Plugins";
 
 interface GraphNode {
   identifier: string;
@@ -88,15 +94,18 @@ export default defineComponent({
     );
     this.rulesInput = this.modelValue;
 
-    eventBus.on("workflow-editor-workflowsteps-updated", async (data: any) => {
-      // Load the workflow steps into graph nodes
-      if (data.commands) {
-        this.nodesData = this.mapCommands(data.commands);
-        if (!this.loaded) {
-          this.loaded = true;
+    eventBus.on(
+      "workflow-editor-workflowsteps-updated",
+      async (data: StepsEditData) => {
+        // Load the workflow steps into graph nodes
+        if (data.commands) {
+          this.nodesData = this.mapCommands(data.commands);
+          if (!this.loaded) {
+            this.loaded = true;
+          }
         }
-      }
-    });
+      },
+    );
     // Request the workflow steps from the WorkflowSteps component in case they have already been emitted
     eventBus.emit("workflow-editor-workflowsteps-request");
   },
@@ -105,16 +114,16 @@ export default defineComponent({
      * Map the internal model for workflow steps to graph nodes
      * @param commands
      */
-    mapCommands(commands: any[]): GraphNode[] {
+    mapCommands(commands: EditStepData[]): GraphNode[] {
       const wfplugins =
         (getRundeckContext().rootStore.plugins.getServicePlugins(
           "WorkflowStep",
-        ) as any[]) || [];
+        ) as Plugin[]) || [];
       const nodeplugins =
         (getRundeckContext().rootStore.plugins.getServicePlugins(
           "WorkflowNodeStep",
-        ) as any[]) || [];
-      return commands.map((command: any, i: number) => {
+        ) as Plugin[]) || [];
+      return commands.map((command, i) => {
         const type = command.type;
         const plugin = (command.nodeStep ? nodeplugins : wfplugins).find(
           (p) => p.name === type,
@@ -125,7 +134,7 @@ export default defineComponent({
           iconCss = `fas fa-${plugin.providerMetadata.faicon}`;
         }
         if (command.nodeStep && type === "exec-command") {
-          title = command.config.adhocRemoteString;
+          title = (command.config as CommandExecPluginConfig).adhocRemoteString;
           iconCss = "rdicon shell icon-small icon-med";
         } else if (command.nodeStep && type === "script-file-url") {
           title = this.$t("graph.stepLabel.scriptFile");
@@ -140,7 +149,7 @@ export default defineComponent({
 
         return {
           identifier: (Number(i) + 1).toString(),
-          label: command.description,
+          label: command.description || "",
           title,
           icon: {
             class: iconCss,

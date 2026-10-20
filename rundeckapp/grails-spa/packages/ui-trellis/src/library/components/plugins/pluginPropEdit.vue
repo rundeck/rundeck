@@ -428,6 +428,7 @@ import { EventBus } from "../../../library";
 import UiSocket from "../utils/UiSocket.vue";
 import PluginDetails from "./PluginDetails.vue";
 import PtAutoComplete from "../primeVue/PtAutoComplete/PtAutoComplete.vue";
+import type PluginValidation from "../../interfaces/PluginValidation";
 import {
   getContextVariables,
   isAutoCompleteField,
@@ -440,11 +441,11 @@ const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
 
 interface Prop {
   type: string;
-  defaultValue: any;
+  defaultValue: unknown;
   title: string;
   required: boolean;
-  options: any;
-  allowed: string;
+  options: Record<string, unknown>;
+  allowed: unknown;
   // Optional { value: label } map supplied when a plugin provides dynamic
   // values as a map; pluginConfig keeps it here while `allowed` holds the
   // keys. Rendered by pluginPropVal.
@@ -453,6 +454,27 @@ interface Prop {
   desc: string;
   staticTextDefaultValue: string;
 }
+
+interface SelectorOption {
+  key: string;
+  value: string;
+  description?: string;
+}
+
+interface LegacyAutocompleteContext {
+  value: string;
+  data: {
+    title: string;
+    category: string;
+  };
+}
+
+interface JobContext {
+  name: string;
+  description: string;
+  category: string;
+}
+
 export default defineComponent({
   components: {
     PluginDetails,
@@ -492,7 +514,7 @@ export default defineComponent({
       required: false,
     },
     validation: {
-      type: Object as PropType<any>,
+      type: Object as PropType<PluginValidation>,
       required: false,
     },
     eventBus: {
@@ -525,11 +547,11 @@ export default defineComponent({
       required: false,
     },
     autocompleteCallback: {
-      type: Function,
+      type: Function as PropType<(key: string) => LegacyAutocompleteContext[]>,
       required: false,
     },
     selectorData: {
-      type: Object as PropType<any>,
+      type: Object as PropType<Record<string, SelectorOption[]>>,
       required: true,
     },
     stepType: {
@@ -550,21 +572,21 @@ export default defineComponent({
       ctx,
       jobName: "",
       keyPath: "",
-      jobContext: [] as any,
+      jobContext: [] as JobContext[],
       aceEditorEnabled: false,
       renderReadOnly: false,
-      appMeta: (ctx?.appMeta ?? {}) as Record<string, any>,
+      appMeta: ctx?.appMeta ?? {},
     };
   },
   computed: {
-    selectorDataForName(): any[] {
-      return this.selectorData[this.prop.name];
+    selectorDataForName(): SelectorOption[] {
+      return this.selectorData[this.prop.name] || [];
     },
     currentValue: {
       get() {
         return this.modelValue;
       },
-      set(val: any) {
+      set(val: unknown) {
         this.$emit("update:modelValue", val);
         this.setJobName(val);
       },
@@ -572,7 +594,7 @@ export default defineComponent({
     isAutoCompleteField(): boolean {
       return isAutoCompleteField(this.stepType);
     },
-    inputTypeContextVariables(): any {
+    inputTypeContextVariables(): ContextVariable[] {
       if (!this.isAutoCompleteField) return [];
       return [
         ...getContextVariables("input", this.stepType, this.pluginType),
@@ -583,7 +605,7 @@ export default defineComponent({
         ),
       ];
     },
-    scriptTypeContextVariables(): any {
+    scriptTypeContextVariables(): ContextVariable[] {
       if (!this.isAutoCompleteField) return [];
       return [
         ...getContextVariables("script", this.stepType, this.pluginType),
@@ -595,11 +617,15 @@ export default defineComponent({
       ];
     },
     aceEditorMinLines(): number {
-      return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
+      const value = this.appMeta.aceEditorMinLines;
+      return typeof value === "number" ? value : ACE_EDITOR_DEFAULT_MIN_LINES;
     },
     aceEditorMaxLines(): number {
+      const configured = this.appMeta.aceEditorMaxLines;
       const raw =
-        this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+        typeof configured === "number"
+          ? configured
+          : ACE_EDITOR_DEFAULT_MAX_LINES;
       return raw === 0 ? Infinity : raw;
     },
   },
@@ -625,8 +651,8 @@ export default defineComponent({
 
     if (this.autocompleteCallback && this.contextAutocomplete) {
       const vars = this.autocompleteCallback(this.rkey + "prop_" + this.pindex);
-      const jobContext = [] as any;
-      vars.forEach((context: any) => {
+      const jobContext: JobContext[] = [];
+      vars.forEach((context: LegacyAutocompleteContext) => {
         jobContext.push({
           name: context["value"],
           description: context["data"]["title"],
@@ -645,13 +671,13 @@ export default defineComponent({
       (this.prop.options && this.prop.options["displayType"] === "READONLY");
   },
   methods: {
-    translatedTitle(prop: any): string {
+    translatedTitle(prop: Prop): string {
       return (this.$t(prop?.title || "") as string) || "";
     },
-    translatedDesc(prop: any): string {
+    translatedDesc(prop: Prop): string {
       return (this.$t(prop?.desc || "") as string) || "";
     },
-    inputColSize(prop: any) {
+    inputColSize(prop: Prop) {
       let size = 10;
       if (prop.options && prop.options["labelHidden"] === "true") {
         size = 12;
@@ -661,8 +687,9 @@ export default defineComponent({
       }
       return `col-sm-${size}`;
     },
-    setJobName(jobUuid: string) {
+    setJobName(jobUuid: unknown) {
       if (
+        typeof jobUuid === "string" &&
         jobUuid &&
         jobUuid.length > 0 &&
         this.prop.options &&
@@ -687,7 +714,7 @@ export default defineComponent({
       }
       return JSON.stringify(this.prop.allowed);
     },
-    handleUpdate(val: any) {
+    handleUpdate(val: unknown) {
       this.currentValue = val;
     },
     hasAllowedValues() {

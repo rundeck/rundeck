@@ -80,7 +80,7 @@ A comprehensive form component for creating and editing job options in Rundeck. 
         appMeta: {},
         token: {} as RundeckToken,
         tokens: {},
-        navbar: { items: [] as any },
+        navbar: { items: [] },
         feature: {},
         data: {},
         rootStore: rootStore,

@@ -34,11 +34,11 @@ export const darkTheme: StoryFn<typeof LogViewer> = (args) => ({
   template:
     '<LogViewer :useUserSettings="false" :config="settings" executionId="912" style="height: 100%;" />',
   mounted() {
-    const el = this.$el as any;
+    const el = this.$el as HTMLElement;
     if (!el) {
       return;
     }
-    el.parentNode.style.height = "100vh";
+    el.parentElement!.style.height = "100vh";
   },
   props: {
     settings: {
@@ -108,8 +108,8 @@ export const basicOutput: StoryFn<typeof LogViewer> = () => ({
   },
   async mounted() {
     console.log("Mounted!!!");
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
 
     fetchMock.reset();
     const cassette = await Cassette.Load("/fixtures/ExecBasicOutput.json");
@@ -151,8 +151,8 @@ export const htmlOutput: StoryFn<typeof LogViewer> = () => ({
   template:
     '<LogViewer :useUserSettings="false" executionId="907" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -166,8 +166,8 @@ export const ansiColorOutput: StoryFn<typeof LogViewer> = () => ({
   template:
     '<LogViewer :useUserSettings="false" executionId="912" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -181,8 +181,8 @@ export const largeOutput: StoryFn<typeof LogViewer> = () => ({
   template:
     '<LogViewer :useUserSettings="false" executionId="7" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -196,8 +196,8 @@ export const runningOutput: StoryFn<typeof LogViewer> = () => ({
   template:
     '<LogViewer :useUserSettings="false" executionId="900" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -211,8 +211,8 @@ export const failedOutput: StoryFn<typeof LogViewer> = () => ({
   template:
     '<LogViewer :useUserSettings="false" executionId="880" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -229,8 +229,8 @@ export const gutterOverflow: StoryFn<typeof LogViewer> = (args) => ({
   template:
     '<LogViewer :useUserSettings="false" :config="config" executionId="900" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -249,8 +249,8 @@ export const userSettings: StoryFn<typeof LogViewer> = () => ({
   },
   template: '<LogViewer executionId="900" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -271,8 +271,8 @@ export const filtered: StoryFn<typeof LogViewer> = () => ({
   },
   mounted: async function () {
     console.log("Mounted!!!");
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
 
     fetchMock.reset();
     const cassette = await Cassette.Load("/fixtures/ExecFailedOutput.json");
@@ -313,8 +313,8 @@ export const missingOutput: StoryFn<typeof LogViewer> = () => ({
   },
   template: '<LogViewer executionId="1033" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100%";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100%";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),
@@ -330,8 +330,8 @@ export const oversizeOutput: StoryFn<typeof LogViewer> = () => ({
   },
   template: '<LogViewer executionId="900" style="height: 100%;" />',
   mounted: async function () {
-    const el = this.$el as any;
-    el.parentNode.style.height = "100%";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100%";
   },
   provide: () => ({
     rootStore: new RootStore(window._rundeck.rundeckClient),

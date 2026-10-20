@@ -6,6 +6,33 @@ import NodeCard from "../../components/job/resources/NodeCard.vue";
 import { observer } from "../../utilities/uiSocketObserver";
 
 const rundeckContext = getRundeckContext();
+
+interface NodeFilterValue {
+  filter: string;
+}
+
+interface KnockoutNodeFilter {
+  filter: {
+    (): string;
+    subscribe(callback: (value: string) => void): { dispose(): void };
+  };
+  selectNodeFilter(filter: NodeFilterValue, submit: boolean): void;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isKnockoutNodeFilter = (value: unknown): value is KnockoutNodeFilter => {
+  if (!isRecord(value)) return false;
+  const filter = value.filter;
+  return (
+    typeof filter === "function" &&
+    "subscribe" in filter &&
+    typeof filter.subscribe === "function" &&
+    typeof value.selectNodeFilter === "function"
+  );
+};
+
 export const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
@@ -65,7 +92,7 @@ export const FilterInputComp = defineComponent({
         });
       }
     },
-    filterClicked(filter: any) {
+    filterClicked(filter: NodeFilterValue) {
       this.nodeFilterKo()?.selectNodeFilter(filter, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter);
@@ -76,34 +103,28 @@ export const FilterInputComp = defineComponent({
         });
       }
     },
-    nodeFilterKo(): any {
-      if (
-        this.koFieldName &&
-        this.koParam &&
-        window[this.koFieldName] &&
-        window[this.koFieldName][this.koParam]
-      ) {
-        return window[this.koFieldName][this.koParam];
-      } else if (this.koFieldName && window[this.koFieldName]) {
-        return window[this.koFieldName];
-      } else if (!this.koFieldName) {
-        return (window as any).nodeFilter;
-      }
+    nodeFilterKo(): KnockoutNodeFilter | undefined {
+      const field: unknown = Reflect.get(
+        window,
+        this.koFieldName || "nodeFilter",
+      );
+      const nestedField =
+        this.koParam && isRecord(field) ? field[this.koParam] : undefined;
+      if (isKnockoutNodeFilter(nestedField)) return nestedField;
+      if (isKnockoutNodeFilter(field)) return field;
     },
     attachKnockout(retry: number) {
       //set up reactive connection to existing Knockout
-      if (this.nodeFilterKo()) {
+      const nodeFilter = this.nodeFilterKo();
+      if (nodeFilter) {
         this.subs.push(
-          this.nodeFilterKo().filter.subscribe(
+          nodeFilter.filter.subscribe(
             (val: string) => (this.filterValue = val),
           ),
         );
-        const koVal = this.nodeFilterKo().filter();
+        const koVal = nodeFilter.filter();
         if (this.filterValue) {
-          this.nodeFilterKo().selectNodeFilter(
-            { filter: this.filterValue },
-            false,
-          );
+          nodeFilter.selectNodeFilter({ filter: this.filterValue }, false);
         } else {
           this.filterValue = koVal;
         }
@@ -175,8 +196,8 @@ function init() {
             };
           },
           methods: {
-            updateNodeFilter(val: any) {
-              const filterName = val && val.filter ? val.filter : val;
+            updateNodeFilter(val: string | NodeFilterValue) {
+              const filterName = typeof val === "string" ? val : val.filter;
               if (
                 filterName === ".*" ||
                 this.nodeFilterStore.selectedFilter === ".*"

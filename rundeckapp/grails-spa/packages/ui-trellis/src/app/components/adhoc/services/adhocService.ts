@@ -23,7 +23,7 @@ export interface RunAdhocRequest {
     [key: string]: string | undefined;
   };
   // Allow any additional fields (including flat meta.* fields from form)
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface RunAdhocResponse {
@@ -51,7 +51,7 @@ export async function runAdhocCommand(
 
   // Convert request to query parameters (matching original jQuery.serialize() behavior)
   // This ensures meta.* fields are sent as flat query parameters that Grails parses correctly
-  const params: Record<string, any> = {
+  const params: Record<string, unknown> = {
     formInput: "true", // Required by endpoint
     project: request.project,
     exec: request.exec,
@@ -201,7 +201,20 @@ export interface ExecutionDetails {
   project: string;
   failedNodes?: string[];
   successfulNodes?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+interface ExecutionDetailsApiResponse {
+  id: number;
+  status: string;
+  project: string;
+  failedNodes?: string[] | string;
+  successfulNodes?: string[];
+  [key: string]: unknown;
+}
+
+interface ExecutionDetailsEnvelope {
+  executions?: ExecutionDetailsApiResponse[];
 }
 
 /**
@@ -236,20 +249,27 @@ export async function getExecutionDetails(
   // Use execution API endpoint: /api/{api_version}/execution/{id}
   const executionApiUrl = `execution/${executionId}`;
 
-  const response = await api.get(executionApiUrl);
+  const response = await api.get<
+    ExecutionDetailsApiResponse | ExecutionDetailsEnvelope
+  >(executionApiUrl);
+  const data = response.data;
+
+  if (!data || typeof data !== "object") {
+    return null;
+  }
 
   // The API returns { executions: [...] } when multiple, or flattened execution object when single:true
-  let execution: any = null;
+  let execution: ExecutionDetailsApiResponse | null = null;
   if (
-    response.data &&
-    Array.isArray(response.data.executions) &&
-    response.data.executions.length > 0
+    "executions" in data &&
+    Array.isArray(data.executions) &&
+    data.executions.length > 0
   ) {
     // Multiple executions format
-    execution = response.data.executions[0];
-  } else if (response.data && response.data.id) {
+    execution = data.executions[0];
+  } else if ("id" in data && data.id) {
     // Single execution format (when single:true, execution is flattened directly)
-    execution = response.data;
+    execution = data;
   }
 
   if (!execution) {
@@ -286,7 +306,7 @@ export interface RecentCommandExecution {
   title?: string;
   execid?: string;
   filter?: string;
-  extraMetadata?: any;
+  extraMetadata?: unknown;
   status?: string;
   succeeded?: boolean;
 }

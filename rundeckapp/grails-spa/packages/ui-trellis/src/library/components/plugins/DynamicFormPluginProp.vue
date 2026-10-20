@@ -184,6 +184,11 @@ interface CustomField {
   desc?: string;
 }
 
+interface CustomOption {
+  value: string;
+  label: string;
+}
+
 export default defineComponent({
   name: "DynamicFormPluginProp",
   components: {
@@ -214,7 +219,7 @@ export default defineComponent({
   data() {
     return {
       customFields: [] as CustomField[],
-      customOptions: [] as any[],
+      customOptions: [] as CustomOption[],
       useOptions: false,
       modalAddField: false,
       duplicate: false,
@@ -248,8 +253,8 @@ export default defineComponent({
       this.options !== undefined &&
       this.options !== ""
     ) {
-      const optionsObject = JSON.parse(this.options!);
-      const options = Object.keys(optionsObject).map((key: any) => {
+      const optionsObject = JSON.parse(this.options) as Record<string, string>;
+      const options = Object.keys(optionsObject).map((key: string) => {
         const data = optionsObject[key];
         return { value: key, label: data };
       });
@@ -257,7 +262,7 @@ export default defineComponent({
     }
   },
   beforeUnmount() {
-    this.customFields = null as any;
+    this.customFields = [];
   },
   methods: {
     syncFieldsFromProp(fields: string) {
@@ -267,9 +272,12 @@ export default defineComponent({
         this.customFields = [];
         return;
       }
-      const customFieldsObject = JSON.parse(fields);
+      const customFieldsObject = JSON.parse(fields) as Record<
+        string,
+        CustomField
+      >;
       if (customFieldsObject != null) {
-        const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
+        const parsedFields = Object.keys(customFieldsObject).map((key) => {
           const value = customFieldsObject[key];
           if (value.desc == null) {
             value.desc = this.$t("message_fieldKeyDescription", [value.key]);
@@ -329,7 +337,7 @@ export default defineComponent({
         };
       }
       let exists = false;
-      this.customFields.forEach((row: any) => {
+      this.customFields.forEach((row: CustomField) => {
         if (field.key === row.key) {
           exists = true;
         }
@@ -346,7 +354,7 @@ export default defineComponent({
         this.duplicate = true;
       }
     },
-    removeField(row: any) {
+    removeField(row: CustomField) {
       const fields = [] as CustomField[];
       this.customFields.forEach((field: CustomField) => {
         if (field.key !== row.key) {

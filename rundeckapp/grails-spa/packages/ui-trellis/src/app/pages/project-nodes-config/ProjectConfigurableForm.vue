@@ -43,34 +43,39 @@ import { defineComponent } from "vue";
 
 interface Prop {
   type: string;
-  defaultValue: any;
+  defaultValue: unknown;
   title: string;
   required: boolean;
-  options: any;
-  allowed: string;
+  options: Record<string, unknown>;
+  allowed: unknown;
   name: string;
   desc: string;
+  description: string;
+  renderingOptions: Record<string, unknown>;
   staticTextDefaultValue: string;
 }
 
-interface NodeServiceConfigurableItemValues {
-  delay: string;
-  enabled: string;
-  firstLoadSynch: string;
-}
-interface HealthCheckConfigurableItemValues {
-  onstartup: string;
-  enabled: string;
-  period: string;
-  refreshHealthCheckCache: string;
-}
 interface ConfigurableItem {
   name: string;
-  properties: [Prop];
-  propertiesMapping:
-    NodeServiceConfigurableItemValues | HealthCheckConfigurableItemValues;
-  values: NodeServiceConfigurableItemValues | HealthCheckConfigurableItemValues;
+  properties: Prop[];
+  propertiesMapping: Record<string, unknown>;
+  values: Record<string, unknown>;
 }
+
+const errorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return String(error);
+};
 
 export default defineComponent({
   name: "ProjectConfigurableForm",
@@ -86,11 +91,11 @@ export default defineComponent({
   data() {
     return {
       rundeckContext: {} as RundeckContext,
-      pluginConfig: {},
-      apiResponse: {},
+      pluginConfig: {} as { type?: string; props?: Prop[] },
+      apiResponse: [] as ConfigurableItem[],
       isConfigSet: false,
-      cacheConfig: { config: {} },
-      massagedConfig: {},
+      cacheConfig: { config: {} as Record<string, unknown> },
+      massagedConfig: {} as Record<string, unknown>,
     };
   },
   async mounted() {
@@ -103,13 +108,12 @@ export default defineComponent({
           window._rundeck.projectName,
           this.category,
         );
-        this.apiResponse = (config.response["projectConfigurable"] || []) as [
-          ConfigurableItem,
-        ];
-        const properties = [];
+        this.apiResponse = (config.response["projectConfigurable"] ||
+          []) as ConfigurableItem[];
+        const properties: Prop[][] = [];
         this.apiResponse.forEach((item: ConfigurableItem) => {
           const itemName = item.name;
-          item.properties.forEach((prop: any) => {
+          item.properties.forEach((prop: Prop) => {
             const originalPropName = prop.name;
             prop.name = itemName + "." + prop.name;
             prop.title = this.$t(prop.title) as string;
@@ -122,9 +126,9 @@ export default defineComponent({
           });
           properties.push(item.properties);
         });
-        const resolvedProps = [];
-        properties.forEach((item: any) => {
-          item.forEach((prop: any) => {
+        const resolvedProps: Prop[] = [];
+        properties.forEach((item: Prop[]) => {
+          item.forEach((prop: Prop) => {
             prop.desc = prop.description;
             resolvedProps.push({ ...prop, options: prop.renderingOptions });
           });
@@ -135,8 +139,8 @@ export default defineComponent({
         };
         this.cacheConfig.config = this.massagedConfig;
         this.isConfigSet = true;
-      } catch (err) {
-        this.notifyError("Error loading config: " + err.message);
+      } catch (err: unknown) {
+        this.notifyError("Error loading config: " + errorMessage(err));
         console.error(err);
       }
     },
@@ -154,28 +158,29 @@ export default defineComponent({
           this.notifySuccess("Success!", "Config saved successfully");
           await this.loadConfig();
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Full error object:", err);
-        this.notifyError(
-          "Error saving config: " +
-            (err.message || err.toString() || "Unknown error"),
-        );
+        this.notifyError("Error saving config: " + errorMessage(err));
       }
     },
-    convertMapNumbersToStrings(obj: any): any {
+    convertMapNumbersToStrings(
+      obj: Record<string, unknown>,
+    ): Record<string, unknown> {
       for (const key in obj) {
         if (typeof obj[key] === "number") {
           // Convert number to string
           obj[key] = obj[key].toString();
         } else if (typeof obj[key] === "object" && obj[key] !== null) {
           // Recursively convert numbers to strings in nested objects
-          obj[key] = this.convertMapNumbersToStrings(obj[key]);
+          obj[key] = this.convertMapNumbersToStrings(
+            obj[key] as Record<string, unknown>,
+          );
         }
       }
       return obj;
     },
-    transformConfigToMap(config: any) {
-      const resultMap = {};
+    transformConfigToMap(config: Record<string, unknown>) {
+      const resultMap: Record<string, Record<string, unknown>> = {};
 
       Object.entries(config).forEach(([key, value]) => {
         const [mainKey, subKey] = key.split(".");

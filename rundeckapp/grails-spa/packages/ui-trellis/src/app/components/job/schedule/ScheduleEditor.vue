@@ -446,8 +446,24 @@ import {
   getDays,
   getMonths,
   getSimpleDecomposition,
+  SimpleScheduleDecomposition,
 } from "./services/scheduleDefinition";
 import { EventBus } from "../../../../library";
+
+interface ScheduleEditorData {
+  useCrontabString: boolean;
+  crontabString: string;
+  hourSelected?: string;
+  minuteSelected?: string;
+  selectedDays: string[];
+  selectedMonths: string[];
+  everyDayOfWeek?: boolean;
+  allMonths?: boolean;
+  timeZone?: string;
+  timeZones?: string[];
+  scheduleEnabled?: boolean;
+  executionEnabled?: boolean;
+}
 
 export default defineComponent({
   name: "ScheduleEditor",
@@ -471,7 +487,7 @@ export default defineComponent({
   emits: ["update:modelValue"],
   data() {
     return {
-      modelData: {},
+      modelData: {} as ScheduleEditorData,
       name: "",
       errors: "",
       hours: [],
@@ -533,7 +549,7 @@ export default defineComponent({
     this.showSimpleCron();
   },
   methods: {
-    loadScheduleIntoSimpleTab(decomposedSchedule: any) {
+    loadScheduleIntoSimpleTab(decomposedSchedule: SimpleScheduleDecomposition) {
       this.modelData.hourSelected = decomposedSchedule.hour;
       this.modelData.minuteSelected = decomposedSchedule.minute;
       this.modelData.selectedDays =
@@ -626,12 +642,22 @@ function getCrontabSection(pos: number, text: string): number {
  */
 function getCaretPos() {
   const el = document.getElementsByName("crontabString")[0] as HTMLInputElement;
-  let rng;
   const ii = -1;
   if (typeof el.selectionStart == "number") {
     return el.selectionStart;
-  } else if ((document as any).selection && (el as any).createTextRange) {
-    rng = (document as any).selection.createRange();
+  }
+
+  const legacyDocument = document as Document & {
+    selection?: {
+      createRange(): {
+        collapse(start: boolean): void;
+        moveStart(unit: string, count: number): void;
+        text: string;
+      };
+    };
+  };
+  if (legacyDocument.selection && "createTextRange" in el) {
+    const rng = legacyDocument.selection.createRange();
     rng.collapse(true);
     rng.moveStart("character", -el.value.length);
     return rng.text.length;

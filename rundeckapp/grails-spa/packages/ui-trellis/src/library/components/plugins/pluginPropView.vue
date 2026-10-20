@@ -282,9 +282,9 @@ export default defineComponent({
     },
   },
   methods: {
-    getCustomValues(): any[] {
+    getCustomValues(): unknown[] {
       if (this.innerValue !== "") {
-        return JSON.parse(`${this.innerValue}`);
+        return JSON.parse(`${this.innerValue}`) as unknown[];
       }
       return [];
     },

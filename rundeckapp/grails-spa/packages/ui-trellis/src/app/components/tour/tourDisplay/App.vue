@@ -87,7 +87,7 @@ export default defineComponent({
         image: null,
         alt: null,
       },
-      tour: null as any,
+      tour: null as Tour | null,
       display: false,
       stepIndex: 0,
       progress: 0,
@@ -109,7 +109,7 @@ export default defineComponent({
       if (tourParts[2] != null) {
         this.initUrl = tourParts[2];
       }
-      TourServices.getTour(tourParts[0], tourParts[1]).then((tour: any) => {
+      TourServices.getTour(tourParts[0], tourParts[1]).then((tour) => {
         let tourStep = 0;
         if (window._rundeck.activeTourStep) {
           if (Number.isInteger(parseInt(window._rundeck.activeTourStep))) {
@@ -184,7 +184,7 @@ export default defineComponent({
         element?.parentNode?.removeChild(element);
       }
     },
-    initTour(tour: Tour, tourStep: any) {
+    initTour(tour: Tour, tourStep: number) {
       this.tour = tour;
       this.display = true;
       this.stepIndex = 0;
@@ -197,7 +197,7 @@ export default defineComponent({
     },
     stopTour() {
       TourServices.unsetTour().then(() => {
-        this.tour = null as any;
+        this.tour = null;
         this.display = false;
         document.body.classList.remove("tour-open");
         this.removeIndicator();
@@ -234,7 +234,7 @@ export default defineComponent({
         window.location.replace(`${window._rundeck.rdBase}${step.currentUrl}`);
       }
     },
-    getNextUrl(stepIndex: any) {
+    getNextUrl(stepIndex: number) {
       const nextStep = this.tour.steps[stepIndex];
       let nextUrl = null;
 
@@ -278,9 +278,10 @@ export default defineComponent({
         });
       });
     },
-    openImageModal(event: any) {
-      this.modalData.image = event.target.src;
-      this.modalData.alt = event.target.alt;
+    openImageModal(event: MouseEvent) {
+      const target = event.target as HTMLImageElement;
+      this.modalData.image = target.src;
+      this.modalData.alt = target.alt;
       this.modalData.show = true;
     },
     resume() {

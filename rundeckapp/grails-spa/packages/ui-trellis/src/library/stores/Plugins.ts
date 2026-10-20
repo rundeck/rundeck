@@ -9,7 +9,7 @@ export class PluginStore {
 
   pluginsByService: { [key: string]: Plugin[] } = {};
   pluginsById: { [key: string]: Plugin[] } = {};
-  pluginDetailLoader: { [key: string]: Promise<any> } = {};
+  pluginDetailLoader: { [key: string]: Promise<unknown> } = {};
   loadedServices: Set<string> = new Set();
 
   constructor(
@@ -26,11 +26,11 @@ export class PluginStore {
     ) {
       this._injectStaticPlugins(service);
     }
-    const plugins = await apiClient(57).get("plugin/list", {
+    const plugins = await apiClient(57).get<Plugin[]>("plugin/list", {
       params: { service },
     });
 
-    plugins.data.forEach((p: any) => {
+    plugins.data.forEach((p: Plugin) => {
       const pluginKey = this._getPluginByIdKey(p);
       if (this.pluginsById[pluginKey]) return;
       else this.plugins.push(p);

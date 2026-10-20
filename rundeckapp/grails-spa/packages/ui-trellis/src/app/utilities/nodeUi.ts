@@ -1,9 +1,16 @@
+import type {
+  Node,
+  NodeAttributes,
+} from "../components/job/resources/types/nodeTypes";
+
+type UiAttributes = Partial<Record<string, string | null>>;
+
 const CSSColors =
   "aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen".split(
     " ",
   );
 
-export function cssForIcon(attrs: any) {
+export function cssForIcon(attrs: UiAttributes) {
   const classnames = [];
   const fgColor = iconFgCss(attrs, "ui:icon:color");
   if (fgColor) {
@@ -16,7 +23,7 @@ export function cssForIcon(attrs: any) {
   return classnames.join(" ");
 }
 
-export function cssForNode(node: any, nodes: Array<any>) {
+export function cssForNode(node: NodeAttributes, nodes: Node[]) {
   return {
     server: node.islocal,
     "col-lg-2": nodes.length > 20,
@@ -25,8 +32,8 @@ export function cssForNode(node: any, nodes: Array<any>) {
   };
 }
 
-export function styleForNode(attrs: any) {
-  const styles: any = {};
+export function styleForNode(attrs: UiAttributes) {
+  const styles: Record<string, string> = {};
   const uiColor = attrs["ui:color"];
   if (!nodeFgCss(attrs) && isStyleFg(uiColor)) {
     styles["color"] = uiColor;
@@ -38,8 +45,8 @@ export function styleForNode(attrs: any) {
   return styles;
 }
 
-export function statusIconStyle(attrs: any) {
-  const styles: any = {};
+export function statusIconStyle(attrs: UiAttributes) {
+  const styles: Record<string, string> = {};
   if (!iconFgCss(attrs, "ui:status:color")) {
     const uiIconColor = attrs["ui:status:color"];
     const uiColor = attrs["ui:color"];
@@ -61,7 +68,7 @@ export function statusIconStyle(attrs: any) {
   return styles;
 }
 
-export function statusIconCss(attrs: any) {
+export function statusIconCss(attrs: UiAttributes) {
   const classnames = [];
   const fgColor = iconFgCss(attrs, "ui:status:color");
   if (fgColor) {
@@ -74,39 +81,39 @@ export function statusIconCss(attrs: any) {
   return classnames.join(" ");
 }
 
-export function isAnsiFg(str: string) {
+export function isAnsiFg(str: string | null | undefined): str is string {
   return (
     str != null &&
-    str.match(
-      /^ansi-fg-(light-)?(black|green|red|yellow|blue|magenta|cyan|white)$/,
+    /^ansi-fg-(light-)?(black|green|red|yellow|blue|magenta|cyan|white)$/.test(
+      str,
     )
   );
 }
 
-export function isStyleFg(str: string) {
+export function isStyleFg(str: string | null | undefined): str is string {
   return (
-    (str != null && str.match(/^#[0-9a-fA-F]{3,6}$/)) ||
-    CSSColors.indexOf(str) >= 0
+    str != null &&
+    (/^#[0-9a-fA-F]{3,6}$/.test(str) || CSSColors.indexOf(str) >= 0)
   );
 }
 
-export function isAnsiBg(str: string) {
+export function isAnsiBg(str: string | null | undefined): str is string {
   return (
     str != null &&
-    str.match(
-      /^ansi-bg-(black|green|red|yellow|blue|magenta|cyan|white|default)$/,
+    /^ansi-bg-(black|green|red|yellow|blue|magenta|cyan|white|default)$/.test(
+      str,
     )
   );
 }
 
-export function isStyleBg(str: string) {
+export function isStyleBg(str: string | null | undefined): str is string {
   return (
-    (str != null && str.match(/^#[0-9a-fA-F]{3,6}$/)) ||
-    CSSColors.indexOf(str) >= 0
+    str != null &&
+    (/^#[0-9a-fA-F]{3,6}$/.test(str) || CSSColors.indexOf(str) >= 0)
   );
 }
 
-export function nodeFgCss(attrs: any) {
+export function nodeFgCss(attrs: UiAttributes) {
   const uiColor = attrs["ui:color"];
   if (isAnsiFg(uiColor)) {
     return uiColor;
@@ -114,7 +121,7 @@ export function nodeFgCss(attrs: any) {
   return null;
 }
 
-export function nodeBgCss(attrs: any) {
+export function nodeBgCss(attrs: UiAttributes) {
   const uiBgcolor = attrs["ui:bgcolor"];
   if (isAnsiBg(uiBgcolor)) {
     return uiBgcolor;
@@ -122,7 +129,7 @@ export function nodeBgCss(attrs: any) {
   return null;
 }
 
-export function iconFgCss(attrs: any, attrName: string) {
+export function iconFgCss(attrs: UiAttributes, attrName: string) {
   const uiIconColor = attrs[attrName];
   const uiColor = attrs["ui:color"];
   if (isAnsiFg(uiIconColor)) {
@@ -133,7 +140,7 @@ export function iconFgCss(attrs: any, attrName: string) {
   return null;
 }
 
-export function iconBgCss(attrs: any) {
+export function iconBgCss(attrs: UiAttributes) {
   const uiIconBgcolor = attrs["ui:icon:bgcolor"];
   const uiBgcolor = attrs["ui:bgcolor"];
   if (isAnsiBg(uiIconBgcolor)) {
@@ -144,8 +151,8 @@ export function iconBgCss(attrs: any) {
   return null;
 }
 
-export function styleForIcon(attrs: any) {
-  const styles: any = {};
+export function styleForIcon(attrs: UiAttributes) {
+  const styles: Record<string, string> = {};
   if (!iconFgCss(attrs, "ui:icon:color")) {
     const uiIconColor = attrs["ui:icon:color"];
     const uiColor = attrs["ui:color"];
@@ -178,7 +185,7 @@ export function glyphiconForName(name: string) {
   return "";
 }
 
-export function glyphiconBadges(attributes: any): Array<string> {
+export function glyphiconBadges(attributes: UiAttributes): Array<string> {
   const badges = [];
   if (attributes["ui:badges"]) {
     const found = attributes["ui:badges"].split(/,\s*/g);
@@ -196,7 +203,7 @@ export function glyphiconBadges(attributes: any): Array<string> {
   return badges;
 }
 
-export function expandNodeAttributes(attrs: any, str: string) {
+export function expandNodeAttributes(attrs: UiAttributes, str: string) {
   return str.replace(
     /\$\{node\.([a-zA-Z-.]+)\}/g,
     function (match, g1, offset, string) {

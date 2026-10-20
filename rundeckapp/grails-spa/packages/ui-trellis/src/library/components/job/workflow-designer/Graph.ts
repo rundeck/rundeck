@@ -90,7 +90,7 @@ class PNode extends GNode {
 /** Represents a choice node for branching logic */
 // TODO: Implement
 class CNode extends GNode {
-  choices: Array<any> = [];
+  choices: unknown[] = [];
 }
 
 type GraphNode = GNode | PNode | CNode;
@@ -311,11 +311,11 @@ export class WorkflowGraph {
   }
 
   generateRules(): Array<RuleBuilder> {
-    const rules: any = [];
+    const rules: RuleBuilder[] = [];
     for (const [id, node] of this.nodes) {
       if (node.previous.length > 0) {
         //const rule = new RuleBuilder()
-        const rule: any = new RuleBuilder();
+        const rule = new RuleBuilder();
         rules.push(rule);
         rule.addIdentifer(id);
         rule.addRule({
@@ -323,7 +323,7 @@ export class WorkflowGraph {
           identifiers: node.previous.map((p) => p.identifier),
         });
       } else {
-        const rule: any = new RuleBuilder();
+        const rule = new RuleBuilder();
         rules.push(rule);
         rule.addIdentifer(id);
         rule.addRule({

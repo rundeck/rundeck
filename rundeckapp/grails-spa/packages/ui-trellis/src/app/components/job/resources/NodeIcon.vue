@@ -12,18 +12,19 @@
   </span>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import {
   cssForIcon,
   styleForIcon,
   glyphiconForName,
 } from "../../../utilities/nodeUi";
+import type { Node, NodeAttributes } from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeIcon",
   props: {
     node: {
-      type: Object,
+      type: Object as PropType<Node>,
       required: true,
     },
     defaultIconCss: {
@@ -41,14 +42,14 @@ export default defineComponent({
     },
   },
   methods: {
-    cssForIcon(attrs: any) {
+    cssForIcon(attrs: NodeAttributes) {
       return cssForIcon(attrs);
     },
-    styleForIcon(attrs: any) {
+    styleForIcon(attrs: NodeAttributes) {
       return styleForIcon(attrs);
     },
-    glyphiconForName(attrs: any) {
-      return glyphiconForName(attrs);
+    glyphiconForName(name: string) {
+      return glyphiconForName(name);
     },
   },
 });

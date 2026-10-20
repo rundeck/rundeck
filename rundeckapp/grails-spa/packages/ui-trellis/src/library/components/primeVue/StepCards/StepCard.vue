@@ -36,6 +36,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import type { PluginConfig } from "../../../interfaces/PluginConfig";
 import BaseStepCard from "./BaseStepCard.vue";
 import StepCardContent from "./StepCardContent.vue";
 
@@ -63,7 +64,7 @@ interface JobRefDefinition {
   };
 }
 interface ErrorHandlerDefinition {
-  config: any;
+  config: PluginConfig["config"];
   keepgoingOnSuccess?: boolean;
   nodeStep: boolean;
   jobref?: JobRefDefinition;
@@ -167,7 +168,7 @@ export default defineComponent({
     handleEdit() {
       this.$emit("edit");
     },
-    handleEditLogFilter(data: { filter: any; index: number }) {
+    handleEditLogFilter(data: { filter: PluginConfig; index: number }) {
       this.$emit("edit-log-filter", data);
     },
     handleEditErrorHandler(elementId: string) {

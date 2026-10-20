@@ -52,6 +52,7 @@
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import PluginDetails from "../../../../library/components/plugins/PluginDetails.vue";
 import { getPluginProvidersForService } from "../../../../library/modules/pluginService";
+import type { PluginProviderDescription } from "../../../../library/modules/pluginService";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -72,7 +73,7 @@ export default defineComponent({
     return {
       model: {} as PluginConfig,
       mode: "create",
-      pluginProviders: [],
+      pluginProviders: [] as PluginProviderDescription[],
       pluginLabels: [],
       loaded: false,
       editStrategyPlugin: { type: "", config: {} } as PluginConfig,
@@ -84,7 +85,7 @@ export default defineComponent({
       if (!this.model.type) {
         return null;
       }
-      return this.pluginProviders.find((p: any) => p.name === this.model.type);
+      return this.pluginProviders.find((p) => p.name === this.model.type);
     },
   },
   watch: {

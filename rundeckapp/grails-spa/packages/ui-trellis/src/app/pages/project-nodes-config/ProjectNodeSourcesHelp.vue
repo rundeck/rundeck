@@ -73,7 +73,7 @@ export default defineComponent({
     };
   },
   computed: {
-    empty: function (): any {
+    empty: function (): boolean {
       return this.count === 0;
     },
   },

@@ -1,7 +1,7 @@
 import { Rundeck, TokenCredentialProvider } from "@rundeck/client";
 import { BrowserFetchHttpClient } from "@azure/ms-rest-js/es/lib/browserFetchHttpClient";
 
-const w = window as any;
+const w = window;
 w._rundeck = {
   rdBase: "http://xubuntu:4440",
   rundeckClient: new Rundeck(new TokenCredentialProvider("foo"), {

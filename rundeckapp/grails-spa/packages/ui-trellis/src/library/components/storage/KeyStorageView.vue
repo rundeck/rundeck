@@ -100,9 +100,7 @@
                 Overwrite Key
               </button>
               <button
-                v-if="
-                  selectedKey && selectedKey.path && isSelectedKey && !readOnly
-                "
+                v-if="selectedKeyResource?.path && isSelectedKey && !readOnly"
                 class="btn btn-sm btn-danger"
                 data-testid="delete-key-btn"
                 @click="deleteKey"
@@ -147,7 +145,7 @@
                   v-for="key in files"
                   :key="key.name"
                   :class="[
-                    selectedKey && key.path === selectedKey.path
+                    selectedKeyResource && key.path === selectedKeyResource.path
                       ? selectedClass
                       : '',
                     'action',
@@ -157,7 +155,7 @@
                   <td>
                     <i
                       :class="[
-                        key.path === selectedKey.path
+                        key.path === selectedKeyResource?.path
                           ? 'glyphicon glyphicon-ok'
                           : 'glyphicon glyphicon-unchecked',
                       ]"
@@ -241,7 +239,9 @@
             <p>{{ "Really delete the selected key at this path?" }}</p>
 
             <p>
-              <strong class="text-info"> {{ selectedKey.path }}</strong>
+              <strong class="text-info">
+                {{ selectedKeyResource?.path }}
+              </strong>
             </p>
           </div>
           <div class="modal-footer">
@@ -262,12 +262,17 @@
             </button>
           </div>
         </modal>
-        <div v-if="isSelectedKey && selectedKey.type === 'file'" class="row">
+        <div
+          v-if="isSelectedKey && selectedKeyResource?.type === 'file'"
+          class="row"
+        >
           <div class="col-sm-12">
             <div class="well">
               <div>
                 Storage path:
-                <code class="text-success">{{ selectedKey.path }}</code>
+                <code class="text-success">{{
+                  selectedKeyResource?.path
+                }}</code>
                 <a
                   href="#"
                   data-bind="attr: { href: selectedPathUrl() }"
@@ -303,7 +308,7 @@
                 </div>
               </div>
               <div
-                v-if="selectedKey && isPublicKey(selectedKey)"
+                v-if="selectedKeyResource && isPublicKey(selectedKeyResource)"
                 class="pull-right"
               >
                 <span>
@@ -313,11 +318,11 @@
                   >
                 </span>
               </div>
-              <div v-if="selectedKey && selectedKey.expired" class="pull-right">
+              <div v-if="selectedKeyResource?.expired" class="pull-right">
                 <span>
                   <a
                     :href="'javascript:void(0)'"
-                    @click="loadKeys(selectedKey)"
+                    @click="loadKeys(selectedKeyResource)"
                   >
                     <i class="glyphicon glyphicon-download"></i>
                     {{ "Refresh Expired Key" }}</a
@@ -347,6 +352,7 @@ import { listProjects } from "../../services/projects";
 import {
   storageKeyDelete,
   storageKeyGetMetadata,
+  type StorageKeyMetadata,
   StorageKeyListResponse,
 } from "../../services/storage";
 import moment from "moment";
@@ -358,6 +364,24 @@ import {
   formatHumanizedDuration,
   formatKeyStorageDate,
 } from "../../utilities/DateTimeFormatters";
+import type { UploadSetting } from "./KeyStorageEdit.vue";
+
+interface StorageResource extends StorageKeyMetadata {
+  expired?: boolean;
+  meta?: Record<string, string>;
+}
+
+interface StorageListResult extends StorageKeyListResponse {
+  cacheStatus?: string;
+  resources?: StorageResource[];
+}
+
+type SelectedStorageValue = StorageResource | string;
+
+const selectedResource = (
+  value: SelectedStorageValue,
+): StorageResource | undefined =>
+  typeof value === "string" ? undefined : value;
 
 export default defineComponent({
   name: "KeyStorageView",
@@ -367,7 +391,10 @@ export default defineComponent({
     modelValue: String,
     storageFilter: String,
     rootPath: String,
-    createdKey: {},
+    createdKey: {
+      type: Object as PropType<StorageResource>,
+      default: undefined,
+    },
     runnerId: String,
     getKeyMetadata: {
       type: Function as PropType<
@@ -394,13 +421,13 @@ export default defineComponent({
       path: "",
       isConfirmingDeletion: false,
       modalEdit: false,
-      upload: {} as any,
-      selectedKey: {} as any,
+      upload: {} as Partial<UploadSetting>,
+      selectedKey: {} as SelectedStorageValue,
       isSelectedKey: false,
-      files: [] as any,
+      files: [] as StorageResource[],
       selectedClass: "success",
-      directories: [] as any,
-      uploadErrors: {} as any,
+      directories: [] as StorageResource[],
+      uploadErrors: {} as Record<string, unknown>,
       selectedIsDownloadable: true,
       loading: true,
       linksTitle: "",
@@ -411,6 +438,9 @@ export default defineComponent({
     };
   },
   computed: {
+    selectedKeyResource(): StorageResource | undefined {
+      return selectedResource(this.selectedKey);
+    },
     formatKeyStorageCreatedTime() {
       return formatKeyStorageDate(this.createdTime);
     },
@@ -422,23 +452,23 @@ export default defineComponent({
     },
     createdTime() {
       let value = "";
+      const selectedKey = selectedResource(this.selectedKey);
       if (
-        this.selectedKey != null &&
-        this.selectedKey.meta != null &&
-        this.selectedKey.meta["Rundeck-content-creation-time"] != null
+        selectedKey?.meta != null &&
+        selectedKey.meta["Rundeck-content-creation-time"] != null
       ) {
-        value = this.selectedKey.meta["Rundeck-content-creation-time"];
+        value = selectedKey.meta["Rundeck-content-creation-time"];
       }
       return value;
     },
     modifiedTimeAgoText() {
       let value = 0;
+      const selectedKey = selectedResource(this.selectedKey);
       if (
-        this.selectedKey != null &&
-        this.selectedKey.meta != null &&
-        this.selectedKey.meta["Rundeck-content-modify-time"] != null
+        selectedKey?.meta != null &&
+        selectedKey.meta["Rundeck-content-modify-time"] != null
       ) {
-        const time = this.selectedKey.meta["Rundeck-content-modify-time"];
+        const time = selectedKey.meta["Rundeck-content-modify-time"];
         value = this.duration(time);
       }
       return value;
@@ -476,17 +506,18 @@ export default defineComponent({
     downloadUrl(): string {
       const downloadBaseUrl = "storage/download/keys";
       const rundeckContext = getRundeckContext();
+      const key = selectedResource(this.selectedKey);
 
-      if (!this.selectedKey || !this.selectedKey.path) return "#";
+      if (!key?.path) return "#";
 
-      return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(this.selectedKey.path)}`;
+      return `${rundeckContext.rdBase}/${downloadBaseUrl}?resourcePath=${encodeURIComponent(key.path)}`;
     },
     async loadProjectNames() {
       try {
         const response = await listProjects();
 
         this.linksTitle = "Projects";
-        this.jumpLinks = response.map((v: any) => {
+        this.jumpLinks = response.map((v) => {
           return { name: v.name, path: "keys/project/" + v.name };
         });
       } catch (error) {
@@ -501,9 +532,11 @@ export default defineComponent({
     },
     async confirmDeleteKey() {
       this.isConfirmingDeletion = false;
+      const key = selectedResource(this.selectedKey);
+      if (!key?.path) return;
 
       try {
-        const resp = await storageKeyDelete(this.selectedKey.path.slice(5));
+        const resp = await storageKeyDelete(key.path.slice(5));
         if (!resp) {
           this.errorMsg = "Not found";
           return;
@@ -533,7 +566,7 @@ export default defineComponent({
       }
       return browse;
     },
-    countDown(selectedKey?: any) {
+    countDown(selectedKey?: StorageResource) {
       if (this.countDownLimit > 0) return;
       this.countDownLimit = 5;
       this.countDownInterval = window.setInterval(() => {
@@ -550,7 +583,7 @@ export default defineComponent({
         }
       }, 1000);
     },
-    loadKeys(selectedKey?: any, forceRefresh?: boolean) {
+    loadKeys(selectedKey?: SelectedStorageValue, forceRefresh?: boolean) {
       if (selectedKey) {
         this.selectedKey = selectedKey;
       }
@@ -562,7 +595,7 @@ export default defineComponent({
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
       this.getKeyMetadata(getPath, requestOptions)
-        .then((result: any) => {
+        .then((result: StorageListResult) => {
           this.directories = [];
           this.files = [];
 
@@ -573,11 +606,11 @@ export default defineComponent({
           }
 
           if (result.resources != null) {
-            result.resources.forEach((resource: any) => {
+            result.resources.forEach((resource: StorageResource) => {
               if (resource.type === "directory") {
                 this.directories.push(resource);
                 if (this.directories.length > 1) {
-                  this.directories.sort((obj1: any, obj2: any) => {
+                  this.directories.sort((obj1, obj2) => {
                     if (obj1.path > obj2.path) {
                       return 1;
                     }
@@ -599,7 +632,7 @@ export default defineComponent({
                   this.files.push(resource);
                 }
 
-                this.files.sort((obj1: any, obj2: any) => {
+                this.files.sort((obj1, obj2) => {
                   if (obj1.path > obj2.path) {
                     return 1;
                   }
@@ -644,7 +677,7 @@ export default defineComponent({
           this.loading = false;
         });
     },
-    allowedResource(meta: any) {
+    allowedResource(meta?: Record<string, string>) {
       const filterArray = this.storageFilter?.split("=") || ["", ""];
       const key = filterArray[0];
       const value = filterArray[1];
@@ -664,53 +697,53 @@ export default defineComponent({
       }
       return false;
     },
-    duration(start: any) {
+    duration(start: string) {
       return moment().diff(moment(start));
     },
     modifiedUsername() {
       const value = "";
+      const selectedKey = selectedResource(this.selectedKey);
       if (
-        this.selectedKey != null &&
-        this.selectedKey.meta != null &&
-        this.selectedKey.meta["Rundeck-auth-modified-username"]
+        selectedKey?.meta != null &&
+        selectedKey.meta["Rundeck-auth-modified-username"]
       ) {
-        return this.selectedKey.meta["Rundeck-auth-modified-username"];
+        return selectedKey.meta["Rundeck-auth-modified-username"];
       }
       return value;
     },
     wasModified() {
+      const selectedKey = selectedResource(this.selectedKey);
       if (
-        this.selectedKey != null &&
-        this.selectedKey.meta != null &&
-        this.selectedKey.meta["Rundeck-content-creation-time"] != null &&
-        this.selectedKey.meta["Rundeck-content-modify-time"] != null
+        selectedKey?.meta != null &&
+        selectedKey.meta["Rundeck-content-creation-time"] != null &&
+        selectedKey.meta["Rundeck-content-modify-time"] != null
       ) {
         return (
-          this.selectedKey.meta["Rundeck-content-creation-time"] !=
-          this.selectedKey.meta["Rundeck-content-modify-time"]
+          selectedKey.meta["Rundeck-content-creation-time"] !=
+          selectedKey.meta["Rundeck-content-modify-time"]
         );
       }
       return false;
     },
     createdUsername() {
       const value = "";
+      const selectedKey = selectedResource(this.selectedKey);
       if (
-        this.selectedKey != null &&
-        this.selectedKey.meta != null &&
-        this.selectedKey.meta["Rundeck-auth-created-username"] != null
+        selectedKey?.meta != null &&
+        selectedKey.meta["Rundeck-auth-created-username"] != null
       ) {
-        return this.selectedKey.meta["Rundeck-auth-created-username"];
+        return selectedKey.meta["Rundeck-auth-created-username"];
       }
       return value;
     },
-    dirNameString(path: any) {
+    dirNameString(path: string) {
       if (path.lastIndexOf("/") >= 0) {
         return path.substring(path.lastIndexOf("/") + 1);
       } else {
         return path;
       }
     },
-    isPrivateKey(key: any) {
+    isPrivateKey(key: StorageResource) {
       let keyType = key.meta["rundeckKeyType"];
       if (keyType == null) {
         keyType = key.meta["Rundeck-key-type"];
@@ -718,23 +751,24 @@ export default defineComponent({
 
       return key && key.meta && keyType && keyType === "private";
     },
-    isPublicKey(key: any) {
+    isPublicKey(key: StorageResource) {
       let keyType = key.meta["rundeckKeyType"];
       if (keyType == null) {
         keyType = key.meta["Rundeck-key-type"];
       }
       return key && key.meta && keyType && keyType === "public";
     },
-    isPassword(key: any) {
+    isPassword(key: StorageResource) {
       return key && key.meta && key.meta["Rundeck-data-type"] === "password";
     },
     notFound() {
       return false;
     },
-    selectKey(key: any) {
-      if (this.selectedKey.path === key.path && this.isSelectedKey == false) {
+    selectKey(key: StorageResource) {
+      const currentKey = selectedResource(this.selectedKey);
+      if (currentKey?.path === key.path && this.isSelectedKey == false) {
         this.isSelectedKey = true;
-      } else if (this.selectedKey.path === key.path) {
+      } else if (currentKey?.path === key.path) {
         this.selectedKey = {};
         this.isSelectedKey = false;
       } else {
@@ -744,10 +778,10 @@ export default defineComponent({
 
       this.$emit(
         "update:modelValue",
-        this.selectedKey ? this.selectedKey.path : "",
+        selectedResource(this.selectedKey)?.path || "",
       );
     },
-    parentDirString(path: any) {
+    parentDirString(path: string) {
       if (null != path && path.lastIndexOf("/") >= 0) {
         return path.substring(0, path.lastIndexOf("/"));
       } else {
@@ -755,17 +789,20 @@ export default defineComponent({
       }
     },
     actionUploadModify() {
+      const selectedKey = selectedResource(this.selectedKey);
+      if (!selectedKey?.path) return;
+
       // Default to KeyType.Password
       let type = KeyType.Password;
-      if (this.isPrivateKey(this.selectedKey)) {
+      if (this.isPrivateKey(selectedKey)) {
         type = KeyType.Private;
       }
-      if (this.isPublicKey(this.selectedKey)) {
+      if (this.isPublicKey(selectedKey)) {
         type = KeyType.Public;
       }
 
       const inputPath = this.relativePath(
-        this.parentDirString(this.selectedKey.path),
+        this.parentDirString(selectedKey.path),
       );
       const inputType = InputType.Text;
 
@@ -774,13 +811,13 @@ export default defineComponent({
         keyType: type,
         inputPath: inputPath,
         inputType: inputType,
-        fileName: this.selectedKey.name,
+        fileName: selectedKey.name,
         file: "",
         fileContent: "",
         textArea: "",
         password: "",
         status: "update",
-        errorMsg: null as any,
+        errorMsg: null,
       };
       this.$emit("openEditor", upload);
     },
@@ -792,7 +829,7 @@ export default defineComponent({
       this.inputPath = "";
       this.invalid = false;
       this.errorMsg = "";
-      this.uploadErrors = {} as any;
+      this.uploadErrors = {};
     },
     loadDirInputPath() {
       if (this.isRunner) {
@@ -801,10 +838,10 @@ export default defineComponent({
         this.loadDir(this.rootPath + "/" + this.inputPath);
       }
     },
-    defaultSelectKey(path: any) {
-      storageKeyGetMetadata(this.calcBrowsePath(path)).then((result: any) => {
+    defaultSelectKey(path: string) {
+      storageKeyGetMetadata(this.calcBrowsePath(path)).then((result) => {
         if (result.resources != null) {
-          result.resources.forEach((resource: any) => {
+          result.resources.forEach((resource: StorageKeyMetadata) => {
             if (resource.type === "file") {
               if (resource.path === path) {
                 this.selectedKey = resource;
@@ -848,7 +885,7 @@ export default defineComponent({
         }
       }
     },
-    absolutePath(relpath: any) {
+    absolutePath(relpath: string) {
       if (this.isRunner) {
         return "/" + relpath;
       }
@@ -858,7 +895,7 @@ export default defineComponent({
       }
       return this.rootPath + "/" + relpath;
     },
-    loadDir(selectedPath: any, forceRefresh?: boolean) {
+    loadDir(selectedPath: string, forceRefresh?: boolean) {
       this.isDropdownOpen = false;
       this.clean();
       let path = "";
@@ -889,7 +926,7 @@ export default defineComponent({
         return this.upPath;
       }
     },
-    relativePath(path: any) {
+    relativePath(path: string) {
       const root = this.rootPath;
       const statroot = this.staticRoot;
 
@@ -905,7 +942,7 @@ export default defineComponent({
       return newpath;
     },
 
-    cleanPath(path: any) {
+    cleanPath(path: string | null | undefined): string {
       if (path != null) {
         while (path.indexOf("/") == 0) {
           path = path.substring(1);
@@ -927,7 +964,7 @@ export default defineComponent({
         textArea: "",
         password: "",
         status: "new",
-        errorMsg: null as any,
+        errorMsg: null,
       };
 
       this.$emit("openEditor", upload);

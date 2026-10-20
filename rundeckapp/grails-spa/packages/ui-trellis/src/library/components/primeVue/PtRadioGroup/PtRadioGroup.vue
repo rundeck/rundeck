@@ -45,6 +45,9 @@
 import { defineComponent, useId, type PropType } from "vue";
 import RadioButton from "primevue/radiobutton";
 
+type RadioOption = unknown;
+type OptionField = string | ((option: RadioOption) => unknown);
+
 /** A labelled group of radio buttons; the whole group is one tab stop. */
 export default defineComponent({
   name: "PtRadioGroup",
@@ -52,27 +55,27 @@ export default defineComponent({
   props: {
     /** The selected option's value (v-model). */
     modelValue: {
-      type: [String, Number, Boolean, Object] as PropType<any>,
+      type: [String, Number, Boolean, Object] as PropType<unknown>,
       default: undefined,
     },
     /** Options to choose from; simple values or objects. */
     options: {
-      type: Array as PropType<any[]>,
+      type: Array as PropType<RadioOption[]>,
       required: true,
     },
     /** Property name or getter for an option's label. */
     optionLabel: {
-      type: [String, Function] as PropType<string | ((option: any) => string)>,
+      type: [String, Function] as PropType<OptionField>,
       default: "label",
     },
     /** Property name or getter for an option's value. */
     optionValue: {
-      type: [String, Function] as PropType<string | ((option: any) => any)>,
+      type: [String, Function] as PropType<OptionField>,
       default: "value",
     },
     /** Property name or getter for an option's disabled flag. */
     optionDisabled: {
-      type: [String, Function] as PropType<string | ((option: any) => boolean)>,
+      type: [String, Function] as PropType<OptionField>,
       default: "disabled",
     },
     /** Text that names the group (its accessible name), shown above the options. */
@@ -109,24 +112,24 @@ export default defineComponent({
     },
   },
   methods: {
-    resolve(option: any, field: string | ((option: any) => any)) {
+    resolve(option: RadioOption, field: OptionField): unknown {
       if (typeof field === "function") return field(option);
-      return option !== null && typeof option === "object"
-        ? option[field]
+      return option !== null && typeof option === "object" && field in option
+        ? (option as Record<string, unknown>)[field]
         : undefined;
     },
-    getLabel(option: any): string {
+    getLabel(option: RadioOption): string {
       const label = this.resolve(option, this.optionLabel);
       return String(label ?? option);
     },
-    getValue(option: any): any {
+    getValue(option: RadioOption): unknown {
       const value = this.resolve(option, this.optionValue);
       return value === undefined ? option : value;
     },
-    isOptionDisabled(option: any): boolean {
+    isOptionDisabled(option: RadioOption): boolean {
       return !!this.resolve(option, this.optionDisabled);
     },
-    onUpdateModelValue(value: any) {
+    onUpdateModelValue(value: unknown) {
       this.$emit("update:modelValue", value);
       this.$emit("change", value);
     },

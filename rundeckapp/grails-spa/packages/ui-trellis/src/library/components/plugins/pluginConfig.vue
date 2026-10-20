@@ -232,12 +232,48 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import { getPluginProvidersForService } from "../../modules/pluginService";
+import {
+  getPluginProvidersForService,
+  type PluginProviderDescription,
+} from "../../modules/pluginService";
+
+interface PluginPropertyOptions {
+  [key: string]: unknown;
+  displayType?: string;
+  groupName?: string;
+  grouping?: boolean;
+  requiredProperty?: string;
+  requiredValue?: unknown;
+  selectionAccessor?: string;
+  selectionAdditional?: string;
+}
+
+interface PluginProperty {
+  name: string;
+  type: string;
+  defaultValue?: unknown;
+  allowed?: unknown;
+  selectLabels?: Record<string, unknown> | null;
+  descriptorSelectLabels?: Record<string, unknown> | null;
+  options?: PluginPropertyOptions;
+  scope?: string;
+  staticTextDefaultValue?: unknown;
+}
+
+interface PluginDetail {
+  props: PluginProperty[];
+  dynamicProps?: Record<string, unknown>;
+  dynamicDefaults?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
 
 interface PropGroup {
   name?: string;
   secondary: boolean;
-  props: any[];
+  props: PluginProperty[];
 }
 
 export default defineComponent({
@@ -286,17 +322,20 @@ export default defineComponent({
   ],
   data() {
     return {
-      props: [] as any[],
-      detail: {},
-      error: null as any | null,
+      props: [] as PluginProperty[],
+      detail: {} as Partial<PluginDetail>,
+      error: null as string | null,
       isReadOnly: this.readOnly !== null ? this.readOnly : false,
-      propsComputedSelectorData: {} as any,
+      propsComputedSelectorData: {} as Record<
+        string,
+        Array<{ key: string; value: string; description?: string }>
+      >,
       inputShowTitle: this.showTitle !== null ? this.showTitle : true,
       inputShowIcon: this.showIcon !== null ? this.showIcon : true,
       inputShowDescription:
         this.showDescription !== null ? this.showDescription : true,
-      inputValues: {} as any,
-      inputSaved: {} as any,
+      inputValues: {} as Record<string, unknown>,
+      inputSaved: {} as Record<string, unknown>,
       inputSavedProps: (typeof this.savedProps !== "undefined"
         ? this.savedProps
         : ["type"]) as string[] | null,
@@ -326,7 +365,7 @@ export default defineComponent({
     },
     visibility(): { [name: string]: boolean } {
       const visibility: { [name: string]: boolean } = {};
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         visibility[prop.name] =
           this.isPropVisible(prop) && this.isPropInScope(prop);
         if (!visibility[prop.name]) {
@@ -335,7 +374,7 @@ export default defineComponent({
       });
       return visibility;
     },
-    visibleProps(): any[] {
+    visibleProps(): PluginProperty[] {
       const visibility = this.visibility;
       return this.props.filter((prop) => {
         return visibility[prop.name];
@@ -375,10 +414,10 @@ export default defineComponent({
       });
       return groups;
     },
-    exportedValues(): any {
+    exportedValues(): Record<string, unknown> {
       return convertArrayInput(cleanConfigInput(this.exportInputs()));
     },
-    computedConfig(): any {
+    computedConfig(): Record<string, unknown> | null {
       if (this.modelValue) {
         return Object.assign({}, this.modelValue.config || {});
       } else {
@@ -425,10 +464,10 @@ export default defineComponent({
     this.loadForMode();
   },
   methods: {
-    setVal(target: any, prop: any, val: any) {
+    setVal(target: Record<string, unknown>, prop: string, val: unknown) {
       target[prop] = val;
     },
-    isStorageProperty(prop: any) {
+    isStorageProperty(prop: PluginProperty) {
       return (
         prop.options && prop.options["selectionAccessor"] === "STORAGE_PATH"
       );
@@ -446,7 +485,9 @@ export default defineComponent({
       ) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === "undefined") {
-            this.inputSaved[i] = (this.modelValue as any)[i];
+            this.inputSaved[i] = Object.entries(this.modelValue || {}).find(
+              ([key]) => key === i,
+            )?.[1];
           }
         }
       }
@@ -456,7 +497,7 @@ export default defineComponent({
       const modeCreate = this.isCreateMode;
 
       // set up defaults and convert Options to array
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (config[prop.name]) {
           this.inputValues[prop.name] = config[prop.name];
         }
@@ -511,9 +552,9 @@ export default defineComponent({
       this.inputLoaded = true;
     },
     exportInputs() {
-      const values: { [index: string]: any } = {};
+      const values: Record<string, unknown> = {};
       //convert true boolean to 'true'
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (this.isStaticTextProp(prop)) {
           // STATIC_TEXT properties are display-only help text (e.g. workflow strategy
           // "info" panels) and must never be persisted as real config data.
@@ -538,12 +579,13 @@ export default defineComponent({
       });
       return values;
     },
-    computeSelectionAccessor(prop: any) {
+    computeSelectionAccessor(prop: PluginProperty) {
       if (prop.options && prop.options["selectionAccessor"] === "PLUGIN_TYPE") {
-        const serviceName = prop.options["selectionAdditional"];
-        getPluginProvidersForService(serviceName).then((data: any) => {
+        const serviceName = prop.options["selectionAdditional"] as string;
+        getPluginProvidersForService(serviceName).then((data) => {
+          if (!data) return;
           this.propsComputedSelectorData[prop.name] = data.descriptions.map(
-            (provider: any) => {
+            (provider: PluginProviderDescription) => {
               return {
                 key: provider.title,
                 value: provider.name,
@@ -554,14 +596,13 @@ export default defineComponent({
         });
       }
     },
-    loadPluginData(data: any) {
+    loadPluginData(data: PluginDetail) {
       this.props = data.props;
 
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (data.dynamicProps && data.dynamicProps[prop.name]) {
           const dynamic = data.dynamicProps[prop.name];
-          const isValueLabelMap =
-            typeof dynamic === "object" && !Array.isArray(dynamic);
+          const isValueLabelMap = isRecord(dynamic);
 
           // Remember the labels the descriptor itself supplied. loadPluginData
           // can run more than once over the same prop object, so labels
@@ -602,14 +643,19 @@ export default defineComponent({
         this.notifyHasKeyStorageAccess();
       }
     },
-    async loadProvider(provider: any) {
+    async loadProvider(provider: string) {
       try {
         const data =
           await getRundeckContext().rootStore.plugins.getPluginDetail(
             this.serviceName as string,
             provider,
           );
-        if (data.props) {
+        if (
+          data !== null &&
+          typeof data === "object" &&
+          "props" in data &&
+          Array.isArray(data.props)
+        ) {
           this.loadPluginData(data);
         }
       } catch (e) {
@@ -618,7 +664,7 @@ export default defineComponent({
         this.error = message;
       }
     },
-    isPropVisible(testProp: any): boolean {
+    isPropVisible(testProp: PluginProperty): boolean {
       // determine if property is visible based on required prop value
       const requiredProp =
         testProp.options && testProp.options["requiredProperty"];
@@ -636,10 +682,10 @@ export default defineComponent({
       }
       return true;
     },
-    isPropHidden(testProp: any): boolean {
+    isPropHidden(testProp: PluginProperty): boolean {
       return testProp.options && testProp.options["displayType"] === "HIDDEN";
     },
-    isStaticTextProp(testProp: any): boolean {
+    isStaticTextProp(testProp: PluginProperty): boolean {
       // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
       // rendered from prop.staticTextDefaultValue and are never user-editable, so
       // they must not be seeded with a default value or exported as config data.
@@ -653,7 +699,7 @@ export default defineComponent({
         testProp.options["displayType"] === "STATIC_TEXT"
       );
     },
-    isPropInScope(testProp: any): boolean {
+    isPropInScope(testProp: PluginProperty): boolean {
       // determine if property is visible in scope
       const testScope = testProp.scope || this.defaultScope;
       const allowedScope = this.scope;
@@ -679,7 +725,7 @@ export default defineComponent({
 
       return false;
     },
-    isGroupedProp(testProp: any): boolean {
+    isGroupedProp(testProp: PluginProperty): boolean {
       // determine if property is visible based on required prop value
       const grouping = testProp.options && testProp.options["grouping"];
       const groupName = testProp.options && testProp.options["groupName"];
@@ -688,7 +734,7 @@ export default defineComponent({
     },
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (prop.options != null && prop.options["selectionAccessor"]) {
           storageAccess = true;
         }

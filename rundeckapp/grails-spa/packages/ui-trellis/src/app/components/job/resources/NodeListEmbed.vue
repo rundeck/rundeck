@@ -21,6 +21,11 @@ import NodeShowEmbed from "../../job/resources/NodeShowEmbed.vue";
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 import { cssForNode, styleForNode } from "../../../utilities/nodeUi";
+import type {
+  Node,
+  NodeAttributes,
+  NodeFilterSelection,
+} from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeListEmbed",
@@ -29,7 +34,7 @@ export default defineComponent({
   },
   props: {
     nodes: {
-      type: Array as PropType<any[]>,
+      type: Array as PropType<Node[]>,
       required: true,
     },
     tagsummary: {
@@ -45,13 +50,13 @@ export default defineComponent({
   },
   emits: ["filter"],
   methods: {
-    cssForNode(node: any) {
-      return cssForNode(node, this.nodes);
+    cssForNode(attributes: NodeAttributes) {
+      return cssForNode(attributes, this.nodes);
     },
-    styleForNode(node: any) {
-      return styleForNode(node);
+    styleForNode(attributes: NodeAttributes) {
+      return styleForNode(attributes);
     },
-    filterClick(filter: any) {
+    filterClick(filter: NodeFilterSelection) {
       this.$emit("filter", filter);
     },
   },
