@@ -19,11 +19,14 @@ import rundeck.services.data.IScheduledExecutionDataService
 
 
 /**
- * Provides a non-blocking "executionAclValid" job metadata flag: whether a scheduled job's
- * stored owner (user/userRoles) is still authorized (ACTION_RUN) to execute it.
+ * Provides the "executionAclValid" job metadata flag: whether a scheduled job's stored
+ * owner (user/userRoles) is still authorized (ACTION_RUN) to execute it.
  *
- * This is a detection-only warning, not an enforcement mechanism: it does not affect
- * whether a scheduled job's Quartz trigger actually creates an execution.
+ * This component only reports; it never decides. Whether an unauthorized owner actually
+ * stops the run is {@link Features#SCHEDULED_RUN_AUTHORIZATION}, which the Quartz path
+ * (ExecutionJob, via ExecutionService) evaluates for itself. The same flag is reported
+ * here as {@code enforced} so a renderer can say whether the schedule is being skipped
+ * or only warned about, without repeating the feature lookup.
  */
 @CompileStatic
 class JobExecutionAclMetadataComponent implements JobMetadataComponent {
