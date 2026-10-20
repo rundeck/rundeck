@@ -99,6 +99,7 @@
     "@types/graphlib": "2.1.12",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.25",
+    "@types/markdown-it": "14.2.0",
     "@types/node": "14.18.63",
     "@types/uuid": "11.0.0",
     "@typescript-eslint/eslint-plugin": "6.21.0",
