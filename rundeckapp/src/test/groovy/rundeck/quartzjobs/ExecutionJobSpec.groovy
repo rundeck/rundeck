@@ -568,6 +568,83 @@ class ExecutionJobSpec extends Specification implements DataTest {
         0 * quartzScheduler.deleteJob(ajobKey)
     }
 
+    def "scheduled job trigger with no saved user is skipped, not failed, when the check is enforced"() {
+
+        def serverUUID = UUID.randomUUID().toString()
+        def jobUUID = UUID.randomUUID().toString()
+        def es = Mock(ExecutionService) {
+            isScheduledRunAuthorizationEnforced() >> true
+        }
+        def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
+        def jobSchedulerService = Mock(JobSchedulerService)
+        def fs = Mock(FrameworkService) {
+            getServerUUID() >> serverUUID
+            getProjectConfigReloaded('AProject') >> Mock(IRundeckProject) {
+                getProjectProperties() >> [:]
+            }
+        }
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider)
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                serverNodeUUID: jobUUID,
+                // the saved user is nullable, and this is the case that used to throw
+                user: null,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true,
+                uuid: jobUUID
+        )
+        se.save(flush: true)
+        def datamap = new JobDataMap(
+                [
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
+                        executionService    : es,
+                        executionUtilService: eus,
+                        frameworkService    : fs,
+                        bySchedule          : true,
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
+                ]
+        )
+        ExecutionJob job = new ExecutionJob()
+        def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+
+        def quartzScheduler = Mock(Scheduler)
+        def trigger = Mock(Trigger)
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+                getKey() >> ajobKey
+            }
+
+            getScheduler() >> quartzScheduler
+            getTrigger() >> trigger
+        }
+
+        when: "a job with no saved user is triggered by its schedule"
+        job.execute(context)
+
+        then: "it is skipped before an auth context is built for a user that is not there"
+        0 * authContextProvider.getAuthContextForUserAndRolesAndProject(*_)
+        0 * es.createExecution(*_)
+        0 * es.executeAsyncBegin(*_)
+        0 * quartzScheduler.deleteJob(ajobKey)
+        noExceptionThrown()
+    }
+
     def "average notification threshold from options"() {
         given:
         def es = new ExecutionService()

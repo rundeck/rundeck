@@ -369,6 +369,14 @@ class ExecutionJob implements InterruptableJob {
                 return initMap
             }
 
+            // the saved user is nullable, and building an auth context for a null one throws
+            // rather than denying: decline the trigger on the normal skip path instead, so
+            // this matches the warning the job page shows for the same job. Only when the
+            // feature is on -- with it off nothing here re-checks authorization at all.
+            if (!initMap.scheduledExecution.user && initMap.executionService.isScheduledRunAuthorizationEnforced()) {
+                initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} triggered but has no saved user to authorize it; skipping this execution."
+                return initMap
+            }
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = initMap.authContextProvider.getAuthContextForUserAndRolesAndProject(
                     initMap.scheduledExecution.user,
