@@ -44,6 +44,24 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="col-sm-2 control-label" for="_jobUuidFilter">{{
+          $t("jobquery.title.jobUuidFilter")
+        }}</label>
+        <div class="col-sm-10">
+          <input
+            id="_jobUuidFilter"
+            v-model="jobPageStore.query['jobUuidFilter']"
+            data-testid="job-search-modal-job-uuid-input"
+            type="text"
+            name="jobUuidFilter"
+            class="form-control"
+          />
+          <span class="help-block">{{
+            $t("jobquery.description.jobUuidFilter")
+          }}</span>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="col-sm-2 control-label" for="_groupPath">{{
           $t("jobquery.title.groupPath")
         }}</label>

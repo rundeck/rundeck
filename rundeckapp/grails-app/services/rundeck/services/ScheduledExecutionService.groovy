@@ -37,6 +37,7 @@ import rundeck.data.util.JobTakeoverQueryBuilder
 import rundeck.services.feature.FeatureService
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import org.rundeck.app.data.providers.GormJobQueryProvider
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -395,6 +396,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         }
 
+        //not all JobQueryInput implementations define jobUuidFilter
+        String jobUuidFilter = query.hasProperty('jobUuidFilter') ? query['jobUuidFilter'] : null
+        def jobUuidRefIds = jobUuidFilter ? GormJobQueryProvider.findJobIdsReferencingUuid(jobUuidFilter) : []
+        def jobUuidCriteria = { crit ->
+            if (jobUuidFilter) {
+                crit.or {
+                    eq("uuid", jobUuidFilter)
+                    for (def partition : Lists.partition(jobUuidRefIds, 1000)) {
+                        'in'("id", partition)
+                    }
+                }
+            }
+        }
+
         def crit = ScheduledExecution.createCriteria()
 
         def scheduled = crit.list{
@@ -417,6 +432,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
             }
+
+            jobUuidCriteria(delegate)
 
             txtfilters.each{ key,val ->
                 if(query["${key}Filter"]){
@@ -506,6 +523,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         }
                     }
                 }
+
+                jobUuidCriteria(delegate)
 
                 txtfilters.each { key, val ->
                     if (query["${key}Filter"]) {
