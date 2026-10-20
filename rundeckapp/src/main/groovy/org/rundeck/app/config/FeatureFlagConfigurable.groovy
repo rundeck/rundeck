@@ -57,6 +57,14 @@ class FeatureFlagConfigurable implements SystemConfigurable {
                 'Applies on the next Git operation, without a restart. ' +
                 'A value saved here overrides framework.properties.'
         ),
+        featureConfig(
+            Features.SCHEDULED_RUN_AUTHORIZATION,
+            "Authorize Scheduled Runs",
+            "Re-check that a scheduled job's saved user is still authorized to run it, each time the " +
+                "trigger fires, and skip the execution when they are not. Leave this off until those " +
+                "users have been granted run access: turning it on stops schedules that run today.",
+            'ops_admin'
+        ),
         //TODO: include additional feature flags here
     ]
 
