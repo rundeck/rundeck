@@ -4,29 +4,69 @@ orbs:
   node: circleci/node@7.2.1
 
 executors:
-  ui-tests:
+  docker-builder:
     docker:
       - image: cimg/openjdk:17.0.20@sha256:f5468d6ddf3849e811edcf03329f013494549e63cf06037302aa7514c3cf41ff
 
-jobs:
-  unit-tests:
-    executor: ui-tests
-    working_directory: /home/circleci/workspace
+commands:
+  setup_docker:
     steps:
-      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false
+
+  install-node:
+    steps:
       - node/install:
           use-nvm-cache: true
-          nvm-cache-key: ui-trellis-nvm-{{ checksum ".nvmrc" }}
+          nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
+
+  run-build-step:
+    parameters:
+      step-name:
+        type: string
+      command:
+        type: string
+      when:
+        type: string
+        default: on_success
+    steps:
       - run:
-          name: Run ui-trellis Vitest suite
+          name: << parameters.step-name >>
+          when: << parameters.when >>
           command: |
             source scripts/circleci/setup.sh
-            rundeck_gui_tests
+            echo "=== ENV ===" && env && echo "=== ENV END $(date)==="
+            set -x
+            << parameters.command >>
+            echo "=== Finished $(date) ==="
+
+  collect-gradle-tests:
+    steps:
+      - run-build-step:
+          step-name: Save test results
+          when: always
+          command: collect_gradle_tests
       - store_test_results:
-          path: rundeckapp/grails-spa/packages/ui-trellis/build/test-results
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/junit
+
+jobs:
+  test-gui:
+    working_directory: /home/circleci/workspace
+    executor: docker-builder
+    steps:
+      - setup_docker
+      - checkout
+      - install-node
+      - run-build-step:
+          step-name: Run GUI Tests
+          command: rundeck_gui_tests
+      - collect-gradle-tests
 
 workflows:
   unit-tests:
     jobs:
-      - unit-tests:
+      - test-gui:
+          name: T Unit UI
           context: Cloudsmith
