@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import rundeck.ScheduledExecution
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import rundeck.services.FrameworkService
 import rundeck.services.data.IScheduledExecutionDataService
 
@@ -37,6 +39,18 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
 
     @Autowired
     FrameworkService frameworkService
+
+    @Autowired
+    FeatureService featureService
+
+    /**
+     * @return true when the trigger will actually skip an unauthorized run, rather than
+     * only warn about it. Decided here so every renderer can pick its wording without
+     * repeating the feature lookup.
+     */
+    boolean isExecutionAclEnforced() {
+        return featureService.featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION)
+    }
 
     /**
      * Per-call caches. Jobs in a listing commonly share both a saved owner and a
@@ -214,6 +228,7 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         // one cache for the whole batch: the browse page asks for many jobs at once and
         // they commonly share an owner
         EvaluationCache cache = new EvaluationCache()
+        boolean enforced = isExecutionAclEnforced()
         // batched rather than one lookup per job: the browse endpoint can ask for every
         // job in a project, which is both an N+1 and, as a single IN, past the parameter
         // limit some databases impose. Same partition size as bulkNextExecutionTime.
@@ -226,7 +241,11 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
                 [
                     ComponentMeta.with(
                         NAME,
-                        [valid: evaluateExecutionAcl(se, cache), user: se.user] as Map<String, Object>
+                        [
+                            valid   : evaluateExecutionAcl(se, cache),
+                            user    : se.user,
+                            enforced: enforced,
+                        ] as Map<String, Object>
                     )
                 ]
             )
