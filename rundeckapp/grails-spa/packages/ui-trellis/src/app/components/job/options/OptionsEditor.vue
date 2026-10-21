@@ -98,7 +98,12 @@ import {
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
-import { Operation, ChangeEvent } from "./model/ChangeEvents";
+import {
+  Operation,
+  ChangeEvent,
+  UndoRedoEventBus,
+  UndoRedoEvents,
+} from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
 import pluginService from "../../../../library/modules/pluginService";
 import type {
@@ -108,15 +113,8 @@ import type {
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
-import mitt, { Emitter } from "mitt";
+import mitt from "mitt";
 import draggable from "vuedraggable";
-
-type UndoRedoEvents = {
-  undo: ChangeEvent;
-  redo: ChangeEvent;
-  revertAll: void;
-  change: ChangeEvent;
-};
 
 interface OperationData {
   index: number;
@@ -125,7 +123,7 @@ interface OperationData {
 }
 
 const emitter = mitt<UndoRedoEvents>();
-const localEB: Emitter<UndoRedoEvents> = emitter;
+const localEB: UndoRedoEventBus = emitter;
 const eventBus = getRundeckContext().eventBus;
 
 export default defineComponent({

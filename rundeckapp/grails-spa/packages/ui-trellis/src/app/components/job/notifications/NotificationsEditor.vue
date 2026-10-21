@@ -393,9 +393,9 @@ export default defineComponent({
     this.eventBus.on("undo", this.doUndo);
     this.eventBus.on("redo", this.doRedo);
     pluginService.getPluginProvidersForService("Notification").then((data) => {
-      if (data.service) {
+      if (data?.service) {
         this.pluginProviders = data.descriptions;
-        this.pluginLabels = data.labels;
+        this.pluginLabels = data.labels ?? {};
       }
     });
   },

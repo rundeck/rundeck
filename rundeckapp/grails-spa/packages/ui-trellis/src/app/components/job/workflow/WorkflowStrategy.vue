@@ -132,9 +132,9 @@ export default defineComponent({
     },
     async getStrategyPlugins() {
       const response = await getPluginProvidersForService("WorkflowStrategy");
-      if (response.service) {
+      if (response?.service) {
         this.pluginProviders = response.descriptions;
-        this.pluginLabels = response.labels;
+        this.pluginLabels = response.labels ?? {};
       }
     },
   },

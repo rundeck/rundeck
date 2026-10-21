@@ -407,7 +407,7 @@ export default defineComponent({
         .then((data) => {
           if (data?.service) {
             this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
+            this.pluginLabels = data.labels ?? {};
           }
         })
         .catch((error) => console.error(error));

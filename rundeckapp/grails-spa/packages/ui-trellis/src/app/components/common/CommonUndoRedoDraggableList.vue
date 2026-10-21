@@ -71,20 +71,17 @@ import { defineComponent, PropType } from "vue";
 import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
 import { getRundeckContext } from "../../../library";
-import mitt, { Emitter } from "mitt";
-import { ChangeEvent, Operation } from "../job/options/model/ChangeEvents";
+import mitt from "mitt";
+import {
+  ChangeEvent,
+  Operation,
+  UndoRedoEventBus,
+  UndoRedoEvents,
+} from "../job/options/model/ChangeEvents";
 import { cloneDeep } from "lodash";
 
-type UndoRedoEvents = {
-  undo: ChangeEvent;
-  redo: ChangeEvent;
-  revertAll: void;
-  change: ChangeEvent;
-  "job-edit:edited": boolean;
-};
-
 const emitter = mitt<UndoRedoEvents>();
-const localEB: Emitter<UndoRedoEvents> = emitter;
+const localEB: UndoRedoEventBus = emitter;
 
 export default defineComponent({
   name: "CommonUndoRedoDraggableList",

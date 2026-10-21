@@ -109,9 +109,9 @@ export default defineComponent({
       this.items = [];
       for (let i = 0, l = data.length; i < l; i++) {
         const item = data[i];
-        let key =
-          this.itemKey && typeof item === "object" ? item[this.itemKey] : item;
-        key = key.toString();
+        const key = String(
+          this.itemKey && typeof item === "object" ? item[this.itemKey] : item,
+        );
         if (key.startsWith(this.selectedValue)) {
           this.items.push(item);
         }

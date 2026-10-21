@@ -1,4 +1,5 @@
 import { JobOption } from "../../../../../library/types/jobs/JobEdit";
+import type { Emitter } from "mitt";
 
 export enum Operation {
   Insert,
@@ -14,3 +15,13 @@ export interface ChangeEvent {
   operation: Operation;
   undo: Operation;
 }
+
+export type UndoRedoEvents = {
+  undo: ChangeEvent;
+  redo: ChangeEvent;
+  revertAll: void;
+  change: ChangeEvent;
+  "job-edit:edited": boolean;
+};
+
+export type UndoRedoEventBus = Emitter<UndoRedoEvents>;

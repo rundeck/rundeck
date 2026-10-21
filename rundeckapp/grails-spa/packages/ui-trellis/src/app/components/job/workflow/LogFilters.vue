@@ -205,9 +205,9 @@ export default defineComponent({
       const response = await getPluginProvidersForService(
         ServiceType.LogFilter,
       );
-      if (response.service) {
+      if (response?.service) {
         this.pluginProviders = response.descriptions;
-        this.pluginLabels = response.labels;
+        this.pluginLabels = response.labels ?? {};
       }
     },
   },

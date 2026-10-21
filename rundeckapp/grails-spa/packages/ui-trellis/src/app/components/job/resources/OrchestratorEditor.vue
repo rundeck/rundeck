@@ -178,7 +178,7 @@ export default defineComponent({
       );
       const data =
         await pluginService.getPluginProvidersForService("Orchestrator");
-      if (data.service) {
+      if (data?.service) {
         this.pluginProviders = data.descriptions;
         this.pluginLabels = data.labels || {};
       }

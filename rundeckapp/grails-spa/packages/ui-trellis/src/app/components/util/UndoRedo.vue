@@ -33,13 +33,15 @@
 </template>
 <script lang="ts">
 import { PropType, defineComponent } from "vue";
-import { EventBus } from "../../../library";
-import { ChangeEvent } from "../job/options/model/ChangeEvents";
+import {
+  ChangeEvent,
+  UndoRedoEventBus,
+} from "../job/options/model/ChangeEvents";
 
 export default defineComponent({
   name: "UndoRedo",
   props: {
-    eventBus: Object as PropType<typeof EventBus>,
+    eventBus: Object as PropType<UndoRedoEventBus>,
     revertAllEnabled: {
       type: Boolean,
       default: false,

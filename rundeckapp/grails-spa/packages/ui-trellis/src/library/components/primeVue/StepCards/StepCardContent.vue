@@ -210,7 +210,7 @@ export default defineComponent({
     },
     jobRefProps(): JobRefProperty[] {
       if (!this.config.jobref) return [];
-      const props = [];
+      const props: JobRefProperty[] = [];
 
       props.push({
         name: "job",

@@ -10,21 +10,31 @@ type WebhookConfig = Record<string, unknown> & {
   __ob__?: { value: Record<string, unknown> };
 };
 
-interface WebhookApiData {
-  uuid: string;
-  id: string;
-  authToken: string;
+interface NewWebhookData {
+  uuid?: string;
+  id?: string;
+  authToken?: string;
   enabled: boolean;
   name: string;
-  creator: string;
+  creator?: string;
   config: WebhookConfig;
   project: string;
   roles: string;
   user: string;
   useAuth: boolean;
+  regenAuth?: boolean;
+  authString?: string;
+  eventPlugin?: string;
+  new?: boolean;
+}
+
+interface WebhookApiData extends NewWebhookData {
+  uuid: string;
+  id: string;
+  authToken: string;
+  creator: string;
   regenAuth: boolean;
   authString: string;
-  eventPlugin?: string;
 }
 
 export const webhookui = reactive({
@@ -102,7 +112,7 @@ export class WebhookStore {
     this.add(webhook);
   }
 
-  newFromApi(json: WebhookApiData) {
+  newFromApi(json: NewWebhookData) {
     const webhook = Webhook.FromApi(this, json);
     webhook.eventPlugin = this.root.plugins
       .getServicePlugins(ServiceType.WebhookEvent)
@@ -178,26 +188,26 @@ export class Webhook {
 
   constructor(readonly store: WebhookStore) {}
 
-  static FromApi(store: WebhookStore, json: WebhookApiData) {
+  static FromApi(store: WebhookStore, json: NewWebhookData) {
     const webhook = new Webhook(store);
     webhook.fromApi(json);
     return webhook;
   }
 
-  fromApi(json: WebhookApiData) {
+  fromApi(json: NewWebhookData) {
     this.uuid = json.uuid || this.uuid;
-    this.id = json.id;
-    this.authToken = json.authToken;
+    this.id = json.id!;
+    this.authToken = json.authToken!;
     this.enabled = json.enabled;
     this.name = json.name;
-    this.creator = json.creator;
+    this.creator = json.creator!;
     this.config = json.config;
     this.project = json.project;
     this.roles = json.roles;
     this.user = json.user;
     this.useAuth = json.useAuth;
-    this.regenAuth = json.regenAuth;
-    this.authString = json.authString;
+    this.regenAuth = json.regenAuth!;
+    this.authString = json.authString!;
     this.eventPluginName = json.eventPlugin;
   }
 
