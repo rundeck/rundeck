@@ -10,6 +10,8 @@ interface RundeckContextData extends Record<string, unknown> {
   autorefreshms?: number;
   bulkDeleteUrl?: string;
   deleteExecAuth?: boolean;
+  eventReadAuth?: boolean;
+  executionModeActive?: boolean;
   filterOpts?: Record<string, unknown>;
   jobslistDateFormatMoment?: string;
   otherData?: {
@@ -20,9 +22,11 @@ interface RundeckContextData extends Record<string, unknown> {
     max?: number;
   };
   projectAdminAuth?: boolean;
+  projectAclConfigPageUrl?: string;
   query?: Record<string, string>;
   runningOpts?: Record<string, boolean>;
   sinceUpdatedUrl?: string;
+  systemAclConfigPageUrl?: string;
   viewOpts?: {
     showBulkDelete?: boolean;
   };
