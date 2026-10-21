@@ -168,7 +168,7 @@ export default defineComponent({
     setOrchestratorType(name: string) {
       this.updatedValue.type = name;
     },
-    getProviderFor(name: string) {
+    getProviderFor(name: string | null) {
       return this.pluginProviders.find((p) => p.name === name);
     },
     async onMount() {

@@ -39,7 +39,8 @@ export default defineComponent({
       features: {},
       optionsData: null as JobOptionsData | null,
       updatedData: null as JobOptionsData | null,
-      subs: {} as Record<string, ReturnType<typeof eventBus.on>>,
+      scheduleChangedHandler: null as
+        ((data: { scheduled: boolean }) => void) | null,
       uuid: "",
     };
   },
@@ -53,13 +54,10 @@ export default defineComponent({
         this.optionsData = data.optionsData;
         this.updatedData = this.optionsData;
       }
-      this.subs["job-edit-schedules-changed"] = eventBus.on(
-        "job-edit-schedules-changed",
-        (data: { scheduled: boolean }) => {
-          if (this.optionsData)
-            this.optionsData.jobWasScheduled = data.scheduled;
-        },
-      );
+      this.scheduleChangedHandler = (data: { scheduled: boolean }) => {
+        if (this.optionsData) this.optionsData.jobWasScheduled = data.scheduled;
+      };
+      eventBus.on("job-edit-schedules-changed", this.scheduleChangedHandler);
       if (!this.hasJob(this.uuid)) {
         this.initializeJobPlaceholder();
       }
@@ -68,10 +66,9 @@ export default defineComponent({
     }
   },
   async beforeUnmount() {
-    eventBus.off(
-      "job-edit-schedules-changed",
-      this.subs["job-edit-schedules-changed"],
-    );
+    if (this.scheduleChangedHandler) {
+      eventBus.off("job-edit-schedules-changed", this.scheduleChangedHandler);
+    }
   },
   computed: {
     ...mapState(useJobStore, ["hasJob"]),

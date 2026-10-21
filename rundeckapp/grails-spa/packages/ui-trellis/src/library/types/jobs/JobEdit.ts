@@ -89,6 +89,7 @@ export interface JobSaveInfo {
   name: string;
   group: string;
   project: string;
+  description?: string;
   permalink?: string;
   error?: string;
 }
