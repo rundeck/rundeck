@@ -80,8 +80,8 @@ export default defineComponent({
         if (match && match.length > 2) {
           return match[2];
         }
-        return null;
       }
+      return null;
     },
     /**
      * Return 'style' variant if the motd text contains a html comment starting with &lt;!-- style:variant

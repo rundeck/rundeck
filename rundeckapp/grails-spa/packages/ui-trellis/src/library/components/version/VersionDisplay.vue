@@ -186,6 +186,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style>
 .rundeck-version-info {
   color: #8a8a8a;

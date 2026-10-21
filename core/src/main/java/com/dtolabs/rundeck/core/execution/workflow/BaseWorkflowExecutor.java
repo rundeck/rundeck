@@ -385,9 +385,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         HashMap<String, String>
                 resultData = new HashMap<>();
         if (null != stepResult.getFailureData()) {
-            //convert values to string
+            //convert values to string, skipping null values that plugins may put in StepException failure data
             for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
-                resultData.put(entry.getKey(), entry.getValue().toString());
+                if (null != entry.getValue()) {
+                    resultData.put(entry.getKey(), entry.getValue().toString());
+                }
             }
         }
         FailureReason reason = stepResult.getFailureReason();

@@ -74,7 +74,7 @@
           <td class="" colspan="3">
             <span v-if="tags">
               <span class="nodetags">
-                <span v-for="tag in tags" class="label label-muted">
+                <span v-for="tag in tags" :key="tag" class="label label-muted">
                   {{ tag }}
 
                   <node-filter-link
@@ -105,7 +105,8 @@
       <!--  node attributes with no namespaces -->
       <tbody>
         <tr
-          v-for="(value, attr, index) in attributesWithNoNamespaces"
+          v-for="(value, attr) in attributesWithNoNamespaces"
+          :key="attr"
           class="hover-action-holder"
         >
           <td class="key setting">
@@ -172,7 +173,7 @@
             class="subattrs collapse collapse-expandable"
             :class="{ in: uiNs[namespace.ns] }"
           >
-            <template v-for="nsattr in namespace.values">
+            <template v-for="nsattr in namespace.values" :key="nsattr.name">
               <tr class="hover-action-holder">
                 <td class="key setting" :data-test="nsattr.name">
                   <node-filter-link
@@ -215,7 +216,6 @@
 </template>
 <script lang="ts">
 import NodeFilterLink from "../../job/resources/NodeFilterLink.vue";
-import NodeIcon from "../../job/resources/NodeIcon.vue";
 import NodeStatus from "../../job/resources/NodeStatus.vue";
 import { defineComponent, ref } from "vue";
 import type { PropType } from "vue";
@@ -228,7 +228,6 @@ const OsAttributeNames =
 export default defineComponent({
   name: "NodeDetailsSimple",
   components: {
-    NodeIcon,
     NodeStatus,
     NodeFilterLink,
   },
@@ -384,6 +383,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup and legacy GSP markup -->
 <style type="scss">
 .text-parenthetical:before {
   content: "(";
