@@ -47,7 +47,7 @@ interface GraphNode {
   title: string;
   icon: {
     class: string;
-    image: string;
+    image?: string;
   };
 }
 type Callback = (rules: string) => void;

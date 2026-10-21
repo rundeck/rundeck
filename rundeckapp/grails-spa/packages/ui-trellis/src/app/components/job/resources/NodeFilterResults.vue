@@ -191,7 +191,7 @@ export default defineComponent({
       this.allcount = 0;
       this.truncated = false;
       this.colkeys = [];
-      this.nodeSet = { nodeset: [], tagsummary: {} };
+      this.nodeSet = { nodes: [], tagsummary: {} };
     },
     handleFilter(val: NodeFilterSelection) {
       this.$emit("filter", val);

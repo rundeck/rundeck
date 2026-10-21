@@ -71,17 +71,16 @@ import { defineComponent, PropType } from "vue";
 import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
 import { getRundeckContext } from "../../../library";
-import mitt from "mitt";
 import {
   ChangeEvent,
+  createUndoRedoEventBus,
   Operation,
-  UndoRedoEventBus,
-  UndoRedoEvents,
 } from "../job/options/model/ChangeEvents";
 import { cloneDeep } from "lodash";
 
-const emitter = mitt<UndoRedoEvents>();
-const localEB: UndoRedoEventBus = emitter;
+type ListChangeEvent = ChangeEvent<unknown>;
+
+const localEB = createUndoRedoEventBus();
 
 export default defineComponent({
   name: "CommonUndoRedoDraggableList",
@@ -232,7 +231,7 @@ export default defineComponent({
         this.operationMove(data.index, data.dest);
       }
     },
-    doUndo(change: ChangeEvent) {
+    doUndo(change: ListChangeEvent) {
       this.operation(change.undo, {
         index:
           change.dest !== undefined && change.dest >= 0
@@ -243,7 +242,7 @@ export default defineComponent({
       });
       this.wasChanged();
     },
-    doRedo(change: ChangeEvent) {
+    doRedo(change: ListChangeEvent) {
       this.operation(change.operation, change);
       this.wasChanged();
     },
@@ -251,7 +250,7 @@ export default defineComponent({
       this.internalData = cloneDeep(this.originalData);
       this.wasChanged();
     },
-    changeEvent(event: ChangeEvent) {
+    changeEvent(event: ListChangeEvent) {
       this.localEB.emit("change", event);
       this.wasChanged();
     },

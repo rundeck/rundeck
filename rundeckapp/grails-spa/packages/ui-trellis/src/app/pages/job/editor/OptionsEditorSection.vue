@@ -55,7 +55,7 @@ export default defineComponent({
       }
       this.subs["job-edit-schedules-changed"] = eventBus.on(
         "job-edit-schedules-changed",
-        (data) => {
+        (data: { scheduled: boolean }) => {
           if (this.optionsData)
             this.optionsData.jobWasScheduled = data.scheduled;
         },

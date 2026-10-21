@@ -101,8 +101,7 @@ import {
 import {
   Operation,
   ChangeEvent,
-  UndoRedoEventBus,
-  UndoRedoEvents,
+  createUndoRedoEventBus,
 } from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
 import pluginService from "../../../../library/modules/pluginService";
@@ -113,7 +112,6 @@ import type {
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
-import mitt from "mitt";
 import draggable from "vuedraggable";
 
 interface OperationData {
@@ -122,8 +120,9 @@ interface OperationData {
   value?: JobOptionEdit;
 }
 
-const emitter = mitt<UndoRedoEvents>();
-const localEB: UndoRedoEventBus = emitter;
+type OptionChangeEvent = ChangeEvent<JobOptionEdit>;
+
+const localEB = createUndoRedoEventBus();
 const eventBus = getRundeckContext().eventBus;
 
 export default defineComponent({
@@ -314,7 +313,7 @@ export default defineComponent({
       this.editIndex = -1;
       this.createOption = null;
     },
-    doUndo(change: ChangeEvent) {
+    doUndo(change: OptionChangeEvent) {
       this.operation(change.undo, {
         value: change.orig || change.value,
         dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
@@ -325,7 +324,7 @@ export default defineComponent({
       });
       this.wasChanged();
     },
-    doRedo(change: ChangeEvent) {
+    doRedo(change: OptionChangeEvent) {
       this.operation(change.operation, change);
       this.wasChanged();
     },
@@ -338,7 +337,7 @@ export default defineComponent({
         opt.sortIndex = i + 1;
       });
     },
-    changeEvent(event: ChangeEvent) {
+    changeEvent(event: OptionChangeEvent) {
       this.localEB.emit("change", event);
       this.wasChanged();
     },

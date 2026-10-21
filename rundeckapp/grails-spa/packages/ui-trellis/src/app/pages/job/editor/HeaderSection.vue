@@ -71,7 +71,7 @@ export default defineComponent({
 
     this.subs["job-edit-details-changed"] = eventBus.on(
       "job-edit-details-changed",
-      (data) => {
+      (data: { jobName: string; groupPath: string }) => {
         this.detailsData.jobName = data.jobName;
         this.detailsData.groupPath = data.groupPath;
       },

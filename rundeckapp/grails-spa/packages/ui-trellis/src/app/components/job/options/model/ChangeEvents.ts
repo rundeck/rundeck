@@ -1,5 +1,5 @@
 import { JobOption } from "../../../../../library/types/jobs/JobEdit";
-import type { Emitter } from "mitt";
+import mitt, { Handler } from "mitt";
 
 export enum Operation {
   Insert,
@@ -7,21 +7,31 @@ export enum Operation {
   Modify,
   Move,
 }
-export interface ChangeEvent {
+export interface ChangeEvent<TValue = JobOption, TOperation = Operation> {
   index: number;
-  value?: JobOption;
-  orig?: JobOption;
+  value?: TValue;
+  orig?: TValue;
   dest?: number;
-  operation: Operation;
-  undo: Operation;
+  operation: TOperation;
+  undo: TOperation;
 }
 
-export type UndoRedoEvents = {
-  undo: ChangeEvent;
-  redo: ChangeEvent;
-  revertAll: void;
-  change: ChangeEvent;
-  "job-edit:edited": boolean;
-};
+type UndoRedoEventType =
+  "undo" | "redo" | "revertAll" | "change" | "job-edit:edited";
 
-export type UndoRedoEventBus = Emitter<UndoRedoEvents>;
+export interface UndoRedoEventBus {
+  on<T = unknown>(type: UndoRedoEventType, handler: Handler<T>): void;
+  off<T = unknown>(type: UndoRedoEventType, handler?: Handler<T>): void;
+  emit<T = undefined>(type: UndoRedoEventType, event?: T): void;
+}
+
+export function createUndoRedoEventBus(): UndoRedoEventBus {
+  const emitter = mitt<Record<UndoRedoEventType, unknown>>();
+  return {
+    on: <T>(type: UndoRedoEventType, handler: Handler<T>) =>
+      emitter.on(type, handler as Handler<unknown>),
+    off: <T>(type: UndoRedoEventType, handler?: Handler<T>) =>
+      emitter.off(type, handler as Handler<unknown> | undefined),
+    emit: <T>(type: UndoRedoEventType, event?: T) => emitter.emit(type, event),
+  };
+}

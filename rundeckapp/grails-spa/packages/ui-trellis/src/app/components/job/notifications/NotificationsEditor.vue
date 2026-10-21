@@ -313,8 +313,9 @@ import PluginConfig from "../../../../library/components/plugins/pluginConfig.vu
 import pluginService from "../../../../library/modules/pluginService";
 import UndoRedo from "../../util/UndoRedo.vue";
 import MarkdownView from "../../../../library/components/utils/MarkdownView.vue";
-import mitt from "mitt";
-const localEB = mitt();
+import { createUndoRedoEventBus } from "../options/model/ChangeEvents";
+
+const localEB = createUndoRedoEventBus();
 export default defineComponent({
   name: "NotificationsEditor",
   components: {
