@@ -248,6 +248,12 @@ import Expandable from "../utils/RdExpandable.vue";
 import AceEditor from "../utils/AceEditor.vue";
 import PluginPropVal from "./pluginPropVal.vue";
 import { CopyToClipboard } from "../../utilities/Clipboard";
+
+interface CustomValue {
+  label: string;
+  value: string;
+}
+
 export default defineComponent({
   components: {
     Expandable,
@@ -282,9 +288,9 @@ export default defineComponent({
     },
   },
   methods: {
-    getCustomValues(): unknown[] {
+    getCustomValues(): CustomValue[] {
       if (this.innerValue !== "") {
-        return JSON.parse(`${this.innerValue}`) as unknown[];
+        return JSON.parse(`${this.innerValue}`) as CustomValue[];
       }
       return [];
     },

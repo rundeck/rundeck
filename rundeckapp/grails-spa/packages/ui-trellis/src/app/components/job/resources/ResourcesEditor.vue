@@ -458,9 +458,14 @@ import type { NodeFilterSelection, NodeSummary } from "./types/nodeTypes";
 interface ResourcesModel {
   doNodedispatch: boolean;
   filter: string;
+  filterErrors: string[];
   filterExclude: string;
+  filterExcludeErrors: string[];
   filterName?: string;
   filterNameExclude?: string;
+  excludeFilterUncheck: boolean;
+  nodeRankAttributeErrors: string[];
+  nodeThreadcountDynamicErrors: string[];
   orchestrator: {
     type: string | null;
     config: Record<string, unknown>;
@@ -493,7 +498,12 @@ export default defineComponent({
     const modelData = ref<ResourcesModel>({
       doNodedispatch: false,
       filter: "",
+      filterErrors: [],
       filterExclude: "",
+      filterExcludeErrors: [],
+      excludeFilterUncheck: false,
+      nodeRankAttributeErrors: [],
+      nodeThreadcountDynamicErrors: [],
       orchestrator: { type: null, config: {} },
       project: "",
     });
