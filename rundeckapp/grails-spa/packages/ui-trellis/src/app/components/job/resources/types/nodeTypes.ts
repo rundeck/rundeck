@@ -22,7 +22,7 @@ interface Node {
   authrun?: boolean;
   nodename: string;
   name?: string;
-  tags?: Tag[] | string;
+  tags?: string[] | string;
   hostname?: string;
   username?: string;
   description?: string;

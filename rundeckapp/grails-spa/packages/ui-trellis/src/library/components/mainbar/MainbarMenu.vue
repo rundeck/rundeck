@@ -28,7 +28,7 @@ export default defineComponent({
   },
   data() {
     return {
-      submenuOpen: null,
+      submenuOpen: null as number | null,
     };
   },
   computed: {
@@ -50,7 +50,7 @@ export default defineComponent({
     },
   },
   methods: {
-    submenuClick(id: string, event: Event) {
+    submenuClick(id: number, event: Event) {
       event.stopPropagation();
       event.preventDefault();
       this.submenuOpen = this.submenuOpen === id ? null : id;

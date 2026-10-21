@@ -111,7 +111,7 @@ export default defineComponent({
     },
     tags(): string[] {
       if (Array.isArray(this.node.tags)) {
-        return this.node.tags.map((tag) => tag.tag);
+        return this.node.tags;
       }
       return this.node.tags ? this.node.tags.split(",") : [];
     },
