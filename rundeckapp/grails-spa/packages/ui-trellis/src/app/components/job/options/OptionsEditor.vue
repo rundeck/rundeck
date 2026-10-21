@@ -118,11 +118,11 @@ type UndoRedoEvents = {
   change: ChangeEvent;
 };
 
-type OperationData =
-  | { operation: Operation.Insert; index: number; value: JobOptionEdit }
-  | { operation: Operation.Remove; index: number }
-  | { operation: Operation.Modify; index: number; value: JobOptionEdit }
-  | { operation: Operation.Move; index: number; dest: number };
+interface OperationData {
+  index: number;
+  dest?: number;
+  value?: JobOptionEdit;
+}
 
 const emitter = mitt<UndoRedoEvents>();
 const localEB: Emitter<UndoRedoEvents> = emitter;
@@ -207,10 +207,7 @@ export default defineComponent({
       this.createMode = true;
     },
     doRemove(index: number) {
-      const orig = this.applyOperation({
-        operation: Operation.Remove,
-        index,
-      });
+      const orig = this.operation(Operation.Remove, { index });
       this.changeEvent({
         index,
         dest: -1,
@@ -221,11 +218,7 @@ export default defineComponent({
     },
     doMoveUp(index: number) {
       if (index > 0) {
-        this.applyOperation({
-          operation: Operation.Move,
-          index,
-          dest: index - 1,
-        });
+        this.operation(Operation.Move, { index, dest: index - 1 });
         this.changeEvent({
           index: index,
           dest: index - 1,
@@ -236,11 +229,7 @@ export default defineComponent({
     },
     doMoveDown(index: number) {
       if (index < this.intOptions.length - 1) {
-        this.applyOperation({
-          operation: Operation.Move,
-          index,
-          dest: index + 1,
-        });
+        this.operation(Operation.Move, { index, dest: index + 1 });
         this.changeEvent({
           index: index,
           dest: index + 1,
@@ -260,11 +249,7 @@ export default defineComponent({
     },
     updateOption(index: number, data: JobOptionEdit) {
       const value = cloneDeep(data);
-      const orig = this.applyOperation({
-        operation: Operation.Modify,
-        index,
-        value,
-      });
+      const orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
         index: index,
         dest: -1,
@@ -280,11 +265,7 @@ export default defineComponent({
       this.createMode = false;
       const index = this.intOptions.length;
       const value = cloneDeep(data);
-      this.applyOperation({
-        operation: Operation.Insert,
-        index,
-        value,
-      });
+      this.operation(Operation.Insert, { index, value });
 
       this.changeEvent({
         index,
@@ -313,36 +294,22 @@ export default defineComponent({
     operationInsert(index: number, value: JobOptionEdit): void {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
-    applyOperation(data: OperationData): JobOptionEdit | undefined {
+    operation(
+      operation: Operation,
+      data: OperationData,
+    ): JobOptionEdit | undefined {
       let result: JobOptionEdit | undefined;
-      if (data.operation === Operation.Insert) {
-        this.operationInsert(data.index, data.value);
-      } else if (data.operation === Operation.Remove) {
+      if (operation === Operation.Insert) {
+        this.operationInsert(data.index, data.value!);
+      } else if (operation === Operation.Remove) {
         result = this.operationRemove(data.index);
-      } else if (data.operation === Operation.Modify) {
-        result = this.operationModify(data.index, data.value);
-      } else if (data.operation === Operation.Move) {
-        this.operationMove(data.index, data.dest);
+      } else if (operation === Operation.Modify) {
+        result = this.operationModify(data.index, data.value!);
+      } else if (operation === Operation.Move) {
+        this.operationMove(data.index, data.dest!);
       }
       this.updateIndexes();
       return result;
-    },
-    replayOperation(
-      operation: Operation,
-      index: number,
-      dest: number,
-      value?: JobOptionEdit,
-    ) {
-      if (operation === Operation.Insert) {
-        return this.applyOperation({ operation, index, value: value! });
-      }
-      if (operation === Operation.Remove) {
-        return this.applyOperation({ operation, index });
-      }
-      if (operation === Operation.Modify) {
-        return this.applyOperation({ operation, index, value: value! });
-      }
-      return this.applyOperation({ operation, index, dest });
     },
     doCancel() {
       this.createMode = false;
@@ -350,23 +317,18 @@ export default defineComponent({
       this.createOption = null;
     },
     doUndo(change: ChangeEvent) {
-      this.replayOperation(
-        change.undo,
-        change.dest !== undefined && change.dest >= 0
-          ? change.dest
-          : change.index,
-        change.index >= 0 ? change.index : (change.dest ?? change.index),
-        change.orig || change.value,
-      );
+      this.operation(change.undo, {
+        value: change.orig || change.value,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
+        index:
+          change.dest !== undefined && change.dest >= 0
+            ? change.dest
+            : change.index,
+      });
       this.wasChanged();
     },
     doRedo(change: ChangeEvent) {
-      this.replayOperation(
-        change.operation,
-        change.index,
-        change.dest ?? change.index,
-        change.value,
-      );
+      this.operation(change.operation, change);
       this.wasChanged();
     },
     doRevertAll() {
