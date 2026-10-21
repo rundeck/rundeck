@@ -247,7 +247,7 @@ export default defineComponent({
 
       return props;
     },
-    jobRefConfig(): Record<string, unknown> {
+    jobRefConfig(): Record<string, string | undefined> {
       if (!this.config.jobref) return {};
       return {
         job: this.jobRefFullName,
