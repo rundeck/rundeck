@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.common
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
@@ -339,6 +340,14 @@ class ProjectNodeSupportSpec extends Specification {
         result[1].type == "provider2"
         result[1].props == ['x':'y','z':'w']
         result[1].extraProps == [:]
+    }
+
+    def "loaded source toString identifies project, index and type"() {
+        given:
+        def source = new ProjectNodeSupport.LoadedSource('Foo', 3, 'aws-ec2', Mock(ResourceModelSource))
+
+        expect:
+        source.toString() == 'project=Foo source #3 (aws-ec2)'
     }
 
 }
