@@ -80,6 +80,7 @@ type UndoRedoEvents = {
   redo: ChangeEvent;
   revertAll: void;
   change: ChangeEvent;
+  "job-edit:edited": boolean;
 };
 
 const emitter = mitt<UndoRedoEvents>();
@@ -222,7 +223,7 @@ export default defineComponent({
     },
     operation(
       op: Operation,
-      data: { index: number; dest: number; value?: unknown },
+      data: { index: number; dest?: number; value?: unknown },
     ) {
       if (op === Operation.Insert) {
         this.operationInsert(data.index, data.value);
@@ -230,7 +231,7 @@ export default defineComponent({
         this.operationRemove(data.index);
       } else if (op === Operation.Modify) {
         this.operationModify(data.index, data.value);
-      } else if (op === Operation.Move) {
+      } else if (op === Operation.Move && data.dest !== undefined) {
         this.operationMove(data.index, data.dest);
       }
     },

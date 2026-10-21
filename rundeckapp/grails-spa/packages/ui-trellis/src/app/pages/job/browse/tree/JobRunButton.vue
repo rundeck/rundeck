@@ -74,7 +74,7 @@ export default defineComponent({
       const data = this.job?.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "schedule",
       )?.data;
-      return data?.executionEnabled || false;
+      return !!data?.executionEnabled;
     },
     projEnabled(): boolean {
       return (
