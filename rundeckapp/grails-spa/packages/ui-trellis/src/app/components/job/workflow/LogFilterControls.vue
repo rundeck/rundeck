@@ -39,9 +39,10 @@ import EditPluginModal from "../../../../library/components/plugins/EditPluginMo
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import {
   getPluginProvidersForService,
+  type PluginProviderDescription,
   validatePluginConfig,
 } from "../../../../library/modules/pluginService";
-import { ServiceType, Plugin } from "../../../../library/stores/Plugins";
+import { ServiceType } from "../../../../library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 import { resetValidation } from "./stepEditorUtils";
@@ -76,8 +77,8 @@ export default defineComponent({
   data() {
     return {
       ServiceType,
-      pluginProviders: [] as Plugin[],
-      pluginLabels: [],
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
       addFilterModal: false,
       editFilterModal: false,
       model: {

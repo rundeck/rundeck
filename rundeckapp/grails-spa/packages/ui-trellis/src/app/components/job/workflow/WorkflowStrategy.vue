@@ -74,7 +74,7 @@ export default defineComponent({
       model: {} as PluginConfig,
       mode: "create",
       pluginProviders: [] as PluginProviderDescription[],
-      pluginLabels: [],
+      pluginLabels: {} as Record<string, string>,
       loaded: false,
       editStrategyPlugin: { type: "", config: {} } as PluginConfig,
       editValidation: null,

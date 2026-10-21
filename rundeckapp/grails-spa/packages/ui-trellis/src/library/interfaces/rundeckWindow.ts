@@ -5,12 +5,30 @@ import { AppMeta, RootStore } from "../stores/RootStore";
 import { EventBus } from "../utilities/vueEventBus";
 
 interface RundeckContextData extends Record<string, unknown> {
+  activityPageHref?: string;
+  activityUrl?: string;
+  autorefreshms?: number;
+  bulkDeleteUrl?: string;
+  deleteExecAuth?: boolean;
+  filterOpts?: Record<string, unknown>;
+  jobslistDateFormatMoment?: string;
   otherData?: {
     uuid?: string;
     [key: string]: unknown;
   };
+  pagination?: {
+    max?: number;
+  };
+  projectAdminAuth?: boolean;
+  query?: Record<string, string>;
+  runningOpts?: Record<string, boolean>;
+  sinceUpdatedUrl?: string;
+  viewOpts?: {
+    showBulkDelete?: boolean;
+  };
   features?: Record<string, boolean>;
   optionsData?: JobOptionsData;
+  workflowData?: Record<string, unknown>;
 }
 
 export interface RundeckContext {

@@ -111,9 +111,9 @@ export default defineComponent({
   },
   methods: {
     getText(elem: ModalButtons | ModalLinks, defaultMessage: string = "") {
-      return elem.message || elem.messageCode
-        ? elem.message || this.$t(elem.messageCode)
-        : defaultMessage;
+      if (elem.message) return elem.message;
+      if (elem.messageCode) return this.$t(elem.messageCode);
+      return defaultMessage;
     },
     emitButtonEvent(button: ModalButtons) {
       this.$emit("buttonClicked", button.id);

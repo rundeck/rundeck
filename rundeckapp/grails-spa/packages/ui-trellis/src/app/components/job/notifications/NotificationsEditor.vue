@@ -311,6 +311,7 @@ import { defineComponent } from "vue";
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../../library/modules/pluginService";
+import type { PluginProviderDescription } from "../../../../library/modules/pluginService";
 import UndoRedo from "../../util/UndoRedo.vue";
 import MarkdownView from "../../../../library/components/utils/MarkdownView.vue";
 import { createUndoRedoEventBus } from "../options/model/ChangeEvents";
@@ -329,8 +330,8 @@ export default defineComponent({
   data() {
     return {
       notifyAvgDurationThreshold: null,
-      pluginProviders: [],
-      pluginLabels: {},
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
       notifyTypes: [
         "onstart",
         "onsuccess",

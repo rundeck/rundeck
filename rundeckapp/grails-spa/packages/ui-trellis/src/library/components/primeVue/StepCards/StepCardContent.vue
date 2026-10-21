@@ -89,17 +89,7 @@ import PluginInfo from "../../plugins/PluginInfo.vue";
 import PluginPropView from "../../plugins/pluginPropView.vue";
 import { getRundeckContext } from "../../../../library";
 import type { PluginConfig as PluginConfigData } from "../../../interfaces/PluginConfig";
-import type { JobRefDefinition } from "../../../../app/components/job/workflow/types/workflowTypes";
-
-interface StepCardConfig extends PluginConfigData {
-  id?: string;
-  jobref?: JobRefDefinition;
-}
-
-interface StepCardHandler extends PluginConfigData {
-  jobref?: JobRefDefinition;
-  title?: string;
-}
+import type { StepCardConfig, StepCardHandler } from "./StepCardTypes";
 
 interface JobRefProperty {
   name: string;

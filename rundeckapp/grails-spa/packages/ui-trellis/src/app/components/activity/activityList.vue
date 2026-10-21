@@ -785,39 +785,41 @@ export default defineComponent({
 
     this.projectName = this.rundeckContext.projectName;
     if (this.rundeckContext && this.rundeckContext.data) {
-      this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
-      this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
-      this.activityUrl = this.rundeckContext.data["activityUrl"];
-      this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
-      this.activityPageHref = this.rundeckContext.data["activityPageHref"];
-      this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
-      this.autorefreshms = this.rundeckContext.data["autorefreshms"] || 5000;
+      this.auth.projectAdmin =
+        this.rundeckContext.data.projectAdminAuth ?? false;
+      this.auth.deleteExec = this.rundeckContext.data.deleteExecAuth ?? false;
+      this.activityUrl = this.rundeckContext.data.activityUrl ?? "";
+      this.bulkDeleteUrl = this.rundeckContext.data.bulkDeleteUrl ?? "";
+      this.activityPageHref = this.rundeckContext.data.activityPageHref ?? "";
+      this.sinceUpdatedUrl = this.rundeckContext.data.sinceUpdatedUrl ?? "";
+      this.autorefreshms = this.rundeckContext.data.autorefreshms || 5000;
 
       if (
-        this.rundeckContext.data["pagination"] &&
-        this.rundeckContext.data["pagination"].max
+        this.rundeckContext.data.pagination &&
+        this.rundeckContext.data.pagination.max
       ) {
-        this.pagination.max = this.rundeckContext.data["pagination"].max;
+        this.pagination.max = this.rundeckContext.data.pagination.max;
       }
-      if (this.rundeckContext.data["filterOpts"]) {
+      if (this.rundeckContext.data.filterOpts) {
         this.filterOpts = this.rundeckContext.data.filterOpts;
       }
       this.showFilters = true;
-      if (this.rundeckContext.data["query"]) {
+      if (this.rundeckContext.data.query) {
         this.query = Object.assign(
           {},
           this.query,
-          this.rundeckContext.data["query"],
+          this.rundeckContext.data.query,
         );
       } else {
         this.loadActivity(0);
       }
-      if (this.rundeckContext.data["runningOpts"]) {
+      if (this.rundeckContext.data.runningOpts) {
         this.runningOpts = this.rundeckContext.data.runningOpts;
       }
 
-      if (this.rundeckContext.data["viewOpts"]) {
-        this.showBulkDelete = this.rundeckContext.data.viewOpts.showBulkDelete;
+      if (this.rundeckContext.data.viewOpts) {
+        this.showBulkDelete =
+          this.rundeckContext.data.viewOpts.showBulkDelete ?? true;
       }
       if (this.runningOpts["autorefresh"]) {
         this.autorefresh = true;

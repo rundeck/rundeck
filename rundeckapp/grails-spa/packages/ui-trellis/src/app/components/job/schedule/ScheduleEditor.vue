@@ -451,6 +451,7 @@ import {
 import { EventBus } from "../../../../library";
 
 interface ScheduleEditorData {
+  scheduled: boolean;
   useCrontabString: boolean;
   crontabString: string;
   hourSelected?: string;
