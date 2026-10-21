@@ -15,7 +15,7 @@
         class="node_ident embedded_node tight"
         tabindex="0"
         role="button"
-        :style="styleForNode(node.attributes)"
+        :style="styleForNode(attributes)"
         :data-node="node.nodename"
         :title="node.nodename"
       >
@@ -51,11 +51,11 @@
 
           <div class="nodedetail" style="overflow-x: auto">
             <node-details-simple
-              :attributes="node.attributes"
+              :attributes="attributes"
               :show-exclude-filter-links="showExcludeFilterLinks"
               :authrun="node.authrun"
               :use-namespace="true"
-              :tags="node.tags"
+              :tags="tags"
               :node-columns="true"
               @filter="filterClick"
             />
@@ -104,6 +104,17 @@ export default defineComponent({
     return {
       popoverVisible: false,
     };
+  },
+  computed: {
+    attributes(): NodeAttributes {
+      return this.node.attributes ?? {};
+    },
+    tags(): string[] {
+      if (Array.isArray(this.node.tags)) {
+        return this.node.tags.map((tag) => tag.tag);
+      }
+      return this.node.tags ? this.node.tags.split(",") : [];
+    },
   },
   methods: {
     styleForNode(attributes: NodeAttributes) {

@@ -23,7 +23,9 @@ import { defineComponent, type PropType } from "vue";
 import SelectButton from "primevue/selectbutton";
 
 type SelectButtonOption = unknown;
-type OptionField = string | ((option: SelectButtonOption) => unknown);
+type OptionLabelField = string | ((option: SelectButtonOption) => string);
+type OptionValueField = string | ((option: SelectButtonOption) => unknown);
+type OptionDisabledField = string | ((option: SelectButtonOption) => boolean);
 
 export default defineComponent({
   name: "PtSelectButton",
@@ -39,15 +41,15 @@ export default defineComponent({
       required: true,
     },
     optionLabel: {
-      type: [String, Function] as PropType<OptionField>,
+      type: [String, Function] as PropType<OptionLabelField>,
       default: undefined,
     },
     optionValue: {
-      type: [String, Function] as PropType<OptionField>,
+      type: [String, Function] as PropType<OptionValueField>,
       default: undefined,
     },
     optionDisabled: {
-      type: [String, Function] as PropType<OptionField>,
+      type: [String, Function] as PropType<OptionDisabledField>,
       default: undefined,
     },
     multiple: {

@@ -5,7 +5,7 @@
         <template v-for="(node, i) in nodes" :key="`node-${i}`">
           <node-show-embed
             :node="node"
-            :class="cssForNode(node.attributes)"
+            :class="cssForNode(node.attributes ?? {})"
             :show-exclude-filter-links="showExcludeFilterLinks"
             @filter="filterClick"
           />

@@ -45,7 +45,14 @@ export interface RundeckContext {
   };
   rundeckClient: RundeckBrowser;
   data: RundeckContextData;
-  profile?: Record<string, unknown>;
+  profile?: {
+    username?: string;
+    links?: {
+      profile?: string;
+      logout?: string;
+    };
+    [key: string]: unknown;
+  };
   feature: { [key: string]: RundeckFeature };
   navbar: {
     items: Array<NavItem>;

@@ -84,8 +84,8 @@ export default defineComponent({
     return {
       modalData: {
         show: false,
-        image: null,
-        alt: null,
+        image: null as string | null,
+        alt: null as string | null,
       },
       tour: null as Tour | null,
       display: false,
@@ -122,7 +122,9 @@ export default defineComponent({
   },
   methods: {
     showIndicator() {
-      const indicator = this.tour.steps[this.stepIndex].stepIndicator;
+      const tour = this.tour;
+      if (!tour) return;
+      const indicator = tour.steps[this.stepIndex].stepIndicator;
       if (indicator != null) {
         const indicatorTarget = document.getElementById(indicator);
         if (indicatorTarget == null) {
@@ -137,9 +139,9 @@ export default defineComponent({
           indicatorElement.style.top = `${indicatorTargetViewportOffset.y + (indicatorTargetViewportOffset.height / 2 - 25)}px `;
           indicatorElement.style.left = `${indicatorTargetViewportOffset.x + indicatorTargetViewportOffset.width}px`;
 
-          if (this.tour.steps[this.stepIndex].stepIndicatorPosition) {
+          if (tour.steps[this.stepIndex].stepIndicatorPosition) {
             const stepIndicatorPosition =
-              this.tour.steps[this.stepIndex].stepIndicatorPosition;
+              tour.steps[this.stepIndex].stepIndicatorPosition;
 
             if (stepIndicatorPosition === "bottom") {
               indicatorElement.classList.add("bottom");
@@ -216,7 +218,9 @@ export default defineComponent({
       }
     },
     nextStep() {
-      if (this.stepIndex !== this.tour.steps.length - 1) {
+      const tour = this.tour;
+      if (!tour) return;
+      if (this.stepIndex !== tour.steps.length - 1) {
         this.stepIndex++;
         Trellis.FilterPrefs.setFilterPref(
           "activeTourStep",
@@ -229,13 +233,17 @@ export default defineComponent({
       }
     },
     initNextUrl() {
-      const step = this.tour.steps[0];
+      const tour = this.tour;
+      if (!tour) return;
+      const step = tour.steps[0];
       if (step.currentUrl != null && this.currentUrl !== step.currentUrl) {
         window.location.replace(`${window._rundeck.rdBase}${step.currentUrl}`);
       }
     },
     getNextUrl(stepIndex: number) {
-      const nextStep = this.tour.steps[stepIndex];
+      const tour = this.tour;
+      if (!tour) return;
+      const nextStep = tour.steps[stepIndex];
       let nextUrl = null;
 
       if (nextStep != null) {
@@ -253,18 +261,18 @@ export default defineComponent({
       }
     },
     setProgress() {
+      const tour = this.tour;
+      if (!tour) return;
       // Updating the Progress Bar and Label
-      const progressStep = 100 / this.tour.steps.length;
+      const progressStep = 100 / tour.steps.length;
       this.progress = Math.ceil(progressStep * (this.stepIndex + 1));
       if (this.stepIndex === 0) {
         this.progressText = " ";
       } else {
-        this.progressText = `${this.stepIndex + 1} of ${
-          this.tour.steps.length
-        }`;
+        this.progressText = `${this.stepIndex + 1} of ${tour.steps.length}`;
       }
       // Handling the Step Indicator
-      if (this.tour.steps[this.stepIndex].stepIndicator) {
+      if (tour.steps[this.stepIndex].stepIndicator) {
         this.showIndicator();
       } else {
         this.removeIndicator();
@@ -285,7 +293,9 @@ export default defineComponent({
       this.modalData.show = true;
     },
     resume() {
-      const step = this.tour.steps[this.stepIndex];
+      const tour = this.tour;
+      if (!tour) return;
+      const step = tour.steps[this.stepIndex];
       if (step.currentUrl != null && step.currentUrl !== "") {
         if (this.currentUrl !== step.currentUrl) {
           window.location.replace(

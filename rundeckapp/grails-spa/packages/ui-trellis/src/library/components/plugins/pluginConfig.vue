@@ -291,7 +291,10 @@ export default defineComponent({
     showTitle: { required: false },
     showIcon: { required: false },
     showDescription: { required: false },
-    modelValue: { type: Object as PropType<PluginConfig>, required: false },
+    modelValue: {
+      type: Object as PropType<PluginConfig<object>>,
+      required: false,
+    },
     savedProps: { type: Array as PropType<string[]>, required: false },
     pluginConfig: { required: false },
     validation: { required: false },

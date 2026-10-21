@@ -473,7 +473,7 @@ export default defineComponent({
   },
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<ScheduleEditorData>,
       required: true,
     },
     eventBus: {
@@ -536,6 +536,8 @@ export default defineComponent({
   mounted() {
     this.modelData = Object.assign(
       {
+        scheduled: false,
+        crontabString: "",
         selectedDays: [],
         selectedMonths: [],
         useCrontabString: this.useCrontabString,

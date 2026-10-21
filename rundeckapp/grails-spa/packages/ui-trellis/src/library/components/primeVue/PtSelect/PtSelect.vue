@@ -89,7 +89,8 @@ import { defineComponent, type PropType } from "vue";
 import Select, { type SelectFilterEvent } from "primevue/select";
 
 type SelectOption = unknown;
-type OptionField = string | ((option: SelectOption) => unknown);
+type OptionLabelField = string | ((option: SelectOption) => string);
+type OptionValueField = string | ((option: SelectOption) => unknown);
 
 export default defineComponent({
   name: "PtSelect",
@@ -105,11 +106,11 @@ export default defineComponent({
       default: () => [],
     },
     optionLabel: {
-      type: [String, Function] as PropType<OptionField>,
+      type: [String, Function] as PropType<OptionLabelField>,
       default: undefined,
     },
     optionValue: {
-      type: [String, Function] as PropType<OptionField>,
+      type: [String, Function] as PropType<OptionValueField>,
       default: undefined,
     },
     placeholder: {
