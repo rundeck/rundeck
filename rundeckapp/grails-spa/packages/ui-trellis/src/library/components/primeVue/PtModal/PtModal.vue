@@ -133,4 +133,24 @@ export default defineComponent({
     padding: 0 var(--sizes-8) var(--sizes-8);
   }
 }
+
+*[data-color-theme="dark"] :deep(.p-dialog.pt-modal) {
+  background: var(--grey-700);
+  color: var(--white, #fff);
+
+  .p-dialog-header,
+  .p-dialog-content,
+  .p-dialog-footer {
+    background: var(--grey-700);
+  }
+
+  .p-dialog-title,
+  .p-dialog-close-button {
+    color: var(--white, #fff);
+  }
+
+  .p-dialog-content {
+    color: var(--grey-200);
+  }
+}
 </style>
