@@ -111,6 +111,7 @@ import rundeck.support.filters.BaseNodeFilters
 import rundeck.support.filters.ExtNodeFilters
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.NodeService
 import rundeck.services.UserService
 import com.dtolabs.rundeck.app.api.ApiVersions
 
@@ -2159,7 +2160,16 @@ List of config values, each value contains:
         removePrefixes.addAll(pconfigurable.remove)
         def result = [success: false]
         if (!errors) {
-            result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+            result = frameworkService.updateFrameworkProjectConfig(
+                project,
+                projProps,
+                removePrefixes,
+                !onlyNodeCacheSettingsChanged(
+                    frameworkService.getFrameworkProject(project).getProjectProperties(),
+                    projProps,
+                    removePrefixes
+                )
+            )
             if (!result.success) {
                 errors << result.error
             }
@@ -2172,6 +2182,37 @@ List of config values, each value contains:
                         errors                   : errors
                 ]
         )
+    }
+
+    /**
+     * Project properties that only tune node cache loading. Changing them does not change which nodes a project has,
+     * so saving them keeps the cached nodes, and the node cache reloads with the new settings on its next refresh.
+     */
+    static final Set<String> NODE_CACHE_SETTINGS = [
+        NodeService.PROJECT_NODECACHE_ENABLED,
+        NodeService.PROJECT_NODECACHE_DELAY,
+        NodeService.PROJECT_NODECACHE_FIRSTLOAD_SYNCH,
+        ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS
+    ].toSet().asImmutable()
+
+    /**
+     * The configurable form saves every setting in its category, changed or not, so compare values with the current
+     * project config.
+     * @param current current project properties
+     * @param saved properties being saved
+     * @param replaced property keys cleared before the saved properties are merged in
+     * @return true if no property other than a node cache setting changes value
+     */
+    static boolean onlyNodeCacheSettingsChanged(
+        Map<String, String> current,
+        Properties saved,
+        Collection<String> replaced
+    ) {
+        Set<String> keys = new HashSet<>(saved.stringPropertyNames())
+        keys.addAll(replaced)
+        keys.every { String key ->
+            NODE_CACHE_SETTINGS.contains(key) || current.get(key) == saved.getProperty(key)
+        }
     }
 
     def saveProjectNodeSources() {

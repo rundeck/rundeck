@@ -2915,6 +2915,26 @@ project.label=A Label
         model.enableCleanHistory == false
     }
 
+    @Unroll
+    def "only node cache settings changed is #expected when #desc"() {
+        given:
+        Map<String, String> current = [
+            'project.nodeCache.delay'      : '30',
+            'project.resources.loadThreads': '1',
+            'project.healthcheck.enabled'  : 'true'
+        ]
+        def saved = new Properties()
+        saved.putAll(savedValues)
+        def replaced = ['project.nodeCache.delay', 'project.resources.loadThreads', 'project.healthcheck.enabled']
 
+        expect:
+        FrameworkController.onlyNodeCacheSettingsChanged(current, saved, replaced) == expected
 
+        where:
+        desc                             | savedValues                                                                                                   | expected
+        'load threads changes'           | ['project.nodeCache.delay': '30', 'project.resources.loadThreads': '20', 'project.healthcheck.enabled': 'true'] | true
+        'nothing changes'                | ['project.nodeCache.delay': '30', 'project.resources.loadThreads': '1', 'project.healthcheck.enabled': 'true']  | true
+        'another setting changes'        | ['project.nodeCache.delay': '30', 'project.resources.loadThreads': '1', 'project.healthcheck.enabled': 'false'] | false
+        'another setting is removed'     | ['project.nodeCache.delay': '30', 'project.resources.loadThreads': '20']                                       | false
+    }
 }
