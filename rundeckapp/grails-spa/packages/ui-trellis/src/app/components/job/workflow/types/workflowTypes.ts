@@ -62,11 +62,20 @@ export interface CommandExecPluginConfig {
   adhocRemoteString: string;
 }
 
-export type StepPluginConfig =
+/**
+ * Extension point for bundled consumers that add workflow-step config fields.
+ */
+export interface StepPluginConfigExtension {
+  readonly __stepPluginConfigExtension?: never;
+}
+
+export type StepPluginConfig = (
   | ScriptInlinePluginConfig
   | ScriptFilePluginConfig
   | CommandExecPluginConfig
-  | Record<string, unknown>;
+  | Record<string, unknown>
+) &
+  StepPluginConfigExtension;
 
 export interface JobRefDefinition {
   group: string;
