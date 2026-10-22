@@ -140,6 +140,49 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(updatedFieldValue).toBe("Updated Value");
   });
 
+  it("uses a component input when no host element is supplied", async () => {
+    const wrapper = createWrapper();
+    await flushPromises();
+    const hiddenInput = wrapper.get('[data-testid="dynamic-form-value-input"]');
+
+    expect(hiddenInput.attributes("name")).toBe("test-name");
+    await wrapper
+      .find('[data-testid="field-input-0"]')
+      .setValue("Updated Value");
+    await flushPromises();
+
+    expect((hiddenInput.element as HTMLInputElement).value).toBe(
+      '[{"key":"field1","label":"Option1","value":"Updated Value","desc":"Description1"}]',
+    );
+  });
+
+  it("updates the legacy host input when a field value changes", async () => {
+    const hostInput = document.createElement("input");
+    hostInput.id = "legacy-dynamic-form-input";
+    hostInput.name = "executionLifecyclePlugins.key.configMap.userRoiData";
+    hostInput.type = "hidden";
+    document.body.appendChild(hostInput);
+
+    const wrapper = createWrapper({ element: hostInput.id });
+    await flushPromises();
+    expect(
+      wrapper.find('[data-testid="dynamic-form-value-input"]').exists(),
+    ).toBe(false);
+    await wrapper
+      .find('[data-testid="field-input-0"]')
+      .setValue("Updated Value");
+    await flushPromises();
+
+    expect(hostInput.value).toBe(
+      '[{"key":"field1","label":"Option1","value":"Updated Value","desc":"Description1"}]',
+    );
+    expect(wrapper.emitted("update:modelValue")?.[0]).toEqual([
+      '[{"key":"field1","label":"Option1","value":"Updated Value","desc":"Description1"}]',
+    ]);
+
+    hostInput.remove();
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin
