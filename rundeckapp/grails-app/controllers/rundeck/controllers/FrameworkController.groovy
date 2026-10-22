@@ -1947,9 +1947,11 @@ Since: v55""",
                 fwkProject.projectProperties,
                 'resourceModelSource'
         )
-        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
+        final projectNodes = fwkProject.projectNodes
+        //display only: use the already loaded sources so the page does not wait for a node load in progress
+        final writeableModelSources = projectNodes.loadedWriteableResourceModelSources
 
-        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
+        def parseExceptions = projectNodes.getResourceModelSourceExceptionsMap()
 
         [
                 project           : project,
@@ -3236,7 +3238,8 @@ Since: v23''',
 
         //get list of model source configes
         final resourceConfig = projectNodes.listResourceModelConfigurations()
-        final writeableModelSourcesMap = projectNodes.writeableResourceModelSources.collectEntries { [it.index, it] }
+        //display only: use the already loaded sources so the list does not wait for a node load in progress
+        final writeableModelSourcesMap = projectNodes.loadedWriteableResourceModelSources.collectEntries { [it.index, it] }
 
         def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
 

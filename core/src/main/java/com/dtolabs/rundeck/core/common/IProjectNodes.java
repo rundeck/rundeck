@@ -44,6 +44,16 @@ public interface IProjectNodes {
     public Collection<WriteableProjectNodes> getWriteableResourceModelSources();
 
     /**
+     * Writeable sources that are already loaded, without loading the sources or waiting for a load in progress.
+     * Use for display only, the result may be stale or empty.
+     *
+     * @return writeable sources from the last completed load
+     */
+    default Collection<WriteableProjectNodes> getLoadedWriteableResourceModelSources() {
+        return getWriteableResourceModelSources();
+    }
+
+    /**
      * Contains and identifies a model source entry for the project
      */
     static interface ReadableProjectNodes {

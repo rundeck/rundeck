@@ -29,6 +29,14 @@ class ProjectNodesEnhancer implements IProjectNodes {
 
     long loadedTime
 
+    /**
+     * @return writeable sources from the last completed load, without waiting for a load in progress
+     */
+    @Override
+    Collection<WriteableProjectNodes> getLoadedWriteableResourceModelSources() {
+        projectNodes.loadedWriteableResourceModelSources
+    }
+
     @Override
     INodeSet getNodeSet() {
         def nodeset = projectNodes.getNodeSet()

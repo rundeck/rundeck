@@ -90,6 +90,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private ResourceModelSourceService                                             resourceModelSourceService;
     private NodeSourceLoader     nodeSourceLoader;
     private boolean                                                                sourcesOpened;
+    /**
+     * Sources from the last completed load, readable without waiting for a load in progress
+     */
+    private volatile List<LoadedResourceModelSource>                               lastLoadedSources = Collections.emptyList();
     private File varDir;
 
     /**
@@ -391,6 +395,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         if (!sourcesOpened) {
             loadResourceModelSources();
             sourcesOpened = true;
+            lastLoadedSources = nodesSourceList;
         }
         return nodesSourceList;
     }
@@ -404,7 +409,22 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     public Collection<WriteableProjectNodes> getWriteableResourceModelSources() {
         //determine if sources need to be reloaded
-        List<LoadedResourceModelSource> resourceModelSources = getResourceModelSourcesInternal();
+        return toWriteable(getResourceModelSourcesInternal());
+    }
+
+    /**
+     * Writeable sources from the last completed load of the sources. Unlike {@link #getWriteableResourceModelSources()}
+     * this never loads the sources or waits for a load in progress, so it can be used for display while a slow load
+     * is running.
+     *
+     * @return writeable sources, empty if the sources have not been loaded yet
+     */
+    @Override
+    public Collection<WriteableProjectNodes> getLoadedWriteableResourceModelSources() {
+        return toWriteable(lastLoadedSources);
+    }
+
+    private static Collection<WriteableProjectNodes> toWriteable(final List<LoadedResourceModelSource> resourceModelSources) {
         return
                 resourceModelSources.stream()
                                     .filter(i -> i.getSourceType() == SourceType.READ_WRITE)

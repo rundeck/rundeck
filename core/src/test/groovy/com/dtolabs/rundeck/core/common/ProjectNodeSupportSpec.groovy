@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.SourceType
+import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
@@ -390,6 +392,71 @@ class ProjectNodeSupportSpec extends Specification {
         node.setAttribute('x', value)
         set.putNode(node)
         set
+    }
+
+    def "loaded writeable sources are returned without waiting for a load in progress"() {
+        given:
+        def props = new Properties()
+        props['resources.source.1.type'] = 'file'
+        props['resources.source.1.config.file'] = '/tmp/file0'
+        def lastModified = new Date(1000)
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> PROJECT_NAME
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> { lastModified }
+        }
+        def writeable = Stub(WriteableModelSource)
+        def blockCreate = false
+        def creating = new CountDownLatch(1)
+        def releaseCreate = new CountDownLatch(1)
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> {
+                if (blockCreate) {
+                    creating.countDown()
+                    releaseCreate.await(10, TimeUnit.SECONDS)
+                }
+                def source = new ResourceModelSource() {
+                    @Override
+                    INodeSet getNodes() throws ResourceModelSourceException {
+                        nodes('a', 'v')
+                    }
+
+                    @Override
+                    SourceType getSourceType() {
+                        SourceType.READ_WRITE
+                    }
+
+                    @Override
+                    WriteableModelSource getWriteable() {
+                        writeable
+                    }
+                }
+                Closeables.closeableProvider(source)
+            }
+        }
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
+        def support = new ProjectNodeSupport(
+            File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"), config, generatorService, sourceService
+        )
+
+        expect: "nothing before the sources are first loaded"
+        support.getLoadedWriteableResourceModelSources().isEmpty()
+        support.getWriteableResourceModelSources()*.index == [1]
+
+        when: "the config changes and a load blocks while it creates the sources"
+        lastModified = new Date(2000)
+        blockCreate = true
+        def loading = Thread.start { support.getNodeSet() }
+        creating.await(10, TimeUnit.SECONDS)
+        def loaded = support.getLoadedWriteableResourceModelSources()
+        releaseCreate.countDown()
+        loading.join(10000)
+
+        then: "the sources from the last completed load are returned without waiting"
+        loaded*.index == [1]
+        !loading.isAlive()
     }
 
     def "sources are queried in parallel and merged in source order"() {
