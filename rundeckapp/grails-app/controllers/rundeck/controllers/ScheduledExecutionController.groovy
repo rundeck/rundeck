@@ -5759,7 +5759,7 @@ For Content-Type: `multipart/form-data`
     /**
      * API: run script: /api/14/project/PROJECT/run/script
      */
-    def apiRunScriptv14(ApiRunAdhocRequest runAdhocRequest){
+    def apiRunScriptv14(@Parameter(hidden = true) ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireApi(request,response)){
             return
         }
@@ -6005,7 +6005,7 @@ Since: v14''',
     /**
      * API: run script: /api/14/project/PROJECT/run/url
      */
-    def apiRunScriptUrlv14 (ApiRunAdhocRequest runAdhocRequest){
+    def apiRunScriptUrlv14 (@Parameter(hidden = true) ApiRunAdhocRequest runAdhocRequest){
         if(!apiService.requireApi(request,response)){
             return
         }
