@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
@@ -372,6 +373,9 @@ class ProjectNodeSupportSpec extends Specification {
         def sourceService = Mock(ResourceModelSourceService) {
             getCloseableSourceForConfiguration('file', _) >> { String type, Properties p ->
                 int idx = (p.getProperty('file') - '/tmp/file') as int
+                if (null == loaders[idx]) {
+                    throw new ExecutionServiceException("failed to initialize source ${idx + 1}")
+                }
                 // not a Spock Mock: mock invocations are serialized, which would defeat parallel loading
                 def source = new ResourceModelSource() {
                     @Override
@@ -518,42 +522,55 @@ class ProjectNodeSupportSpec extends Specification {
         maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
     }
 
-    def "serial loads from many projects share the global concurrency cap"() {
+    def "a serial load on an interrupted thread still queries every source"() {
         given:
-        def active = new AtomicInteger()
-        def maxActive = new AtomicInteger()
-        def release = new CountDownLatch(1)
-        def projects = ProjectNodeSupport.MAX_LOAD_THREADS + 10
-        def supports = (1..projects).collect {
-            supportWithSources([:], [{ ->
-                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
-                release.await(10, TimeUnit.SECONDS)
-                active.decrementAndGet()
-                nodes("n", 'v')
-            } as Closure<INodeSet>])
-        }
+        def support = supportWithSources([:], [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> nodes('b', '2') } as Closure<INodeSet>
+        ])
+        def results = []
 
         when:
-        def threads = supports.collect { s -> Thread.start { s.getNodeSet() } }
+        def loading = Thread.start {
+            Thread.currentThread().interrupt()
+            results << support.getNodeSet()
+        }
+        loading.join(10000)
 
         then:
-        new PollingConditions(timeout: 10).eventually {
-            assert active.get() == ProjectNodeSupport.MAX_LOAD_THREADS
-        }
+        results[0].nodeNames as Set == ['a', 'b'] as Set
+        support.getResourceModelSourceExceptionsMap().isEmpty()
+    }
+
+    def "a load started from a source query on a pool thread runs serially on that thread"() {
+        given:
+        def innerThreads = Collections.synchronizedList([])
+        def inner = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], [
+                { -> innerThreads << Thread.currentThread(); nodes('i1', '1') } as Closure<INodeSet>,
+                { -> innerThreads << Thread.currentThread(); nodes('i2', '2') } as Closure<INodeSet>
+        ])
+        def outerThread = null
+        def outer = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], [
+                { -> outerThread = Thread.currentThread(); inner.getNodeSet() } as Closure<INodeSet>,
+                { -> nodes('o2', '2') } as Closure<INodeSet>
+        ])
 
         when:
-        release.countDown()
-        threads*.join(10000)
+        def result = outer.getNodeSet()
 
         then:
-        maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+        result.nodeNames as Set == ['i1', 'i2', 'o2'] as Set
+        outerThread.name.startsWith('ProjectNodeSupport-load-')
+        innerThreads == [outerThread, outerThread]
     }
 
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
         given:
+        def firstThread = null
+        def firstDone = new CountDownLatch(1)
         def secondStarted = new CountDownLatch(1)
         def loaders = [
-                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> firstThread = Thread.currentThread(); firstDone.countDown(); nodes('a', '1') } as Closure<INodeSet>,
                 { -> secondStarted.countDown(); new CountDownLatch(1).await(10, TimeUnit.SECONDS); nodes('b', '2') } as Closure<INodeSet>
         ]
         def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
@@ -561,7 +578,13 @@ class ProjectNodeSupportSpec extends Specification {
 
         when:
         def loading = Thread.start { results << support.getNodeSet() }
+        firstDone.await(10, TimeUnit.SECONDS)
         secondStarted.await(10, TimeUnit.SECONDS)
+        // the first source's task has completed once its pool thread is idle again, so the interrupt can only
+        // arrive while the load waits for the second source
+        new PollingConditions(timeout: 10).eventually {
+            assert firstThread.state == Thread.State.TIMED_WAITING
+        }
         loading.interrupt()
         loading.join(10000)
 
@@ -590,6 +613,24 @@ class ProjectNodeSupportSpec extends Specification {
         result.nodeNames as List == ['a', 'c']
         errors.keySet() == ['2.source'] as Set
         errors['2.source'].message == 'bad node data'
+    }
+
+    def "a source failure after a source that failed to initialize is reported by its configured index"() {
+        given: "source 1 fails to initialize, so source 2 is the first loaded source"
+        def support = supportWithSources([:], [
+                null,
+                { -> throw new RuntimeException('query failed') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ])
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        result.nodeNames as List == ['c']
+        def errors = support.getResourceModelSourceExceptionsMap()
+        errors.keySet() == ['1.source', '2.source'] as Set
+        errors['2.source'].message.contains('query failed')
     }
 
     def "failure of one source is reported by source index and others still load"() {
