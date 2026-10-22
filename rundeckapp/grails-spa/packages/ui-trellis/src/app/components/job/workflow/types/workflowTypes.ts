@@ -1,4 +1,23 @@
 import { PluginConfig } from "../../../../../library/interfaces/PluginConfig";
+import {
+  ErrorHandlerDefinition,
+  JobRefDefinition,
+  StepPluginConfig,
+} from "../../../../../library/types/jobs/WorkflowTypes";
+
+export {
+  CommandEditData,
+  CommandExecPluginConfig,
+  EditStepData,
+  ErrorHandlerDefinition,
+  JobRefDefinition,
+  ScriptFilePluginConfig,
+  ScriptGeneralPluginConfig,
+  ScriptInlinePluginConfig,
+  StepPluginConfig,
+  StepPluginConfigExtension,
+  StepsEditData,
+} from "../../../../../library/types/jobs/WorkflowTypes";
 
 /**
  * Input config for script steps
@@ -18,23 +37,6 @@ export interface ScriptInlineData extends ScriptArgsData {
 }
 
 /**
- * Output Plugin common fields for script plugin types
- */
-export interface ScriptGeneralPluginConfig {
-  argString?: string;
-  scriptInterpreter?: string;
-  interpreterArgsQuoted?: boolean;
-  fileExtension?: string;
-}
-
-/**
- * Ouput Plugin config for script-inline plugin type
- */
-export interface ScriptInlinePluginConfig extends ScriptGeneralPluginConfig {
-  adhocLocalString: string;
-}
-
-/**
  * Input config for script steps with script file
  */
 export interface ScriptFileData extends ScriptArgsData {
@@ -43,62 +45,8 @@ export interface ScriptFileData extends ScriptArgsData {
   expandTokenInScriptFile?: boolean;
 }
 
-/**
- * Ouput Plugin config for script-inline plugin type
- */
-export interface ScriptFilePluginConfig extends ScriptGeneralPluginConfig {
-  adhocFilepath: string;
-  expandTokenInScriptFile?: boolean;
-}
-
 export interface CommandExecData {
   exec?: string;
-}
-
-/**
- * Output Plugin config for exec-command plugin type
- */
-export interface CommandExecPluginConfig {
-  adhocRemoteString: string;
-}
-
-/**
- * Extension point for bundled consumers that add workflow-step config fields.
- */
-export interface StepPluginConfigExtension {
-  readonly __stepPluginConfigExtension?: never;
-}
-
-export type StepPluginConfig = (
-  | ScriptInlinePluginConfig
-  | ScriptFilePluginConfig
-  | CommandExecPluginConfig
-  | Record<string, unknown>
-) &
-  StepPluginConfigExtension;
-
-export interface JobRefDefinition {
-  group: string;
-  name: string;
-  project?: string;
-  uuid?: string;
-  args?: string;
-  failOnDisable?: boolean;
-  childNodes?: boolean;
-  importOptions?: boolean;
-  ignoreNotifications?: boolean;
-  nodeStep?: boolean;
-  useName?: boolean;
-  nodefilters?: {
-    filter: string;
-    dispatch?: {
-      threadcount?: number;
-      keepgoing?: boolean;
-      rankAttribute?: string;
-      rankOrder?: string;
-      nodeIntersect?: boolean;
-    };
-  };
 }
 export interface JobRefData {
   description?: string;
@@ -136,14 +84,6 @@ export interface StrategyConfig {
   strategy?: string;
 }
 
-export interface ErrorHandlerDefinition {
-  config: StepPluginConfig;
-  keepgoingOnSuccess?: boolean;
-  nodeStep: boolean;
-  jobref?: JobRefDefinition;
-  type: string;
-  id: string;
-}
 export interface ErrorHandlerData {
   errorhandler?: ErrorHandlerDefinition;
 }
@@ -168,19 +108,6 @@ export type StepData = CommandData &
 
 export interface StepsData {
   commands: StepData[];
-}
-export interface CommandEditData extends PluginConfig<StepPluginConfig> {
-  nodeStep: boolean;
-  description?: string;
-  jobref?: JobRefDefinition;
-  errorhandler?: ErrorHandlerDefinition;
-  //simply to provide a unique id for each step on client side
-  id: string;
-  filters?: PluginConfig[];
-}
-export type EditStepData = CommandEditData;
-export interface StepsEditData {
-  commands: EditStepData[];
 }
 
 export interface WorkflowData

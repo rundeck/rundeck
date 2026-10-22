@@ -1,4 +1,4 @@
-import type { JobRefDefinition } from "../../../../app/components/job/workflow/types/workflowTypes";
+import type { JobRefDefinition } from "../../../types/jobs/WorkflowTypes";
 import type { PluginConfig } from "../../../interfaces/PluginConfig";
 
 export interface StepCardConfig extends PluginConfig {

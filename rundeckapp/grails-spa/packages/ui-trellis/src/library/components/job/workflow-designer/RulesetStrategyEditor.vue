@@ -38,7 +38,7 @@ import type {
   CommandExecPluginConfig,
   EditStepData,
   StepsEditData,
-} from "../../../../app/components/job/workflow/types/workflowTypes";
+} from "../../../types/jobs/WorkflowTypes";
 import type { Plugin } from "../../../stores/Plugins";
 
 interface GraphNode {
