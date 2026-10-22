@@ -140,6 +140,223 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(updatedFieldValue).toBe("Updated Value");
   });
 
+  it("shows help text for the Field Label and Field Key inputs on the free-text path", async () => {
+    // The "Add Field" modal previously gave no guidance on what these two
+    // inputs mean or whether they're required, which made it easy to add a
+    // field with a blank key (silently dropped/meaningless downstream) or
+    // to not realize the label is optional and falls back to the key.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="field-label-help"]').text()).toContain(
+      "message_fieldLabelHelp",
+    );
+    expect(wrapper.find('[data-testid="field-key-help"]').text()).toContain(
+      "message_fieldKeyHelp",
+    );
+  });
+
+  it("associates the Field Key and Field Label inputs with their labels and help text, and marks Key required", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    const keyInput = wrapper.find('[data-testid="field-key-input"]');
+    const keyHelp = wrapper.find('[data-testid="field-key-help"]');
+    expect(keyInput.attributes("id")).toBeTruthy();
+    expect(keyInput.attributes("aria-describedby")).toBe(
+      keyHelp.attributes("id"),
+    );
+    expect(keyInput.attributes("required")).toBeDefined();
+
+    const labelInput = wrapper.find('[data-testid="field-label-input"]');
+    const labelHelp = wrapper.find('[data-testid="field-label-help"]');
+    expect(labelInput.attributes("id")).toBeTruthy();
+    expect(labelInput.attributes("aria-describedby")).toBe(
+      labelHelp.attributes("id"),
+    );
+
+    const descriptionInput = wrapper.find(
+      '[data-testid="field-description-input"]',
+    );
+    const descriptionHelp = wrapper.find(
+      '[data-testid="new-field-description-help"]',
+    );
+    expect(descriptionInput.attributes("id")).toBeTruthy();
+    expect(descriptionInput.attributes("aria-describedby")).toBe(
+      descriptionHelp.attributes("id"),
+    );
+
+    const keyLabelEl = wrapper
+      .findAll("label")
+      .find((l) => l.attributes("for") === keyInput.attributes("id"));
+    const fieldLabelEl = wrapper
+      .findAll("label")
+      .find((l) => l.attributes("for") === labelInput.attributes("id"));
+    const descriptionLabelEl = wrapper
+      .findAll("label")
+      .find((l) => l.attributes("for") === descriptionInput.attributes("id"));
+    expect(keyLabelEl).toBeTruthy();
+    expect(fieldLabelEl).toBeTruthy();
+    expect(descriptionLabelEl).toBeTruthy();
+  });
+
+  describe("ids across independent Vue apps", () => {
+    // Each entry point mounts one Vue app per element, and useId() is only
+    // unique within a single app, so the entry points give each app its own
+    // app.config.idPrefix. Mount the component as two separate apps, like the
+    // entry points do.
+    const mountInOwnApp = async (idPrefix?: string) => {
+      const wrapper = mount(DynamicFormPluginProp, {
+        props: { fields: "{}", hasOptions: "false", name: "sameName" },
+        global: {
+          mocks: { $t: translate },
+          components: { Btn, Modal },
+          plugins: [
+            (app: any) => {
+              if (idPrefix) app.config.idPrefix = idPrefix;
+            },
+          ],
+          stubs: {
+            Modal: {
+              template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
+            },
+          },
+        },
+      });
+      await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+      await flushPromises();
+      return wrapper.find('[data-testid="field-key-input"]').attributes("id");
+    };
+
+    it("generates different ids when each app has a distinct idPrefix", async () => {
+      const idA = await mountInOwnApp("dynamic-form-0");
+      const idB = await mountInOwnApp("dynamic-form-1");
+
+      expect(idA).toContain("dynamic-form-0");
+      expect(idB).toContain("dynamic-form-1");
+      expect(idA).not.toBe(idB);
+    });
+
+    it("collides when two apps share the default idPrefix", async () => {
+      // Guards the premise: without the per-app prefix the ids are identical.
+      const idA = await mountInOwnApp();
+      const idB = await mountInOwnApp();
+
+      expect(idA).toBeTruthy();
+      expect(idA).toBe(idB);
+    });
+  });
+
+  it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    // createWrapper's data() override pre-seeds newField as "field1" for
+    // other tests' benefit - clear it explicitly so this test's key is
+    // actually blank.
+    await wrapper.find('[data-testid="field-key-input"]').setValue("");
+    await wrapper
+      .find('[data-testid="field-label-input"]')
+      .setValue("Some Label");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      true,
+    );
+  });
+
+  it("blocks adding a field via the options path when nothing is selected", async () => {
+    const wrapper = createWrapper();
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      true,
+    );
+  });
+
+  it("clears a stale invalid-key warning when the modal is reopened", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      true,
+    );
+
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      false,
+    );
+  });
+
+  it("shows help text for the Description input using its own key, not the reused message_empty", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(
+      wrapper.find('[data-testid="new-field-description-help"]').text(),
+    ).toBe("message_fieldDescriptionHelp");
+  });
+
+  it("falls back the stored label to the Key when the Field Label is left blank on the free-text path", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("env_name");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    const emitted = wrapper.emitted("update:modelValue");
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields[1].label).toBe("env_name");
+  });
+
+  it("renders a stored field with a blank label as just its Key, without mutating it", async () => {
+    const wrapper = createWrapper({
+      fields: JSON.stringify({
+        legacy_field: {
+          key: "legacy_field",
+          label: "",
+          value: "",
+          desc: "Legacy description",
+        },
+      }),
+    });
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="field-item"] label').text()).toBe(
+      "legacy_field",
+    );
+    expect(wrapper.emitted("update:modelValue")).toBeFalsy();
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin

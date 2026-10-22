@@ -191,7 +191,7 @@
           class="configpair"
           data-testid="configpair"
         >
-          <span title="">{{ custom.label }}:</span>
+          <span title="">{{ custom.label?.trim() || custom.key }}:</span>
           <span
             class="text-success copiable-text"
             @click="copyText(custom.value)"
