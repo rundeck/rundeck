@@ -3682,7 +3682,7 @@ Note: `other_errors` included since API v35""",
             )
     )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
-    def apiProjectImport(ProjectArchiveParams archiveParams){
+    def apiProjectImport(@Parameter(hidden = true) ProjectArchiveParams archiveParams){
         if(!apiService.requireApi(request,response)){
             return
         }
