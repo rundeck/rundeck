@@ -32,16 +32,13 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -90,6 +87,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private ResourceModelSourceService                                             resourceModelSourceService;
     private NodeSourceLoader     nodeSourceLoader;
     private boolean                                                                sourcesOpened;
+    /**
+     * Last invalid {@link #PROJECT_RESOURCES_LOAD_THREADS} value logged, so it is warned about once
+     */
+    private volatile String                                                        invalidLoadThreads;
     private File varDir;
 
     /**
@@ -202,16 +203,30 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return number of threads used to query node sources, from {@link #PROJECT_RESOURCES_LOAD_THREADS}
      */
     private int getLoadThreads() {
-        if (projectConfig.hasProperty(PROJECT_RESOURCES_LOAD_THREADS)) {
-            try {
-                return Integer.parseInt(projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS).trim());
-            } catch (NumberFormatException e) {
+        final String value = projectConfig.hasProperty(PROJECT_RESOURCES_LOAD_THREADS)
+                             ? projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS).trim()
+                             : "";
+        if (value.isEmpty()) {
+            return DEFAULT_LOAD_THREADS;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            //warn once per invalid value, not on every reload
+            if (!value.equals(invalidLoadThreads)) {
+                invalidLoadThreads = value;
                 logger.warn("Invalid value for " + PROJECT_RESOURCES_LOAD_THREADS + ", using default: " + e.getMessage());
             }
+            return DEFAULT_LOAD_THREADS;
         }
-        return DEFAULT_LOAD_THREADS;
     }
 
+    /**
+     * Create the node source query pool shared by all projects: {@link #MAX_LOAD_THREADS} daemon threads that time
+     * out when idle.
+     *
+     * @return new pool
+     */
     private static ThreadPoolExecutor createLoadPool() {
         final ThreadPoolExecutor pool = new ThreadPoolExecutor(
                 MAX_LOAD_THREADS,
@@ -231,9 +246,9 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     /**
      * Query all sources, in parallel if more than one thread is configured, and pass each result to the consumer in
-     * source order as soon as it and all earlier results are available. A source is only submitted while fewer than
-     * the configured number of sources are waiting to be consumed, so at most that many results are held at once even
-     * when an early source is slow, and one project uses at most that much of the shared pool.
+     * source order. Sources are submitted in a sliding window of the configured size, read in order, so at most that
+     * many results are held at once even when an early source is slow, and one project uses at most that much of
+     * the shared pool.
      *
      * @param sources  sources to query
      * @param consumer receives the source index and its result, in source order, on the calling thread
@@ -251,59 +266,61 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             }
             return;
         }
-        final AtomicReferenceArray<SourceResult> results = new AtomicReferenceArray<>(total);
-        final CompletionService<Void> completion = new ExecutorCompletionService<>(LOAD_POOL);
-        final List<Future<Void>> submitted = new ArrayList<>();
+        final Deque<Future<SourceResult>> window = new ArrayDeque<>();
         int next = 0;
         int consumed = 0;
         try {
             while (consumed < total) {
-                while (next < total && next < consumed + threads) {
-                    final int index = next++;
-                    submitted.add(completion.submit(() -> {
-                        results.set(index, querySource(sources.get(index)));
-                        return null;
-                    }));
+                while (next < total && window.size() < threads) {
+                    final LoadedResourceModelSource source = sources.get(next++);
+                    window.add(LOAD_POOL.submit(() -> querySource(source)));
                 }
-                completion.take().get();
-                SourceResult result;
-                while (consumed < next && (result = results.getAndSet(consumed, null)) != null) {
-                    consumer.accept(consumed++, result);
-                }
+                consumer.accept(consumed, window.peek().get());
+                window.poll();
+                consumed++;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            consumeWithFailures(results, consumed, consumer, e);
+            //keep the results already loaded, and report the failure for sources that did not complete
+            final SourceResult failed = new SourceResult(
+                    null,
+                    new ResourceModelSourceException("Failed loading nodes: " + e, e)
+            );
+            for (final Future<SourceResult> future : window) {
+                consumer.accept(consumed++, completedResult(future, failed));
+            }
+            while (consumed < total) {
+                consumer.accept(consumed++, failed);
+            }
         } catch (ExecutionException e) {
-            consumeWithFailures(results, consumed, consumer, e);
+            //querySource catches Throwable, so a task cannot fail
+            throw new IllegalStateException(e.getCause());
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
-            submitted.forEach(f -> f.cancel(true));
+            window.forEach(f -> f.cancel(true));
         }
     }
 
     /**
-     * Passes the results already collected to the consumer, and reports the failure for sources that did not complete
+     * @param future  source query
+     * @param failed  result to use if the query has not completed
+     *
+     * @return the query result if it has completed, otherwise the failed result
      */
-    private static void consumeWithFailures(
-            final AtomicReferenceArray<SourceResult> results,
-            final int consumed,
-            final BiConsumer<Integer, SourceResult> consumer,
-            final Exception e
-    )
-    {
-        final SourceResult failed = new SourceResult(
-                null,
-                new ResourceModelSourceException("Failed loading nodes: " + e, e)
-        );
-        for (int i = consumed; i < results.length(); i++) {
-            final SourceResult result = results.get(i);
-            consumer.accept(i, result != null ? result : failed);
+    private static SourceResult completedResult(final Future<SourceResult> future, final SourceResult failed) {
+        if (!future.isDone() || future.isCancelled()) {
+            return failed;
+        }
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            return failed;
         }
     }
 
     /**
-     * Query a single source, capturing any failure in the result
+     * Query a single source, capturing any failure in the result. Waits for a permit so at most
+     * {@link #MAX_LOAD_THREADS} sources are queried at once across all projects.
      *
      * @param nodesSource source
      *
@@ -316,14 +333,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             Thread.currentThread().interrupt();
             return new SourceResult(null, new ResourceModelSourceException("Interrupted loading nodes: " + e, e));
         }
-        try {
-            return queryUnbounded(nodesSource);
-        } finally {
-            LOAD_PERMITS.release();
-        }
-    }
-
-    private static SourceResult queryUnbounded(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         try {
@@ -331,9 +340,9 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             if (null == nodes) {
                 logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
             }
-            if(nodesSource instanceof ResourceModelSourceErrors){
-                List<String> modelSourceErrors = ((ResourceModelSourceErrors) nodesSource).getModelSourceErrors();
-                if(modelSourceErrors!=null && modelSourceErrors.size()>0){
+            if (nodesSource instanceof ResourceModelSourceErrors errs) {
+                List<String> modelSourceErrors = errs.getModelSourceErrors();
+                if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
                     logger.error("Some errors getting nodes from [" +
                                  nodesSource.toString() +
                                  "]: " +
@@ -351,6 +360,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
             logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage());
+        } finally {
+            LOAD_PERMITS.release();
         }
         return new SourceResult(nodes, error);
     }
