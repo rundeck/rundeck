@@ -13,9 +13,8 @@
           style="width: 400px; padding-bottom: 10px"
           onload="SVGInject(this)"
         />
-        <VMarkdownView
+        <MarkdownView
           :content="$t('app.firstRun.md', [appTitle, helpLinkUrl])"
-          mode=""
         />
         <p class="h6 text-strong" style="margin-top: 1em">
           {{ $t("you.can.see.this.message.again.by.clicking.the") }}
@@ -31,12 +30,12 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { VMarkdownView } from "vue3-markdown";
+import MarkdownView from "../../../library/components/utils/MarkdownView.vue";
 import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "HomeWelcome",
-  components: { VMarkdownView },
+  components: { MarkdownView },
   props: {
     appTitle: {
       type: String,
