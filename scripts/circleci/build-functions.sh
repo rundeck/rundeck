@@ -98,6 +98,8 @@ rundeck_test_images_build_push() {
     docker_login
 
     if [[ -z "${TAG_SUFFIX}" ]]; then
+        # Remove any stale test images restored by CircleCI Docker Layer Caching (DLC)
+        docker rmi -f rdtest:latest rundeckansible:latest 2>/dev/null || true
         copy_rundeck_war test/docker/rundeck-launcher.war
         (
             set -e
