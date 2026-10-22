@@ -224,6 +224,7 @@ import { ContextVariable } from "../../../library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 import { defineComponent, type PropType } from "vue";
 import type { PluginConfig } from "../../../library/interfaces/PluginConfig";
+import type PluginValidation from "../../interfaces/PluginValidation";
 
 import PluginInfo from "./PluginInfo.vue";
 import PluginPropView from "./pluginPropView.vue";
@@ -255,7 +256,7 @@ interface PluginProperty {
   allowed?: unknown;
   selectLabels?: Record<string, unknown> | null;
   descriptorSelectLabels?: Record<string, unknown> | null;
-  options?: PluginPropertyOptions;
+  options?: PluginPropertyOptions | null;
   scope?: string;
   staticTextDefaultValue?: unknown;
 }
@@ -269,6 +270,16 @@ interface PluginDetail {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
+
+const isPluginProperty = (value: unknown): value is PluginProperty =>
+  isRecord(value) &&
+  typeof value["name"] === "string" &&
+  typeof value["type"] === "string";
+
+const isPluginDetail = (value: unknown): value is PluginDetail =>
+  isRecord(value) &&
+  Array.isArray(value["props"]) &&
+  value["props"].every(isPluginProperty);
 
 interface PropGroup {
   name?: string;
@@ -284,28 +295,45 @@ export default defineComponent({
     PluginPropEdit,
   },
   props: {
-    serviceName: { required: false },
-    provider: { required: false },
-    config: { required: false },
-    mode: { required: false },
-    showTitle: { required: false },
-    showIcon: { required: false },
-    showDescription: { required: false },
+    serviceName: { type: String, required: false },
+    provider: { type: String, required: false },
+    config: {
+      type: Object as PropType<Record<string, unknown>>,
+      required: false,
+    },
+    mode: { type: String, required: false },
+    showTitle: { type: Boolean, default: undefined },
+    showIcon: { type: Boolean, default: undefined },
+    showDescription: { type: Boolean, default: undefined },
     modelValue: {
       type: Object as PropType<PluginConfig<object>>,
       required: false,
     },
     savedProps: { type: Array as PropType<string[]>, required: false },
-    pluginConfig: { required: false },
-    validation: { required: false },
-    readOnly: { required: false },
-    validationWarningText: { required: false },
-    scope: { required: false },
-    defaultScope: { required: false },
-    contextAutocomplete: { required: false },
-    autocompleteCallback: { required: false },
-    useRunnerSelector: { required: false },
-    eventBus: { required: false },
+    pluginConfig: {
+      type: Object as PropType<PluginDetail>,
+      required: false,
+    },
+    validation: {
+      type: Object as PropType<PluginValidation>,
+      required: false,
+    },
+    readOnly: { type: Boolean, default: undefined },
+    validationWarningText: { type: String, required: false },
+    scope: { type: String, required: false },
+    defaultScope: { type: String, required: false },
+    contextAutocomplete: { type: Boolean, default: undefined },
+    autocompleteCallback: {
+      type: Function as PropType<
+        (key: string) => Array<{
+          value: string;
+          data: { title: string; category: string };
+        }>
+      >,
+      required: false,
+    },
+    useRunnerSelector: { type: Boolean, default: undefined },
+    eventBus: { type: Object, required: false },
     groupCss: {
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
@@ -328,15 +356,14 @@ export default defineComponent({
       props: [] as PluginProperty[],
       detail: {} as Partial<PluginDetail>,
       error: null as string | null,
-      isReadOnly: this.readOnly !== null ? this.readOnly : false,
+      isReadOnly: this.readOnly ?? false,
       propsComputedSelectorData: {} as Record<
         string,
         Array<{ key: string; value: string; description?: string }>
       >,
-      inputShowTitle: this.showTitle !== null ? this.showTitle : true,
-      inputShowIcon: this.showIcon !== null ? this.showIcon : true,
-      inputShowDescription:
-        this.showDescription !== null ? this.showDescription : true,
+      inputShowTitle: this.showTitle ?? true,
+      inputShowIcon: this.showIcon ?? true,
+      inputShowDescription: this.showDescription ?? true,
       inputValues: {} as Record<string, unknown>,
       inputSaved: {} as Record<string, unknown>,
       inputSavedProps: (typeof this.savedProps !== "undefined"
@@ -346,8 +373,7 @@ export default defineComponent({
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
       inputLoaded: false,
-      inputContextAutocomplete:
-        this.contextAutocomplete !== null ? this.contextAutocomplete : false,
+      inputContextAutocomplete: this.contextAutocomplete ?? false,
     };
   },
   computed: {
@@ -384,11 +410,7 @@ export default defineComponent({
       });
     },
     hasGroups(): boolean {
-      return this.props.find((prop) => {
-        return this.isGroupedProp(prop);
-      })
-        ? true
-        : false;
+      return this.props.some((prop) => this.isGroupedProp(prop));
     },
     groupedProperties(): PropGroup[] {
       const unnamed: PropGroup = { props: [], secondary: false };
@@ -396,8 +418,8 @@ export default defineComponent({
       const named: { [name: string]: PropGroup } = {};
 
       this.props.forEach((prop) => {
-        const name = prop.options && prop.options["groupName"];
-        const secondary = prop.options && prop.options["grouping"];
+        const name = prop.options?.groupName;
+        const secondary = prop.options?.grouping ?? false;
         const inScope = this.isPropInScope(prop);
         if (!inScope) {
           return;
@@ -422,7 +444,9 @@ export default defineComponent({
     },
     computedConfig(): Record<string, unknown> | null {
       if (this.modelValue) {
-        return Object.assign({}, this.modelValue.config || {});
+        return isRecord(this.modelValue.config)
+          ? Object.assign({}, this.modelValue.config)
+          : {};
       } else {
         return null;
       }
@@ -470,10 +494,8 @@ export default defineComponent({
     setVal(target: Record<string, unknown>, prop: string, val: unknown) {
       target[prop] = val;
     },
-    isStorageProperty(prop: PluginProperty) {
-      return (
-        prop.options && prop.options["selectionAccessor"] === "STORAGE_PATH"
-      );
+    isStorageProperty(prop: PluginProperty): boolean {
+      return prop.options?.selectionAccessor === "STORAGE_PATH";
     },
     prepareInputs() {
       if (!this.isShowConfigForm) {
@@ -495,7 +517,9 @@ export default defineComponent({
         }
       }
 
-      const config = this.modelValue?.config || {};
+      const config = isRecord(this.modelValue?.config)
+        ? this.modelValue.config
+        : {};
 
       const modeCreate = this.isCreateMode;
 
@@ -512,13 +536,10 @@ export default defineComponent({
         ) {
           this.inputValues[prop.name] = prop.defaultValue;
         }
-        if (
-          prop.type === "Options" &&
-          typeof this.inputValues[prop.name] === "string"
-        ) {
+        const inputValue = this.inputValues[prop.name];
+        if (prop.type === "Options" && typeof inputValue === "string") {
           // convert to array
-          this.inputValues[prop.name] =
-            this.inputValues[prop.name].split(/, */);
+          this.inputValues[prop.name] = inputValue.split(/, */);
         } else if (
           prop.type === "Options" &&
           typeof this.inputValues[prop.name] === "undefined"
@@ -584,7 +605,10 @@ export default defineComponent({
     },
     computeSelectionAccessor(prop: PluginProperty) {
       if (prop.options && prop.options["selectionAccessor"] === "PLUGIN_TYPE") {
-        const serviceName = prop.options["selectionAdditional"] as string;
+        const serviceName = prop.options["selectionAdditional"];
+        if (typeof serviceName !== "string") {
+          return;
+        }
         getPluginProvidersForService(serviceName).then((data) => {
           if (!data) return;
           this.propsComputedSelectorData[prop.name] = data.descriptions.map(
@@ -653,12 +677,7 @@ export default defineComponent({
             this.serviceName as string,
             provider,
           );
-        if (
-          data !== null &&
-          typeof data === "object" &&
-          "props" in data &&
-          Array.isArray(data.props)
-        ) {
+        if (isPluginDetail(data)) {
           this.loadPluginData(data);
         }
       } catch (e) {
@@ -686,7 +705,7 @@ export default defineComponent({
       return true;
     },
     isPropHidden(testProp: PluginProperty): boolean {
-      return testProp.options && testProp.options["displayType"] === "HIDDEN";
+      return testProp.options?.displayType === "HIDDEN";
     },
     isStaticTextProp(testProp: PluginProperty): boolean {
       // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
@@ -698,8 +717,7 @@ export default defineComponent({
       // "wizard-id"), so they are excluded here.
       return (
         testProp.type !== "AutogenInstanceId" &&
-        testProp.options &&
-        testProp.options["displayType"] === "STATIC_TEXT"
+        testProp.options?.displayType === "STATIC_TEXT"
       );
     },
     isPropInScope(testProp: PluginProperty): boolean {
@@ -730,10 +748,10 @@ export default defineComponent({
     },
     isGroupedProp(testProp: PluginProperty): boolean {
       // determine if property is visible based on required prop value
-      const grouping = testProp.options && testProp.options["grouping"];
-      const groupName = testProp.options && testProp.options["groupName"];
+      const grouping = testProp.options?.grouping;
+      const groupName = testProp.options?.groupName;
 
-      return grouping || groupName;
+      return Boolean(grouping || groupName);
     },
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;

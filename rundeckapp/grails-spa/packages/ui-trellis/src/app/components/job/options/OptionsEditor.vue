@@ -93,7 +93,6 @@
 import { getRundeckContext } from "../../../../library";
 import { cloneDeep } from "lodash";
 import {
-  JobOption,
   JobOptionEdit,
   JobOptionsData,
   OptionPrototype,
@@ -208,7 +207,7 @@ export default defineComponent({
       this.changeEvent({
         index,
         dest: -1,
-        orig: orig as JobOption,
+        orig,
         operation: Operation.Remove,
         undo: Operation.Insert,
       });
@@ -250,7 +249,7 @@ export default defineComponent({
       this.changeEvent({
         index: index,
         dest: -1,
-        orig: orig as JobOption,
+        orig,
         value,
         operation: Operation.Modify,
         undo: Operation.Modify,
@@ -333,7 +332,7 @@ export default defineComponent({
       this.wasChanged();
     },
     updateIndexes() {
-      this.intOptions.forEach((opt: JobOption, i: number) => {
+      this.intOptions.forEach((opt: JobOptionEdit, i: number) => {
         opt.sortIndex = i + 1;
       });
     },

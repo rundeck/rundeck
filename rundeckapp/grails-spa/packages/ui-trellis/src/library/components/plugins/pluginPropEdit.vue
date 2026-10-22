@@ -362,7 +362,7 @@
               allowUpload: true,
               readOnly: renderReadOnly,
               value: currentValue,
-              handleUpdate: (val) => (currentValue = val),
+              handleUpdate,
             }"
           >
             <key-storage-selector
@@ -715,7 +715,9 @@ export default defineComponent({
       return JSON.stringify(this.prop.allowed);
     },
     handleUpdate(val: unknown) {
-      this.currentValue = val;
+      if (typeof val === "string") {
+        this.currentValue = val;
+      }
     },
     hasAllowedValues() {
       if (this.prop.allowed != null) {

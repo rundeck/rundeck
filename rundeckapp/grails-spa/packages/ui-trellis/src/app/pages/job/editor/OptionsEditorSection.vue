@@ -23,7 +23,6 @@ import type {
   JobOptionEdit,
   JobOptionsData,
 } from "../../../../library/types/jobs/JobEdit";
-import type { JobDefinition } from "../../../../library/types/jobs/JobDefinition";
 
 import { getRundeckContext } from "../../../../library";
 
@@ -59,7 +58,7 @@ export default defineComponent({
       };
       eventBus.on("job-edit-schedules-changed", this.scheduleChangedHandler);
       if (!this.hasJob(this.uuid)) {
-        this.initializeJobPlaceholder();
+        this.initializeJobPlaceholder(this.uuid);
       }
 
       await this.updateStore();
@@ -71,17 +70,20 @@ export default defineComponent({
     }
   },
   computed: {
-    ...mapState(useJobStore, ["hasJob"]),
+    ...mapState(useJobStore, ["hasJob", "jobDefinition"]),
   },
   methods: {
     async updateStore() {
       await this.setActiveId(this.uuid);
-      await this.updateJobDefinition(
-        {
-          options: this.updatedData?.options || [],
-        } as JobDefinition,
-        this.uuid,
-      );
+      if (this.jobDefinition) {
+        await this.updateJobDefinition(
+          {
+            ...this.jobDefinition,
+            options: this.updatedData?.options || [],
+          },
+          this.uuid,
+        );
+      }
     },
     async changed(data: JobOptionEdit[]) {
       if (!_.isEqual(data, this.updatedData?.options)) {

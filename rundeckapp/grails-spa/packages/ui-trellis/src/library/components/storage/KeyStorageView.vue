@@ -214,7 +214,7 @@
                     data-testid="keyDirectoryButton"
                     class="action"
                     colspan="2"
-                    @click="loadDir(directory.path)"
+                    @click="directory.path && loadDir(directory.path)"
                   >
                     <i class="glyphicon glyphicon-arrow-down"></i>
                     <i class="glyphicon glyphicon-folder-close"></i>
@@ -368,7 +368,6 @@ import type { UploadSetting } from "./KeyStorageEdit.vue";
 
 interface StorageResource extends StorageKeyMetadata {
   expired?: boolean;
-  meta?: Record<string, string>;
 }
 
 interface StorageListResult extends StorageKeyListResponse {
@@ -376,12 +375,20 @@ interface StorageListResult extends StorageKeyListResponse {
   resources?: StorageResource[];
 }
 
-type SelectedStorageValue = StorageResource | string;
+type SelectedStorageValue = StorageResource | string | null;
 
 const selectedResource = (
   value: SelectedStorageValue,
 ): StorageResource | undefined =>
-  typeof value === "string" ? undefined : value;
+  value !== null && typeof value === "object" ? value : undefined;
+
+const metadataValue = (
+  meta: Record<string, unknown> | undefined,
+  key: string,
+): string | undefined => {
+  const value = meta?.[key];
+  return typeof value === "string" ? value : undefined;
+};
 
 export default defineComponent({
   name: "KeyStorageView",
@@ -401,7 +408,7 @@ export default defineComponent({
         (
           path: string,
           options?: { queryParameters?: { refresh?: string } },
-        ) => Promise<StorageKeyListResponse>
+        ) => Promise<StorageListResult>
       >,
       default: storageKeyGetMetadata,
       required: true,
@@ -422,7 +429,7 @@ export default defineComponent({
       isConfirmingDeletion: false,
       modalEdit: false,
       upload: {} as Partial<UploadSetting>,
-      selectedKey: {} as SelectedStorageValue,
+      selectedKey: null as SelectedStorageValue,
       isSelectedKey: false,
       files: [] as StorageResource[],
       selectedClass: "success",
@@ -451,27 +458,18 @@ export default defineComponent({
       return this.rootPath?.startsWith("keys/project") || false;
     },
     createdTime() {
-      let value = "";
       const selectedKey = selectedResource(this.selectedKey);
-      if (
-        selectedKey?.meta != null &&
-        selectedKey.meta["Rundeck-content-creation-time"] != null
-      ) {
-        value = selectedKey.meta["Rundeck-content-creation-time"];
-      }
-      return value;
+      return (
+        metadataValue(selectedKey?.meta, "Rundeck-content-creation-time") ?? ""
+      );
     },
     modifiedTimeAgoText() {
-      let value = 0;
       const selectedKey = selectedResource(this.selectedKey);
-      if (
-        selectedKey?.meta != null &&
-        selectedKey.meta["Rundeck-content-modify-time"] != null
-      ) {
-        const time = selectedKey.meta["Rundeck-content-modify-time"];
-        value = this.duration(time);
-      }
-      return value;
+      const time = metadataValue(
+        selectedKey?.meta,
+        "Rundeck-content-modify-time",
+      );
+      return time ? this.duration(time) : 0;
     },
     isRunner(): boolean {
       return this.rootPath ? this.rootPath.startsWith("runner:") : false;
@@ -479,7 +477,7 @@ export default defineComponent({
   },
   watch: {
     createdKey: function (newValue) {
-      if (newValue !== null) {
+      if (newValue) {
         this.selectKey(newValue);
       }
     },
@@ -488,7 +486,7 @@ export default defineComponent({
 
       this.path = "";
       this.inputPath = "";
-      this.selectedKey = {};
+      this.selectedKey = null;
       this.loadKeys();
     },
   },
@@ -545,7 +543,7 @@ export default defineComponent({
         this.errorMsg = (e as Error).message;
         return;
       }
-      this.selectedKey = {};
+      this.selectedKey = null;
       this.isSelectedKey = false;
 
       this.loadKeys();
@@ -595,13 +593,17 @@ export default defineComponent({
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
       this.getKeyMetadata(getPath, requestOptions)
-        .then((result: StorageListResult) => {
+        .then((result) => {
           this.directories = [];
           this.files = [];
 
           if (result.cacheStatus === "LOADING") {
             this.loading = true;
-            this.countDown(selectedKey);
+            this.countDown(
+              typeof selectedKey === "object" && selectedKey !== null
+                ? selectedKey
+                : undefined,
+            );
             return;
           }
 
@@ -611,13 +613,10 @@ export default defineComponent({
                 this.directories.push(resource);
                 if (this.directories.length > 1) {
                   this.directories.sort((obj1, obj2) => {
-                    if (obj1.path > obj2.path) {
-                      return 1;
-                    }
-
-                    if (obj1.path < obj2.path) {
-                      return -1;
-                    }
+                    const path1 = obj1.path ?? "";
+                    const path2 = obj2.path ?? "";
+                    if (path1 > path2) return 1;
+                    if (path1 < path2) return -1;
                     return 0;
                   });
                 }
@@ -633,13 +632,10 @@ export default defineComponent({
                 }
 
                 this.files.sort((obj1, obj2) => {
-                  if (obj1.path > obj2.path) {
-                    return 1;
-                  }
-
-                  if (obj1.path < obj2.path) {
-                    return -1;
-                  }
+                  const path1 = obj1.path ?? "";
+                  const path2 = obj2.path ?? "";
+                  if (path1 > path2) return 1;
+                  if (path1 < path2) return -1;
                   return 0;
                 });
               }
@@ -677,20 +673,20 @@ export default defineComponent({
           this.loading = false;
         });
     },
-    allowedResource(meta?: Record<string, string>) {
+    allowedResource(meta?: Record<string, unknown>) {
       const filterArray = this.storageFilter?.split("=") || ["", ""];
       const key = filterArray[0];
       const value = filterArray[1];
       if (key == "Rundeck-key-type") {
         if (
-          value === meta["rundeckKeyType"] ||
-          value === meta["Rundeck-key-type"]
+          value === metadataValue(meta, "rundeckKeyType") ||
+          value === metadataValue(meta, "Rundeck-key-type")
         ) {
           return true;
         }
       } else {
         if (key == "Rundeck-data-type") {
-          if (value === meta["Rundeck-data-type"]) {
+          if (value === metadataValue(meta, "Rundeck-data-type")) {
             return true;
           }
         }
@@ -701,42 +697,35 @@ export default defineComponent({
       return moment().diff(moment(start));
     },
     modifiedUsername() {
-      const value = "";
       const selectedKey = selectedResource(this.selectedKey);
-      if (
-        selectedKey?.meta != null &&
-        selectedKey.meta["Rundeck-auth-modified-username"]
-      ) {
-        return selectedKey.meta["Rundeck-auth-modified-username"];
-      }
-      return value;
+      return (
+        metadataValue(selectedKey?.meta, "Rundeck-auth-modified-username") ?? ""
+      );
     },
     wasModified() {
       const selectedKey = selectedResource(this.selectedKey);
-      if (
-        selectedKey?.meta != null &&
-        selectedKey.meta["Rundeck-content-creation-time"] != null &&
-        selectedKey.meta["Rundeck-content-modify-time"] != null
-      ) {
-        return (
-          selectedKey.meta["Rundeck-content-creation-time"] !=
-          selectedKey.meta["Rundeck-content-modify-time"]
-        );
-      }
-      return false;
+      const created = metadataValue(
+        selectedKey?.meta,
+        "Rundeck-content-creation-time",
+      );
+      const modified = metadataValue(
+        selectedKey?.meta,
+        "Rundeck-content-modify-time",
+      );
+      return created !== undefined && modified !== undefined
+        ? created !== modified
+        : false;
     },
     createdUsername() {
-      const value = "";
       const selectedKey = selectedResource(this.selectedKey);
-      if (
-        selectedKey?.meta != null &&
-        selectedKey.meta["Rundeck-auth-created-username"] != null
-      ) {
-        return selectedKey.meta["Rundeck-auth-created-username"];
-      }
-      return value;
+      return (
+        metadataValue(selectedKey?.meta, "Rundeck-auth-created-username") ?? ""
+      );
     },
-    dirNameString(path: string) {
+    dirNameString(path?: string) {
+      if (!path) {
+        return "";
+      }
       if (path.lastIndexOf("/") >= 0) {
         return path.substring(path.lastIndexOf("/") + 1);
       } else {
@@ -744,22 +733,22 @@ export default defineComponent({
       }
     },
     isPrivateKey(key: StorageResource) {
-      let keyType = key.meta["rundeckKeyType"];
+      let keyType = metadataValue(key.meta, "rundeckKeyType");
       if (keyType == null) {
-        keyType = key.meta["Rundeck-key-type"];
+        keyType = metadataValue(key.meta, "Rundeck-key-type");
       }
 
-      return key && key.meta && keyType && keyType === "private";
+      return keyType === "private";
     },
     isPublicKey(key: StorageResource) {
-      let keyType = key.meta["rundeckKeyType"];
+      let keyType = metadataValue(key.meta, "rundeckKeyType");
       if (keyType == null) {
-        keyType = key.meta["Rundeck-key-type"];
+        keyType = metadataValue(key.meta, "Rundeck-key-type");
       }
-      return key && key.meta && keyType && keyType === "public";
+      return keyType === "public";
     },
     isPassword(key: StorageResource) {
-      return key && key.meta && key.meta["Rundeck-data-type"] === "password";
+      return metadataValue(key.meta, "Rundeck-data-type") === "password";
     },
     notFound() {
       return false;
@@ -769,7 +758,7 @@ export default defineComponent({
       if (currentKey?.path === key.path && this.isSelectedKey == false) {
         this.isSelectedKey = true;
       } else if (currentKey?.path === key.path) {
-        this.selectedKey = {};
+        this.selectedKey = null;
         this.isSelectedKey = false;
       } else {
         this.selectedKey = key;
@@ -824,7 +813,7 @@ export default defineComponent({
     clean() {
       this.directories = [];
       this.files = [];
-      this.selectedKey = {};
+      this.selectedKey = null;
       this.isSelectedKey = false;
       this.inputPath = "";
       this.invalid = false;

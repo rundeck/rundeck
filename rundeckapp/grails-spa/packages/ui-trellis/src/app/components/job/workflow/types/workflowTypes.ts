@@ -147,6 +147,11 @@ export interface ErrorHandlerDefinition {
 export interface ErrorHandlerData {
   errorhandler?: ErrorHandlerDefinition;
 }
+export interface StepErrorHandlerData {
+  errorhandler?: StepData & {
+    keepgoingOnSuccess?: boolean;
+  };
+}
 
 export interface GlobalLogFiltersData {
   filters?: PluginConfig[];
@@ -159,7 +164,7 @@ export type StepData = CommandData &
   ScriptFileData &
   ScriptInlineData &
   CommandExecData &
-  ErrorHandlerData;
+  StepErrorHandlerData;
 
 export interface StepsData {
   commands: StepData[];

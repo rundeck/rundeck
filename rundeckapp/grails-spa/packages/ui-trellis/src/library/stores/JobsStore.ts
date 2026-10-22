@@ -37,10 +37,10 @@ export const useJobStore = defineStore("jobs", {
         this.jobs[jobId] = job;
       }
     },
-    initializeJobPlaceholder() {
+    initializeJobPlaceholder(jobId: string = "!new") {
       this.updateJobDefinition(
         {
-          id: "!new",
+          id: jobId,
           loglevel: LogLevel.Info,
           nodeFilterEditable: false,
           nodesSelectedByDefault: true,
@@ -48,7 +48,7 @@ export const useJobStore = defineStore("jobs", {
           scheduleEnabled: true,
           executionEnabled: true,
         },
-        "!new",
+        jobId,
       );
     },
     setActiveId(activeId: string): void {
