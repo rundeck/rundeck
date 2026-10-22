@@ -4,14 +4,10 @@ parameters:
   disable-wizcli-scan:
     type: boolean
     default: true
-  trigger-enterprise:
-    type: boolean
-    default: true
 
 orbs:
   aws-cli: circleci/aws-cli@5.4.2
   node: circleci/node@7.2.1
-  trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@6.1.3
   snyk: snyk/snyk@2.3.0 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
@@ -499,22 +495,6 @@ jobs:
           path: snyk-summary.csv
           destination: snyk-summary.csv
 
-  # Trigger pipeline in the enterprise repo
-  trigger-enterprise:
-    executor:
-      name: docker-builder
-    steps:
-      - run: echo "Trigger enterprise pipeline is << pipeline.parameters.trigger-enterprise >>"
-      - when:
-          condition: << pipeline.parameters.trigger-enterprise >>
-          steps:
-            - trigger/trigger:
-                debug: true
-                branch: ${CIRCLE_BRANCH}
-                token: '${CIRCLECI_API_TOKEN}'
-                project-slug: 'gh/rundeckpro/rundeckpro'
-                pipeline-number: '<<pipeline.number>>'
-
   # Publish Docker Images
   docker-publish:
     <<: *job-defaults
@@ -825,7 +805,7 @@ require-api-integration: &require-api-integration
     - T Functional Plugin Blocklist
     - T Feature NodeExecutorSecureInput
 
-# Stage 4: All Selenium must pass before packaging/security/validation/enterprise trigger
+# Stage 4: All Selenium must pass before packaging/security/validation
 require-selenium: &require-selenium
   requires:
     - T Selenium - Auth & Login
@@ -1018,9 +998,8 @@ workflows:
           <<: *require-api-integration
           <<: *slack-defaults
 
-      # Row 4: Packaging, security scans, validation, and enterprise trigger
-      # Nothing here matters if build and tests don't pass. Enterprise Snapshot only
-      # triggers Pro CI after all OSS tests are green — broken OSS means broken Pro.
+      # Row 4: Packaging, security scans, and validation
+      # Nothing here matters if build and tests don't pass.
       - packaging-test:
           name: T Packaging
           <<: *require-selenium
@@ -1053,11 +1032,6 @@ workflows:
           name: OpenAPI Spec Validation
           <<: *require-selenium
           <<: *slack-defaults
-      - trigger-enterprise:
-          name: Enterprise Snapshot
-          <<: *require-selenium
-          filters:
-            branches: { only: main }
 
   # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
   build_and_test_with_jre_17:
