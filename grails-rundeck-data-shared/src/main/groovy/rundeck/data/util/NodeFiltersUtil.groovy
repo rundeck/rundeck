@@ -8,6 +8,7 @@ class NodeFiltersUtil {
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         return nodeset
     }
 
