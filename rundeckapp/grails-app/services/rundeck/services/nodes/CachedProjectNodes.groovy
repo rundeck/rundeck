@@ -35,14 +35,6 @@ class CachedProjectNodes implements IProjectNodes {
     List<ReadableProjectNodes> getResourceModelSources() {
         nodeSupport.resourceModelSources
     }
-
-    /**
-     * @return writeable sources from the last completed load, without waiting for a load in progress
-     */
-    @Override
-    Collection<WriteableProjectNodes> getLoadedWriteableResourceModelSources() {
-        nodeSupport.loadedWriteableResourceModelSources
-    }
     @Override
     INodeSet getNodeSet() {
         return doCache?nodes:reloadNodeSet()

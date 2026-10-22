@@ -111,7 +111,6 @@ import rundeck.support.filters.BaseNodeFilters
 import rundeck.support.filters.ExtNodeFilters
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
-import rundeck.services.NodeService
 import rundeck.services.UserService
 import com.dtolabs.rundeck.app.api.ApiVersions
 
@@ -1948,11 +1947,9 @@ Since: v55""",
                 fwkProject.projectProperties,
                 'resourceModelSource'
         )
-        final projectNodes = fwkProject.projectNodes
-        //display only: use the already loaded sources so the page does not wait for a node load in progress
-        final writeableModelSources = projectNodes.loadedWriteableResourceModelSources
+        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
 
-        def parseExceptions = projectNodes.getResourceModelSourceExceptionsMap()
+        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
 
         [
                 project           : project,
@@ -2160,16 +2157,7 @@ List of config values, each value contains:
         removePrefixes.addAll(pconfigurable.remove)
         def result = [success: false]
         if (!errors) {
-            result = frameworkService.updateFrameworkProjectConfig(
-                project,
-                projProps,
-                removePrefixes,
-                !onlyNodeCacheSettingsChanged(
-                    frameworkService.getFrameworkProject(project).getProjectProperties(),
-                    projProps,
-                    removePrefixes
-                )
-            )
+            result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
             if (!result.success) {
                 errors << result.error
             }
@@ -2182,37 +2170,6 @@ List of config values, each value contains:
                         errors                   : errors
                 ]
         )
-    }
-
-    /**
-     * Project properties that only tune node cache loading. Changing them does not change which nodes a project has,
-     * so saving them keeps the cached nodes, and the node cache reloads with the new settings on its next refresh.
-     */
-    static final Set<String> NODE_CACHE_SETTINGS = [
-        NodeService.PROJECT_NODECACHE_ENABLED,
-        NodeService.PROJECT_NODECACHE_DELAY,
-        NodeService.PROJECT_NODECACHE_FIRSTLOAD_SYNCH,
-        ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS
-    ].toSet().asImmutable()
-
-    /**
-     * The configurable form saves every setting in its category, changed or not, so compare values with the current
-     * project config.
-     * @param current current project properties
-     * @param saved properties being saved
-     * @param replaced property keys cleared before the saved properties are merged in
-     * @return true if no property other than a node cache setting changes value
-     */
-    static boolean onlyNodeCacheSettingsChanged(
-        Map<String, String> current,
-        Properties saved,
-        Collection<String> replaced
-    ) {
-        Set<String> keys = new HashSet<>(saved.stringPropertyNames())
-        keys.addAll(replaced)
-        keys.every { String key ->
-            NODE_CACHE_SETTINGS.contains(key) || current.get(key) == saved.getProperty(key)
-        }
     }
 
     def saveProjectNodeSources() {
@@ -3279,8 +3236,7 @@ Since: v23''',
 
         //get list of model source configes
         final resourceConfig = projectNodes.listResourceModelConfigurations()
-        //display only: use the already loaded sources so the list does not wait for a node load in progress
-        final writeableModelSourcesMap = projectNodes.loadedWriteableResourceModelSources.collectEntries { [it.index, it] }
+        final writeableModelSourcesMap = projectNodes.writeableResourceModelSources.collectEntries { [it.index, it] }
 
         def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
 

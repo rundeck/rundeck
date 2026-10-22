@@ -30,20 +30,11 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.SettableFuture
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncTaskExecutor
-import rundeck.services.nodes.CachedProjectNodes
 import spock.lang.Specification
-import spock.util.concurrent.PollingConditions
 import spock.lang.Unroll
-
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Created by greg on 2/3/16.
@@ -136,19 +127,6 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
         nodes1.nodeNames as List == ['anode']
-    }
-
-    def "refresh project nodes invalidates the cached entry"() {
-        given:
-        def cache = Mock(LoadingCache)
-        service.nodeCache = cache
-
-        when:
-        service.refreshProjectNodes('test1')
-
-        then:
-        1 * cache.invalidate('test1')
-        0 * cache.refresh(_)
     }
 
     def "project load threads config is exposed as a project property"() {

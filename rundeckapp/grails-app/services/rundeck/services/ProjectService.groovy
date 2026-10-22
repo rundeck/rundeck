@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IFilesystemFramework
 import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -126,7 +125,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
-    IProjectNodesFactory rundeckNodeService
     ExecReportDataProvider execReportDataProvider
 
     static transactional = false
@@ -1676,10 +1674,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 newprops.removeAll { String key, String value -> propResourcesSource.keySet().contains(key) }
             }
             project.setProjectProperties(newprops)
-        }
-        if (importConfig || importNodes) {
-            //importing project config is a manual save: drop the node cache so the next read loads the imported nodes
-            rundeckNodeService.refreshProjectNodes(project.name)
         }
     }
 

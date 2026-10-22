@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.net.api.RundeckApi
@@ -115,7 +114,6 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def providerExec = new GormExecReportDataProvider()
         service.execReportDataProvider = providerExec
 
-        service.rundeckNodeService = Stub(IProjectNodesFactory)
 
         // Change the default promise factory so the async project deletion in ProjectService.deleteProject()
         // happens synchronously in tests
@@ -206,14 +204,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def fwk = Mock(Framework){
             1 * getFrameworkProjectsBaseDir() >> new File('/projects/dir')
         }
-        service.rundeckNodeService = Mock(IProjectNodesFactory)
 
         when:
         service.importProjectConfig(tempfile,project,fwk)
 
         then:
         1 * project.setProjectProperties([a:'b',x:'/projects/dir/myproject/sub/path/file.txt'] as Properties)
-        1 * service.rundeckNodeService.refreshProjectNodes('myproject')
     }
     def "importProjectMdFiles"(){
         given:
