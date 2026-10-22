@@ -43,7 +43,9 @@
             <div class="text-info">
               {{ $t("The Node Source had an error") }}:
             </div>
-            <span class="text-danger">{{ source.errors }}</span>
+            <span class="text-danger node-source-error">{{
+              source.errors
+            }}</span>
           </div>
         </div>
       </div>
@@ -113,5 +115,9 @@ export default defineComponent({
 <style scoped lang="scss">
 .item-section {
   margin-top: 0.5em;
+}
+.node-source-error {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 </style>
