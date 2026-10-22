@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.plugins.scm;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
 /**
@@ -109,6 +110,18 @@ public class ScmOperationContextBuilder {
     }
 
     /**
+     * Set the framework property lookup used by SCM plugins.
+     *
+     * @param runtimePropertyRetriever framework properties, or null
+     *
+     * @return this
+     */
+    public ScmOperationContextBuilder runtimePropertyRetriever(final PropertyRetriever runtimePropertyRetriever) {
+        impl.runtimePropertyRetriever = runtimePropertyRetriever;
+        return this;
+    }
+
+    /**
      * @return built context
      */
     public ScmOperationContext build() {
@@ -124,6 +137,7 @@ public class ScmOperationContextBuilder {
         private StorageTree storageTree;
         private ScmUserInfo userInfo;
         private String jobId;
+        private PropertyRetriever runtimePropertyRetriever;
 
         public ScmOperationContextImpl() {
         }
@@ -134,6 +148,7 @@ public class ScmOperationContextBuilder {
             this.storageTree = context.getStorageTree();
             this.userInfo = context.getUserInfo();
             this.jobId = context.getJobId();
+            this.runtimePropertyRetriever = context.getRuntimePropertyRetriever();
         }
 
         @Override
@@ -159,6 +174,11 @@ public class ScmOperationContextBuilder {
         @Override
         public String getJobId() {
             return jobId;
+        }
+
+        @Override
+        public PropertyRetriever getRuntimePropertyRetriever() {
+            return runtimePropertyRetriever;
         }
     }
 }

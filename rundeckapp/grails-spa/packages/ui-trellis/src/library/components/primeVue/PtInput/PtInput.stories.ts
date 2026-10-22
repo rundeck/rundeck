@@ -7,7 +7,7 @@ const meta: Meta<typeof PtInput> = {
   component: PtInput,
   parameters: {
     componentSubtitle:
-      "A wrapper component for PrimeVue InputText and IconField with custom styling, labels, helper text, and error states",
+      "A wrapper component for PrimeVue InputText, Textarea and IconField with custom styling, labels, helper text, and error states",
     actions: {
       disable: true,
     },
@@ -208,6 +208,25 @@ export const WithLabel: Story = {
   args: {
     label: "Title Text",
     placeholder: "Enter text...",
+  },
+};
+
+export const Multiline: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { PtInput },
+    setup() {
+      return { args };
+    },
+    template: generateTemplate(),
+  }),
+  args: {
+    multiline: true,
+    rows: 3,
+    label: "Execution Notes",
+    helpText:
+      "Optional. Add a note to override the step's default description.",
+    placeholder: "e.g. Restarts the web tier on production nodes...",
   },
 };
 

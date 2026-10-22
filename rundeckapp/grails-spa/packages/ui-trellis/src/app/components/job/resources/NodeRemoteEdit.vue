@@ -34,7 +34,13 @@
     </div>
     <div v-if="error" id="remoteEditError" class="error note"></div>
     <div v-if="remoteUrl" id="remoteEditTarget">
-      <iframe :key="remoteUrl" width="640" height="480" :src="remoteUrl" />
+      <iframe
+        :key="remoteUrl"
+        width="640"
+        height="480"
+        :src="remoteUrl"
+        :title="`${$t('node.remoteEdit.edit')} ${nodename}`"
+      />
     </div>
   </div>
 </template>

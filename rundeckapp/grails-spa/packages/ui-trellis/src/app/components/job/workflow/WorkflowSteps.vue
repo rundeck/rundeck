@@ -460,7 +460,7 @@ export default defineComponent({
       const originalData = cloneDeep(this.model.commands[index]);
       const commandToRemove = cloneDeep(this.model.commands[index]);
 
-      let dataForUpdatingHistory = {
+      const dataForUpdatingHistory = {
         operation: Operation.Remove,
         undo: Operation.Insert,
         orig: undefined,
@@ -651,7 +651,7 @@ export default defineComponent({
       });
     },
     handleSuccessOnValidation(saveData: any) {
-      let dataForUpdatingHistory = {
+      const dataForUpdatingHistory = {
         index: this.model.commands.length,
         operation: Operation.Insert,
         undo: Operation.Remove,
@@ -694,6 +694,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 @media (min-width: 1280px) {
   .modal-dialog {

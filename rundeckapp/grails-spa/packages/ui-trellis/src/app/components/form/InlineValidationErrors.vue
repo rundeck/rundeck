@@ -1,7 +1,7 @@
 <template>
   <div v-if="errors && errors.length > 0" class="text-warning">
     <ul>
-      <li v-for="err in errors">{{ err }}</li>
+      <li v-for="(err, i) in errors" :key="i">{{ err }}</li>
     </ul>
     <i class="glyphicon glyphicon-warning-sign"></i>
   </div>
