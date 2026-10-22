@@ -1,10 +1,11 @@
 # Build remco from org fork with CVE fixes applied
 ###################################################
-FROM golang:1.27.1@sha256:e0174e51e81218523251d85d248a90d24c3d5e81543b4f07a5d66229397db190 AS remco
+FROM golang:1.27.3@sha256:f20d83a83e18dbd2a4714b8ffd4b30b287b6243962dd75608e86abcc63ba4efc AS remco
 
 # Pinned to a rundeck/remco commit synced with upstream HeavyHorst/remco.
 # Fixes golang.org/x/crypto 0.52.0, golang.org/x/net 0.55.0, and
 # google.golang.org/grpc 1.82.1 - see RUN-4857 for the full CVE list.
+# Go 1.27.3+ required for CVE-2026-111943 (eMudhra intermediate CA denylist).
 ENV REMCO_COMMIT=bbc9243fec2e05c2fc8bf8a66bd9e24f04a2762b
 
 RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
