@@ -61,7 +61,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * Upper bound on parallel node source queries running at once, shared by all projects
      */
-    static final         int    MAX_LOAD_THREADS                        = 20;
+    public static final  int    MAX_LOAD_THREADS                        = 20;
     private static final AtomicInteger LOAD_THREAD_COUNT                = new AtomicInteger();
     /**
      * Shared by all projects so concurrency is bounded across them. Idle threads time out.
@@ -82,10 +82,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private ResourceModelSourceService                                             resourceModelSourceService;
     private NodeSourceLoader     nodeSourceLoader;
     private boolean                                                                sourcesOpened;
-    /**
-     * Last invalid {@link #PROJECT_RESOURCES_LOAD_THREADS} value logged, so it is warned about once
-     */
-    private volatile String                                                        invalidLoadThreads;
     private File varDir;
 
     /**
@@ -209,18 +205,14 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            //warn once per invalid value, not on every reload
-            if (!value.equals(invalidLoadThreads)) {
-                invalidLoadThreads = value;
-                logger.warn("Invalid value for " + PROJECT_RESOURCES_LOAD_THREADS + ", using default: " + e.getMessage());
-            }
+            logger.warn("Invalid value for " + PROJECT_RESOURCES_LOAD_THREADS + ", using default: " + e.getMessage());
             return DEFAULT_LOAD_THREADS;
         }
     }
 
     /**
      * Create the node source query pool shared by all projects: {@link #MAX_LOAD_THREADS} daemon threads that time
-     * out when idle.
+     * out when idle, using this class's classloader as their context classloader.
      *
      * @return new pool
      */
@@ -234,6 +226,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 r -> {
                     Thread t = new LoadThread(r, "ProjectNodeSupport-load-" + LOAD_THREAD_COUNT.incrementAndGet());
                     t.setDaemon(true);
+                    //not inherited from whichever thread first used the pool
+                    t.setContextClassLoader(ProjectNodeSupport.class.getClassLoader());
                     return t;
                 }
         );
@@ -289,14 +283,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            //keep the results already loaded, and report the failure for sources that did not complete
+            //report the failure for sources not yet consumed
             final SourceResult failed = new SourceResult(
                     null,
                     new ResourceModelSourceException("Failed loading nodes: " + e, e)
             );
-            for (final Future<SourceResult> future : window) {
-                consumer.accept(consumed++, completedResult(future, failed));
-            }
             while (consumed < total) {
                 consumer.accept(consumed++, failed);
             }
@@ -306,23 +297,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             window.forEach(f -> f.cancel(true));
-        }
-    }
-
-    /**
-     * @param future  source query
-     * @param failed  result to use if the query has not completed
-     *
-     * @return the query result if it has completed, otherwise the failed result
-     */
-    private static SourceResult completedResult(final Future<SourceResult> future, final SourceResult failed) {
-        if (!future.isDone() || future.isCancelled()) {
-            return failed;
-        }
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            return failed;
         }
     }
 
