@@ -5346,8 +5346,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             !ScheduledExecution.get(id)
             (deleteExecutions ? 1 : 0) * service.
                     executionServiceBean.
-                    deleteBulkExecutionIds([execid], authContext, username)>>{
+                    deleteBulkExecutionIds([execid], authContext, username, false)>>{
                 Execution.get(it[0].first()).delete(flush:true)
+                [success: true]
             }
             if (!deleteExecutions) {
                 def exec2 = Execution.get(execid)
@@ -5403,6 +5404,43 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         where:
             deleteExecutions << [true, false]
+    }
+
+    def "failed execution cleanup keeps job stats and references"() {
+        given:
+            def job = new ScheduledExecution(createJobParams() + [uuid: UUID.randomUUID().toString()]).save()
+            def stats = new ScheduledExecutionStats(jobUuid: job.uuid, content: '{}').save()
+            def exec1 = new Execution(
+                    scheduledExecution: job,
+                    status: 'running',
+                    dateStarted: new Date(100),
+                    dateCompleted: new Date(10000),
+                    project: job.project,
+                    user: 'bob',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+            ).save(flush: true)
+            def ref = new ReferencedExecution(jobUuid: job.uuid, status: 'success', execution: exec1).save()
+            def authContext = Mock(AuthContext)
+            def username = 'bob'
+            service.executionServiceBean = Mock(ExecutionService) {
+                1 * deleteBulkExecutionIds([exec1.id], authContext, username, false) >> [success: false, failures: [[message: 'unauthorized']]]
+            }
+            service.fileUploadService = Mock(FileUploadService)
+            service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+            service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        when:
+            def result = service.deleteScheduledExecution(job, true, authContext, username)
+        then:
+            !result.success
+            result.error.contains('unauthorized')
+            ScheduledExecution.get(job.id)
+            ScheduledExecutionStats.get(stats.id)
+            ReferencedExecution.get(ref.id)
+            Execution.get(exec1.id)
+            0 * service.fileUploadService.deleteRecordsForScheduledExecution(_)
+            0 * service.rundeckJobDefinitionManager.beforeDelete(_, _)
     }
 
     def "job definition basic should retain uuid"() {

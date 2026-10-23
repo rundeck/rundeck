@@ -1364,7 +1364,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     DeleteJobResult deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
-                                 AuthContext authContext=null, String username){
+                                 AuthContext authContext=null, String username, boolean skipExecutionAuthorization = false){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def originalRef=jobEventRevRef(scheduledExecution)
         def jobname = scheduledExecution.generateJobScheduledName()
@@ -1387,18 +1387,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return new DeleteJobResult(success:false,error:errmsg)
             }
             
-            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
-            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){
-                executionService.deleteBulkExecutionIds(result*.id,authContext, username)
+                def bulk = executionService.deleteBulkExecutionIds(result*.id, authContext, username, skipExecutionAuthorization)
+                if (bulk != null && !bulk.success) {
+                    def detail = bulk.failures?.collect { it?.message ?: it?.error ?: it?.id }?.findAll { it }?.join('; ')
+                    errmsg = detail ?: 'Failed to delete executions'
+                    return new DeleteJobResult(success: false, error: errmsg)
+                }
             }else{
 
                 result.each { Execution exec ->
                     exec.scheduledExecution = null
                 }
             }
+            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
+            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             fileUploadService.deleteRecordsForScheduledExecution(scheduledExecution)
             //before delete job
             rundeckJobDefinitionManager.beforeDelete(scheduledExecution, authContext)
