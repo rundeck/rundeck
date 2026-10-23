@@ -119,6 +119,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.data.util.OptionsParserUtil
+import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
@@ -4610,13 +4611,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!jitem.ignoreNotifications) {
                 def scheduledExecution = ScheduledExecution.get(id)
 
-                if (averageDuration > 0 && duration > averageDuration) {
+                long avgDurationThreshold = ExecutionJob.getNotifyAvgDurationThreshold(
+                        scheduledExecution.notifyAvgDurationThreshold ?: "0",
+                        averageDuration,
+                        newContext.dataContext
+                )
+                if (avgDurationThreshold > 0 && duration > avgDurationThreshold) {
                     avgDurationExceeded(scheduledExecution.uuid, [
                             execution: execution,
                             context  : newContext,
                             jobref   : jitem.jobIdentifier,
                             export    : data,
-                            // The value this notification is triggered by, already resolved above.
+                            // The historical average, not the trigger threshold, as in ExecutionJob.
                             averageDuration: averageDuration
                     ])
                 }
