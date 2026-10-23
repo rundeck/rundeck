@@ -190,4 +190,21 @@ export default defineComponent({
     cursor: pointer;
   }
 }
+
+*[data-color-theme="dark"] .pt-radio-group {
+  color: var(--white, #fff);
+
+  --p-radiobutton-background: var(--grey-800);
+  --p-radiobutton-border-color: var(--grey-300);
+  --p-radiobutton-hover-border-color: var(--white, #fff);
+  --p-radiobutton-invalid-border-color: #e55b5b;
+  --p-radiobutton-disabled-background: var(--grey-700);
+  --p-radiobutton-checked-disabled-border-color: var(--grey-500);
+  --p-radiobutton-icon-disabled-color: var(--grey-300);
+
+  .pt-radio-group__legend,
+  .pt-radio-group__label {
+    color: var(--white, #fff);
+  }
+}
 </style>
