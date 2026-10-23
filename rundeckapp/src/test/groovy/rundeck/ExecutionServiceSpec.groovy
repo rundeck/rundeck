@@ -1343,6 +1343,57 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         'ISO-8859-1' | _
     }
 
+    def "validateExecution returns true when authorized"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> true
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> true
+        result
+    }
+
+    def "validateExecution returns false when unauthorized"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> true
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> false
+        !result
+    }
+
+    def "validateExecution skips ACTION_RUN check when feature disabled"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> false
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        0 * service.rundeckAuthContextProcessor._
+        result
+    }
+
     def "delete execution unauthorized"() {
         given:
 
