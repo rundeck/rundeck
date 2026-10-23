@@ -5384,7 +5384,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def totalCount = result?.size()
         Long maxDuration = timeSpentWithoutRunningExecs?.max()
         Long minDuration = timeSpentWithoutRunningExecs?.min()
-        double avgDuration = totalCount != 0 ? (timeSpentWithoutRunningExecs?.sum() / totalCount) : 0
+        double avgDuration = totalCount != 0 ? ((timeSpentWithoutRunningExecs?.sum() ?: 0) / totalCount) : 0
 
         // Calculate success rate
         def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
