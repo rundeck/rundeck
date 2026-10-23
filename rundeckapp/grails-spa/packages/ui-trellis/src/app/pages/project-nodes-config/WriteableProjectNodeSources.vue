@@ -43,9 +43,11 @@
             <div class="text-info">
               {{ $t("The Node Source had an error") }}:
             </div>
-            <span class="text-danger node-source-error">{{
-              source.errors
-            }}</span>
+            <span
+              class="text-danger node-source-error"
+              data-testid="node-source-error"
+              >{{ source.errors }}</span
+            >
           </div>
         </div>
       </div>

@@ -34,9 +34,11 @@
               <div class="text-info">
                 {{ $t("The Node Source had an error") }}:
               </div>
-              <span class="text-danger node-source-error">{{
-                sourceErrors(plugin.origIndex)
-              }}</span>
+              <span
+                class="text-danger node-source-error"
+                data-testid="node-source-error"
+                >{{ sourceErrors(plugin.origIndex) }}</span
+              >
             </div>
           </div>
         </div>
