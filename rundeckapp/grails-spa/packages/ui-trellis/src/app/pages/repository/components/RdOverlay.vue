@@ -27,7 +27,7 @@
 import { mapState, mapActions } from "vuex";
 
 export default {
-  name: "Overlay",
+  name: "RdOverlay",
   computed: {
     ...mapState("overlay", [
       "overlay",

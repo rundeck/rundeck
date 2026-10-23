@@ -21,5 +21,3 @@ export default {
   props: ["fields", "options", "element", "hasOptions", "name"],
 };
 </script>
-
-<style></style>

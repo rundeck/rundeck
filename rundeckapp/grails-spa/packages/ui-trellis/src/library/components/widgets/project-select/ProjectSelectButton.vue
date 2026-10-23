@@ -41,7 +41,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import Popper from "../../utility-bar/Popper.vue";
+import Popper from "../../utility-bar/RdPopper.vue";
 
 import ProjectSelect from "./ProjectSelect.vue";
 

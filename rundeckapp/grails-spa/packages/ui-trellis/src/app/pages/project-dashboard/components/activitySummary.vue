@@ -54,7 +54,7 @@
 
 <script>
 export default {
-  name: "Activity",
+  name: "ActivitySummary",
   props: ["project", "rdBase"],
   data() {
     return {

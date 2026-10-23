@@ -2,7 +2,11 @@
   <div class="rundeck-info-widget">
     <div class="rundeck-info-widget__group">
       <div class="rundeck-info-widget__more-link">
-        <a :href="welcomeUrl()" data-test-id="welcome-link">
+        <a
+          :href="welcomeUrl()"
+          :aria-label="appInfo.title"
+          data-test-id="welcome-link"
+        >
           <RundeckLogo v-if="appInfo.title === 'Rundeck'" />
           <PagerdutyLogo v-else />
         </a>
@@ -66,7 +70,7 @@ import { url } from "../../../rundeckService";
 import RundeckLogo from "../../svg/RundeckLogo.vue";
 import PagerdutyLogo from "../../svg/PagerdutyLogo.vue";
 
-import Copyright from "../../version/Copyright.vue";
+import Copyright from "../../version/RdCopyright.vue";
 import RundeckVersion from "../../version/RundeckVersionDisplay.vue";
 import VersionDisplay from "../../version/VersionIconNameDisplay.vue";
 import ServerDisplay from "../../version/ServerDisplay.vue";
