@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.app.api.plugins.ApiPluginProviderDetail
 import com.dtolabs.rundeck.app.api.plugins.ApiProviderProp
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -693,7 +694,7 @@ Since: v49''',
                 tmpFile << inputStream
             }
         } catch(Exception ex) {
-            def err  = [err: "Failed to fetch plugin from URL. Error: ${ex.message}"]
+            def err  = [err: "Failed to fetch plugin from URL. Error: ${ClientErrorMessages.publicMessage(ex)}"]
             render err as JSON
             return
         }
