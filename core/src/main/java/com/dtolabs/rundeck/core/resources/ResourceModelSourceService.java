@@ -68,6 +68,15 @@ public class ResourceModelSourceService
         registry.put(ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, ScriptResourceModelSourceFactory.class);
     }
 
+    /**
+     * Returns the framework used to configure resource model source providers.
+     *
+     * @return framework instance
+     */
+    public Framework getFrameworkInstance() {
+        return framework;
+    }
+
     public String getName() {
         return SERVICE_NAME;
     }
