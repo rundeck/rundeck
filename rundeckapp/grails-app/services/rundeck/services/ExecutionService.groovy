@@ -26,6 +26,7 @@ import org.hibernate.sql.JoinType
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.util.ExecReportUtil
+import rundeck.data.util.WorkflowStepUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
@@ -447,6 +448,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             data
         }, paging)
     }
+    /**
+     * Render the executions list response. The summary is included when no query is given, when the query
+     * requests it, and always for adhoc executions, whose summary is their only description.
+     * @param request request
+     * @param response response
+     * @param executions executions to render
+     * @param paging paging data
+     * @param query the executions query, or null
+     */
     public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:], ExecutionQuery query  = null) {
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
@@ -456,8 +466,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         status: getExecutionState(e)
                 ]
 
-                //check if query is set and executionSummary is defined¡
-                if (!query || query?.executionSummary) {
+                //check if query is set and executionSummary is defined, always summarize adhoc executions
+                if (!query || query?.executionSummary || e.scheduledExecution == null) {
                     data.summary = ExecReportUtil.summarizeJob(e)
                 }
 
@@ -1040,6 +1050,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         mdcprops.keySet().each(MDC.&remove)
     }
 
+    /**
+     * Create the MDC properties and log message describing an execution for the execution status log
+     * @param e execution
+     * @return list of the MDC properties map and the log message
+     */
     protected List createExecutionLogMDCdata(Execution e) {
         def state = getExecutionState(e)
         def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project', 'argString']
@@ -1068,7 +1083,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     e.scheduledExecution.jobName
         } else {
             def workflowData = e.getWorkflowData()
-            def adhocCommand = workflowData?.commands?.size()==1 && (workflowData.commands[0] instanceof CommandExec) && workflowData.commands[0].adhocRemoteString
+            def adhocCommand = workflowData?.commands?.size()==1 ? WorkflowStepUtil.getCommandString(workflowData.commands[0]) : null
             if (adhocCommand) {
                 mdcprops.put("command", adhocCommand)
                 jobstring += " command: " + adhocCommand

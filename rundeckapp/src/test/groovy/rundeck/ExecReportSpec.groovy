@@ -177,4 +177,26 @@ class ExecReportSpec extends Specification implements DataTest {
         report.status=='succeed'
         report.title=='[0 steps]'
     }
+
+    def "adhoc from execution with workflow json"(){
+        given:
+        def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                project: "test",
+                user: "user",
+                status: 'true'
+        )
+        exec.setWorkflowData(new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")]))
+        exec.save(flush:true)
+
+        when:
+        def report = ExecReport.fromExec(exec)
+
+        then:
+        exec.workflowJson != null
+        report.adhocExecution
+        report.adhocScript=='test exec'
+        report.title=='test exec'
+    }
 }
