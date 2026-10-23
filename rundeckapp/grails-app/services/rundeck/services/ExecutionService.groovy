@@ -5072,12 +5072,32 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Detects Microsoft SQL Server datasources. SQL Server does not support subtracting
+     * {@code datetime2} values (error 8117, "Operand data type datetime2 is invalid for
+     * subtract operator"), so durations are computed with {@code DATEDIFF_BIG(MILLISECOND, ...) / 1000}.
+     * This truncates to whole seconds like the other databases; {@code DATEDIFF(SECOND, ...)} counts second
+     * boundaries crossed instead, so it can report up to a second more. DATEDIFF_BIG needs SQL Server 2016 or later.
+     */
+    boolean isSqlServerDatasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'Microsoft SQL Server'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-SQL Server", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
         try {
             boolean isH2 = isH2Datasource()
             boolean isMySql = isMySqlDatasource()
             boolean isOracle = isOracleDatasource()
+            boolean isSqlServer = isSqlServerDatasource()
             Execution.createCriteria().list(max:1) {
                 projections {
                     if (isH2) {
@@ -5086,6 +5106,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         sqlProjection 'TIMESTAMPDIFF(SECOND, date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else if (isOracle) {
                         sqlProjection 'round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else if (isSqlServer) {
+                        sqlProjection 'DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000 as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else {
                         sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
                     }
@@ -5225,6 +5247,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return Arrays.asList(metricCriteriaOracle)
         }
 
+        if (isSqlServerDatasource()) {
+            // SQL Server: datetime2 values cannot be subtracted. DATEDIFF_BIG in milliseconds divided by 1000
+            // truncates to whole seconds like the other databases, and returns BIGINT so the sum cannot overflow.
+            def metricCriteriaSqlServer = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaSqlServer)
+        }
+
         def metricCriteriaB = {
             // Run main query criteria
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
@@ -5273,16 +5319,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def succeededCount = metricsData?.succeededCount ? metricsData.succeededCount : 0
         def failedCount = metricsData?.failedCount ? metricsData.failedCount : 0
 
+        def avgDuration
+        def maxDurationToMillis
+        def minDurationToMillis
         if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
-            maxDuration = epochToTime(metricsData?.durationMax)
-            minDuration = epochToTime(metricsData?.durationMin)
-            durationSum = epochToTime(metricsData?.durationSum)
+            // Durations are numbers of seconds. Convert them directly: converting them through java.sql.Time
+            // depends on the JVM time zone and wraps at 24 hours.
+            long sumMillis = secondsToMillis(metricsData?.durationSum)
+            avgDuration = totalCount != 0 ? (sumMillis / totalCount) : 0
+            maxDurationToMillis = secondsToMillis(metricsData?.durationMax)
+            minDurationToMillis = secondsToMillis(metricsData?.durationMin)
+        } else {
+            avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
+            maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
+            minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
         }
-
-        def avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
-
-        def maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
-        def minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
 
         // Calculate success rate
         def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
@@ -5300,16 +5351,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Parse Unix time in Long, into a java.sql.Time object
+     * Convert a duration in seconds, as returned by the database specific metrics queries, to milliseconds
      *
-     * @param epoch - Long : The result of the query
-     * @return a new instance of Time
+     * @param seconds - Number : The result of the query, or null
+     * @return the duration in milliseconds, 0 if null
      *
      * */
     @CompileStatic
-    private Time epochToTime(Long epoch){
-        Date date = new Date(epoch * 1000L)
-        return new Time(date.getTime())
+    private static long secondsToMillis(Object seconds){
+        return seconds != null ? ((Number) seconds).longValue() * 1000L : 0L
     }
 
     private def queryExecutionMetricsOnMemory(ExecutionQuery query){

@@ -6908,6 +6908,73 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             service.metaClass = null
     }
 
+    def "isSqlServerDatasource returns true when databaseProductName is Microsoft SQL Server"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'Microsoft SQL Server' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isSqlServerDatasource()
+    }
+
+    def "isSqlServerDatasource returns false when databaseProductName is not Microsoft SQL Server"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isSqlServerDatasource()
+    }
+
+    def "getCriteriaScenarios uses DATEDIFF_BIG durations when datasource is SQL Server"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> false }
+            service.metaClass.isSqlServerDatasource = { -> true }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBeansOfType(JobQuery) >> [:]
+            }
+            def recorder = new SqlProjectionRecorder()
+        when:
+            def scenarios = service.getCriteriaScenarios(new ExecutionQuery())
+            recorder.run(scenarios[0])
+            def durations = recorder.sqlProjections.findAll { it.contains('duration') }
+        then:
+            scenarios.size() == 1
+            durations.size() == 3
+            durations.every { it.contains('DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000') }
+            !durations.any { it.contains('date_completed - date_started') }
+        cleanup:
+            service.metaClass = null
+    }
+
+    def "isSqlCompatible uses a DATEDIFF_BIG duration when datasource is SQL Server"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> false }
+            service.metaClass.isSqlServerDatasource = { -> true }
+            def recorder = new SqlProjectionRecorder()
+            Execution.metaClass.static.createCriteria = { ->
+                new Expando(list: { Map args, Closure criteria -> recorder.run(criteria); [] })
+            }
+        when:
+            def result = service.isSqlCompatible()
+        then:
+            result
+            recorder.sqlProjections == ['DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000 as durationSum']
+        cleanup:
+            GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+            service.metaClass = null
+    }
+
     def "isSqlCompatible returns false without propagating exception when criteria throws"() {
         given:
             service.metaClass.isH2Datasource = { -> false }
@@ -6938,6 +7005,24 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.duration.average == 1000L
         result.duration.min == 2000L
         result.duration.max == 1000L
+    }
+
+    @Unroll
+    def "metrics data from criteria result with durations in seconds does not depend on time zone #tz"() {
+        given:
+            def originalTz = TimeZone.getDefault()
+            TimeZone.setDefault(TimeZone.getTimeZone(tz))
+            def critresult = [count: 2L, durationMax: 90000L, durationMin: 1L, durationSum: 90001L]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then: "a 25 hour max duration is not wrapped at 24 hours or shifted by the time zone offset"
+            result.duration.max == 90000L * 1000L
+            result.duration.min == 1000L
+            result.duration.average == 90001L * 1000L / 2
+        cleanup:
+            TimeZone.setDefault(originalTz)
+        where:
+            tz << ['UTC', 'America/Denver', 'Asia/Kolkata']
     }
 
     def "metrics data from projection result"(){
@@ -8052,4 +8137,30 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * executionListener.log(0, { it.contains("Error executing runner workflow") })
     }
 
+}
+
+/**
+ * Criteria delegate for tests: records sqlProjection SQL and ignores other criteria calls
+ */
+class SqlProjectionRecorder {
+    List<String> sqlProjections = []
+
+    void run(Closure criteria) {
+        Closure c = (Closure) criteria.clone()
+        c.delegate = this
+        c.resolveStrategy = Closure.DELEGATE_FIRST
+        c.call()
+    }
+
+    void projections(Closure c) {
+        run(c)
+    }
+
+    void sqlProjection(String sql, String alias, Object type) {
+        sqlProjections << sql
+    }
+
+    def methodMissing(String name, Object args) {
+        null
+    }
 }
