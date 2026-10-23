@@ -54,9 +54,9 @@
         </div>
         <div class="card-footer" data-ko-bind="jobeditor">
             <div id="schedCreateButtons">
-                <g:actionSubmit id="createFormCancelButton"
+                <g:formActionSubmit id="createFormCancelButton"
                                 value="${g.message(code:'cancel')}"
-                                action="cancel"
+                                action="cancel" params="[project: params.project]"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"

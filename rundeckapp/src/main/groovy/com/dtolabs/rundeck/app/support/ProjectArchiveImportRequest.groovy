@@ -29,5 +29,6 @@ interface ProjectArchiveImportRequest {
     Boolean getImportScm()
     Boolean getValidateJobref()
     Map<String,Boolean> getImportComponents()
-    Map<String,Map<String, String>> getImportOpts()
+    // Raw to match ProjectArchiveParams -- see the note there on how M6 binds dotted parameters.
+    Map getImportOpts()
 }

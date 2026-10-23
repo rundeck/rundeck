@@ -91,6 +91,25 @@ class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements S
                 validate
     }
 
+    /**
+     * Grails 8 routes {@code withForm} token validation through this single method, instead of the
+     * {@code isValid}/{@code resetToken} pair it called previously. The inherited implementation parses
+     * the token as a UUID, which never matches the HMac tokens this holder issues, so every token-protected
+     * request would be rejected unless the method is overridden here.
+     *
+     * @param url the request URL the token was issued for
+     * @param token the token supplied with the request
+     * @return true if the token was valid, in which case it is also consumed
+     */
+    @Override
+    synchronized boolean isValidAndResetToken(String url, String token) {
+        if (!isValid(url, token)) {
+            return false
+        }
+        resetToken(url, token)
+        return true
+    }
+
     HMacSynchronizerTokensHolder(HMacSynchronizerTokensManager manager,String sessionID, List<String> sessionData) {
         this.manager=manager
         this.sessionID = sessionID

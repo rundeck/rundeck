@@ -49,6 +49,31 @@ class ReloadableRundeckPropertySource {
             tmp.each {key, value ->
                 rundeckProps[key] = tmp.get(key)
             }
+            permitMysqlSchemeOnDataSourceUrl()
+        }
+    }
+
+    /**
+     * Rewrites this source's dataSource.url so the MariaDB 3.x driver accepts a jdbc:mysql: scheme.
+     *
+     * application.groovy already asks DefaultRundeckConfigPropertyLoader for a permitted url, but it
+     * does not win: Application.loadRundeckPropertySources adds this source with addFirst, so the
+     * flat dataSource.url straight out of rundeck-config.properties outranks the nested map and is
+     * what the connection pool is built from. The symptom is a startup that logs the fix being
+     * applied and then dies anyway on
+     *
+     *   java.sql.SQLException: Driver:org.mariadb.jdbc.Driver returned null for URL:jdbc:mysql://...
+     *
+     * with the url in the message identical to the configured one. Patching the winning source is
+     * the only placement that covers every consumer, reload() included.
+     */
+    private static void permitMysqlSchemeOnDataSourceUrl() {
+        String url = rundeckProps["dataSource.url"]
+        String permitted = DefaultRundeckConfigPropertyLoader.permitMysqlScheme(
+                url, rundeckProps["dataSource.driverClassName"] as String
+        )
+        if (permitted != url) {
+            rundeckProps["dataSource.url"] = permitted
         }
     }
 

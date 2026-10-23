@@ -9,7 +9,7 @@ import org.eclipse.jetty.server.HttpConnectionFactory
 import org.eclipse.jetty.server.Request
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.util.URIUtil
-import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
+import org.springframework.boot.jetty.JettyServerCustomizer
 
 /**
  * Restores the Jetty 9 behavior of tolerating empty path segments (e.g. {@code //api/50/projects}).

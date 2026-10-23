@@ -47,7 +47,16 @@ class NodesPage extends BasePage {
         return (els nodeListTrBy).size()
     }
 
+    /**
+     * Clicks the node filter search button, once it is actually enabled.
+     *
+     * NodeFilterInput.vue binds the button as :disabled="!outputValue", and setNodeInputText clears the
+     * field before typing into it. Clearing empties outputValue and disables the button; typing re-enables
+     * it, but only on Vue's next render. Clicking in between either raises ElementNotInteractableException
+     * or is swallowed, leaving the node list showing whatever the previous filter matched.
+     */
     def clickSearchNodes(){
+        waitForElementToBeClickable(searchNodesButtonBy)
         (el searchNodesButtonBy).click()
     }
 

@@ -1884,7 +1884,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         e.outputfilepath = null
                     }
                 }
-                if (!oldOutputFilePath || !(execout[oldOutputFilePath] || e.isRemoteOutputfilepath())){
+                // execout[..] holds a File. Groovy 5 gave File an asBoolean() based on existence,
+                // and by this point the successful branch above has already MOVED that file to its
+                // destination -- so re-testing it by truthiness reports "no matching outfile" for
+                // an import that in fact worked. The question here is whether the archive supplied
+                // an entry, so test the map for null instead of testing the file for existence.
+                if (!oldOutputFilePath || !(execout[oldOutputFilePath] != null || e.isRemoteOutputfilepath())){
                     execerrors << "New execution ${e.id}, NO matching outfile: ${oldOutputFilePath}. It might be present in configured remote log storage plugin."
                     log.error("New execution ${e.id}, NO matching outfile: ${oldOutputFilePath}. It might be present in configured remote log storage plugin.")
                 }

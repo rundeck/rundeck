@@ -148,23 +148,21 @@ class WaitUtils  {
                                                     Duration checkPeriod = WaitingTime.LOW,
                                                     Function<RID, String> acceptanceFailureOutputProducer = { RID id -> "" }) {
 
-        Map<RID, R> result = resourceIdentifiers.stream().reduce(
-                new HashMap<>(),
-                (Map<RID, R> acc, id) -> {
-                    R r = waitForResource(id,
-                            resourceRetriever,
-                            resourceAcceptanceEvaluator,
-                            acceptanceFailureOutputProducer,
-                            timeout,
-                            checkPeriod)
-                    acc.put(id, r)
-                    return acc;
-                },
-                (Map<RID, R> map1, Map<RID, R> map2) -> {
-                    map1.putAll(map2);
-                    return map1;
-                }
-        )
+        // Plain loop rather than stream().reduce(..) with lambdas. Under @TypeChecked those
+        // lambdas compile to closure classes, and on Java 25 the first metaclass lookup inside
+        // one of them dies in java.beans.Introspector with
+        //   GenericSignatureFormatError: Expected Field Type Signature / Remaining input: >;
+        // before any waiting happens, so every caller fails instantly instead of polling.
+        // The reduce bought nothing here: the retrieval is sequential either way.
+        Map<RID, R> result = new HashMap<RID, R>()
+        for (RID id : resourceIdentifiers) {
+            result.put(id, waitForResource(id,
+                    resourceRetriever,
+                    resourceAcceptanceEvaluator,
+                    acceptanceFailureOutputProducer,
+                    timeout,
+                    checkPeriod))
+        }
         return result
     }
 }

@@ -23,22 +23,29 @@ dataSource {
 
 // environment specific settings
 environments {
+    // NB: NON_KEYWORDS is required on every H2 URL. ScheduledExecution has columns named MINUTE,
+    // HOUR, MONTH, YEAR and SECONDS -- all reserved words in H2 -- and the 4.6.0 migrations
+    // deliberately renamed them from quoted "minute" to unquoted MINUTE. Hibernate emits them
+    // unquoted (this_.minute), so without NON_KEYWORDS H2 rejects the query with
+    // "Syntax error ... expected identifier" and any page listing jobs fails.
+    // The runtime configs (rundeck-config.properties, packaging, docker templates) already set it;
+    // these URLs did not, so whichever config wins must carry it too.
 	development {
 		dataSource {
 			dbCreate = "none" // one of 'create', 'create-drop','update'
-            url = "jdbc:h2:file:db/devDb"
+            url = "jdbc:h2:file:db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
 	}
 	test {
 		dataSource {
 			dbCreate = "none"
-			url = "jdbc:h2:file:./db/testDb"
+			url = "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
 		}
 	}
 	production {
 		dataSource {
 			dbCreate = "none"
-			url = "jdbc:h2:file:rundeck/grailsh2"
+			url = "jdbc:h2:file:rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
 		}
 	}
 }
