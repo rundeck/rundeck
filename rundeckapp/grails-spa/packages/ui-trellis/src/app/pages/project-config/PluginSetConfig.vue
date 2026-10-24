@@ -24,19 +24,16 @@
 import { PropType, defineComponent } from "vue";
 import { EventBus } from "../../../library";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
+import type { PluginConfig } from "../../../library/interfaces/PluginConfig";
 import ProjectPluginGroups from "./ProjectPluginGroups.vue";
 
-interface PluginConf {
-  readonly type: string;
-  config: any;
-}
 interface ProjectPluginConfigEntry {
-  entry: PluginConf;
-  extra: PluginConf;
-  validation: PluginValidation;
+  entry: PluginConfig;
+  extra?: PluginConfig;
+  validation?: PluginValidation;
   create?: boolean;
   origIndex?: number;
-  modified: boolean;
+  modified?: boolean;
 }
 export default defineComponent({
   name: "App",

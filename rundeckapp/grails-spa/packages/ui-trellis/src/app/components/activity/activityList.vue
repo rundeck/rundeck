@@ -603,6 +603,7 @@ import {
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
 import { api } from "../../../library/services/api";
+import type { PagingParams } from "../../../library/services/executions";
 
 /**
  * Generate a URL
@@ -611,14 +612,16 @@ import { api } from "../../../library/services/api";
  * @returns {string}
  * @private
  */
-function _genUrl(url: string, params: any) {
+function _genUrl(url: string, params: string | Record<string, unknown>) {
   let urlparams = [];
   if (typeof params == "string") {
     urlparams = [params];
   } else if (typeof params == "object") {
     for (const e in params) {
       urlparams.push(
-        encodeURIComponent(e) + "=" + encodeURIComponent(params[e]),
+        encodeURIComponent(e) +
+          "=" +
+          encodeURIComponent(params[e] as string | number | boolean),
       );
     }
   }
@@ -646,7 +649,7 @@ const knownStatusList = [
   "fail",
 ];
 
-function nodeStats(execution: any) {
+function nodeStats(execution: Execution) {
   const info = {
     total: 0,
     succeeded: 0,
@@ -690,7 +693,10 @@ export default defineComponent({
       activityPageHref: "",
       sinceUpdatedUrl: "",
       reports: [] as Execution[],
-      running: null as null | { executions: any[]; paging: any },
+      running: null as null | {
+        executions: Execution[];
+        paging: PagingParams;
+      },
       lastDate: -1,
       pagination: {
         offset: 0,
@@ -703,10 +709,10 @@ export default defineComponent({
       runningOpts: {
         loadRunning: true,
         allowAutoRefresh: true,
-      } as { [key: string]: any },
+      } as Record<string, boolean>,
       autorefresh: false,
       autorefreshms: 5000,
-      autorefreshtimeout: null as null | any,
+      autorefreshtimeout: null as ReturnType<typeof setTimeout> | null,
       sincecount: 0,
       loading: false,
       loadingRunning: false,
@@ -779,39 +785,41 @@ export default defineComponent({
 
     this.projectName = this.rundeckContext.projectName;
     if (this.rundeckContext && this.rundeckContext.data) {
-      this.auth.projectAdmin = this.rundeckContext.data["projectAdminAuth"];
-      this.auth.deleteExec = this.rundeckContext.data["deleteExecAuth"];
-      this.activityUrl = this.rundeckContext.data["activityUrl"];
-      this.bulkDeleteUrl = this.rundeckContext.data["bulkDeleteUrl"];
-      this.activityPageHref = this.rundeckContext.data["activityPageHref"];
-      this.sinceUpdatedUrl = this.rundeckContext.data["sinceUpdatedUrl"];
-      this.autorefreshms = this.rundeckContext.data["autorefreshms"] || 5000;
+      this.auth.projectAdmin =
+        this.rundeckContext.data.projectAdminAuth ?? false;
+      this.auth.deleteExec = this.rundeckContext.data.deleteExecAuth ?? false;
+      this.activityUrl = this.rundeckContext.data.activityUrl ?? "";
+      this.bulkDeleteUrl = this.rundeckContext.data.bulkDeleteUrl ?? "";
+      this.activityPageHref = this.rundeckContext.data.activityPageHref ?? "";
+      this.sinceUpdatedUrl = this.rundeckContext.data.sinceUpdatedUrl ?? "";
+      this.autorefreshms = this.rundeckContext.data.autorefreshms || 5000;
 
       if (
-        this.rundeckContext.data["pagination"] &&
-        this.rundeckContext.data["pagination"].max
+        this.rundeckContext.data.pagination &&
+        this.rundeckContext.data.pagination.max
       ) {
-        this.pagination.max = this.rundeckContext.data["pagination"].max;
+        this.pagination.max = this.rundeckContext.data.pagination.max;
       }
-      if (this.rundeckContext.data["filterOpts"]) {
+      if (this.rundeckContext.data.filterOpts) {
         this.filterOpts = this.rundeckContext.data.filterOpts;
       }
       this.showFilters = true;
-      if (this.rundeckContext.data["query"]) {
+      if (this.rundeckContext.data.query) {
         this.query = Object.assign(
           {},
           this.query,
-          this.rundeckContext.data["query"],
+          this.rundeckContext.data.query,
         );
       } else {
         this.loadActivity(0);
       }
-      if (this.rundeckContext.data["runningOpts"]) {
+      if (this.rundeckContext.data.runningOpts) {
         this.runningOpts = this.rundeckContext.data.runningOpts;
       }
 
-      if (this.rundeckContext.data["viewOpts"]) {
-        this.showBulkDelete = this.rundeckContext.data.viewOpts.showBulkDelete;
+      if (this.rundeckContext.data.viewOpts) {
+        this.showBulkDelete =
+          this.rundeckContext.data.viewOpts.showBulkDelete ?? true;
       }
       if (this.runningOpts["autorefresh"]) {
         this.autorefresh = true;
@@ -961,16 +969,16 @@ export default defineComponent({
     isCustomStatus(status: string) {
       return knownStatusList.indexOf(status) < 0;
     },
-    isCustomReportStatus(rpt: any) {
+    isCustomReportStatus(rpt: Execution) {
       return this.isCustomStatus(this.reportState(rpt));
     },
     executionStateCss(status: string) {
       return this.executionState(status).toUpperCase();
     },
-    reportStateCss(rpt: any) {
+    reportStateCss(rpt: Execution) {
       return this.executionStateCss(this.reportState(rpt));
     },
-    formatDurationMomentHumanize(execution: any) {
+    formatDurationMomentHumanize(execution: Execution) {
       // Calculate duration from dateStarted and dateEnded
       let ms = 0;
 
@@ -1221,7 +1229,7 @@ export default defineComponent({
         this.autorefreshtimeout = null;
       }
     },
-    fullQueryParams(): any {
+    fullQueryParams(): Record<string, string> {
       const params = {} as { [key: string]: string };
       for (const v in this.query) {
         if (this.query[v]) {

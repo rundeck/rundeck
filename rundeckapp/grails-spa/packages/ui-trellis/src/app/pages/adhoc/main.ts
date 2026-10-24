@@ -52,9 +52,8 @@ async function mountAdhocApp() {
       // Provide addUiMessages so components can add translations dynamically
       // This matches the pattern used by ui-socket components
       vue.provide("addUiMessages", async (messages: UiMessage[]) => {
-        const newMessages = messages.reduce(
-          (acc: any, message: UiMessage) =>
-            message ? { ...acc, ...message } : acc,
+        const newMessages = messages.reduce<Record<string, string>>(
+          (acc, message) => (message ? { ...acc, ...message } : acc),
           {},
         );
         const locale = rundeckContext.locale || "en_US";
@@ -72,9 +71,8 @@ async function mountAdhocApp() {
           i18n,
           locale,
           lang,
-          initialMessages.reduce(
-            (acc: any, message: UiMessage) =>
-              message ? { ...acc, ...message } : acc,
+          initialMessages.reduce<Record<string, string>>(
+            (acc, message) => (message ? { ...acc, ...message } : acc),
             {},
           ),
         );

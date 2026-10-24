@@ -62,6 +62,20 @@ import { JobBrowseItem, JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject } from "vue";
 
 const context = getRundeckContext();
+
+interface ScmAction {
+  id: string;
+  title: string;
+  description?: string;
+}
+
+interface ScmMetaData {
+  jobState?: {
+    actions?: ScmAction[];
+    synchState?: string;
+  };
+}
+
 export default defineComponent({
   name: "JobScmActions",
   components: { JobScmStatusBadge },
@@ -89,10 +103,10 @@ export default defineComponent({
         this.jobPageStore.projAuthz["scm_import"]
       );
     },
-    exportActions(): any[] | undefined {
+    exportActions(): ScmAction[] | undefined {
       return this.scmExport?.jobState?.actions;
     },
-    importActions(): any[] | undefined {
+    importActions(): ScmAction[] | undefined {
       return this.scmImport?.jobState?.actions;
     },
     exportSynchState(): string | undefined {
@@ -101,15 +115,15 @@ export default defineComponent({
     importSynchState(): string | undefined {
       return this.scmImport?.jobState?.synchState;
     },
-    scmExport(): JobBrowseMeta | undefined {
+    scmExport(): ScmMetaData | undefined {
       return this.job.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "scmExport",
-      )?.data;
+      )?.data as ScmMetaData | undefined;
     },
-    scmImport(): JobBrowseMeta | undefined {
+    scmImport(): ScmMetaData | undefined {
       return this.job.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "scmImport",
-      )?.data;
+      )?.data as ScmMetaData | undefined;
     },
   },
   methods: {

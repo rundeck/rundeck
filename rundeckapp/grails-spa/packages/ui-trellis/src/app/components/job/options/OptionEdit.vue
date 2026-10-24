@@ -1082,11 +1082,16 @@ export default defineComponent({
       );
     },
     validateLen(field: string, max: number): boolean {
-      return !(this.option[field] && this.option[field].length > max);
+      const value = this.option[field];
+      return typeof value !== "string" || value.length <= max;
     },
     validateRegex(field: string, regex: string): boolean {
+      const value = this.option[field];
+      if (typeof value !== "string") {
+        return false;
+      }
       const testRegex = new RegExp(regex);
-      return testRegex.test(this.option[field]);
+      return testRegex.test(value);
     },
     validateFieldName(field: string): boolean {
       if (field in Validations) {

@@ -78,8 +78,8 @@ export default defineComponent({
     items: {
       type: Array as PropType<Item[]>,
       required: true,
-      validator: (arrayOfObjects: any) => {
-        return arrayOfObjects.every((item: any) => {
+      validator: (arrayOfObjects: Item[]) => {
+        return arrayOfObjects.every((item: Item) => {
           return item.label;
         });
       },

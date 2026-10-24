@@ -90,7 +90,7 @@ export default defineComponent({
       default: false,
     },
     features: {
-      type: Object as PropType<any>,
+      type: Object as PropType<Record<string, boolean>>,
       required: false,
       default: () => ({}),
     },

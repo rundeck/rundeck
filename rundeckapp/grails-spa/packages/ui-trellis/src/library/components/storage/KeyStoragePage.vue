@@ -42,6 +42,7 @@ import KeyStorageEdit, { UploadSetting } from "./KeyStorageEdit.vue";
 import { defineComponent } from "vue";
 import { getRundeckContext } from "../../index";
 import UiSocket from "../utils/UiSocket.vue";
+import type { StorageKeyMetadata } from "../../services/storage";
 
 export default defineComponent({
   name: "KeyStoragePage",
@@ -65,7 +66,7 @@ export default defineComponent({
       path: "",
       uploadSetting: {} as UploadSetting,
       ready: false,
-      selectedKey: {},
+      selectedKey: {} as StorageKeyMetadata,
     };
   },
   computed: {
@@ -78,7 +79,7 @@ export default defineComponent({
     this.ready = true;
   },
   methods: {
-    handleFinishEditing(selectedKey: any) {
+    handleFinishEditing(selectedKey: StorageKeyMetadata) {
       (
         this.$refs.keyStorageViewRef as { loadKeys(key: unknown): void }
       ).loadKeys(selectedKey);

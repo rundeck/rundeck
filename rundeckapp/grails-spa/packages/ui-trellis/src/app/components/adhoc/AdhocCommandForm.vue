@@ -242,7 +242,7 @@ interface AdhocLink {
   title: string | null;
   execid: string | null;
   filter: string | null;
-  extraMetadata: any | null;
+  extraMetadata: unknown | null;
   status: string | null;
   succeeded: boolean | null;
   statusClass: string;
@@ -250,6 +250,10 @@ interface AdhocLink {
 
 interface RecentCommand extends AdhocLink {
   fillCommand: () => void;
+}
+
+interface FollowControl {
+  stopFollowingOutput(): void;
 }
 
 const statusMap: Record<string, string> = {
@@ -294,7 +298,7 @@ export default defineComponent({
       required: true,
     },
     nodeTotal: {
-      type: Number,
+      type: [Number, String] as PropType<number | string>,
       default: 0,
     },
     nodeError: {
@@ -317,7 +321,7 @@ export default defineComponent({
       canRun: false,
       allowInput: true,
       error: null as string | null,
-      followControl: null as any,
+      followControl: null as FollowControl | null,
       loadMax: 20,
       threadCount: 1,
       nodeKeepgoing: "true",
@@ -400,7 +404,7 @@ export default defineComponent({
 
       const totalNum =
         typeof this.nodeTotal === "string"
-          ? parseInt(this.nodeTotal as any, 10)
+          ? parseInt(this.nodeTotal, 10)
           : this.nodeTotal;
       if (
         totalNum &&
@@ -437,7 +441,7 @@ export default defineComponent({
           this.recentCommandsLoaded = true;
 
           if (data.executions && Array.isArray(data.executions)) {
-            this.recentCommands = data.executions.map((exec: any) => {
+            this.recentCommands = data.executions.map((exec) => {
               const link: RecentCommand = {
                 href: exec.href || null,
                 title: exec.title || null,
@@ -473,9 +477,10 @@ export default defineComponent({
           } else {
             this.recentCommands = [];
           }
-        } catch (err: any) {
+        } catch (err) {
           this.recentCommandsLoaded = true;
-          this.error = `Recent commands list: request failed: ${err.message}`;
+          const message = err instanceof Error ? err.message : String(err);
+          this.error = `Recent commands list: request failed: ${message}`;
           console.error("Recent commands list: error receiving data", err);
           this.recentCommands = [];
         }
@@ -506,7 +511,7 @@ export default defineComponent({
         return false;
       }
       const formData = new FormData(form);
-      const data: Record<string, any> = {};
+      const data: Record<string, unknown> = {};
 
       // Extract all form fields - keep meta.* fields as flat fields (not nested)
       // The service will send them as query parameters matching original jQuery.serialize() behavior

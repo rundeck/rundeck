@@ -186,26 +186,29 @@ import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
+import type { PluginConfig as PluginConfigData } from "../../../library/interfaces/PluginConfig";
+import type { PluginProviderDescription } from "../../../library/modules/pluginService";
 
-interface PluginConf {
-  type: string;
-  config: any;
-  project: any;
+type PluginConf = PluginConfigData;
+
+interface PluginGroupsData {
+  config: PluginConf[];
 }
+
 interface EditedProjectPluginConfigEntry {
   entry: PluginConf;
 }
 interface ProjectPluginConfigEntry {
   entry: PluginConf;
-  extra: PluginConf;
-  validation: PluginValidation;
+  extra?: PluginConf;
+  validation?: PluginValidation;
   create?: boolean;
   origIndex?: number;
-  modified: boolean;
-  configSet: boolean;
+  modified?: boolean;
+  configSet?: boolean;
 }
 
-const array_clone = (arr: any[]): any[] =>
+const array_clone = <T extends object>(arr: T[]): T[] =>
   arr.map((val) => Object.assign({}, val));
 export default defineComponent({
   name: "App",
@@ -250,15 +253,15 @@ export default defineComponent({
       workingData: [] as ProjectPluginConfigEntry[],
       editedPlugins: {} as { [key: string]: EditedProjectPluginConfigEntry },
       pluginData: {} as { [key: string]: PluginConf },
-      configOrig: [] as any[],
+      configOrig: [] as PluginConf[],
       rundeckContext: {} as RundeckContext,
       modalAddOpen: false,
-      pluginProviders: [] as any[],
-      pluginLabels: {},
-      projectSettings: {},
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
+      projectSettings: {} as Record<string, unknown>,
       editFocus: -1,
       errors: [] as string[],
-      pluginStorageAccess: [] as any[],
+      pluginStorageAccess: [] as string[],
     };
   },
   watch: {
@@ -276,21 +279,21 @@ export default defineComponent({
     },
   },
   computed: {
-    exportedData(): any[] {
-      const data = [] as any;
+    exportedData(): PluginConfigData[] {
+      const data: PluginConfigData[] = [];
       const inputData = this.pluginConfigs;
       inputData.forEach((plugin) => {
         data.push({ type: plugin.entry.type, config: plugin.entry.config });
       });
       return data;
     },
-    filteredPluginProviders(): any[] {
-      return this.pluginProviders.filter((plugin) => !plugin["configSet"]);
+    filteredPluginProviders(): PluginProviderDescription[] {
+      return this.pluginProviders.filter((plugin) => !plugin.configSet);
     },
   },
   async mounted() {
     this.project = window._rundeck.projectName;
-    const pluginGroups = window._rundeck.data.pluginGroups as PluginConf;
+    const pluginGroups = window._rundeck.data.pluginGroups as PluginGroupsData;
     this.contextConfig = pluginGroups.config;
     await this.getPluginConfigs();
   },
@@ -317,13 +320,15 @@ export default defineComponent({
         duration: 5000,
       });
     },
-    createConfigEntry(entry: any): ProjectPluginConfigEntry {
+    createConfigEntry(entry: PluginConf): ProjectPluginConfigEntry {
       return {
         entry: { type: entry.type, config: Object.assign({}, entry.config) },
       } as ProjectPluginConfigEntry;
     },
 
-    serializeConfigEntry(entry: ProjectPluginConfigEntry): any {
+    serializeConfigEntry(
+      entry: ProjectPluginConfigEntry,
+    ): PluginConfigData & { serviceName: string } {
       return {
         type: entry.entry.type,
         serviceName: "PluginGroup",
@@ -343,7 +348,7 @@ export default defineComponent({
     setFocus(focus: number) {
       this.editFocus = focus;
     },
-    editPlugin(index: any, plugin: ProjectPluginConfigEntry) {
+    editPlugin(index: number, plugin: ProjectPluginConfigEntry) {
       this.editFocus = index;
       this.editedPlugins[plugin.entry.type] = { entry: plugin.entry };
     },
@@ -370,7 +375,7 @@ export default defineComponent({
       }
 
       const type = plugin.entry.type;
-      this.pluginProviders.forEach((item: any) => {
+      this.pluginProviders.forEach((item: PluginProviderDescription) => {
         if (item.name == type) {
           item.configSet = true;
         }
@@ -395,7 +400,7 @@ export default defineComponent({
     },
     removePlugin(plugin: ProjectPluginConfigEntry) {
       const type = plugin.entry.type;
-      this.pluginProviders.forEach((item: any) => {
+      this.pluginProviders.forEach((item: PluginProviderDescription) => {
         if (item.name == type) {
           item.configSet = false;
         }
@@ -427,13 +432,13 @@ export default defineComponent({
     configUpdated() {
       this.modified = true;
     },
-    hasKeyStorageAccess(provider: any) {
+    hasKeyStorageAccess(provider: string) {
       this.pluginStorageAccess.push(provider);
       this.$emit("plugin-storage-access", [provider]);
     },
-    cleanStorageAccess(plugin: any) {
-      const pluginStorageAccess = [] as any[];
-      this.pluginStorageAccess.forEach((pluginAccess: any) => {
+    cleanStorageAccess(plugin: ProjectPluginConfigEntry) {
+      const pluginStorageAccess: string[] = [];
+      this.pluginStorageAccess.forEach((pluginAccess: string) => {
         if (pluginAccess !== plugin.entry.type) {
           pluginStorageAccess.push(pluginAccess);
         }
@@ -447,21 +452,23 @@ export default defineComponent({
         this.serviceName,
       );
 
-      if (data.service) {
+      if (data?.service) {
         this.pluginProviders = data.descriptions;
         this.pluginLabels = data.labels;
 
-        this.contextConfig.forEach((provider2: any) => {
+        this.contextConfig.forEach((provider2: PluginConf) => {
           const projectPluginConfig = {
             entry: provider2,
             create: true,
           } as ProjectPluginConfigEntry;
           projectPluginConfigList.push(projectPluginConfig);
-          this.pluginProviders.forEach((provider: any) => {
-            if (provider.name === provider2.type) {
-              provider["configSet"] = true;
-            }
-          });
+          this.pluginProviders.forEach(
+            (provider: PluginProviderDescription) => {
+              if (provider.name === provider2.type) {
+                provider["configSet"] = true;
+              }
+            },
+          );
         });
         this.loaded = true;
       }

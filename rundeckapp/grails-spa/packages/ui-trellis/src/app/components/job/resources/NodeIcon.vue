@@ -1,29 +1,27 @@
 <template>
-  <span
-    :class="cssForIcon(node.attributes)"
-    :style="styleForIcon(node.attributes)"
-  >
+  <span :class="cssForIcon(attributes)" :style="styleForIcon(attributes)">
     <i
-      v-if="node.attributes['ui:icon:name']"
-      :class="glyphiconForName(node.attributes['ui:icon:name'])"
+      v-if="attributes['ui:icon:name']"
+      :class="glyphiconForName(attributes['ui:icon:name'])"
     ></i>
 
-    <i v-if="!node.attributes['ui:icon:name']" :class="iconCss"></i>
+    <i v-if="!attributes['ui:icon:name']" :class="iconCss"></i>
   </span>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import {
   cssForIcon,
   styleForIcon,
   glyphiconForName,
 } from "../../../utilities/nodeUi";
+import type { Node, NodeAttributes } from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeIcon",
   props: {
     node: {
-      type: Object,
+      type: Object as PropType<Node>,
       required: true,
     },
     defaultIconCss: {
@@ -33,6 +31,9 @@ export default defineComponent({
     },
   },
   computed: {
+    attributes(): NodeAttributes {
+      return this.node.attributes ?? {};
+    },
     iconCss(): string {
       if (!this.defaultIconCss) {
         return "far fa-circle";
@@ -41,14 +42,14 @@ export default defineComponent({
     },
   },
   methods: {
-    cssForIcon(attrs: any) {
+    cssForIcon(attrs: NodeAttributes) {
       return cssForIcon(attrs);
     },
-    styleForIcon(attrs: any) {
+    styleForIcon(attrs: NodeAttributes) {
       return styleForIcon(attrs);
     },
-    glyphiconForName(attrs: any) {
-      return glyphiconForName(attrs);
+    glyphiconForName(name: string) {
+      return glyphiconForName(name);
     },
   },
 });

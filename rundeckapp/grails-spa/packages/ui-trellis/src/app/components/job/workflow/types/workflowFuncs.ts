@@ -97,8 +97,10 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
     }
   }
   if (cmd.errorhandler) {
+    const errorhandler = commandToEditConfig(cmd.errorhandler);
     editData.errorhandler = {
-      ...commandToEditConfig(cmd.errorhandler),
+      ...errorhandler,
+      nodeStep: errorhandler.nodeStep ?? false,
       keepgoingOnSuccess: cmd.errorhandler.keepgoingOnSuccess,
     };
   }

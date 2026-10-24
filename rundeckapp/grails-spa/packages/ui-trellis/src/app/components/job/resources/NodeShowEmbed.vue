@@ -15,7 +15,7 @@
         class="node_ident embedded_node tight"
         tabindex="0"
         role="button"
-        :style="styleForNode(node.attributes)"
+        :style="styleForNode(attributes)"
         :data-node="node.nodename"
         :title="node.nodename"
       >
@@ -51,11 +51,11 @@
 
           <div class="nodedetail" style="overflow-x: auto">
             <node-details-simple
-              :attributes="node.attributes"
+              :attributes="attributes"
               :show-exclude-filter-links="showExcludeFilterLinks"
               :authrun="node.authrun"
               :use-namespace="true"
-              :tags="node.tags"
+              :tags="tags"
               :node-columns="true"
               @filter="filterClick"
             />
@@ -74,6 +74,11 @@ import NodeStatus from "../../job/resources/NodeStatus.vue";
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 import { styleForNode } from "../../../utilities/nodeUi";
+import type {
+  Node,
+  NodeAttributes,
+  NodeFilterSelection,
+} from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeShowEmbed",
@@ -85,7 +90,7 @@ export default defineComponent({
   },
   props: {
     node: {
-      type: Object as PropType<any>,
+      type: Object as PropType<Node>,
       required: true,
     },
     showExcludeFilterLinks: {
@@ -100,11 +105,22 @@ export default defineComponent({
       popoverVisible: false,
     };
   },
-  methods: {
-    styleForNode(node: any) {
-      return styleForNode(node);
+  computed: {
+    attributes(): NodeAttributes {
+      return this.node.attributes ?? {};
     },
-    filterClick(filter: any) {
+    tags(): string[] {
+      if (Array.isArray(this.node.tags)) {
+        return this.node.tags;
+      }
+      return this.node.tags ? this.node.tags.split(",") : [];
+    },
+  },
+  methods: {
+    styleForNode(attributes: NodeAttributes) {
+      return styleForNode(attributes);
+    },
+    filterClick(filter: NodeFilterSelection) {
       this.popoverVisible = false;
       this.$emit("filter", filter);
     },

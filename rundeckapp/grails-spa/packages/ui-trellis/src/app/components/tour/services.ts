@@ -2,10 +2,28 @@ import axios from "axios";
 import _ from "lodash";
 import Trellis from "../../../library";
 import TourConstants from "./constants";
+import type { Tour } from "./interfaces/Tours";
+
+export interface TourManifestEntry {
+  key: string;
+  name: string;
+  author: string;
+  provider: string;
+}
+
+export interface TourLoader {
+  tours: TourManifestEntry[];
+  provider: string;
+  loader: string;
+}
+
+export interface LoadedTour extends Tour {
+  project?: string;
+}
 
 export const getTours = () => {
-  const tours = [] as any[];
-  return new Promise<any[]>((resolve, reject) => {
+  const tours: TourLoader[] = [];
+  return new Promise<TourLoader[]>((resolve, reject) => {
     axios
       .get(TourConstants.tourManifestUrl, getHeaderObject())
       .then((response) => {
@@ -24,7 +42,7 @@ export const getTours = () => {
 };
 
 export const getTour = (tourLoader: string, tourKey: string) => {
-  return new Promise((resolve, reject) => {
+  return new Promise<LoadedTour>((resolve, reject) => {
     axios
       .get(
         `${TourConstants.tourUrl}${tourLoader}/${tourKey}.json`,

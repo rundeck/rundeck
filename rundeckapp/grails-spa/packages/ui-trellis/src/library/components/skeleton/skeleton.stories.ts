@@ -23,11 +23,11 @@ export const list: StoryFn<typeof Skeleton> = (args) => {
     provide: { rootStore },
     components: { Skeleton },
     mounted() {
-      const el = this.$el as any;
-      el.parentNode.style.height = "100vh";
-      el.parentNode.style.overflow = "hidden";
-      el.parentNode.style.position = "relative";
-      el.parentNode.style.padding = "20px";
+      const el = this.$el as HTMLElement;
+      el.parentElement!.style.height = "100vh";
+      el.parentElement!.style.overflow = "hidden";
+      el.parentElement!.style.position = "relative";
+      el.parentElement!.style.padding = "20px";
       document.body.style.overflow = "hidden";
     },
   };
@@ -49,11 +49,11 @@ export const listWithAvatar: StoryFn<typeof Skeleton> = (args) => {
     provide: { rootStore },
     components: { Skeleton },
     mounted() {
-      const el = this.$el as any;
-      el.parentNode.style.height = "100vh";
-      el.parentNode.style.overflow = "hidden";
-      el.parentNode.style.position = "relative";
-      el.parentNode.style.padding = "20px";
+      const el = this.$el as HTMLElement;
+      el.parentElement!.style.height = "100vh";
+      el.parentElement!.style.overflow = "hidden";
+      el.parentElement!.style.position = "relative";
+      el.parentElement!.style.padding = "20px";
       document.body.style.overflow = "hidden";
     },
   };

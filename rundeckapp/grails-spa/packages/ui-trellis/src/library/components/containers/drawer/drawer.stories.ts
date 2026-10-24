@@ -10,12 +10,15 @@ export default {
   component: Drawer,
 } as Meta<typeof Drawer>;
 
-function setupStory(vue) {
-  const el = vue.$el as any;
-  el.parentNode.style.height = "100vh";
-  el.parentNode.style.overflow = "hidden";
-  el.parentNode.style.position = "relative";
-  el.parentNode.style.padding = "20px";
+function setupStory(vue: { $el: unknown }) {
+  if (!(vue.$el instanceof HTMLElement) || !vue.$el.parentElement) {
+    return;
+  }
+  const parent = vue.$el.parentElement;
+  parent.style.height = "100vh";
+  parent.style.overflow = "hidden";
+  parent.style.position = "relative";
+  parent.style.padding = "20px";
   document.body.style.overflow = "hidden";
 }
 

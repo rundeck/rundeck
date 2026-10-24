@@ -225,13 +225,9 @@ export default defineComponent({
         "",
       );
       // then add markdown
-      (window as any).markdeep.format(
-        massagedData + "\n",
-        true,
-        (t: string) => {
-          this.preview = t;
-        },
-      );
+      window.markdeep.format(massagedData + "\n", true, (t: string) => {
+        this.preview = t;
+      });
     },
   },
 });

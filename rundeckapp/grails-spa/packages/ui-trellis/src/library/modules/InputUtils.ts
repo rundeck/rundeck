@@ -2,8 +2,10 @@
  * Cleans the input values to remove blank strings, null and undefined, returns a new Object with only valid properties
  * @param inConfig Input config object, where key is fieldname, and value is entered value
  */
-export const cleanConfigInput = (inConfig: any): { [index: string]: any } => {
-  const newConfig: { [index: string]: any } = {};
+export const cleanConfigInput = (
+  inConfig: Record<string, unknown>,
+): Record<string, unknown> => {
+  const newConfig: Record<string, unknown> = {};
   // set newConfig with values that are not blank
   for (const prop in inConfig) {
     if (inConfig.hasOwnProperty(prop)) {
@@ -24,9 +26,9 @@ export const cleanConfigInput = (inConfig: any): { [index: string]: any } => {
  * @param inConfig input configuration values
  */
 export const convertArrayInput = (
-  inConfig: any,
-): { [index: string]: string } => {
-  const newConfig: { [index: string]: string } = {};
+  inConfig: Record<string, unknown>,
+): Record<string, unknown> => {
+  const newConfig: Record<string, unknown> = {};
 
   for (const prop in inConfig) {
     if (inConfig[prop] instanceof Array) {

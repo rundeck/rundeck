@@ -11,11 +11,24 @@ import { JobBrowserStore } from "./JobBrowser";
 export interface JobPageFilter {
   filter(j: JobBrowseItem): boolean;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isBooleanRecord = (value: unknown): value is Record<string, boolean> =>
+  isRecord(value) &&
+  Object.values(value).every((item) => typeof item === "boolean");
+
+type AuthorizationTypes = Record<string, Record<string, boolean>>;
+
+const isAuthorizationTypes = (value: unknown): value is AuthorizationTypes =>
+  isRecord(value) && Object.values(value).every(isBooleanRecord);
+
 export class JobPageStore {
   bulkEditMode: boolean = false;
   loaded: boolean = false;
   jobAuthz: { [key: string]: boolean } = {};
-  projTypesAuthz: { [key: string]: boolean } = {};
+  projTypesAuthz: AuthorizationTypes = {};
   projAuthz: { [key: string]: boolean } = {};
   executionMode: boolean = false;
   projectExecutionsEnabled: boolean = false;
@@ -109,24 +122,30 @@ export class JobPageStore {
     this.currentProject = project;
     this.meta = await getProjectMeta(this.currentProject);
     const projAuthz = this.findMeta("authz");
-    if (projAuthz?.types?.job && typeof projAuthz.types.job === "object") {
-      this.jobAuthz = projAuthz?.types?.job;
+    const authzTypes = isRecord(projAuthz) ? projAuthz.types : undefined;
+    const jobAuthz = isRecord(authzTypes) ? authzTypes.job : undefined;
+    if (isBooleanRecord(jobAuthz)) {
+      this.jobAuthz = jobAuthz;
     }
-    if (projAuthz?.types && typeof projAuthz.types === "object") {
-      this.projTypesAuthz = projAuthz?.types;
+    if (isAuthorizationTypes(authzTypes)) {
+      this.projTypesAuthz = authzTypes;
     }
-    if (projAuthz?.project && typeof projAuthz.project === "object") {
-      this.projAuthz = projAuthz?.project;
+    const projectAuthz = isRecord(projAuthz) ? projAuthz.project : undefined;
+    if (isBooleanRecord(projectAuthz)) {
+      this.projAuthz = projectAuthz;
     }
     const config = this.findMeta("config");
-    if (config) {
+    if (isRecord(config)) {
       this.projectExecutionsEnabled = !!config.executionsEnabled;
       this.projectSchedulesEnabled = !!config.scheduleEnabled;
-      this.groupExpandLevel = config.groupExpandLevel || 0;
+      this.groupExpandLevel =
+        typeof config.groupExpandLevel === "number"
+          ? config.groupExpandLevel
+          : 0;
     }
 
     const sysMode = this.findMeta("sysMode");
-    if (sysMode) {
+    if (isRecord(sysMode)) {
       this.executionMode = !!sysMode.active;
     }
     this.loaded = true;

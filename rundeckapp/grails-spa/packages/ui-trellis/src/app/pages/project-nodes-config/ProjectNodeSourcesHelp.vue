@@ -73,7 +73,7 @@ export default defineComponent({
     };
   },
   computed: {
-    empty: function (): any {
+    empty: function (): boolean {
       return this.count === 0;
     },
   },
@@ -86,8 +86,9 @@ export default defineComponent({
   mounted() {
     if (window._rundeck.data) {
       this.projectAclConfigPageUrl =
-        window._rundeck.data.projectAclConfigPageUrl;
-      this.systemAclConfigPageUrl = window._rundeck.data.systemAclConfigPageUrl;
+        window._rundeck.data.projectAclConfigPageUrl ?? "";
+      this.systemAclConfigPageUrl =
+        window._rundeck.data.systemAclConfigPageUrl ?? "";
     }
 
     this.project = getRundeckContext().projectName;

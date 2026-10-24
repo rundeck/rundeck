@@ -289,18 +289,17 @@ import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import { api } from "@/library/services/api";
+import type { PluginConfig as PluginConfigData } from "../../../library/interfaces/PluginConfig";
+import type { PluginProviderDescription } from "../../../library/modules/pluginService";
 
-interface PluginConf {
-  readonly type: string;
-  config: any;
-}
+type PluginConf = PluginConfigData;
 interface ProjectPluginConfigEntry {
   entry: PluginConf;
   extra: PluginConf;
-  validation: PluginValidation;
+  validation?: PluginValidation;
   create?: boolean;
   origIndex?: number;
-  modified: boolean;
+  modified?: boolean;
 }
 
 interface PluginDef {
@@ -309,8 +308,14 @@ interface PluginDef {
 }
 interface PluginExtraConfig {
   plugin: PluginDef;
-  extraConfig: any;
+  extraConfig: Record<string, unknown>;
 }
+
+interface StoredPluginConfig extends PluginConfigData {
+  extra?: Record<string, unknown>;
+  origIndex?: number;
+}
+
 export default defineComponent({
   name: "ProjectPluginConfig",
   components: {
@@ -360,14 +365,14 @@ export default defineComponent({
       cancelUrl: "",
       pluginConfigs: [] as ProjectPluginConfigEntry[],
       removedPluginConfigs: [] as ProjectPluginConfigEntry[],
-      configOrig: [] as any[],
+      configOrig: [] as StoredPluginConfig[],
       rundeckContext: {} as RundeckContext,
       modalAddOpen: false,
-      pluginProviders: [] as any[],
-      pluginLabels: {} as any,
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
       editFocus: -1,
       errors: [] as string[],
-      pluginStorageAccess: [] as any[],
+      pluginStorageAccess: [] as string[],
     };
   },
   mounted() {
@@ -389,7 +394,7 @@ export default defineComponent({
         .then((pluginConfigs) => {
           this.configOrig = pluginConfigs;
           //copy
-          this.pluginConfigs = pluginConfigs.map((val: any, index: number) =>
+          this.pluginConfigs = pluginConfigs.map((val, index: number) =>
             this.createConfigEntry(val, index),
           );
           this.loaded = true;
@@ -400,9 +405,9 @@ export default defineComponent({
       pluginService
         .getPluginProvidersForService(this.serviceName)
         .then((data) => {
-          if (data.service) {
+          if (data?.service) {
             this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
+            this.pluginLabels = data.labels ?? {};
           }
         })
         .catch((error) => console.error(error));
@@ -428,7 +433,10 @@ export default defineComponent({
         duration: 5000,
       });
     },
-    createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
+    createConfigEntry(
+      entry: StoredPluginConfig,
+      origIndex: number,
+    ): ProjectPluginConfigEntry {
       return {
         extra: { config: Object.assign({}, entry.extra) },
         entry: { type: entry.type, config: Object.assign({}, entry.config) },
@@ -440,7 +448,7 @@ export default defineComponent({
       return disabled === true || disabled === "true";
     },
 
-    serializeConfigEntry(entry: ProjectPluginConfigEntry): any {
+    serializeConfigEntry(entry: ProjectPluginConfigEntry): StoredPluginConfig {
       return {
         extra: Object.assign({}, entry.extra.config),
         type: entry.entry.type,
@@ -531,7 +539,7 @@ export default defineComponent({
       project: string,
       configPrefix: string,
       serviceName: string,
-    ) {
+    ): Promise<StoredPluginConfig[]> {
       const response = await axios({
         method: "get",
         headers: { "x-rundeck-ajax": true },
@@ -554,6 +562,7 @@ export default defineComponent({
       if (response.data && response.data.plugins) {
         return response.data.plugins;
       }
+      return [];
     },
     async saveProjectPluginConfig(
       project: string,
@@ -583,7 +592,10 @@ export default defineComponent({
         if (resp.data && Array.isArray(resp.data.errors)) {
           this.errors = resp.data.errors;
           if (resp.data.reports) {
-            const reports = resp.data.reports as { [key: string]: any };
+            const reports = resp.data.reports as Record<
+              string,
+              Record<string, string>
+            >;
             this.pluginConfigs.forEach((plugin, index) => {
               if (reports[`${index}`] !== undefined) {
                 plugin.validation = {
@@ -627,13 +639,13 @@ export default defineComponent({
     configUpdated() {
       this.pluginConfigsModified();
     },
-    hasKeyStorageAccess(provider: any) {
+    hasKeyStorageAccess(provider: string) {
       this.pluginStorageAccess.push(provider);
       this.$emit("plugin-storage-access", [provider]);
     },
-    cleanStorageAccess(plugin: any) {
-      const pluginStorageAccess = [] as any[];
-      this.pluginStorageAccess.forEach((pluginAccess: any) => {
+    cleanStorageAccess(plugin: ProjectPluginConfigEntry) {
+      const pluginStorageAccess: string[] = [];
+      this.pluginStorageAccess.forEach((pluginAccess: string) => {
         if (pluginAccess !== plugin.entry.type) {
           pluginStorageAccess.push(pluginAccess);
         }

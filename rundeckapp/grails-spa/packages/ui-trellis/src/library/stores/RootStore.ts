@@ -1,4 +1,5 @@
 import { RundeckClient } from "@rundeck/client";
+import type { AxiosResponse } from "axios";
 import { reactive, UnwrapNestedRefs } from "vue";
 import { api } from "../services/api";
 import { ExecutionOutputStore } from "./ExecutionOutput";
@@ -17,6 +18,15 @@ import { UtilityBar } from "./UtilityBar";
 import { WebhookStore } from "./Webhooks";
 import { WorkflowStore } from "./Workflow";
 
+export interface AppMeta {
+  title?: string;
+  logocss?: string;
+  appRundeckGatewayUrl?: string;
+  aceEditorMinLines?: number;
+  aceEditorMaxLines?: number;
+  [key: string]: unknown;
+}
+
 export class RootStore {
   executionOutputStore: ExecutionOutputStore;
   workflowStore: UnwrapNestedRefs<WorkflowStore>;
@@ -32,11 +42,11 @@ export class RootStore {
   ui: UnwrapNestedRefs<UIStore>;
   nodeSourceFile: UnwrapNestedRefs<NodeSourceFile>;
   jobPageStore: UnwrapNestedRefs<JobPageStore>;
-  requestCache: { [key: string]: Promise<any> } = {};
+  requestCache: Record<string, Promise<AxiosResponse>> = {};
 
   constructor(
     readonly client: RundeckClient,
-    appMeta: any = {},
+    appMeta: AppMeta = {},
   ) {
     this.executionOutputStore = new ExecutionOutputStore(this, client);
     this.workflowStore = reactive(new WorkflowStore(this, client));

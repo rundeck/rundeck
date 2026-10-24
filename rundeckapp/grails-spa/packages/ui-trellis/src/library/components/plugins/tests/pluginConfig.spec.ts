@@ -945,5 +945,21 @@ describe("PluginConfig", () => {
       expect(prop.allowed).toEqual(["App Support", "Network Ops"]);
       expect(prop.selectLabels).toBeUndefined();
     });
+
+    it("does not treat a null dynamic value as a label map", async () => {
+      const wrapper = await createWrapper();
+
+      expect(() =>
+        (wrapper.vm as any).loadPluginData({
+          props: [{ name: "urgency", type: "FreeSelect", options: {} }],
+          dynamicProps: { urgency: null },
+        }),
+      ).not.toThrow();
+      await wrapper.vm.$nextTick();
+
+      const prop = (wrapper.vm as any).props[0];
+      expect(prop.allowed).toBeUndefined();
+      expect(prop.selectLabels).toBeUndefined();
+    });
   });
 });

@@ -40,7 +40,7 @@ export async function queryPath(
   path: string,
   meta: string = "*",
   breakpoint: number = 100,
-  query: { [key: string]: any },
+  query: Record<string, string | number | boolean>,
   metaExclude?: string | null,
 ): Promise<JobBrowseList> {
   const params = Object.assign({}, query, { path, meta, breakpoint });

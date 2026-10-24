@@ -194,7 +194,7 @@ export default defineComponent({
     hideResults() {
       this.showSearchResults = false;
     },
-    changePageOffset(offset: any) {
+    changePageOffset(offset: number) {
       this.pagination.offset = offset;
       this.handleSearch(false);
     },
