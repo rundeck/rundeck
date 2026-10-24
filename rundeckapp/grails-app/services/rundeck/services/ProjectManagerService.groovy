@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
@@ -544,6 +545,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         projectCache.invalidate(projectName)
         rundeckNodeService.refreshProjectNodes(projectName)
+        ProjectNodeSupport.removeLoadPool(projectName)
     }
 
     private static IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {

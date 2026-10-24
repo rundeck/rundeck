@@ -32,6 +32,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -59,14 +61,14 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final  String PROJECT_RESOURCES_LOAD_THREADS          = "project.resources.loadThreads";
     private static final int    DEFAULT_LOAD_THREADS                    = 1;
     /**
-     * Upper bound on parallel node source queries running at once, shared by all projects
+     * Upper bound on parallel node source queries running at once for a project
      */
     public static final  int    MAX_LOAD_THREADS                        = 20;
-    private static final AtomicInteger LOAD_THREAD_COUNT                = new AtomicInteger();
     /**
-     * Shared by all projects so concurrency is bounded across them. Idle threads time out.
+     * Node source query pool per project, so a slow project does not hold threads another project needs. Idle
+     * threads time out.
      */
-    private static final ThreadPoolExecutor LOAD_POOL                   = createLoadPool();
+    private static final ConcurrentMap<String, ThreadPoolExecutor> LOAD_POOLS = new ConcurrentHashMap<>();
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -211,12 +213,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * Create the node source query pool shared by all projects: {@link #MAX_LOAD_THREADS} daemon threads that time
-     * out when idle, using this class's classloader as their context classloader.
+     * Create the node source query pool for a project: {@link #MAX_LOAD_THREADS} daemon threads that time out when
+     * idle, using this class's classloader as their context classloader.
+     *
+     * @param project project name
      *
      * @return new pool
      */
-    private static ThreadPoolExecutor createLoadPool() {
+    private static ThreadPoolExecutor createLoadPool(final String project) {
+        final AtomicInteger count = new AtomicInteger();
         final ThreadPoolExecutor pool = new ThreadPoolExecutor(
                 MAX_LOAD_THREADS,
                 MAX_LOAD_THREADS,
@@ -224,7 +229,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
                 r -> {
-                    Thread t = new LoadThread(r, "ProjectNodeSupport-load-" + LOAD_THREAD_COUNT.incrementAndGet());
+                    Thread t = new LoadThread(r, "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet());
                     t.setDaemon(true);
                     //not inherited from whichever thread first used the pool
                     t.setContextClassLoader(ProjectNodeSupport.class.getClassLoader());
@@ -236,7 +241,19 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * Thread of {@link #LOAD_POOL}, so a node load started from a node source query can be detected
+     * Stop and discard the node source query pool of a deleted project
+     *
+     * @param project project name
+     */
+    public static void removeLoadPool(final String project) {
+        final ThreadPoolExecutor pool = LOAD_POOLS.remove(project);
+        if (pool != null) {
+            pool.shutdownNow();
+        }
+    }
+
+    /**
+     * Thread of a project's load pool, so a node load started from a node source query can be detected
      */
     private static final class LoadThread extends Thread {
         LoadThread(final Runnable target, final String name) {
@@ -247,8 +264,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * Query all sources, in parallel if more than one thread is configured, and pass each result to the consumer in
      * source order. Sources are submitted in a sliding window of the configured size, read in order, so at most that
-     * many results are held at once even when an early source is slow, and one project uses at most that much of
-     * the shared pool. Serial loads run on the calling thread and do not use the pool. A load started from a node
+     * many results are held at once even when an early source is slow. Parallel loads use the project's own pool;
+     * serial loads run on the calling thread and do not use a pool. A load started from a node
      * source query on a pool thread (a source that loads another project's nodes) runs serially, so it never waits
      * for the pool it is running on.
      *
@@ -268,6 +285,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             }
             return;
         }
+        final ThreadPoolExecutor pool = LOAD_POOLS.computeIfAbsent(
+                projectConfig.getName(),
+                ProjectNodeSupport::createLoadPool
+        );
         final Deque<Future<SourceResult>> window = new ArrayDeque<>();
         int next = 0;
         int consumed = 0;
@@ -275,7 +296,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             while (consumed < total) {
                 while (next < total && window.size() < threads) {
                     final LoadedResourceModelSource source = sources.get(next++);
-                    window.add(LOAD_POOL.submit(() -> querySource(source)));
+                    window.add(pool.submit(() -> querySource(source)));
                 }
                 consumer.accept(consumed, window.peek().get());
                 window.poll();

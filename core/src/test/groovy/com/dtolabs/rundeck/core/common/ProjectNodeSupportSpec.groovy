@@ -564,6 +564,29 @@ class ProjectNodeSupportSpec extends Specification {
         innerThreads == [outerThread, outerThread]
     }
 
+    def "parallel loads use the project's own pool, which is stopped when the project is deleted"() {
+        given:
+        def threads = Collections.synchronizedList([])
+        def loaders = [
+                { -> threads << Thread.currentThread(); nodes('a', '1') } as Closure<INodeSet>,
+                { -> threads << Thread.currentThread(); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+
+        when:
+        support.getNodeSet()
+        ProjectNodeSupport.removeLoadPool(PROJECT_NAME)
+        threads.each { it.join(10000) }
+        def reloaded = support.getNodeSet()
+
+        then:
+        threads.size() == 4
+        threads.every { it.name.startsWith("ProjectNodeSupport-load-${PROJECT_NAME}-".toString()) }
+        !threads[0].alive
+        !threads[1].alive
+        reloaded.nodeNames as List == ['a', 'b']
+    }
+
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
         given:
         def firstThread = null
