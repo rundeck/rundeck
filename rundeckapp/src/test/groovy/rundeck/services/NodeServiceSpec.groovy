@@ -129,6 +129,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         nodes1.nodeNames as List == ['anode']
     }
 
+    def "project load threads config is exposed as a project property"() {
+        expect:
+        service.propertiesMapping['loadThreads'] == 'project.resources.loadThreads'
+        service.projectConfigProperties.find { it.name == 'loadThreads' }.defaultValue == '1'
+    }
+
     class PropsConfig implements IRundeckProjectConfig {
         Map<String, String> properties
         Map<String, String> projectProperties

@@ -75,7 +75,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getCategories() {
-        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource']
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource', loadThreads: 'resourceModelSource']
     }
     @Override
     List<Property> getProjectConfigProperties() {
@@ -103,6 +103,14 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     required(false)
                     defaultValue 'true'
                     renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
+                }.build(),
+                PropertyBuilder.builder().with {
+                    integer 'loadThreads'
+                    title 'Load Threads'
+                    description "Number of Node Sources queried concurrently when loading nodes.\n\nThe default of 1 queries Node Sources one at a time. Higher values reduce load time for projects with many Node Sources, but increase concurrent requests to the systems behind them, which may throttle. At most ${ProjectNodeSupport.MAX_LOAD_THREADS} Node Sources are queried in parallel at once in each project."
+                    required(false)
+                    defaultValue '1'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build()
         ]
     }
@@ -111,7 +119,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getPropertiesMapping() {
-        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH]
+        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH, 'loadThreads': ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS]
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
