@@ -5322,7 +5322,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def avgDuration
         def maxDurationToMillis
         def minDurationToMillis
-        if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
+        // Check the raw values: the defaults above turn a 0 duration, or null when no matched execution has
+        // completed, into Integer 0, which is neither a number of seconds nor a java.sql.Time.
+        boolean timeDurations = [metricsData?.durationMax, metricsData?.durationMin, metricsData?.durationSum].any {
+            it instanceof Time
+        }
+        if (!timeDurations) {
             // Durations are numbers of seconds. Convert them directly: converting them through java.sql.Time
             // depends on the JVM time zone and wraps at 24 hours.
             long sumMillis = secondsToMillis(metricsData?.durationSum)

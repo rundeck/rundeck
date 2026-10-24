@@ -7025,6 +7025,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             tz << ['UTC', 'America/Denver', 'Asia/Kolkata']
     }
 
+    @Unroll
+    def "metrics data from criteria result with #description durations returns zero durations"() {
+        given:
+            def critresult = [count: count, durationMax: duration, durationMin: duration, durationSum: duration]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then:
+            result.total == count
+            result.duration.average == 0
+            result.duration.max == 0
+            result.duration.min == 0
+        where:
+            description                          | count | duration
+            'zero (all executions under 1s)'     | 1L    | 0L
+            'null (no completed executions yet)' | 2L    | null
+    }
+
     def "metrics data from projection result"(){
         given:
             Date now = new Date()
