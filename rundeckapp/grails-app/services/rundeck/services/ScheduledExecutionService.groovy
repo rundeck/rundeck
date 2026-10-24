@@ -4585,7 +4585,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * Normalizes a list of remote option values to name/value entries, keeping the original order.
      * Map entries (a JSONObject, or the plain Map returned by a JSON Path filter) must have a 'name'
-     * and a non-null 'value'. String, Number and Boolean entries become [name: s, value: s].
+     * and a non-null 'value'; a Number or Boolean name or value is converted to a String.
+     * String, Number and Boolean entries become [name: s, value: s].
      * @param entries the remote option values
      * @param validationerrors list that receives a message for each invalid entry
      * @return the normalized entries
@@ -4602,7 +4603,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (item.get('value') == null) {
                     validationerrors << "Item: ${i} has no 'value' entry".toString()
                 }
-                normalized << item
+                normalized << withTextNameAndValue(item)
             } else if (entry instanceof String || entry instanceof Number || entry instanceof Boolean) {
                 String text = entry.toString()
                 normalized << [name: text, value: text]
@@ -4611,6 +4612,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         return normalized
+    }
+
+    /**
+     * The job form treats an option value or label of 0 or false as missing, so Number and Boolean
+     * names and values are passed on as Strings, like Number and Boolean list entries.
+     * @param item a name/value map entry
+     * @return the entry, or a copy of it with Number and Boolean name and value converted to String
+     */
+    @CompileStatic
+    private static Map withTextNameAndValue(Map item) {
+        Object name = item.get('name')
+        Object value = item.get('value')
+        boolean scalarName = name instanceof Number || name instanceof Boolean
+        boolean scalarValue = value instanceof Number || value instanceof Boolean
+        if (!scalarName && !scalarValue) {
+            return item
+        }
+        Map copy = new LinkedHashMap(item)
+        if (scalarName) {
+            copy.put('name', name.toString())
+        }
+        if (scalarValue) {
+            copy.put('value', value.toString())
+        }
+        return copy
     }
 
     /**
