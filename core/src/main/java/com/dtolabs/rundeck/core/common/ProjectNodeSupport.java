@@ -141,12 +141,18 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         nodesSourceExceptions.clear();
         for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
             try {
+                logger.info("Loading nodes from " + nodesSource);
+                long start = System.currentTimeMillis();
                 INodeSet nodes = nodesSource.getNodes();
                 if (null == nodes) {
                     logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
                 } else {
                     list.addNodeSet(nodes);
                 }
+                logger.info(
+                        "Loaded " + (null == nodes ? 0 : nodes.getNodes().size()) + " nodes from " + nodesSource
+                        + " in " + (System.currentTimeMillis() - start) + " ms"
+                );
                 if(nodesSource instanceof ResourceModelSourceErrors){
                     ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
                     List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
@@ -448,13 +454,29 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     static class LoadedSource
             extends DelegateResourceModelSource implements LoadedResourceModelSource
     {
+        @Getter final String project;
         @Getter final int index;
         @Getter final String type;
 
-        LoadedSource(final int index, final String type, final ResourceModelSource delegate) {
+        LoadedSource(
+                final String project,
+                final int index,
+                final String type,
+                final ResourceModelSource delegate
+        )
+        {
             super(delegate);
+            this.project = project;
             this.index = index;
             this.type = type;
+        }
+
+        /**
+         * @return label identifying the source by project, index and type, e.g. "project=Foo source #3 (aws-ec2)"
+         */
+        @Override
+        public String toString() {
+            return "project=" + project + " source #" + index + " (" + type + ")";
         }
 
         @Override
@@ -496,6 +518,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         nodeSourceReferences.add(sourceForConfiguration);
         if (useCache) {
             return new LoadedSource(
+                    projectConfig.getName(),
                     index,
                     type,
                     createCachingSource(sourceForConfiguration.getProvider(), ident, ident + " (" + type + ")")
@@ -503,6 +526,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } else {
 
             return new LoadedSource(
+                    projectConfig.getName(),
                     index,
                     type, sourceForConfiguration.getProvider()
             );
