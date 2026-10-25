@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
@@ -353,7 +354,7 @@ class ProjectController extends ControllerBase{
                     Streams.copy(instream, response.outputStream, false)
                 }
             } catch (Exception e) {
-                throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+                throw new ProjectServiceException("Failed to deliver export file: ${ClientErrorMessages.publicMessage(e)}", e)
             } finally {
                 projectService.releasePromise(session.user, token)
             }
@@ -1746,7 +1747,7 @@ Since: v14""",
             try {
                 text = request.inputStream.text
             } catch (Throwable e) {
-                error = e.message
+                error = ClientErrorMessages.publicMessage(e)
             }
         }else{
             def succeeded = apiService.parseJsonXmlWith(request,response,[
@@ -2062,7 +2063,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             try {
                 text = request.inputStream.text
             } catch (Throwable e) {
-                error = e.message
+                error = ClientErrorMessages.publicMessage(e)
             }
         }else{
             def succeeded = apiService.parseJsonXmlWith(request,response,[
@@ -3577,7 +3578,7 @@ Since: v19""",
                 Streams.copy(instream, response.outputStream, false)
             }
         } catch (Exception e) {
-            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+            throw new ProjectServiceException("Failed to deliver export file: ${ClientErrorMessages.publicMessage(e)}", e)
         } finally {
             projectService.releasePromise(session.user, token)
         }
@@ -3897,7 +3898,7 @@ Note: `other_errors` included since API v35""",
             return apiService.renderErrorFormat(response,[
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     code: 'api.error.async.import.status.file.retrieval.error',
-                    args: [e.message]
+                    args: [ClientErrorMessages.publicMessage(e)]
             ])
         }
         render(

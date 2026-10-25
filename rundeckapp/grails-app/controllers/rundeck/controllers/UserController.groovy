@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import grails.converters.JSON
@@ -895,7 +896,7 @@ For APIv53+, the results will also include:
             result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]
         } catch (Exception e) {
             e.printStackTrace()
-            result = [result: false, error: e.getCause()?.message ?: e.message]
+            result = [result: false, error: ClientErrorMessages.publicMessage(e.getCause() ?: e)]
         }
         return renderTokenGenerateResult(result, params.login)
     }
@@ -933,7 +934,7 @@ For APIv53+, the results will also include:
             }
             renderTokenGenerateResult([result: true, apitoken: token.token, tokenid: token.uuid], authContext.username)
         } catch (Exception e) {
-            renderTokenGenerateResult([result: false, error: e.message], authContext.username)
+            renderTokenGenerateResult([result: false, error: ClientErrorMessages.publicMessage(e)], authContext.username)
         }
     }
 

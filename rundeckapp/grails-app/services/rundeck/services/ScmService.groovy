@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -628,7 +629,7 @@ class ScmService {
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
-            return [error: true, message: e.message]
+            return [error: true, message: ClientErrorMessages.publicMessage(e)]
         }
     }
 
@@ -785,7 +786,7 @@ class ScmService {
                 loaded?.close()
             }
         }catch (ScmPluginInvalidInput e) {
-            return [valid: false, message: e.message]
+            return [valid: false, message: ClientErrorMessages.publicMessage(e)]
         }
     }
 
@@ -859,7 +860,7 @@ class ScmService {
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
-            return [error: true, message: e.message]
+            return [error: true, message: ClientErrorMessages.publicMessage(e)]
         }
     }
 
@@ -1483,15 +1484,15 @@ class ScmService {
             log.debug("export failed ${jobrefs}, ${deletePaths}, ${auth.username}, ${config}", e)
             if (ScmUserInfoMissing.isFieldMissing(e)) {
                 def fieldReport = new Validator.Report()
-                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)] = e.message
+                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)] = ClientErrorMessages.publicMessage(e)
                 return [
                         error               : true,
-                        message             : e.message,
+                        message             : ClientErrorMessages.publicMessage(e),
                         report              : fieldReport,
                         missingUserInfoField: ScmUserInfoMissing.missingFieldName(e)
                 ]
             }
-            return [error: true, message: e.message]
+            return [error: true, message: ClientErrorMessages.publicMessage(e)]
         }
         if (result.error) {
             return [error: true, message: result.message, extendedMessage: result.extendedMessage]
@@ -1573,15 +1574,15 @@ class ScmService {
             log.debug("import failed ${chosenTrackedItems}, ${config}", e)
             if (ScmUserInfoMissing.isFieldMissing(e)) {
                 def fieldReport = new Validator.Report()
-                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)] = e.message
+                fieldReport.errors[ScmUserInfoMissing.missingFieldName(e)] = ClientErrorMessages.publicMessage(e)
                 return [
                         error               : true,
-                        message             : e.message,
+                        message             : ClientErrorMessages.publicMessage(e),
                         report              : fieldReport,
                         missingUserInfoField: ScmUserInfoMissing.missingFieldName(e)
                 ]
             }
-            return [error: true, message: e.message]
+            return [error: true, message: ClientErrorMessages.publicMessage(e)]
         }
         if (result.error) {
             return [error: true, message: result.message, extendedMessage: result.extendedMessage]
