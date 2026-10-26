@@ -38,6 +38,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ProjectNodeSupportSpec extends Specification {
     static final String PROJECT_NAME = 'ProjectNodeSupportSpec'
+    /**
+     * Project name for sources from supportWithSources, unique per feature so no feature inherits another's load pool
+     */
+    String loadProject = "${PROJECT_NAME}-${UUID.randomUUID()}".toString()
     Framework framework
     FrameworkProject testProject
     File directory
@@ -51,6 +55,7 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     def cleanup() {
+        ProjectNodeSupport.removeLoadPool(loadProject)
         if (directory.exists()) {
             FileUtils.deleteDir(directory)
         }
@@ -364,7 +369,7 @@ class ProjectNodeSupportSpec extends Specification {
         }
         extraProps.each { k, v -> props[k] = v }
         def config = Mock(IRundeckProjectConfig) {
-            getName() >> PROJECT_NAME
+            getName() >> loadProject
             getProperties() >> props
             hasProperty(_) >> { String k -> props.containsKey(k) }
             getProperty(_) >> { String k -> props.getProperty(k) }
@@ -569,13 +574,13 @@ class ProjectNodeSupportSpec extends Specification {
 
         when:
         support.getNodeSet()
-        ProjectNodeSupport.removeLoadPool(PROJECT_NAME)
+        ProjectNodeSupport.removeLoadPool(loadProject)
         threads.each { it.join(10000) }
         def reloaded = support.getNodeSet()
 
         then:
         threads.size() == 4
-        threads.every { it.name.startsWith("ProjectNodeSupport-load-${PROJECT_NAME}-".toString()) }
+        threads.every { it.name.startsWith("ProjectNodeSupport-load-${loadProject}-".toString()) }
         !threads[0].alive
         !threads[1].alive
         reloaded.nodeNames as List == ['a', 'b']
@@ -595,7 +600,7 @@ class ProjectNodeSupportSpec extends Specification {
         when:
         def loads = supports.collect { support -> Thread.start { results << support.getNodeSet() } }
         started.await(10, TimeUnit.SECONDS)
-        ProjectNodeSupport.removeLoadPool(PROJECT_NAME)
+        ProjectNodeSupport.removeLoadPool(loadProject)
         loads.each { it.join(10000) }
 
         then:
@@ -618,7 +623,7 @@ class ProjectNodeSupportSpec extends Specification {
         when:
         def loading = Thread.start { results << support.getNodeSet() }
         firstStarted.await(10, TimeUnit.SECONDS)
-        ProjectNodeSupport.removeLoadPool(PROJECT_NAME)
+        ProjectNodeSupport.removeLoadPool(loadProject)
         loading.join(10000)
 
         then:
@@ -627,44 +632,32 @@ class ProjectNodeSupportSpec extends Specification {
         support.getResourceModelSourceExceptionsMap().keySet().containsAll(['1.source', '3.source'])
     }
 
-    def "a project's pool is stopped when its last parallel load ends"() {
+    def "pool threads use each loading thread's context classloader, also when reused by a later load"() {
         given:
-        def threads = Collections.synchronizedList([])
-        def loaders = [
-                { -> threads << Thread.currentThread(); nodes('a', '1') } as Closure<INodeSet>,
-                { -> threads << Thread.currentThread(); nodes('b', '2') } as Closure<INodeSet>
-        ]
-        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
-
-        when:
-        support.getNodeSet()
-        threads.each { it.join(10000) }
-
-        then:
-        threads.size() == 2
-        threads.every { !it.alive }
-    }
-
-    def "pool threads use the loading thread's context classloader"() {
-        given:
-        def loader = new URLClassLoader(new URL[0])
+        def firstLoader = new URLClassLoader(new URL[0])
+        def secondLoader = new URLClassLoader(new URL[0])
         def seen = Collections.synchronizedList([])
         def loaders = [
                 { -> seen << Thread.currentThread().contextClassLoader; nodes('a', '1') } as Closure<INodeSet>,
                 { -> seen << Thread.currentThread().contextClassLoader; nodes('b', '2') } as Closure<INodeSet>
         ]
         def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
-
-        when:
-        def loading = Thread.start {
-            Thread.currentThread().contextClassLoader = loader
-            support.getNodeSet()
+        def loadWith = { ClassLoader loader ->
+            def loading = Thread.start {
+                Thread.currentThread().contextClassLoader = loader
+                support.getNodeSet()
+            }
+            loading.join(10000)
         }
-        loading.join(10000)
+
+        when: "the second load reuses the pool threads created by the first"
+        loadWith(firstLoader)
+        loadWith(secondLoader)
 
         then:
-        seen.size() == 2
-        seen.every { it.is(loader) }
+        seen.size() == 4
+        seen[0..1].every { it.is(firstLoader) }
+        seen[2..3].every { it.is(secondLoader) }
     }
 
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {

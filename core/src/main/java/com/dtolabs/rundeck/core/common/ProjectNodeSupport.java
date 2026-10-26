@@ -67,10 +67,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      */
     public static final  int    MAX_LOAD_THREADS                        = 20;
     /**
-     * Node source query pool per project, so a slow project does not hold threads another project needs. A pool
-     * exists only while the project has parallel loads running.
+     * Node source query pool per project, so a slow project does not hold threads another project needs. Idle
+     * threads time out.
      */
-    private static final ConcurrentMap<String, LoadPool> LOAD_POOLS = new ConcurrentHashMap<>();
+    // ponytail: a load racing a project delete can re-add that project's pool, which keeps an idle executor (no
+    // threads) in the map; remove pools after their last load if deleted projects ever accumulate
+    private static final ConcurrentMap<String, ThreadPoolExecutor> LOAD_POOLS = new ConcurrentHashMap<>();
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -162,7 +164,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     @Override
     public INodeSet getNodeSet() {
         final NodeSetMerge list = getNodeSetMerge();
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
+        Map<String,Exception> exceptions = new HashMap<>();
 
         nodesSourceExceptions.clear();
         final List<LoadedResourceModelSource> sources = new ArrayList<>(getResourceModelSourcesInternal());
@@ -201,13 +203,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      */
     private int getLoadThreads() {
         final String value = projectConfig.hasProperty(PROJECT_RESOURCES_LOAD_THREADS)
-                             ? projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS).trim()
-                             : "";
-        if (value.isEmpty()) {
+                             ? projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS)
+                             : null;
+        if (value == null || value.trim().isEmpty()) {
             return DEFAULT_LOAD_THREADS;
         }
         try {
-            return Integer.parseInt(value);
+            return Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
             logger.warn("Invalid value for " + PROJECT_RESOURCES_LOAD_THREADS + ", using default: " + e.getMessage());
             return DEFAULT_LOAD_THREADS;
@@ -216,7 +218,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     /**
      * Create the node source query pool for a project: {@link #MAX_LOAD_THREADS} daemon threads that time out when
-     * idle. Threads use the context classloader of the loading thread that creates the pool, as a serial load would.
+     * idle.
      *
      * @param project project name
      *
@@ -224,7 +226,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      */
     private static ThreadPoolExecutor createLoadPool(final String project) {
         final AtomicInteger count = new AtomicInteger();
-        final ClassLoader loader = Thread.currentThread().getContextClassLoader();
         final ThreadPoolExecutor pool = new ThreadPoolExecutor(
                 MAX_LOAD_THREADS,
                 MAX_LOAD_THREADS,
@@ -234,8 +235,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 r -> {
                     Thread t = new LoadThread(r, "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet());
                     t.setDaemon(true);
-                    //not inherited from whichever thread submits the task that starts the thread
-                    t.setContextClassLoader(loader);
                     return t;
                 }
         );
@@ -249,56 +248,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @param project project name
      */
     public static void removeLoadPool(final String project) {
-        final LoadPool removed = LOAD_POOLS.remove(project);
-        if (removed != null) {
-            final ThreadPoolExecutor pool = removed.executor;
+        final ThreadPoolExecutor pool = LOAD_POOLS.remove(project);
+        if (pool != null) {
             //cancel queued tasks, so a load waiting on one fails instead of blocking forever
             pool.shutdownNow().forEach(task -> ((Future<?>) task).cancel(true));
         }
-    }
-
-    /**
-     * A project's pool and the number of loads using it
-     */
-    private static final class LoadPool {
-        final ThreadPoolExecutor executor;
-        int users;
-
-        LoadPool(final ThreadPoolExecutor executor) {
-            this.executor = executor;
-        }
-    }
-
-    /**
-     * Get the project's pool for a parallel load, creating it if no load is using it
-     *
-     * @param project project name
-     *
-     * @return pool, to pass to {@link #releaseLoadPool(String, ThreadPoolExecutor)} when the load ends
-     */
-    private static ThreadPoolExecutor acquireLoadPool(final String project) {
-        return LOAD_POOLS.compute(project, (k, v) -> {
-            final LoadPool used = v != null ? v : new LoadPool(createLoadPool(k));
-            used.users++;
-            return used;
-        }).executor;
-    }
-
-    /**
-     * End a parallel load's use of the project's pool, and stop the pool when no load is using it, so no pool is
-     * kept for a project that is not loading (or no longer exists)
-     *
-     * @param project project name
-     * @param pool    pool returned by {@link #acquireLoadPool(String)}
-     */
-    private static void releaseLoadPool(final String project, final ThreadPoolExecutor pool) {
-        LOAD_POOLS.computeIfPresent(project, (k, v) -> {
-            if (v.executor != pool || --v.users > 0) {
-                return v;
-            }
-            pool.shutdown();
-            return null;
-        });
     }
 
     /**
@@ -334,8 +288,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             }
             return;
         }
-        final String project = projectConfig.getName();
-        final ThreadPoolExecutor pool = acquireLoadPool(project);
+        final ThreadPoolExecutor pool = LOAD_POOLS.computeIfAbsent(
+                projectConfig.getName(),
+                ProjectNodeSupport::createLoadPool
+        );
+        //each task runs with the loading thread's context classloader, as a serial load would, whichever load
+        //created the pool thread
+        final ClassLoader loader = Thread.currentThread().getContextClassLoader();
         final Deque<Future<SourceResult>> window = new ArrayDeque<>();
         int next = 0;
         int consumed = 0;
@@ -343,7 +302,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             while (consumed < total) {
                 while (next < total && window.size() < threads) {
                     final LoadedResourceModelSource source = sources.get(next++);
-                    window.add(pool.submit(() -> querySource(source)));
+                    window.add(pool.submit(() -> querySourceWithLoader(source, loader)));
                 }
                 consumer.accept(consumed, window.peek().get());
                 window.poll();
@@ -368,7 +327,25 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             window.forEach(f -> f.cancel(true));
-            releaseLoadPool(project, pool);
+        }
+    }
+
+    /**
+     * Query a single source on a pool thread with the loading thread's context classloader
+     *
+     * @param nodesSource source
+     * @param loader      context classloader of the loading thread
+     *
+     * @return result with nodes and/or error
+     */
+    private static SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader previous = thread.getContextClassLoader();
+        thread.setContextClassLoader(loader);
+        try {
+            return querySource(nodesSource);
+        } finally {
+            thread.setContextClassLoader(previous);
         }
     }
 
