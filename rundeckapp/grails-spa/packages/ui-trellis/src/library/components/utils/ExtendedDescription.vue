@@ -9,23 +9,19 @@
         <span class="less-indicator-verbiage btn-link btn-xs">Less </span>
       </summary>
       <div class="more-info-content">
-        <VMarkdownView
-          class="markdown-body"
-          mode=""
-          :content="extraDescription"
-        />
+        <MarkdownView :content="extraDescription" />
       </div>
     </details>
     <span v-else :class="basicCss">{{ text }}</span>
   </span>
 </template>
 <script lang="ts">
-import { VMarkdownView } from "vue3-markdown";
 import { defineComponent } from "vue";
+import MarkdownView from "./MarkdownView.vue";
 
 export default defineComponent({
   name: "ExtendedDescription",
-  components: { VMarkdownView },
+  components: { MarkdownView },
   props: {
     text: {
       type: String,
@@ -66,6 +62,3 @@ export default defineComponent({
   },
 });
 </script>
-<style>
-@import "~vue3-markdown/dist/vue3-markdown.css";
-</style>

@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.plugins.ApiPluginListProvider
+import com.dtolabs.rundeck.app.api.plugins.ApiPluginOutput
 import com.dtolabs.rundeck.app.api.plugins.ApiPluginProviderDetail
 import com.dtolabs.rundeck.app.api.plugins.ApiProviderProp
 import com.dtolabs.rundeck.app.support.PluginResourceReq
@@ -234,6 +235,10 @@ Since: v33
                 if (includeV40Fields) {
                     providerMap.iconUrl = p.iconUrl
                     providerMap.providerMetadata = p.providerMetadata
+                }
+
+                if (p.outputs) {
+                    providerMap.outputs = p.outputs.collect { ApiPluginOutput.from(it) }
                 }
 
                 ApiPluginListProvider provider = new ApiPluginListProvider(providerMap)

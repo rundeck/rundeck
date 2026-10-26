@@ -233,6 +233,7 @@ a {
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles teleported overlay content -->
 <style lang="scss">
 .v-popover,
 .v-popover .trigger {

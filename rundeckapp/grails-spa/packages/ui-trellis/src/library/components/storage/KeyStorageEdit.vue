@@ -1,11 +1,11 @@
 <template>
   <div>
     <div
-      v-if="!!uploadSetting.errorMsg"
+      v-if="!!localUploadSetting.errorMsg"
       class="alert alert-danger"
       data-testid="error-msg"
     >
-      <span>{{ uploadSetting.errorMsg }}</span>
+      <span>{{ localUploadSetting.errorMsg }}</span>
     </div>
 
     <div class="row">
@@ -19,7 +19,7 @@
           </label>
           <div class="col-sm-9">
             <select
-              v-model="uploadSetting.keyType"
+              v-model="localUploadSetting.keyType"
               name="uploadKeyType"
               class="form-control"
             >
@@ -43,11 +43,11 @@
           :class="[validInput() === true ? 'has-success' : 'has-warning']"
         >
           <div
-            v-if="uploadSetting.keyType !== 'password'"
+            v-if="localUploadSetting.keyType !== 'password'"
             class="col-sm-3 label-key"
           >
             <select
-              v-model="uploadSetting.inputType"
+              v-model="localUploadSetting.inputType"
               class="form-control"
               name="inputType"
             >
@@ -61,7 +61,7 @@
             </select>
           </div>
           <label
-            v-if="uploadSetting.keyType === 'password'"
+            v-if="localUploadSetting.keyType === 'password'"
             for="uploadpasswordfield"
             class="col-sm-3 control-label label-key"
           >
@@ -70,20 +70,20 @@
           <div class="col-sm-9">
             <div
               v-if="
-                uploadSetting.inputType === 'text' &&
-                uploadSetting.keyType !== 'password'
+                localUploadSetting.inputType === 'text' &&
+                localUploadSetting.keyType !== 'password'
               "
             >
               <textarea
                 id="storageuploadtext"
-                v-model="uploadSetting.textArea"
+                v-model="localUploadSetting.textArea"
                 class="form-control"
                 rows="5"
                 name="uploadText"
               ></textarea>
             </div>
 
-            <div v-if="uploadSetting.inputType === 'file'">
+            <div v-if="localUploadSetting.inputType === 'file'">
               <input
                 id="file"
                 ref="file"
@@ -94,13 +94,13 @@
 
             <div
               v-if="
-                uploadSetting.inputType === 'text' &&
-                uploadSetting.keyType === 'password'
+                localUploadSetting.inputType === 'text' &&
+                localUploadSetting.keyType === 'password'
               "
             >
               <input
                 id="uploadpasswordfield"
-                v-model="uploadSetting.password"
+                v-model="localUploadSetting.password"
                 name="uploadPassword"
                 type="password"
                 :placeholder="$t('storage.enter.password')"
@@ -126,8 +126,8 @@
               </div>
               <input
                 id="uploadResourcePath2"
-                v-model="uploadSetting.inputPath"
-                :disabled="uploadSetting.modifyMode === true"
+                v-model="localUploadSetting.inputPath"
+                :disabled="localUploadSetting.modifyMode === true"
                 name="relativePath"
                 class="form-control"
                 data-testid="key-path-input"
@@ -135,8 +135,8 @@
               />
               <input
                 id="uploadResourcePath3"
-                v-model="uploadSetting.inputPath"
-                :disabled="uploadSetting.modifyMode === false"
+                v-model="localUploadSetting.inputPath"
+                :disabled="localUploadSetting.modifyMode === false"
                 type="hidden"
                 name="relativePath"
               />
@@ -148,10 +148,12 @@
           :class="[
             'form-group',
             'row',
-            uploadSetting.fileName == null && uploadSetting.inputType !== 'file'
+            localUploadSetting.fileName == null &&
+            localUploadSetting.inputType !== 'file'
               ? 'has-warning'
               : '',
-            uploadSetting.fileName != null && uploadSetting.inputType !== 'file'
+            localUploadSetting.fileName != null &&
+            localUploadSetting.inputType !== 'file'
               ? 'has-success'
               : '',
           ]"
@@ -166,21 +168,24 @@
           <div class="col-sm-9">
             <input
               id="uploadResourceName2"
-              v-model="uploadSetting.fileName"
-              :disabled="uploadSetting.modifyMode === true"
+              v-model="localUploadSetting.fileName"
+              :disabled="localUploadSetting.modifyMode === true"
               name="fileName"
               class="form-control"
               data-testid="key-name-input"
               :placeholder="$t('storage.specify.name')"
             />
-            <div v-if="uploadSetting.inputType === 'file'" class="help-block">
+            <div
+              v-if="localUploadSetting.inputType === 'file'"
+              class="help-block"
+            >
               If not set, the name of the uploaded file is used.
             </div>
             <input
               id="uploadResourceName3"
-              v-model="uploadSetting.fileName"
+              v-model="localUploadSetting.fileName"
               type="hidden"
-              :disabled="uploadSetting.modifyMode === false"
+              :disabled="localUploadSetting.modifyMode === false"
               name="fileName"
             />
           </div>
@@ -189,7 +194,7 @@
           <div class="col-sm-offset-3 col-sm-9">
             <div class="checkbox">
               <input
-                v-model="uploadSetting.dontOverwrite"
+                v-model="localUploadSetting.dontOverwrite"
                 type="checkbox"
                 value="true"
                 name="dontOverwrite"
@@ -246,6 +251,7 @@ import {
 } from "../../services/storage";
 import type { PropType } from "vue";
 import { defineComponent } from "vue";
+import { cloneDeep, isEqual } from "lodash";
 import InputType from "../../types/InputType";
 import KeyType from "../../types/KeyType";
 
@@ -274,9 +280,16 @@ export default defineComponent({
     project: String,
     rootPath: String,
   },
-  emits: ["cancelEditing", "finishEditing", "keyCreated"],
+  emits: [
+    "cancelEditing",
+    "finishEditing",
+    "keyCreated",
+    "update:uploadSetting",
+  ],
   data() {
     return {
+      // local copy edited by the form; changes are emitted as update:uploadSetting
+      localUploadSetting: cloneDeep(this.uploadSetting) as UploadSetting,
       modalEdit: false,
       path: "",
       errorMsg: "",
@@ -302,15 +315,33 @@ export default defineComponent({
       return this.calcBrowsePath(this.path);
     },
   },
+  watch: {
+    uploadSetting: {
+      handler(val: UploadSetting) {
+        if (!isEqual(val, this.localUploadSetting)) {
+          this.localUploadSetting = cloneDeep(val);
+        }
+      },
+      deep: true,
+    },
+    localUploadSetting: {
+      handler(val: UploadSetting) {
+        if (!isEqual(val, this.uploadSetting)) {
+          this.$emit("update:uploadSetting", cloneDeep(val));
+        }
+      },
+      deep: true,
+    },
+  },
   methods: {
     handleCancel() {
       this.$emit("cancelEditing");
     },
     validInput() {
-      const intype = this.uploadSetting.inputType;
-      const file = this.uploadSetting.file;
-      const textarea = this.uploadSetting.textArea;
-      const pass = this.uploadSetting.password;
+      const intype = this.localUploadSetting.inputType;
+      const file = this.localUploadSetting.file;
+      const textarea = this.localUploadSetting.textArea;
+      const pass = this.localUploadSetting.password;
       if (intype == "text") {
         return textarea || pass ? true : false;
       } else {
@@ -365,41 +396,41 @@ export default defineComponent({
       const fullPath = this.calcBrowsePath(this.getKeyPath());
 
       // Validate path for new items only (skip for legacy items being edited)
-      if (!this.uploadSetting.modifyMode) {
+      if (!this.localUploadSetting.modifyMode) {
         const pathError = this.validateKeyPath();
         if (pathError) {
-          this.uploadSetting.errorMsg = pathError;
+          this.localUploadSetting.errorMsg = pathError;
           return;
         }
       }
 
       let value = null as any;
 
-      switch (this.uploadSetting.keyType) {
+      switch (this.localUploadSetting.keyType) {
         case KeyType.Password:
-          value = this.uploadSetting.password;
+          value = this.localUploadSetting.password;
           break;
         case KeyType.Private:
-          if (this.uploadSetting.inputType === InputType.Text) {
-            value = this.uploadSetting.textArea;
+          if (this.localUploadSetting.inputType === InputType.Text) {
+            value = this.localUploadSetting.textArea;
           } else {
-            if (this.uploadSetting.fileContent == "") {
-              this.uploadSetting.errorMsg = "File content was not read";
-              this.uploadSetting.file = null;
+            if (this.localUploadSetting.fileContent == "") {
+              this.localUploadSetting.errorMsg = "File content was not read";
+              this.localUploadSetting.file = null;
             } else {
-              value = this.uploadSetting.fileContent;
+              value = this.localUploadSetting.fileContent;
             }
           }
           break;
         case KeyType.Public:
-          if (this.uploadSetting.inputType === InputType.Text) {
-            value = this.uploadSetting.textArea;
+          if (this.localUploadSetting.inputType === InputType.Text) {
+            value = this.localUploadSetting.textArea;
           } else {
-            if (this.uploadSetting.fileContent == "") {
-              this.uploadSetting.errorMsg = "File content was not read";
-              this.uploadSetting.file = null;
+            if (this.localUploadSetting.fileContent == "") {
+              this.localUploadSetting.errorMsg = "File content was not read";
+              this.localUploadSetting.file = null;
             } else {
-              value = this.uploadSetting.fileContent;
+              value = this.localUploadSetting.fileContent;
             }
           }
           break;
@@ -408,13 +439,13 @@ export default defineComponent({
       const exists = await storageKeyExists(fullPath);
 
       if (exists) {
-        if (this.uploadSetting.dontOverwrite) {
-          this.uploadSetting.errorMsg = "key already exists";
+        if (this.localUploadSetting.dontOverwrite) {
+          this.localUploadSetting.errorMsg = "key already exists";
           return;
         }
         try {
-          let response = await storageKeyUpdate(fullPath, value, {
-            type: this.uploadSetting.keyType,
+          const response = await storageKeyUpdate(fullPath, value, {
+            type: this.localUploadSetting.keyType,
           });
           this.$emit("finishEditing", response);
         } catch (err: unknown) {
@@ -422,12 +453,12 @@ export default defineComponent({
           if (err && typeof err === "object" && "message" in err) {
             errorMessage = (err as Error).message;
           }
-          this.uploadSetting.errorMsg = errorMessage;
+          this.localUploadSetting.errorMsg = errorMessage;
         }
       } else {
         try {
-          let response = await storageKeyCreate(fullPath, value, {
-            type: this.uploadSetting.keyType,
+          const response = await storageKeyCreate(fullPath, value, {
+            type: this.localUploadSetting.keyType,
           });
           this.getCreatedKey(fullPath).then(() => {
             this.$emit("keyCreated", this.createdKey);
@@ -438,7 +469,7 @@ export default defineComponent({
           if (err && typeof err === "object" && "message" in err) {
             errorMessage = (err as Error).message;
           }
-          this.uploadSetting.errorMsg = errorMessage;
+          this.localUploadSetting.errorMsg = errorMessage;
         }
       }
     },
@@ -462,34 +493,34 @@ export default defineComponent({
       if (!files.length) return;
 
       const file = files[0];
-      this.uploadSetting.file = file.name;
+      this.localUploadSetting.file = file.name;
 
       const reader = new FileReader();
       reader.onload = (event: any) => {
         const text = event.target.result;
-        this.uploadSetting.fileContent = text;
-        if (this.uploadSetting.errorMsg != null) {
-          this.uploadSetting.errorMsg = null;
+        this.localUploadSetting.fileContent = text;
+        if (this.localUploadSetting.errorMsg != null) {
+          this.localUploadSetting.errorMsg = null;
         }
       };
       reader.onerror = () => {
-        this.uploadSetting.errorMsg = "file cannot be read";
-        this.uploadSetting.file = null;
+        this.localUploadSetting.errorMsg = "file cannot be read";
+        this.localUploadSetting.file = null;
       };
       reader.readAsText(file);
     },
     getKeyPath() {
       let fullPath =
-        this.uploadSetting.inputPath != null &&
-        this.uploadSetting.inputPath != ""
-          ? this.uploadSetting.inputPath + "/"
+        this.localUploadSetting.inputPath != null &&
+        this.localUploadSetting.inputPath != ""
+          ? this.localUploadSetting.inputPath + "/"
           : "";
 
-      if (this.uploadSetting.fileName != null) {
-        fullPath = fullPath + this.uploadSetting.fileName;
+      if (this.localUploadSetting.fileName != null) {
+        fullPath = fullPath + this.localUploadSetting.fileName;
       } else {
-        if (this.uploadSetting.file != null) {
-          fullPath = fullPath + this.uploadSetting.file;
+        if (this.localUploadSetting.file != null) {
+          fullPath = fullPath + this.localUploadSetting.file;
         }
       }
 

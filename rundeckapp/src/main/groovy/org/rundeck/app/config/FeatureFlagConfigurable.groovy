@@ -36,6 +36,35 @@ class FeatureFlagConfigurable implements SystemConfigurable {
             '0',
             'Integer'
         ),
+        scmSecurityConfig(
+            'rundeck.scm.git.allowedSchemes',
+            'String',
+            '',
+            'Git SCM allowed URL schemes',
+            'Comma-separated Git URL schemes for SCM import and export, for example https,http,ssh. ' +
+                'ssh includes ssh:// and git@host:path. file includes file:// and local paths. ' +
+                'Leave blank for no restriction; a blank value does not reject every scheme. ' +
+                'Applies on the next Git operation, without a restart. ' +
+                'A non-blank value overrides framework.properties.'
+        ),
+        scmSecurityConfig(
+            'rundeck.scm.git.blockInternalAddresses',
+            'Boolean',
+            'false',
+            'Block internal addresses for Git SCM',
+            'When enabled, Git SCM rejects hosts that resolve to loopback, link-local, or private addresses, including HTTP redirects. ' +
+                'Leave disabled for existing internal Git servers. ' +
+                'Applies on the next Git operation, without a restart. ' +
+                'A value saved here overrides framework.properties.'
+        ),
+        featureConfig(
+            Features.SCHEDULED_RUN_AUTHORIZATION,
+            "Authorize Scheduled Runs",
+            "Re-check that a scheduled job's saved user is still authorized to run it, each time the " +
+                "trigger fires, and skip the execution when they are not. Leave this off until those " +
+                "users have been granted run access: turning it on stops schedules that run today.",
+            'ops_admin'
+        ),
         //TODO: include additional feature flags here
     ]
 
@@ -58,6 +87,33 @@ class FeatureFlagConfigurable implements SystemConfigurable {
 
     private static SysConfigProp featureConfig(Features feature, String label, String description, String auth) {
         featureConfig(feature, label, description, auth, "Feature")
+    }
+
+    /**
+     * Git SCM security control. {@code restart} is false so a System Configuration save applies
+     * on the next Git operation.
+     */
+    private static SysConfigProp scmSecurityConfig(
+        String configKey,
+        String configDatatype,
+        String configDefaultValue,
+        String configLabel,
+        String configDescription
+    ) {
+        SystemConfig.builder().with {
+            key(configKey)
+                .datatype(configDatatype)
+                .label(configLabel)
+                .description(configDescription)
+                .defaultValue(configDefaultValue)
+                .category('SCM')
+                .visibility('Standard')
+                .strata('default')
+                .required(false)
+                .restart(false)
+                .authRequired('ops_admin')
+                .build()
+        } as SysConfigProp
     }
 
     private static SysConfigProp featureConfig(Features feature, String label, String description, String auth, String category) {

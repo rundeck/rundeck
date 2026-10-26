@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -215,6 +216,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final String status
         final String user
         final String execType
+        /** Normalized to a String to keep the all-Strings/Boolean invariant above. */
+        final String execTypeExclude
         final Boolean adhoc
         final String recentFilter
         final String olderFilter
@@ -225,6 +228,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             this.status = args.status
             this.user = args.user
             this.execType = args.execType
+            this.execTypeExclude = args.execTypeExclude
             this.adhoc = args.adhoc
             this.recentFilter = args.recentFilter
             this.olderFilter = args.olderFilter
@@ -248,6 +252,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 status: query.statusFilter,
                 user: query.userFilter,
                 execType: query.executionTypeFilter,
+                execTypeExclude: query.excludeExecutionTypeFilter?.sort()?.join(','),
                 adhoc: query.adhoc,
                 recentFilter: query.recentFilter,
                 olderFilter: query.olderFilter,
@@ -627,6 +632,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
+                //Execution types to leave out, NULL-safe for rows predating the column
+                if (query.excludeExecutionTypeFilter) {
+                    or {
+                        isNull('executionType')
+                        not { inList('executionType', query.excludeExecutionTypeFilter) }
+                    }
+                }
+
                 //running status filter.
                 if (query.runningFilter) {
                     Date now = new Date()
@@ -734,6 +747,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                  }
                              }
                          }
+                     }
+                 }
+
+                 //Execution types to leave out, NULL-safe for rows predating the column
+                 if (query.excludeExecutionTypeFilter) {
+                     or {
+                         isNull('executionType')
+                         not { inList('executionType', query.excludeExecutionTypeFilter) }
                      }
                  }
 
@@ -1181,16 +1202,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
     /**
      * Absolute server base URL exposed as the {@code job.serverUrl} context variable.
-     * The link generator resolves the root URL mapping, which always yields a trailing slash;
-     * it is stripped so the value can be safely concatenated with an absolute path such as
-     * {@code ${job.serverUrl}/api/50/projects} without producing a double slash, which Jetty 12 rejects.
+     * The link generator resolves the root URL mapping, so the value ends with a trailing slash
+     * (e.g. {@code http://host:4440/}). Concatenating it with an absolute path produces a double slash,
+     * which the server tolerates (see {@code EmptySegmentCompactingCustomizer}).
      *
      * @param grailsLinkGenerator link generator used to build the absolute URL
-     * @return server base URL without trailing slashes, or null if no link could be generated
+     * @return server base URL, or null if no link could be generated
      */
     @CompileStatic
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {
-        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)?.replaceAll('/+$', '')
+        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
 
     @CompileStatic
@@ -2395,7 +2416,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflowData:params.workflow,
                                       argString:params.argString,
-                                      executionType: params.executionType ?: 'scheduled',
+                                      executionType: params.executionType ?: ExecutionTypes.SCHEDULED,
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
@@ -2404,7 +2425,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
                                       excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
-                                      extraMetadataMap: params.extraMetadataMap?:null
+                                      extraMetadataMap: params.extraMetadataMap?:null,
+                                      note: params.note?:null
             )
 
             execution.userRoles = params.userRoles
@@ -2485,7 +2507,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def props =[:]
         props.putAll(params)
 
-        props.executionType = 'scheduled'
+        //Callers that build this map themselves (e.g. the Ad Hoc Step plugin) can type the
+        //execution. Callers passing a bound request params map must set it explicitly rather
+        //than rely on this default, so a request parameter can't choose the type.
+        props.executionType = params.executionType ?: ExecutionTypes.SCHEDULED
 
         Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
         execution.dateStarted = new Date()
@@ -2596,6 +2621,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 e.delete()
             }
         }
+    }
+
+    /**
+     * @return true when a scheduled trigger must re-check ACTION_RUN before it creates an
+     * execution. Exposed separately from {@link #validateExecution} so the Quartz path can
+     * decline a job with no saved user before it tries to build an auth context for one,
+     * which would throw rather than skip.
+     */
+    @CompileStatic
+    boolean isScheduledRunAuthorizationEnforced() {
+        return featureService.featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION)
+    }
+
+    /**
+     * Check whether the given authContext is authorized to run (ACTION_RUN) the given job.
+     * Used by the Quartz scheduled-trigger path (ExecutionJob), which builds its authContext
+     * from the job's stored user/roles rather than an interactively-authenticated caller.
+     * Gated by {@link Features#SCHEDULED_RUN_AUTHORIZATION} ({@code feature.scheduledRunAuthorization.enabled}).
+     */
+    @CompileStatic
+    public boolean validateExecution(ScheduledExecution se, UserAndRolesAuthContext authContext) {
+        if (!isScheduledRunAuthorizationEnforced()) {
+            return true
+        }
+        return rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project)
     }
 
     /**
@@ -2806,7 +2856,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId','note']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 

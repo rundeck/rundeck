@@ -6,9 +6,8 @@ import org.rundeck.util.container.BaseContainer
 
 /**
  * Verifies the shape of the {@code job.serverUrl} context variable as seen by a running job step.
- * The value must not end with a slash so that job steps can concatenate it with an absolute path
- * ({@code ${job.serverUrl}/api/50/projects}) without producing a double slash, which Jetty 12 rejects
- * with {@code 400 Ambiguous URI empty segment}.
+ * The value ends with a trailing slash (the 5.x contract), and concatenating it with an absolute path
+ * ({@code ${job.serverUrl}/api/50/projects}) yields a double slash, which the server must tolerate.
  */
 @APITest
 class JobServerUrlContextSpec extends BaseContainer {
@@ -24,7 +23,7 @@ class JobServerUrlContextSpec extends BaseContainer {
         deleteProject(PROJECT_NAME)
     }
 
-    def "job.serverUrl has no trailing slash and is safe to concatenate with an absolute path"() {
+    def "job.serverUrl ends with a trailing slash"() {
         given:
         def jobName = UUID.randomUUID().toString()
         def path = JobUtils.updateJobFileToImport(
@@ -46,9 +45,14 @@ class JobServerUrlContextSpec extends BaseContainer {
         then:
         runJob.execution.status == 'succeeded'
         serverUrl
-        !serverUrl.endsWith('/')
-        // absolute URL with non-empty path segments only, so appending /api/... never yields a double slash
-        // (covers both plain and context-path deployments)
-        serverUrl ==~ /https?:\/\/[^\/]+(\/[^\/]+)*/
+        serverUrl ==~ /https?:\/\/[^\/]+(\/[^\/]+)*\//
+    }
+
+    def "API requests with an empty path segment are served"() {
+        when:
+        def response = doGet("//system/info")
+
+        then:
+        response.code() == 200
     }
 }

@@ -4,14 +4,10 @@ parameters:
   disable-wizcli-scan:
     type: boolean
     default: true
-  trigger-enterprise:
-    type: boolean
-    default: true
 
 orbs:
   aws-cli: circleci/aws-cli@5.4.2
   node: circleci/node@7.2.1
-  trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@6.1.3
   snyk: snyk/snyk@2.3.0 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
@@ -76,7 +72,7 @@ executors:
   # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
   docker-builder:
     docker:
-      - image: cimg/openjdk:17.0.20
+      - image: cimg/openjdk:17.0.20@sha256:f5468d6ddf3849e811edcf03329f013494549e63cf06037302aa7514c3cf41ff
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -90,6 +86,7 @@ executors:
   # Machine executor (gen2: up to 180% faster multi-threaded CPU vs gen1)
   machine-builder:
     machine:
+      # CircleCI only accepts the current/edge tags for machine images (dated tags are rejected), so this cannot be pinned.
       image: ubuntu-2204:current
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
@@ -498,22 +495,6 @@ jobs:
           path: snyk-summary.csv
           destination: snyk-summary.csv
 
-  # Trigger pipeline in the enterprise repo
-  trigger-enterprise:
-    executor:
-      name: docker-builder
-    steps:
-      - run: echo "Trigger enterprise pipeline is << pipeline.parameters.trigger-enterprise >>"
-      - when:
-          condition: << pipeline.parameters.trigger-enterprise >>
-          steps:
-            - trigger/trigger:
-                debug: true
-                branch: ${CIRCLE_BRANCH}
-                token: '${CIRCLECI_API_TOKEN}'
-                project-slug: 'gh/rundeckpro/rundeckpro'
-                pipeline-number: '<<pipeline.number>>'
-
   # Publish Docker Images
   docker-publish:
     <<: *job-defaults
@@ -824,7 +805,7 @@ require-api-integration: &require-api-integration
     - T Functional Plugin Blocklist
     - T Feature NodeExecutorSecureInput
 
-# Stage 4: All Selenium must pass before packaging/security/validation/enterprise trigger
+# Stage 4: All Selenium must pass before packaging/security/validation
 require-selenium: &require-selenium
   requires:
     - T Selenium - Auth & Login
@@ -992,7 +973,7 @@ workflows:
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           parallelism: 2
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec}.groovy"
           <<: *require-api-integration
           <<: *slack-defaults
       - test-gradle-functional:
@@ -1017,9 +998,8 @@ workflows:
           <<: *require-api-integration
           <<: *slack-defaults
 
-      # Row 4: Packaging, security scans, validation, and enterprise trigger
-      # Nothing here matters if build and tests don't pass. Enterprise Snapshot only
-      # triggers Pro CI after all OSS tests are green — broken OSS means broken Pro.
+      # Row 4: Packaging, security scans, and validation
+      # Nothing here matters if build and tests don't pass.
       - packaging-test:
           name: T Packaging
           <<: *require-selenium
@@ -1052,11 +1032,6 @@ workflows:
           name: OpenAPI Spec Validation
           <<: *require-selenium
           <<: *slack-defaults
-      - trigger-enterprise:
-          name: Enterprise Snapshot
-          <<: *require-selenium
-          filters:
-            branches: { only: main }
 
   # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
   build_and_test_with_jre_17:
@@ -1131,7 +1106,7 @@ workflows:
           name: T Selenium - Jobs Core (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec}.groovy"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:

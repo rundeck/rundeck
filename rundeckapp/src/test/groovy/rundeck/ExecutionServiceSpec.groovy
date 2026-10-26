@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import org.rundeck.app.AppConstants
@@ -1340,6 +1341,57 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         null         | _
         'UTF-8'      | _
         'ISO-8859-1' | _
+    }
+
+    def "validateExecution returns true when authorized"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> true
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> true
+        result
+    }
+
+    def "validateExecution returns false when unauthorized"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> true
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> false
+        !result
+    }
+
+    def "validateExecution skips ACTION_RUN check when feature disabled"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> false
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        0 * service.rundeckAuthContextProcessor._
+        result
     }
 
     def "delete execution unauthorized"() {
@@ -2734,6 +2786,30 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 == result.total
         1 == result.nowrunning.size()
 
+    }
+
+    def "list now running excludes the given execution types from both the list and the total"() {
+        given:
+        def query = new QueueQuery()
+        query.projFilter = 'AProject'
+        query.excludeExecutionTypeFilter = [ExecutionTypes.ADHOC_STEP]
+        [ExecutionTypes.ADHOC_STEP, ExecutionTypes.ADHOC_STEP, ExecutionTypes.USER, null].each { type ->
+            new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'userB',
+                    project: 'AProject',
+                    executionType: type
+            ).save()
+        }
+        service.configurationService = Mock(ConfigurationService)
+
+        when:
+        def result = service.queryQueue(query)
+
+        then: 'the paging total agrees with the rows listed, keeping rows with no type'
+        2 == result.nowrunning.size()
+        2 == result.total
     }
 
     @Unroll

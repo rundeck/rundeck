@@ -516,12 +516,15 @@ public class RundeckConfigBase {
         Enabled multilineJobOptions = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
-        Enabled earlyAccessJobConditional = new Enabled();
+        Enabled earlyAccessJobConditional = new Enabled(true);
         Enabled activityDefaultTimeFilter = new Enabled();
         Enabled nextUiMode = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         Enabled adHocStep = new Enabled();
+        // Off unless an operator turns it on: enabling it makes Quartz re-check ACTION_RUN
+        // for a job's stored user, which stops schedules that have been running until now.
+        Enabled scheduledRunAuthorization = new Enabled();
         // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
         // (the default) makes the editor manually resizable via drag handle instead of
         // auto-sizing to a fixed number of lines.
@@ -813,6 +816,28 @@ public class RundeckConfigBase {
     @Data
     public static class ScmConfig {
         ScmStartup startup;
+        /**
+         * Git remote URL controls ({@code rundeck.scm.git.*}).
+         * A null field means the control is unset.
+         */
+        ScmGit git;
+    }
+
+    /**
+     * Git SCM remote URL controls bound from {@code rundeck.scm.git.*}.
+     * Blank or null values stay unset so framework.properties can still apply.
+     */
+    @Data
+    public static class ScmGit {
+        /**
+         * Comma-separated URL schemes. Blank means every scheme is allowed.
+         */
+        String allowedSchemes;
+        /**
+         * When true, Git hosts that resolve to an internal address are rejected.
+         * Null means unset.
+         */
+        Boolean blockInternalAddresses;
     }
 
     @Data

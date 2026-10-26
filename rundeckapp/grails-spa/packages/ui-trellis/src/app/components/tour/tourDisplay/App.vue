@@ -297,6 +297,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- root/body-level selectors -->
 <style lang="scss">
 body.tour-open {
   #layoutBody {

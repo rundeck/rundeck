@@ -284,7 +284,6 @@
   </div>
 </template>
 <script lang="ts">
-import InlineValidationErrors from "../../form/InlineValidationErrors.vue";
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 
@@ -292,9 +291,6 @@ import { EventBus } from "../../../../library/utilities/vueEventBus";
 
 export default defineComponent({
   name: "OtherEditor",
-  components: {
-    InlineValidationErrors,
-  },
   props: {
     modelValue: {
       type: Object as PropType<any>,

@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata;
+import com.dtolabs.rundeck.plugins.descriptions.PluginOutput;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -128,6 +129,16 @@ public class JobStateWorkflowStep implements StepPlugin {
         ConditionNotMet
     }
 
+    /**
+     * State the referenced job was found in -- not the state this step asserts -- so it stays
+     * meaningful when the assertion fails and {@code halt} is off. Holds the {@link ExecutionState}
+     * name, or the custom status string when that state is {@code other}, and stays null when the
+     * job has never run. Output-only: no {@link PluginProperty}, so it is not a step-config input.
+     */
+    @PluginOutput(name = "observedExecutionState",
+            description = "Execution state the referenced job was actually found in")
+    String observedExecutionState;
+
     @Override
     public void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
         if (null == jobUUID && null == jobName) {
@@ -157,6 +168,15 @@ public class JobStateWorkflowStep implements StepPlugin {
                 jobReference = jobService.jobForName(jobName, project);
             }
             jobState = jobService.getJobState(jobReference);
+            // getPreviousExecutionStatusString() only holds a *custom* status string and is null
+            // for the standard states, so the enum is the source for everything but ExecutionState.other.
+            // This mirrors what renderOutcome() already reports in the step's log message.
+            ExecutionState previousState = jobState.getPreviousExecutionState();
+            if (ExecutionState.other == previousState) {
+                this.observedExecutionState = jobState.getPreviousExecutionStatusString();
+            } else if (null != previousState) {
+                this.observedExecutionState = previousState.toString();
+            }
         } catch (JobNotFound jobNotFound) {
             throw new StepException(
                     "Job was not found: " + jobNotFound.getMessage(),
