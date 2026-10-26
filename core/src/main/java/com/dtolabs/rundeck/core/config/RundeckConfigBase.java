@@ -522,6 +522,9 @@ public class RundeckConfigBase {
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         Enabled adHocStep = new Enabled();
+        // Off unless an operator turns it on: enabling it makes Quartz re-check ACTION_RUN
+        // for a job's stored user, which stops schedules that have been running until now.
+        Enabled scheduledRunAuthorization = new Enabled();
         // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
         // (the default) makes the editor manually resizable via drag handle instead of
         // auto-sizing to a fixed number of lines.
