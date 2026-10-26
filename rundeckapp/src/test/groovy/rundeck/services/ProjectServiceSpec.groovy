@@ -450,7 +450,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.executionService.deleteBulkExecutionIds(*_)
         2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject')
-            0 * disableFrameworkProject('myproject')
+            0 * disableFrameworkProject('myproject', _ as Long)
         }
         1 * service.fileUploadService.deleteRecordsForProject('myproject')
         result.success
@@ -479,7 +479,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
             2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * removeFrameworkProject('myproject')
-                0 * disableFrameworkProject('myproject')
+                0 * disableFrameworkProject('myproject', _ as Long)
             }
             result.success
     }
@@ -507,7 +507,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
             1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * isFrameworkProjectDisabled('myproject') >> false
-                0 * disableFrameworkProject('myproject')
+                0 * disableFrameworkProject('myproject', _ as Long)
                 0 * removeFrameworkProject('myproject')
             }
             !result.success
@@ -572,7 +572,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
         2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
-            0 * disableFrameworkProject('myproject')
+            0 * disableFrameworkProject('myproject', _ as Long)
             1 * removeFrameworkProject('myproject')
         }
         result.success
@@ -603,7 +603,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
         3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
-            1 * disableFrameworkProject('myproject')
+            1 * disableFrameworkProject('myproject', _ as Long) >> true
             1 * removeFrameworkProject('myproject')
         }
         result.success
@@ -634,7 +634,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
         fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
-            disablingCalls * disableFrameworkProject('myproject')
+            disablingCalls * disableFrameworkProject('myproject', _ as Long) >> true
             1 * removeFrameworkProject('myproject')
         }
         result.success
@@ -677,7 +677,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
         2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> true
-            0 * disableFrameworkProject('myproject')
+            0 * disableFrameworkProject('myproject', _ as Long)
             0 * enableFrameworkProject('myproject')
             1 * removeFrameworkProject('myproject')
         }
@@ -701,7 +701,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ).save(flush: true, failOnError: true)
         def mgr = Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> true
-            0 * disableFrameworkProject('myproject')
+            0 * disableFrameworkProject('myproject', _ as Long)
             1 * removeFrameworkProject('myproject') >> {
                 assert org.springframework.transaction.support.TransactionSynchronizationManager
                     .isActualTransactionActive()
@@ -755,7 +755,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         !second.success
         second.error == 'Cannot delete an already disabled project.'
         service.deferredDeletesInFlight.containsKey('myproject')
-        1 * mgr.disableFrameworkProject('myproject') >> { disabled = true }
+        1 * mgr.disableFrameworkProject('myproject', _ as Long) >> { disabled = true }
         0 * mgr.removeFrameworkProject('myproject')
         0 * mgr.enableFrameworkProject('myproject')
     }
@@ -777,7 +777,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         new Project(name: 'myproject').save(flush: true, failOnError: true)
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
-            disableFrameworkProject('myproject') >> { disabled = true }
+            disableFrameworkProject('myproject', _ as Long) >> { disabled = true }
         }
         def fwk = Mock(Framework) {
             getFrameworkProjectMgr() >> mgr
@@ -796,6 +796,76 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         claimed != null
         claimed != service.deferredDeletesInFlight['myproject']
         0 * mgr.removeFrameworkProject('myproject')
+    }
+
+    def "deferred delete does not disable a replacement row"() {
+        given:
+        def original = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        def mgr = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            1 * disableFrameworkProject('myproject', original.id) >> false
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def result = service.deleteProject(project, fwk, null, 'admin')
+
+        then:
+        !result.success
+        result.error == 'Project changed before disabling.'
+        service.deferredDeletesInFlight.isEmpty()
+        0 * service.eventBus.notify(_, _)
+    }
+
+    def "trusted recovery rejects an enabled replacement under the row lock"() {
+        given:
+        def replacement = new Project(
+            name: 'myproject',
+            state: org.rundeck.app.data.model.v1.project.RdProject.State.ENABLED
+        ).save(flush: true, failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService) {
+            0 * removeAllPluginConfiguration(_)
+        }
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        def mgr = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> true
+            0 * disableFrameworkProject(_, _)
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+
+        when:
+        def result = service.deleteProject(
+            project,
+            fwk,
+            null,
+            'system',
+            Boolean.TRUE,
+            true
+        )
+
+        then:
+        result.success
+        Project.get(replacement.id)
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
     }
 
     def "a delayed stale request cannot replace the recreated project's active claim"() {
@@ -838,7 +908,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
-            disableFrameworkProject('myproject') >> { disabled = true }
+            disableFrameworkProject('myproject', _ as Long) >> { disabled = true }
             0 * removeFrameworkProject('myproject')
         }
         def fwk = Mock(Framework) {
@@ -877,7 +947,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         Execution.metaClass.static.findAllByProject = { String name -> [[id: 7L]] }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
-            disableFrameworkProject('myproject') >> { disabled = true }
+            disableFrameworkProject('myproject', _ as Long) >> { disabled = true }
             0 * removeFrameworkProject('myproject')
         }
         def fwk = Mock(Framework) {
@@ -975,7 +1045,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> { disabled }
-            disableFrameworkProject('myproject') >> { disabled = true }
+            disableFrameworkProject('myproject', _ as Long) >> { disabled = true }
             0 * enableFrameworkProject('myproject')
             0 * removeFrameworkProject('myproject')
         }
@@ -1072,7 +1142,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> true
-            0 * disableFrameworkProject(_)
+            0 * disableFrameworkProject(_, _)
             0 * removeFrameworkProject(_)
         }
         def fwk = Mock(Framework) {
@@ -1114,7 +1184,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> false
-            disableFrameworkProject('myproject') >> null
+            disableFrameworkProject('myproject', _ as Long) >> true
             1 * removeFrameworkProject('myproject')
         }
         def fwk = Mock(Framework) {
@@ -1149,7 +1219,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def mgr = Mock(ProjectManager) {
             isFrameworkProjectDisabled('myproject') >> true
-            0 * disableFrameworkProject(_)
+            0 * disableFrameworkProject(_, _)
             0 * removeFrameworkProject(_)
         }
         def fwk = Mock(Framework) {
@@ -1239,7 +1309,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             listDisabledFrameworkProjectNames() >> ['myproject']
             isFrameworkProjectDisabled('myproject') >> false
             getFrameworkProject('myproject') >> recreated
-            0 * disableFrameworkProject(_)
+            0 * disableFrameworkProject(_, _)
             0 * removeFrameworkProject(_)
         }
         def fwk = Mock(Framework) {

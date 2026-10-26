@@ -104,6 +104,18 @@ public interface ProjectManager {
     void disableFrameworkProject(String projectName);
 
     /**
+     * Disable a project only when its persistent identity still matches.
+     *
+     * @param projectName name of the project
+     * @param expectedProjectId persistent identity read before the transition
+     * @return true when the expected project was disabled, false when it changed
+     */
+    default boolean disableFrameworkProject(String projectName, Long expectedProjectId) {
+        disableFrameworkProject(projectName);
+        return true;
+    }
+
+    /**
      * Enables a previously disabled project.
      * @param projectName name of the project.
      */

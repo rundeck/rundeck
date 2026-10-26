@@ -62,6 +62,7 @@ import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.data.report.SaveReportRequestImpl
@@ -1988,7 +1989,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
             if (result != null && result.success) {
                 deferredDeletesInFlight.remove(project.name, claimedId)
-            } else if (runningExecutionBlockedDelete(result?.error)) {
+            } else if (runningExecutionBlockedDelete(result?.error) ||
+                result?.error?.contains('Project is not disabled')) {
                 deferredDeletesInFlight.remove(project.name, claimedId)
             }
             return result
@@ -2042,7 +2044,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         if (!alreadyDisabled) {
             try {
-                framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
+                if (!framework.getFrameworkProjectMgr().disableFrameworkProject(project.name, projectId)) {
+                    return new DeleteResponse(
+                        success: false,
+                        error: "Project changed before disabling."
+                    )
+                }
             } catch (UnsupportedOperationException e) {
                 log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
                 throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
@@ -2149,6 +2156,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     Project lockedProject = Project.lock(claimedProjectId)
                     if (lockedProject == null || lockedProject.name != project.name) {
                         throw new IllegalStateException("Project changed before cleanup")
+                    }
+                    RdProject.State lockedState = lockedProject.state ?: RdProject.State.ENABLED
+                    if (trustedCleanup && lockedState != RdProject.State.DISABLED) {
+                        throw new IllegalStateException("Project is not disabled")
                     }
                 }
 

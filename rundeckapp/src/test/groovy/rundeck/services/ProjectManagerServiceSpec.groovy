@@ -49,8 +49,6 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
     def setupSpec() { mockDomains Project }
 
     def setup() {
-
-
         mockDataService(ProjectDataService)
         GormProjectDataProvider provider = new GormProjectDataProvider()
         provider.projectDataService = applicationContext.getBean(ProjectDataService)
@@ -77,6 +75,29 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         result
+    }
+
+    void "disable project only when the row identity matches"() {
+        given:
+        def project = new Project(name: 'test1').save(flush: true, failOnError: true)
+        def lockingService = new TestProjectManagerService()
+
+        expect:
+        lockingService.disableFrameworkProject('test1', project.id)
+        Project.get(project.id).state == RdProject.State.DISABLED
+    }
+
+    void "disable project rejects a recreated row"() {
+        given:
+        def original = new Project(name: 'test1').save(flush: true, failOnError: true)
+        Long originalId = original.id
+        original.delete(flush: true)
+        def replacement = new Project(name: 'test1').save(flush: true, failOnError: true)
+        def lockingService = new TestProjectManagerService()
+
+        expect:
+        !lockingService.disableFrameworkProject('test1', originalId)
+        Project.get(replacement.id).state == null
     }
     void "get project does not exist"(){
         when:
@@ -1331,5 +1352,12 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
             [a: 'aaa', b: 'XXX'] | ['b']
             [a: 'aaa']           | ['b']
             [:]                  | ['a', 'b']
+    }
+}
+
+class TestProjectManagerService extends ProjectManagerService {
+    @Override
+    protected Object lockProject(Long projectId) {
+        Project.get(projectId)
     }
 }

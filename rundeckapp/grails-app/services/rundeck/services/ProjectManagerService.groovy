@@ -632,6 +632,22 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean disableFrameworkProject(String projectName, Long expectedProjectId) {
+        rundeck.Project project = (rundeck.Project) lockProject(expectedProjectId)
+        if (project == null || project.name != projectName) {
+            return false
+        }
+        project.state = RdProject.State.DISABLED
+        project.save(flush: true, failOnError: true)
+        true
+    }
+
+    protected Object lockProject(Long projectId) {
+        rundeck.Project.lock(projectId)
+    }
+
+    @Override
     void enableFrameworkProject(String projectName) {
         def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
         projectData.setState(RdProject.State.ENABLED)
