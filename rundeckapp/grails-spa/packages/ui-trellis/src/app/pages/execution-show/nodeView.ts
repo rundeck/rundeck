@@ -30,12 +30,10 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
 
   const elm = document.querySelector(query) as HTMLElement;
 
-  // The wfnodeoutput element has no explicit height in the Knockout template.
-  // The LogViewer's entire height:100% chain (execution-log → scroller → node-chunk
-  // → DynamicScroller) collapses to auto without a concrete parent height.
-  // Without a fixed height, vue-virtual-scroller cannot measure its viewport and
-  // attempts to render all items at once, crashing when item count exceeds its limit.
-  elm.style.height = "600px";
+  // The wfnodeoutput element has no explicit height in the Knockout template, so it
+  // sizes to the LogViewer. In node mode the LogViewer bounds its own scroller height
+  // (log content height, capped at 600px), which gives vue-virtual-scroller the
+  // bounded viewport it needs without padding short logs with blank space.
   elm.style.overflow = "hidden";
 
   // Unmount any existing viewer for this node/step to avoid stacking
@@ -87,7 +85,7 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
     async (messages: UiMessage[] | LocalizedMessages) =>
       commonAddUiMessages(i18n, messages),
   );
-  // Mount on elm directly (preserving its CSS height/overflow for the virtual scroller)
+  // Mount on elm directly (preserving its CSS overflow for the virtual scroller)
   vue.mount(elm);
   mountedNodeApps.set(appKey, vue);
 
@@ -107,7 +105,6 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
         // expand/collapse cycles in the nodes view.
         vue.unmount();
         mountedNodeApps.delete(appKey);
-        elm.style.height = "";
         elm.style.overflow = "";
         return;
       } else {

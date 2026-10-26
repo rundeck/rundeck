@@ -110,7 +110,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["line-select", "jumped", "follow-change"],
+  emits: ["line-select", "jumped", "follow-change", "content-size"],
   data() {
     return {
       emitResize: true as boolean,
@@ -189,6 +189,9 @@ export default defineComponent({
       scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
     (this as any)._scrollListenerAdded = false;
+    (this as any)._unwatchContentSize?.();
+    (this as any)._unwatchContentSize = undefined;
+    (this as any)._watchedScroller = undefined;
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
@@ -243,6 +246,7 @@ export default defineComponent({
       return newEntry;
     },
     _tryAttachScrollListener() {
+      this._tryWatchContentSize();
       if ((this as any)._scrollListenerAdded) return;
       const scrollerEl = (this.$refs.scroller as any)?.$el as
         HTMLElement | undefined;
@@ -250,6 +254,33 @@ export default defineComponent({
         scrollerEl.addEventListener("scroll", this.onScrollerScroll);
         (this as any)._scrollListenerAdded = true;
       }
+    },
+    /**
+     * Emits "content-size" with the scroller's content height whenever it changes,
+     * so the node view can size its viewport to the log instead of a fixed height.
+     * The height is the inner RecycleScroller's totalSize: the sum of measured item
+     * sizes, with unmeasured items counted at min-item-size until they render.
+     */
+    _tryWatchContentSize() {
+      const recycleScroller = (this.$refs.scroller as any)?.$refs?.scroller;
+      // The DynamicScroller is re-created when nodeChunkKey changes, so re-watch
+      // whenever the underlying scroller instance is replaced.
+      if (
+        !recycleScroller ||
+        recycleScroller === (this as any)._watchedScroller
+      )
+        return;
+      (this as any)._unwatchContentSize?.();
+      (this as any)._watchedScroller = recycleScroller;
+      (this as any)._unwatchContentSize = this.$watch(
+        () => recycleScroller.totalSize,
+        (size: unknown) => {
+          if (typeof size === "number" && size > 0) {
+            this.$emit("content-size", size);
+          }
+        },
+        { immediate: true },
+      );
     },
     onSelectLine(index: number) {
       this.$emit("line-select", index);
