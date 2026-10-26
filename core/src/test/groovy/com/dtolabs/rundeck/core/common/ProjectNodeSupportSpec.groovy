@@ -459,32 +459,26 @@ class ProjectNodeSupportSpec extends Specification {
         support.getResourceModelSourceExceptionsMap().isEmpty()
     }
 
-    def "sources are queried serially by default and when loadThreads is #threads"() {
+    def "sources are queried serially by default and when loadThreads is #loadThreads"() {
         given:
-        def active = new AtomicInteger()
-        def maxActive = new AtomicInteger()
+        def threads = Collections.synchronizedList([])
         def loaders = (1..4).collect { int n ->
-            { ->
-                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
-                sleep(50)
-                active.decrementAndGet()
-                nodes("n${n}", 'v')
-            } as Closure<INodeSet>
+            { -> threads << Thread.currentThread(); nodes("n${n}", 'v') } as Closure<INodeSet>
         }
         def support = supportWithSources(
-                threads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): threads],
+                loadThreads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): loadThreads],
                 loaders
         )
 
         when:
         def result = support.getNodeSet()
 
-        then:
-        maxActive.get() == 1
+        then: "every source ran on the calling thread, one after another"
+        threads == [Thread.currentThread()] * 4
         result.nodeNames as List == ['n1', 'n2', 'n3', 'n4']
 
         where:
-        threads << [null, '1', '0', 'not-a-number']
+        loadThreads << [null, '1', '0', 'not-a-number']
     }
 
     def "concurrency is capped at the shared maximum even if loadThreads is higher"() {
@@ -585,6 +579,92 @@ class ProjectNodeSupportSpec extends Specification {
         !threads[0].alive
         !threads[1].alive
         reloaded.nodeNames as List == ['a', 'b']
+    }
+
+    def "loads waiting on queued tasks finish when the project's pool is stopped"() {
+        given: "two loads of 20 slow sources each, so 20 tasks are queued behind the pool's 20 threads"
+        def started = new CountDownLatch(20)
+        def loaders = (1..20).collect {
+            { -> started.countDown(); new CountDownLatch(1).await(30, TimeUnit.SECONDS); nodes('n', '1') } as Closure<INodeSet>
+        }
+        def supports = (1..2).collect {
+            supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '20'], loaders)
+        }
+        def results = Collections.synchronizedList([])
+
+        when:
+        def loads = supports.collect { support -> Thread.start { results << support.getNodeSet() } }
+        started.await(10, TimeUnit.SECONDS)
+        ProjectNodeSupport.removeLoadPool(PROJECT_NAME)
+        loads.each { it.join(10000) }
+
+        then:
+        loads.every { !it.alive }
+        results.size() == 2
+        supports.every { it.getResourceModelSourceExceptionsMap().size() == 20 }
+    }
+
+    def "a load that submits to the project's stopped pool reports the remaining sources as failed"() {
+        given: "the first source is still running when the pool is stopped, so the third source is submitted after"
+        def firstStarted = new CountDownLatch(1)
+        def loaders = [
+                { -> firstStarted.countDown(); new CountDownLatch(1).await(30, TimeUnit.SECONDS); nodes('a', '1') } as Closure<INodeSet>,
+                { -> nodes('b', '2') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        firstStarted.await(10, TimeUnit.SECONDS)
+        ProjectNodeSupport.removeLoadPool(PROJECT_NAME)
+        loading.join(10000)
+
+        then:
+        !loading.alive
+        results.size() == 1
+        support.getResourceModelSourceExceptionsMap().keySet().containsAll(['1.source', '3.source'])
+    }
+
+    def "a project's pool is stopped when its last parallel load ends"() {
+        given:
+        def threads = Collections.synchronizedList([])
+        def loaders = [
+                { -> threads << Thread.currentThread(); nodes('a', '1') } as Closure<INodeSet>,
+                { -> threads << Thread.currentThread(); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+
+        when:
+        support.getNodeSet()
+        threads.each { it.join(10000) }
+
+        then:
+        threads.size() == 2
+        threads.every { !it.alive }
+    }
+
+    def "pool threads use the loading thread's context classloader"() {
+        given:
+        def loader = new URLClassLoader(new URL[0])
+        def seen = Collections.synchronizedList([])
+        def loaders = [
+                { -> seen << Thread.currentThread().contextClassLoader; nodes('a', '1') } as Closure<INodeSet>,
+                { -> seen << Thread.currentThread().contextClassLoader; nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+
+        when:
+        def loading = Thread.start {
+            Thread.currentThread().contextClassLoader = loader
+            support.getNodeSet()
+        }
+        loading.join(10000)
+
+        then:
+        seen.size() == 2
+        seen.every { it.is(loader) }
     }
 
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {

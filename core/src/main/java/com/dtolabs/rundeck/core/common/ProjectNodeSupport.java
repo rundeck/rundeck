@@ -32,11 +32,13 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,10 +67,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      */
     public static final  int    MAX_LOAD_THREADS                        = 20;
     /**
-     * Node source query pool per project, so a slow project does not hold threads another project needs. Idle
-     * threads time out.
+     * Node source query pool per project, so a slow project does not hold threads another project needs. A pool
+     * exists only while the project has parallel loads running.
      */
-    private static final ConcurrentMap<String, ThreadPoolExecutor> LOAD_POOLS = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, LoadPool> LOAD_POOLS = new ConcurrentHashMap<>();
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -214,7 +216,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     /**
      * Create the node source query pool for a project: {@link #MAX_LOAD_THREADS} daemon threads that time out when
-     * idle, using this class's classloader as their context classloader.
+     * idle. Threads use the context classloader of the loading thread that creates the pool, as a serial load would.
      *
      * @param project project name
      *
@@ -222,6 +224,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      */
     private static ThreadPoolExecutor createLoadPool(final String project) {
         final AtomicInteger count = new AtomicInteger();
+        final ClassLoader loader = Thread.currentThread().getContextClassLoader();
         final ThreadPoolExecutor pool = new ThreadPoolExecutor(
                 MAX_LOAD_THREADS,
                 MAX_LOAD_THREADS,
@@ -231,8 +234,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 r -> {
                     Thread t = new LoadThread(r, "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet());
                     t.setDaemon(true);
-                    //not inherited from whichever thread first used the pool
-                    t.setContextClassLoader(ProjectNodeSupport.class.getClassLoader());
+                    //not inherited from whichever thread submits the task that starts the thread
+                    t.setContextClassLoader(loader);
                     return t;
                 }
         );
@@ -246,10 +249,56 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @param project project name
      */
     public static void removeLoadPool(final String project) {
-        final ThreadPoolExecutor pool = LOAD_POOLS.remove(project);
-        if (pool != null) {
-            pool.shutdownNow();
+        final LoadPool removed = LOAD_POOLS.remove(project);
+        if (removed != null) {
+            final ThreadPoolExecutor pool = removed.executor;
+            //cancel queued tasks, so a load waiting on one fails instead of blocking forever
+            pool.shutdownNow().forEach(task -> ((Future<?>) task).cancel(true));
         }
+    }
+
+    /**
+     * A project's pool and the number of loads using it
+     */
+    private static final class LoadPool {
+        final ThreadPoolExecutor executor;
+        int users;
+
+        LoadPool(final ThreadPoolExecutor executor) {
+            this.executor = executor;
+        }
+    }
+
+    /**
+     * Get the project's pool for a parallel load, creating it if no load is using it
+     *
+     * @param project project name
+     *
+     * @return pool, to pass to {@link #releaseLoadPool(String, ThreadPoolExecutor)} when the load ends
+     */
+    private static ThreadPoolExecutor acquireLoadPool(final String project) {
+        return LOAD_POOLS.compute(project, (k, v) -> {
+            final LoadPool used = v != null ? v : new LoadPool(createLoadPool(k));
+            used.users++;
+            return used;
+        }).executor;
+    }
+
+    /**
+     * End a parallel load's use of the project's pool, and stop the pool when no load is using it, so no pool is
+     * kept for a project that is not loading (or no longer exists)
+     *
+     * @param project project name
+     * @param pool    pool returned by {@link #acquireLoadPool(String)}
+     */
+    private static void releaseLoadPool(final String project, final ThreadPoolExecutor pool) {
+        LOAD_POOLS.computeIfPresent(project, (k, v) -> {
+            if (v.executor != pool || --v.users > 0) {
+                return v;
+            }
+            pool.shutdown();
+            return null;
+        });
     }
 
     /**
@@ -285,10 +334,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             }
             return;
         }
-        final ThreadPoolExecutor pool = LOAD_POOLS.computeIfAbsent(
-                projectConfig.getName(),
-                ProjectNodeSupport::createLoadPool
-        );
+        final String project = projectConfig.getName();
+        final ThreadPoolExecutor pool = acquireLoadPool(project);
         final Deque<Future<SourceResult>> window = new ArrayDeque<>();
         int next = 0;
         int consumed = 0;
@@ -302,8 +349,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 window.poll();
                 consumed++;
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (InterruptedException | CancellationException | RejectedExecutionException e) {
+            //interrupted, or the project's pool was stopped because the project was deleted
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             //report the failure for sources not yet consumed
             final SourceResult failed = new SourceResult(
                     null,
@@ -318,6 +368,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             window.forEach(f -> f.cancel(true));
+            releaseLoadPool(project, pool);
         }
     }
 
