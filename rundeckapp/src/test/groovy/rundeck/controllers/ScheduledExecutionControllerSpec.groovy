@@ -5550,6 +5550,8 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         // Overrides the permissive stub installed in setup()
         controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
             1 * validateExecutionAcl(se) >> aclValid
+            // the view picks its wording from this, so the model has to carry it
+            1 * isExecutionAclEnforced() >> true
         }
 
         controller.frameworkService = Mock(FrameworkService) {
@@ -5606,6 +5608,7 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         response.redirectedUrl == null
         model != null
         model.executionAclValid == aclValid
+        model.executionAclEnforced
 
         where:
         aclValid << [true, false]

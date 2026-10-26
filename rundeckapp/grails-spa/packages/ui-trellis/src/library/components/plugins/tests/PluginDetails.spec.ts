@@ -11,8 +11,8 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
     },
     global: {
       stubs: {
-        VMarkdownView: {
-          name: "VMarkdownView",
+        MarkdownView: {
+          name: "MarkdownView",
           props: ["content"],
           template: '<div class="markdown-body">{{content}}</div>',
         },

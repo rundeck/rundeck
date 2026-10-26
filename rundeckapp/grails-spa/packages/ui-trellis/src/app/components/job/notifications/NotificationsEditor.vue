@@ -79,14 +79,12 @@
                     target="#jobAvgInfoBtn"
                   >
                     <template #popover>
-                      <VMarkdownView
-                        class="markdown-body"
+                      <MarkdownView
                         :content="
                           $t(
                             'scheduledExecution.property.notifyAvgDurationThreshold.description',
                           )
                         "
-                        mode=""
                       />
                     </template>
                   </popover>
@@ -314,7 +312,7 @@ import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../../library/modules/pluginService";
 import UndoRedo from "../../util/UndoRedo.vue";
-import { VMarkdownView } from "vue3-markdown";
+import MarkdownView from "../../../../library/components/utils/MarkdownView.vue";
 import mitt from "mitt";
 const localEB = mitt();
 export default defineComponent({
@@ -323,7 +321,7 @@ export default defineComponent({
     PluginInfo,
     PluginConfig,
     UndoRedo,
-    VMarkdownView,
+    MarkdownView,
   },
   props: ["notificationData"],
   emits: ["changed"],
