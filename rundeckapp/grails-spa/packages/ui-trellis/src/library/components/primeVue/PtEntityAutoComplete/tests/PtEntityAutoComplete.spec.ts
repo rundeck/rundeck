@@ -379,23 +379,44 @@ describe("PtEntityAutoComplete", () => {
       expect(wrapper.emitted("unselect")![0]).toEqual([JOBS[0]]);
     });
 
-    it("restores the typed query in the input when PrimeVue emits a selected object", async () => {
-      const wrapper = await createMultipleWrapper([JOBS[0]]);
-      const autoComplete = wrapper.findComponent(AutoComplete);
+    it("restores the typed query in the input after a native option click or Enter selection", async () => {
+      jest.useFakeTimers();
+      const search = jest.fn().mockResolvedValue(JOBS);
+      const wrapper = await createMultipleWrapper([JOBS[0]], {
+        search,
+        delay: 0,
+        keepOpenOnSelect: true,
+      });
+      try {
+        const input = wrapper.find('[data-testid="entity-search-input"]');
+        await input.setValue("Depl");
+        jest.runAllTimers();
+        await flushPromises();
+        await wrapper.vm.$nextTick();
 
-      await autoComplete.vm.$emit("update:modelValue", "Depl");
-      await wrapper.vm.$nextTick();
-      (
-        autoComplete.vm as unknown as { writeValue: (v: unknown) => void }
-      ).writeValue(JOBS[1]);
-      await wrapper.vm.$nextTick();
+        const options = document.body.querySelectorAll<HTMLElement>(
+          ".p-autocomplete-option",
+        );
+        expect(options.length).toBeGreaterThan(1);
+        options[1].click();
+        await wrapper.vm.$nextTick();
+        jest.runAllTimers();
 
-      expect(
-        (
-          wrapper.find('[data-testid="entity-search-input"]')
-            .element as HTMLInputElement
-        ).value,
-      ).toBe("Depl");
+        expect((input.element as HTMLInputElement).value).toBe("Depl");
+        expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+          [JOBS[0], JOBS[1]],
+        ]);
+
+        await wrapper.setProps({ modelValue: [JOBS[0], JOBS[1]] });
+        await input.trigger("keydown", { code: "Enter", key: "Enter" });
+        await wrapper.vm.$nextTick();
+
+        expect((input.element as HTMLInputElement).value).toBe("Depl");
+        expect(wrapper.emitted("update:modelValue")![1]).toEqual([[JOBS[1]]]);
+      } finally {
+        wrapper.unmount();
+        jest.useRealTimers();
+      }
     });
 
     it("forwards a functional optionLabel resolver to PrimeVue AutoComplete", async () => {
