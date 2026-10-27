@@ -41,6 +41,7 @@ interface OptionSlotProps {
 
 const createMultipleWrapper = async (
   modelValue: EntitySuggestion[] = [],
+  extraProps: Record<string, unknown> = {},
 ): Promise<any> => {
   const wrapper = mount(PtEntityAutoComplete, {
     props: {
@@ -49,6 +50,7 @@ const createMultipleWrapper = async (
       dataKey: "id",
       optionLabel: "name",
       inputTestid: "entity-search-input",
+      ...extraProps,
     },
     slots: {
       "selected-items": ({ items, remove }: SelectedItemsSlotProps) =>
@@ -376,6 +378,62 @@ describe("PtEntityAutoComplete", () => {
       expect(wrapper.emitted("update:modelValue")![0]).toEqual([[]]);
       expect(wrapper.emitted("unselect")![0]).toEqual([JOBS[0]]);
     });
+
+    it("restores the typed query in the input when PrimeVue emits a selected object", async () => {
+      const wrapper = await createMultipleWrapper([JOBS[0]]);
+      const autoComplete = wrapper.findComponent(AutoComplete);
+
+      await autoComplete.vm.$emit("update:modelValue", "Depl");
+      await wrapper.vm.$nextTick();
+      (
+        autoComplete.vm as unknown as { writeValue: (v: unknown) => void }
+      ).writeValue(JOBS[1]);
+      await wrapper.vm.$nextTick();
+
+      expect(
+        (
+          wrapper.find('[data-testid="entity-search-input"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("Depl");
+    });
+
+    it("forwards a functional optionLabel resolver to PrimeVue AutoComplete", async () => {
+      const labelResolver = (option: EntitySuggestion) =>
+        `Job: ${String(option.name)}`;
+      const wrapper = await createMultipleWrapper([], {
+        optionLabel: labelResolver,
+      });
+
+      expect(wrapper.findComponent(AutoComplete).props("optionLabel")).toBe(
+        labelResolver,
+      );
+    });
+
+    it("defers reopening the overlay until after PrimeVue schedules its native hide", async () => {
+      jest.useFakeTimers();
+      try {
+        const wrapper = await createMultipleWrapper([], {
+          keepOpenOnSelect: true,
+        });
+        const autoComplete = wrapper.findComponent(AutoComplete);
+        const order: string[] = [];
+        jest
+          .spyOn(autoComplete.vm as unknown as { show: () => void }, "show")
+          .mockImplementation(() => {
+            order.push("show");
+          });
+
+        autoComplete.vm.$emit("option-select", { value: JOBS[0] });
+        setTimeout(() => order.push("native-hide"), 0);
+        await wrapper.vm.$nextTick();
+        jest.runAllTimers();
+
+        expect(order).toEqual(["native-hide", "show"]);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   describe("read only", () => {
@@ -403,6 +461,23 @@ describe("PtEntityAutoComplete", () => {
       await typeQuery(wrapper, "Depl");
 
       expect(search).not.toHaveBeenCalled();
+    });
+
+    it("blocks multiple-selection edits and removals while readonly", async () => {
+      const wrapper = await createMultipleWrapper([JOBS[0]], {
+        readOnly: true,
+      });
+
+      await wrapper
+        .find('[data-testid="selected-item-uuid-1"]')
+        .trigger("click");
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: JOBS[1] });
+
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+      expect(wrapper.emitted("select")).toBeUndefined();
+      expect(wrapper.emitted("unselect")).toBeUndefined();
     });
   });
 });

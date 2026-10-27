@@ -29,7 +29,7 @@
         ref="autoInput"
         :model-value="inputValue"
         :suggestions="visibleSuggestions"
-        :option-label="primeVueOptionLabel"
+        :option-label="optionLabel"
         :option-disabled="optionDisabled"
         :name="name"
         :input-id="inputId"
@@ -262,12 +262,6 @@ export default defineComponent({
         ? this.modelValue
         : [];
     },
-    /** PrimeVue only accepts a property name for optionLabel. */
-    primeVueOptionLabel(): string | undefined {
-      return typeof this.optionLabel === "string"
-        ? this.optionLabel
-        : undefined;
-    },
     /**
      * Suggestions handed to PrimeVue, or `undefined` when there are none.
      *
@@ -342,6 +336,8 @@ export default defineComponent({
       if (this.multiple) {
         if (typeof val === "string" || val == null) {
           this.queryValue = (val as string) ?? "";
+        } else {
+          this.restoreQueryValue();
         }
         return;
       }
@@ -351,6 +347,14 @@ export default defineComponent({
           : this.labelOf(val);
       this.value = text;
       this.$emit("update:modelValue", text);
+    },
+
+    /** Restores the typed query inside PrimeVue after a native option selection. */
+    restoreQueryValue(): void {
+      (
+        this.$refs.autoInput as
+          { writeValue?: (value: string) => void } | undefined
+      )?.writeValue?.(this.queryValue);
     },
 
     /** Load suggestions for the typed query, ignoring out-of-order results. */
@@ -398,7 +402,7 @@ export default defineComponent({
 
     /** Adds or removes one option from the multiple-selection model. */
     toggleOption(option: EntitySuggestion): void {
-      if (!this.multiple || this.isOptionDisabled(option)) {
+      if (this.readOnly || !this.multiple || this.isOptionDisabled(option)) {
         return;
       }
       if (this.isSelected(option)) {
@@ -411,6 +415,9 @@ export default defineComponent({
 
     /** Removes an option from the multiple-selection model. */
     removeOption(option: EntitySuggestion): void {
+      if (this.readOnly) {
+        return;
+      }
       const identity = this.identityOf(option);
       const selected = this.selectedValues.find(
         (item) => this.identityOf(item) === identity,
@@ -442,10 +449,12 @@ export default defineComponent({
       if (this.reopenTimer) {
         clearTimeout(this.reopenTimer);
       }
-      this.reopenTimer = setTimeout(() => {
-        this.reopenTimer = null;
-        (this.$refs.autoInput as { show?: () => void } | undefined)?.show?.();
-      }, 0);
+      void this.$nextTick(() => {
+        this.reopenTimer = setTimeout(() => {
+          this.reopenTimer = null;
+          (this.$refs.autoInput as { show?: () => void } | undefined)?.show?.();
+        }, 0);
+      });
     },
   },
 });
