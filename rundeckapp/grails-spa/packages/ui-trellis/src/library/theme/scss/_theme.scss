@@ -319,7 +319,7 @@ $black: $grey-900;
   --mainbar-box-shadow: var(--box-shadow-bottom-lv1);
 
   // Side Bar
-  --sidebar-background-color: var(--grey-900);
+  --sidebar-background-color: var(--colors-sidebar-background);
   --sidebar-item-color: var(--grey-500);
   --sidebar-item-state-color: var(--white);
   --sidebar-drawer-bg-color: var(--grey-800);
@@ -457,7 +457,7 @@ $black: $grey-900;
   --mainbar-box-shadow: var(--box-shadow-bottom-lv1);
 
   // Side Bar
-  --sidebar-background-color: var(--grey-700);
+  --sidebar-background-color: var(--colors-sidebar-background);
   --sidebar-item-color: var(--grey-100);
   --sidebar-item-state-color: var(--white);
   --sidebar-drawer-bg-color: var(--grey-900);
