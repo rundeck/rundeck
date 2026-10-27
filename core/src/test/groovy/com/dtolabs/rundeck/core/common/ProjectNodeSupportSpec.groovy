@@ -757,6 +757,27 @@ class ProjectNodeSupportSpec extends Specification {
         release.countDown()
     }
 
+    def "pool threads do not inherit the loading thread's inheritable thread-local values"() {
+        given:
+        def bound = new InheritableThreadLocal<String>()
+        def seen = Collections.synchronizedList([])
+        def loaders = [
+                { -> seen << bound.get(); nodes('a', '1') } as Closure<INodeSet>,
+                { -> seen << bound.get(); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+
+        when:
+        def loading = Thread.start {
+            bound.set('execution-output')
+            support.getNodeSet()
+        }
+        loading.join(10000)
+
+        then:
+        seen == [null, null]
+    }
+
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
         given:
         def firstThread = null

@@ -223,7 +223,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     /**
      * Create the node source query pool for a project: {@link #MAX_LOAD_THREADS} daemon threads that time out when
-     * idle.
+     * idle and do not inherit inheritable thread-local values.
      *
      * @param project project name
      *
@@ -238,7 +238,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
                 r -> {
-                    Thread t = new Thread(r, "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet());
+                    //no inherited thread-local values: a worker outlives the load that created it, so it must not keep
+                    //that load's thread-bound state, such as an execution's output streams
+                    Thread t = new Thread(
+                            null,
+                            r,
+                            "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet(),
+                            0,
+                            false
+                    );
                     t.setDaemon(true);
                     return t;
                 }
