@@ -89,6 +89,16 @@ public interface ProjectManager {
     void removeFrameworkProject(String projectName);
 
     /**
+     * Remove a project definition only when its persistent identity still matches.
+     *
+     * @param projectName name of the project
+     * @param expectedProjectId persistent identity being removed
+     */
+    default void removeFrameworkProject(String projectName, Long expectedProjectId) {
+        throw new UnsupportedOperationException("Identity-aware project removal is not supported");
+    }
+
+    /**
      * Return true when removal of the expected persistent project row has not completed.
      *
      * @param projectName name of the project

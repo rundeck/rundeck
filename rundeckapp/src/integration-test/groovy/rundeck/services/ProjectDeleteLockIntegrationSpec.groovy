@@ -51,7 +51,7 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
             }
         )
         def manager = Mock(ProjectManager) {
-            removeFrameworkProject('lock-test-project') >> {
+            removeFrameworkProject('lock-test-project', projectRow.id) >> {
                 Project.findByName('lock-test-project').delete(flush: true, failOnError: true)
             }
         }
@@ -97,6 +97,70 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
         executor.shutdownNow()
         Project.withNewTransaction {
             Project.findByName('lock-test-project')?.delete(flush: true)
+        }
+    }
+
+    def "overlapping finalizers cannot remove a same-name replacement"() {
+        given:
+        def original = Project.withNewTransaction {
+            new Project(name: 'finalize-lock-project', state: RdProject.State.DISABLED)
+                .save(flush: true, failOnError: true)
+        }
+        def manager = new BlockingProjectManagerService()
+        def executor = Executors.newFixedThreadPool(2)
+
+        when:
+        def first = executor.submit({
+            Project.withNewSession {
+                manager.finishProjectRemoval('finalize-lock-project', original.id)
+            }
+        } as Callable)
+        assert manager.firstCleanupEntered.await(30, TimeUnit.SECONDS)
+        def second = executor.submit({
+            Project.withNewSession {
+                manager.finishProjectRemoval('finalize-lock-project', original.id)
+            }
+        } as Callable)
+        boolean secondWaited = false
+        try {
+            second.get(500, TimeUnit.MILLISECONDS)
+        } catch (TimeoutException ignored) {
+            secondWaited = true
+        }
+        manager.releaseFirstCleanup.countDown()
+        first.get(30, TimeUnit.SECONDS)
+        def replacement = Project.withNewTransaction {
+            new Project(name: 'finalize-lock-project', state: RdProject.State.ENABLED)
+                .save(flush: true, failOnError: true)
+        }
+        second.get(30, TimeUnit.SECONDS)
+        Project.withNewSession {
+            manager.finishProjectRemoval('finalize-lock-project', original.id)
+        }
+
+        then:
+        secondWaited
+        manager.cleanupCalls.get() == 1
+        Project.withNewTransaction { Project.findByName('finalize-lock-project')?.id } == replacement.id
+
+        cleanup:
+        manager.releaseFirstCleanup.countDown()
+        executor.shutdownNow()
+        Project.withNewTransaction {
+            Project.findByName('finalize-lock-project')?.delete(flush: true)
+        }
+    }
+
+    private static class BlockingProjectManagerService extends ProjectManagerService {
+        final CountDownLatch firstCleanupEntered = new CountDownLatch(1)
+        final CountDownLatch releaseFirstCleanup = new CountDownLatch(1)
+        final AtomicInteger cleanupCalls = new AtomicInteger()
+
+        @Override
+        protected void deleteProjectResources(String projectName) {
+            cleanupCalls.incrementAndGet()
+            firstCleanupEntered.countDown()
+            releaseFirstCleanup.await(30, TimeUnit.SECONDS)
         }
     }
 }

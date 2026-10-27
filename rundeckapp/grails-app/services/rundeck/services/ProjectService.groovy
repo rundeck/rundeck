@@ -2018,6 +2018,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @GrailsCompileStatic
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username, Boolean deferred = null, boolean trustedCleanup = false) {
         log.info("Requested deletion of project ${project.name}")
 
@@ -2210,7 +2211,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                 //The claimed row lock prevents another node from deleting and recreating
                 //this name between the cleanup queries and final removal.
-                framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
+                framework.getFrameworkProjectMgr().removeFrameworkProject(project.name, claimedProjectId)
                 result.success = true
             } catch (Exception e) {
                 status.setRollbackOnly()
