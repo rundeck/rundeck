@@ -1,6 +1,8 @@
 import { flushPromises, mount } from "@vue/test-utils";
+import { defineComponent, h } from "vue";
 import AutoComplete from "primevue/autocomplete";
 import { PtEntityAutoComplete } from "../../index";
+import type { EntitySuggestion } from "../PtEntityAutoCompleteTypes";
 
 const JOBS = [
   { name: "Deploy Web App", group: "release/prod", id: "uuid-1" },
@@ -26,6 +28,49 @@ const createWrapper = async (props = {}): Promise<any> => {
 const typeQuery = async (wrapper: any, query: string) => {
   await wrapper.findComponent(AutoComplete).vm.$emit("complete", { query });
   await flushPromises();
+};
+
+interface SelectedItemsSlotProps {
+  items: EntitySuggestion[];
+  remove: (item: EntitySuggestion) => void;
+}
+
+interface OptionSlotProps {
+  query: string;
+}
+
+const createMultipleWrapper = async (
+  modelValue: EntitySuggestion[] = [],
+): Promise<any> => {
+  const wrapper = mount(PtEntityAutoComplete, {
+    props: {
+      modelValue,
+      multiple: true,
+      dataKey: "id",
+      optionLabel: "name",
+      inputTestid: "entity-search-input",
+    },
+    slots: {
+      "selected-items": ({ items, remove }: SelectedItemsSlotProps) =>
+        h(
+          "div",
+          { "data-testid": "selected-items" },
+          items.map((item) =>
+            h(
+              "button",
+              {
+                "data-testid": `selected-item-${item.id}`,
+                onClick: () => remove(item),
+              },
+              String(item.name),
+            ),
+          ),
+        ),
+    },
+    global: { components: { AutoComplete } },
+  });
+  await wrapper.vm.$nextTick();
+  return wrapper;
 };
 
 describe("PtEntityAutoComplete", () => {
@@ -235,6 +280,101 @@ describe("PtEntityAutoComplete", () => {
       expect(wrapper.emitted("update:modelValue")![0]).toEqual([
         "Some Other Job",
       ]);
+    });
+  });
+
+  describe("multiple selection", () => {
+    it("provides the current query to a custom option slot", async () => {
+      const AutoCompleteStub = defineComponent({
+        name: "AutoComplete",
+        template: `
+          <div>
+            <slot name="option" :option="{ name: 'api-01' }" :index="0" />
+          </div>
+        `,
+      });
+      const wrapper = mount(PtEntityAutoComplete, {
+        props: {
+          modelValue: [],
+          multiple: true,
+          optionLabel: "name",
+        },
+        slots: {
+          option: ({ query }: OptionSlotProps) =>
+            h("span", { "data-testid": "option-query" }, query),
+        },
+        global: { stubs: { AutoComplete: AutoCompleteStub } },
+      });
+
+      await wrapper
+        .findComponent(AutoCompleteStub)
+        .vm.$emit("update:modelValue", "api");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.find('[data-testid="option-query"]').text()).toBe("api");
+    });
+
+    it("adds an entity without replacing the typed query model", async () => {
+      const wrapper = await createMultipleWrapper([JOBS[0]]);
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: JOBS[1] });
+
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+        [JOBS[0], JOBS[1]],
+      ]);
+      expect(wrapper.emitted("select")![0]).toEqual([JOBS[1]]);
+    });
+
+    it("keeps the selected entity array unchanged while a query is typed", async () => {
+      const wrapper = await createMultipleWrapper([JOBS[0]]);
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("update:modelValue", "Restart");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+      expect(
+        (
+          wrapper.find('[data-testid="entity-search-input"]')
+            .element as HTMLInputElement
+        ).value,
+      ).toBe("Restart");
+    });
+
+    it("renders selected entities through the selected-items slot", async () => {
+      const wrapper = await createMultipleWrapper(JOBS);
+
+      expect(wrapper.find('[data-testid="selected-items"]').text()).toContain(
+        "Deploy Web App",
+      );
+      expect(wrapper.find('[data-testid="selected-items"]').text()).toContain(
+        "Restart",
+      );
+    });
+
+    it("removes an entity through the selected-items slot callback", async () => {
+      const wrapper = await createMultipleWrapper(JOBS);
+
+      await wrapper
+        .find('[data-testid="selected-item-uuid-1"]')
+        .trigger("click");
+
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([[JOBS[1]]]);
+      expect(wrapper.emitted("unselect")![0]).toEqual([JOBS[0]]);
+    });
+
+    it("uses dataKey identity when refreshed results represent an existing selection", async () => {
+      const wrapper = await createMultipleWrapper([JOBS[0]]);
+
+      await wrapper.findComponent(AutoComplete).vm.$emit("option-select", {
+        value: { ...JOBS[0], name: "Renamed in refreshed results" },
+      });
+
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([[]]);
+      expect(wrapper.emitted("unselect")![0]).toEqual([JOBS[0]]);
     });
   });
 
