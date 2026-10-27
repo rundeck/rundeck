@@ -120,9 +120,7 @@ export default defineComponent({
     entries(newEntries: ExecutionOutputEntry[] | undefined) {
       if (!this.follow || !newEntries || newEntries.length === 0) return;
       this.$nextTick(() => {
-        if (this.follow) {
-          (this.$refs.scroller as any)?.scrollToBottom?.();
-        }
+        this.pinToBottom();
       });
     },
     follow(newVal: boolean) {
@@ -130,9 +128,7 @@ export default defineComponent({
       // new entries have arrived since the last update.
       if (newVal) {
         this.$nextTick(() => {
-          if (this.follow) {
-            (this.$refs.scroller as any)?.scrollToBottom?.();
-          }
+          this.pinToBottom();
         });
       }
     },
@@ -266,8 +262,8 @@ export default defineComponent({
       const atBottom =
         currentScrollTop + el.clientHeight >= el.scrollHeight - 10;
 
-      // Disable follow when the user scrolls UP (not from programmatic
-      // scrollToBottom, which increases scrollTop).
+      // Disable follow when the user scrolls UP (not from pinToBottom,
+      // which increases scrollTop).
       if (scrollingUp && this.follow) {
         this.$emit("follow-change", false);
         return;
@@ -292,10 +288,24 @@ export default defineComponent({
       const lastEntry = entries[entries.length - 1];
       return !!scroller?.getItemSize?.(lastEntry);
     },
-    scrollToLine() {
-      if (this.follow) {
-        this.$refs.scroller.scrollToBottom();
+    /**
+     * Pin the viewport to the bottom while Follow is on.
+     * Avoid DynamicScroller.scrollToBottom(): its animation loop keeps
+     * scrolling until every visible row is measured, which never finishes
+     * on a large streaming log.
+     */
+    pinToBottom() {
+      if (!this.follow) {
+        return;
       }
+      const el = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+      if (!el) {
+        return;
+      }
+      el.scrollTop = el.scrollHeight;
+    },
+    scrollToLine() {
+      this.pinToBottom();
     },
   },
 });
