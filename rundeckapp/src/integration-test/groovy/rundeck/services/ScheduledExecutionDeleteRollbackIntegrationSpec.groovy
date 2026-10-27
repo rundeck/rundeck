@@ -105,4 +105,58 @@ class ScheduledExecutionDeleteRollbackIntegrationSpec extends Specification {
             ScheduledExecution.get(records?.job)?.delete(flush: true)
         }
     }
+
+    def "outer rollback keeps the restored job schedule"() {
+        given:
+        def jobId = ScheduledExecution.withNewTransaction {
+            def workflow = new Workflow(
+                commands: [new CommandExec(adhocRemoteString: 'test').save(flush: true, failOnError: true)]
+            ).save(flush: true, failOnError: true)
+            new ScheduledExecution(
+                jobName: 'scheduled-rollback-test',
+                groupPath: 'delete',
+                uuid: UUID.randomUUID().toString(),
+                project: 'rollback-project',
+                workflow: workflow,
+                scheduled: true
+            ).save(flush: true, failOnError: true).id
+        }
+        def authContext = Mock(AuthContext)
+        def scheduler = Mock(JobSchedulerService)
+        def definitionManager = Mock(RundeckJobDefinitionManager)
+        def service = new ScheduledExecutionService(
+            executionServiceBean: Mock(ExecutionService),
+            fileUploadService: Mock(FileUploadService),
+            rundeckJobDefinitionManager: definitionManager,
+            jobSchedulerService: scheduler,
+            referencedExecutionDataProvider: new GormReferencedExecutionDataProvider(),
+            jobStatsDataProvider: new GormJobStatsDataProvider()
+        )
+
+        when:
+        def result = ScheduledExecution.withNewSession {
+            ScheduledExecution.withNewTransaction { status ->
+                def deleted = service.deleteScheduledExecution(
+                    ScheduledExecution.get(jobId),
+                    true,
+                    authContext,
+                    'test'
+                )
+                status.setRollbackOnly()
+                deleted
+            }
+        }
+
+        then:
+        result.success
+        ScheduledExecution.withNewTransaction { ScheduledExecution.get(jobId) }
+        1 * definitionManager.beforeDelete(_, authContext)
+        0 * definitionManager.afterDelete(_, _)
+        0 * scheduler.deleteJobSchedule(_, _)
+
+        cleanup:
+        ScheduledExecution.withNewTransaction {
+            ScheduledExecution.get(jobId)?.delete(flush: true)
+        }
+    }
 }

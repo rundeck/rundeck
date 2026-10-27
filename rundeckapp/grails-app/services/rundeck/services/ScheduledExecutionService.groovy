@@ -127,6 +127,8 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
@@ -1411,7 +1413,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             rundeckJobDefinitionManager.beforeDelete(scheduledExecution, authContext)
             try {
                 scheduledExecution.delete(flush: true)
-                deleteJob(jobname, groupname)
+                deleteJobAfterCommit(jobname, groupname)
                 success = true
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 scheduledExecution.discard()
@@ -1422,25 +1424,41 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if(success){
+            afterCommit {
+                rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
 
-            //after delete job
-            rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
+                def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
+                notify('jobChanged', event)
 
-            //issue event directly
-            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
-            notify('jobChanged', event)
-
-            // publish audit event
-            if(auditEventsService) {
-                auditEventsService.eventBuilder()
-                    .setResourceType(ResourceTypes.JOB)
-                    .setActionType(ActionTypes.DELETE)
-                    .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
-                    .publish()
+                if(auditEventsService) {
+                    auditEventsService.eventBuilder()
+                        .setResourceType(ResourceTypes.JOB)
+                        .setActionType(ActionTypes.DELETE)
+                        .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
+                        .publish()
+                }
             }
-
         }
         return new DeleteJobResult(id:scheduledExecution.id,success:success,error:errmsg)
+    }
+
+    protected void deleteJobAfterCommit(String jobname, String groupname) {
+        afterCommit {
+            deleteJob(jobname, groupname)
+        }
+    }
+
+    protected void afterCommit(Closure action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                void afterCommit() {
+                    action.call()
+                }
+            })
+        } else {
+            action.call()
+        }
     }
     /**
      * Attempt to delete a job given an id
