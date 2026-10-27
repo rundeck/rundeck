@@ -429,6 +429,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "delete project disables scm plugins"() {
         given:
+        new Project(name: 'myproject').save(flush: true, failOnError: true)
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }
@@ -448,7 +449,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * service.scmService.removeAllPluginConfiguration('myproject')
         1 * service.executionService.deleteBulkExecutionIds(*_)
-        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+        3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject')
             0 * disableFrameworkProject('myproject', _ as Long)
         }
@@ -459,6 +460,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "delete project notifies event bus success"() {
         given:
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
             def project = Mock(IRundeckProject) {
                 getName() >> 'myproject'
             }
@@ -477,7 +479,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
             1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
             1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
-            2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+            3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * removeFrameworkProject('myproject')
                 0 * disableFrameworkProject('myproject', _ as Long)
             }
@@ -485,6 +487,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
     def "delete project notifies event bus failure"() {
         given:
+            new Project(name: 'myproject').save(flush: true, failOnError: true)
             def project = Mock(IRundeckProject) {
                 getName() >> 'myproject'
             }
@@ -514,6 +517,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
     def "delete project calls component projectDelete"() {
         given:
+        new Project(name: 'myproject').save(flush: true, failOnError: true)
         ProjectComponent component1 = Mock(ProjectComponent){
             getName()>>'comp1'
             isComponentEnabled() >> true
@@ -552,6 +556,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "delete project without deferral wont disable project"() {
         given:
+        new Project(name: 'myproject').save(flush: true, failOnError: true)
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }
@@ -570,7 +575,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
-        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+        3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
             0 * disableFrameworkProject('myproject', _ as Long)
             1 * removeFrameworkProject('myproject')
@@ -601,7 +606,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
-        3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+        4 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
             1 * disableFrameworkProject('myproject', _ as Long) >> true
             1 * removeFrameworkProject('myproject')
@@ -675,7 +680,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         result.error == null
         1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
-        2 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+        3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> true
             0 * disableFrameworkProject('myproject', _ as Long)
             0 * enableFrameworkProject('myproject')
@@ -826,6 +831,83 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         0 * service.eventBus.notify(_, _)
     }
 
+    def "synchronous delete does not clean up a replacement row"() {
+        given:
+        def original = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def replacement = [null]
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService) {
+            0 * removeAllPluginConfiguration(_)
+        }
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> false
+        }
+        def mgr = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            0 * disableFrameworkProject(_, _)
+            0 * removeFrameworkProject(_)
+        }
+        def fwk = Mock(Framework) {
+            getFrameworkProjectMgr() >> mgr
+        }
+        Project.metaClass.static.lock = { Serializable id ->
+            Project.get(original.id)?.delete(flush: true)
+            replacement[0] = new Project(name: 'myproject').save(flush: true, failOnError: true)
+            Project.get(id)
+        }
+
+        when:
+        def result = service.deleteProject(project, fwk, null, 'admin', Boolean.FALSE)
+
+        then:
+        !result.success
+        result.error.contains('Project changed before cleanup')
+        Project.get(replacement[0].id)
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+
+        cleanup:
+        Project.metaClass.static.lock = { Serializable id -> Project.get(id) }
+    }
+
+    def "post-commit cleanup failure keeps the delete tombstone retryable"() {
+        given:
+        def projectRow = new Project(name: 'myproject').save(flush: true, failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> false
+        }
+        def manager = Mock(ProjectManager) {
+            isFrameworkProjectDisabled('myproject') >> false
+            1 * removeFrameworkProject('myproject')
+            1 * isFrameworkProjectRemovalPending('myproject', projectRow.id) >> true
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> manager
+        }
+
+        when:
+        def result = service.deleteProject(project, framework, null, 'admin', Boolean.FALSE)
+
+        then:
+        !result.success
+        result.error == 'Failed to finish deleting project myproject'
+        Project.get(projectRow.id).state == org.rundeck.app.data.model.v1.project.RdProject.State.DISABLED
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+    }
+
     def "trusted recovery rejects an enabled replacement under the row lock"() {
         given:
         def replacement = new Project(
@@ -971,6 +1053,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "project removal waits until execution cleanup succeeds"() {
         given:
+        new Project(
+            name: 'myproject',
+            state: org.rundeck.app.data.model.v1.project.RdProject.State.DISABLED
+        ).save(flush: true, failOnError: true)
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }

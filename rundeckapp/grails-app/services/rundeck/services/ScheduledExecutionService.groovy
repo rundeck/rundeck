@@ -126,6 +126,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.TransactionStatus
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
@@ -1371,7 +1372,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def groupname = scheduledExecution.generateJobGroupName()
         String errmsg=null
         boolean success = false
-        Execution.withTransaction {
+        Execution.withTransaction { TransactionStatus status ->
             //find any currently running executions for this job, and if so, throw exception
             def found = Execution.createCriteria().list {
                 delegate.'scheduledExecution' {
@@ -1394,6 +1395,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (bulk != null && !bulk.success) {
                     def detail = bulk.failures?.collect { it?.message ?: it?.error ?: it?.id }?.findAll { it }?.join('; ')
                     errmsg = detail ?: 'Failed to delete executions'
+                    status.setRollbackOnly()
                     return new DeleteJobResult(success: false, error: errmsg)
                 }
             }else{

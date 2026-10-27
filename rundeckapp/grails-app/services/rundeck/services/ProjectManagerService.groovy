@@ -57,10 +57,13 @@ import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
+import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -619,8 +622,37 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     void removeFrameworkProject(final String projectName) {
-        projectDataProvider.delete(projectName)
-        deleteProjectResources(projectName)
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            if (projectDataProvider.findByName(projectName) == null) {
+                throw new DataAccessException("Project does not exist: ${projectName}")
+            }
+            deleteProjectResourcesAfterCommit(projectName)
+        } else {
+            projectDataProvider.delete(projectName)
+            deleteProjectResources(projectName)
+        }
+    }
+
+    protected void deleteProjectResourcesAfterCommit(final String projectName) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            void afterCommit() {
+                try {
+                    deleteProjectResources(projectName)
+                    rundeck.Project.withNewTransaction {
+                        projectDataProvider.delete(projectName)
+                    }
+                } catch (Throwable t) {
+                    log.error("Failed to finish deleting project ${projectName}: ${t.message}", t)
+                }
+            }
+        })
+    }
+
+    @Override
+    boolean isFrameworkProjectRemovalPending(String projectName, Long expectedProjectId) {
+        RdProject project = projectDataProvider.findByName(projectName)
+        project != null && project.id == expectedProjectId
     }
 
     @Override

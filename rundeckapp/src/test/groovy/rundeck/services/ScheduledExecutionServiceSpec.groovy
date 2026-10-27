@@ -5419,11 +5419,23 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                     user: 'bob',
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
             ).save(flush: true)
-            def ref = new ReferencedExecution(jobUuid: job.uuid, status: 'success', execution: exec1).save()
+            def exec2 = new Execution(
+                    scheduledExecution: job,
+                    status: 'failed',
+                    dateStarted: new Date(200),
+                    dateCompleted: new Date(20000),
+                    project: job.project,
+                    user: 'bob',
+                    workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec 2")])
+            ).save(flush: true)
+            def ref1 = new ReferencedExecution(jobUuid: job.uuid, status: 'success', execution: exec1).save()
+            def ref2 = new ReferencedExecution(jobUuid: job.uuid, status: 'failed', execution: exec2).save()
             def authContext = Mock(AuthContext)
             def username = 'bob'
             service.executionServiceBean = Mock(ExecutionService) {
-                1 * deleteBulkExecutionIds([exec1.id], authContext, username, false) >> [success: false, failures: [[message: 'unauthorized']]]
+                1 * deleteBulkExecutionIds([exec1.id, exec2.id], authContext, username, false) >> {
+                    [success: false, failures: [[message: 'unauthorized']]]
+                }
             }
             service.fileUploadService = Mock(FileUploadService)
             service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
@@ -5437,8 +5449,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             result.error.contains('unauthorized')
             ScheduledExecution.get(job.id)
             ScheduledExecutionStats.get(stats.id)
-            ReferencedExecution.get(ref.id)
+            ReferencedExecution.get(ref1.id)
+            ReferencedExecution.get(ref2.id)
             Execution.get(exec1.id)
+            Execution.get(exec2.id)
             0 * service.fileUploadService.deleteRecordsForScheduledExecution(_)
             0 * service.rundeckJobDefinitionManager.beforeDelete(_, _)
     }

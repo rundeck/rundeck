@@ -2031,15 +2031,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def deferDelete = Optional.ofNullable(deferred)
             .orElse(configurationService.getBoolean("projectService.deferredProjectDelete", true))
 
-        if (!alreadyDisabled && !deferDelete) {
-            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup, null)
-        }
-
         Long projectId = currentProjectId(project.name)
         if (projectId == null) {
             return new DeleteResponse(
                 success: false,
                 error: "Cannot delete project ${project.name}: project id is not available.")
+        }
+
+        if (!alreadyDisabled && !deferDelete) {
+            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup, projectId)
         }
 
         if (!alreadyDisabled) {
@@ -2161,6 +2161,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     if (trustedCleanup && lockedState != RdProject.State.DISABLED) {
                         throw new IllegalStateException("Project is not disabled")
                     }
+                    if (lockedState != RdProject.State.DISABLED) {
+                        lockedProject.state = RdProject.State.DISABLED
+                        lockedProject.save(flush: true, failOnError: true)
+                    }
                 }
 
                 //disable scm only after the claimed row is locked
@@ -2214,6 +2218,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 result.error = "Failed to delete project ${project.name}: ${e.message}"
                 result.success = false
             }
+        }
+
+        if (result.success && claimedProjectId != null &&
+            framework.frameworkProjectMgr.isFrameworkProjectRemovalPending(project.name, claimedProjectId)) {
+            result.success = false
+            result.error = "Failed to finish deleting project ${project.name}"
         }
 
         if (result.success) {

@@ -89,6 +89,16 @@ public interface ProjectManager {
     void removeFrameworkProject(String projectName);
 
     /**
+     * Return true when removal of the expected persistent project row has not completed.
+     *
+     * @param projectName name of the project
+     * @param expectedProjectId persistent identity being removed
+     */
+    default boolean isFrameworkProjectRemovalPending(String projectName, Long expectedProjectId) {
+        return false;
+    }
+
+    /**
      * Create a new project if it doesn't, otherwise throw exception
      * @param projectName name of project
      * @param properties config properties
