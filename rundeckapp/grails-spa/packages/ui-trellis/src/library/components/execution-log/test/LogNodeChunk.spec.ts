@@ -33,6 +33,21 @@ jest.mock("../logEntryFlex.vue", () => ({
   },
 }));
 
+// DynamicScroller wraps a RecycleScroller (its "scroller" ref) whose
+// totalSize is the summed height of the measured log lines.
+const RecycleScrollerStub = {
+  name: "RecycleScroller",
+  data() {
+    return { totalSize: 0 };
+  },
+  template: "<div />",
+};
+const DynamicScrollerStub = {
+  name: "DynamicScroller",
+  components: { RecycleScroller: RecycleScrollerStub },
+  template: '<div><RecycleScroller ref="scroller" /></div>',
+};
+
 describe("LogNodeChunk.vue", () => {
   let mockEventBus: typeof EventBus;
 
@@ -86,7 +101,7 @@ describe("LogNodeChunk.vue", () => {
   };
 
   // Setup function to mount the component with given props
-  const createWrapper = (props = {}): VueWrapper<any> => {
+  const createWrapper = (props = {}, stubs = {}): VueWrapper<any> => {
     return shallowMount(LogNodeChunk, {
       props: {
         ...defaultProps,
@@ -97,6 +112,7 @@ describe("LogNodeChunk.vue", () => {
           DynamicScroller: true,
           DynamicScrollerItem: true,
           LogEntryFlex: true,
+          ...stubs,
         },
       },
     });
@@ -285,6 +301,30 @@ describe("LogNodeChunk.vue", () => {
         .fn()
         .mockReturnValue(20);
       expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(true);
+    });
+  });
+
+  describe("content-size", () => {
+    it("emits the measured content height when it changes", async () => {
+      const wrapper = createWrapper(
+        {},
+        {
+          DynamicScroller: DynamicScrollerStub,
+          RecycleScroller: RecycleScrollerStub,
+        },
+      );
+      const recycleScroller = wrapper.findComponent({
+        name: "RecycleScroller",
+      });
+
+      recycleScroller.vm.totalSize = 240;
+      await wrapper.vm.$nextTick();
+      recycleScroller.vm.totalSize = 240;
+      await wrapper.vm.$nextTick();
+      recycleScroller.vm.totalSize = 480;
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("content-size")).toEqual([[240], [480]]);
     });
   });
 
