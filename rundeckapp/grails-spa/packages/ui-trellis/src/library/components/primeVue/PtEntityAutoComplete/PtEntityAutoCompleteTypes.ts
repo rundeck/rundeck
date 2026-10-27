@@ -6,5 +6,8 @@
  * is handed back untouched when the user picks it.
  */
 export interface EntitySuggestion {
-  [key: string]: any;
+  [key: string]: unknown;
 }
+
+/** Resolves display or state data from an entity suggestion. */
+export type EntityFieldResolver<T> = string | ((option: EntitySuggestion) => T);
