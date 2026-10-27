@@ -696,6 +696,67 @@ class ProjectNodeSupportSpec extends Specification {
         release.countDown()
     }
 
+    def "a reload after an interrupted load shares the project's pool with sources still running from that load"() {
+        given: "the first load's sources ignore interruption and keep every pool thread busy"
+        def max = ProjectNodeSupport.MAX_LOAD_THREADS
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def release = new CountDownLatch(1)
+        def track = { Closure<INodeSet> body ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                try {
+                    body.call()
+                } finally {
+                    active.decrementAndGet()
+                }
+            } as Closure<INodeSet>
+        }
+        def stuck = (1..max).collect { int n ->
+            track { ->
+                while (release.count > 0) {
+                    try {
+                        release.await(10, TimeUnit.SECONDS)
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                nodes("s${n}", 'v')
+            }
+        }
+        def quick = (1..max).collect { int n -> track { -> nodes("q${n}", 'v') } }
+        def props = [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): "${max}".toString()]
+        def first = supportWithSources(props, stuck)
+        def second = supportWithSources(props, quick)
+        def results = []
+
+        when: "the first load is interrupted while its sources run, then the project reloads"
+        def firstLoad = Thread.start { first.getNodeSet() }
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == max
+        }
+        firstLoad.interrupt()
+        firstLoad.join(10000)
+        def reload = Thread.start { results << second.getNodeSet() }
+        reload.join(500)
+
+        then: "the reload waits for a pool thread instead of starting more queries"
+        !firstLoad.alive
+        reload.alive
+        active.get() == max
+
+        when:
+        release.countDown()
+        reload.join(10000)
+
+        then:
+        !reload.alive
+        results[0].nodeNames.size() == max
+        maxActive.get() == max
+
+        cleanup:
+        release.countDown()
+    }
+
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
         given:
         def firstThread = null

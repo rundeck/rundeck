@@ -74,6 +74,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     // ponytail: a load racing a project delete can re-add that project's pool, which keeps an idle executor (no
     // threads) in the map; remove pools after their last load if deleted projects ever accumulate
     private static final ConcurrentMap<String, ThreadPoolExecutor> LOAD_POOLS = new ConcurrentHashMap<>();
+    /**
+     * Set while a pool thread queries a source, so a node load started from that query can be detected
+     */
+    private static final ThreadLocal<Boolean> IN_SOURCE_QUERY = ThreadLocal.withInitial(() -> false);
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -234,7 +238,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
                 r -> {
-                    Thread t = new LoadThread(r, "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet());
+                    Thread t = new Thread(r, "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet());
                     t.setDaemon(true);
                     return t;
                 }
@@ -257,15 +261,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * Thread of a project's load pool, so a node load started from a node source query can be detected
-     */
-    private static final class LoadThread extends Thread {
-        LoadThread(final Runnable target, final String name) {
-            super(target, name);
-        }
-    }
-
-    /**
      * Query all sources, in parallel if more than one thread is configured, and pass each result to the consumer in
      * source order. Sources are submitted in a sliding window of the configured size, read in order, so at most that
      * many results are held at once even when an early source is slow. Parallel loads use the project's own pool;
@@ -283,7 +278,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     {
         final int total = sources.size();
         final int threads = Math.min(Math.min(getLoadThreads(), MAX_LOAD_THREADS), total);
-        if (threads <= 1 || Thread.currentThread() instanceof LoadThread) {
+        if (threads <= 1 || IN_SOURCE_QUERY.get()) {
             for (int i = 0; i < total; i++) {
                 consumer.accept(i, querySource(sources.get(i)));
             }
@@ -368,9 +363,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
+        IN_SOURCE_QUERY.set(true);
         try {
             return querySource(nodesSource);
         } finally {
+            IN_SOURCE_QUERY.remove();
             thread.setContextClassLoader(previous);
         }
     }
