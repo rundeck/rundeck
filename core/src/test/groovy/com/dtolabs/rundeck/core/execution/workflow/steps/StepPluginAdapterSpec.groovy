@@ -9,8 +9,10 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -320,6 +322,78 @@ class StepPluginAdapterSpec extends Specification {
         // nothing should have been captured into the output context
         wrap.outputResult == 'SET_BEFORE_FAILURE'
         outputContext.getSharedContext().getData(ContextView.step(4)) == null
+    }
+
+    def "failed step result keeps the StepException failure data"() {
+        given:
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> new BaseDataContext([option: [:]])
+            getFrameworkProject() >> PROJECT_NAME
+            getExecutionListener() >> Mock(ExecutionListener)
+        }
+        def adapter = new StepPluginAdapter(new Test7Plugin())
+        def item = new TestExecItem(type: 'atype', stepConfiguration: [:], label: 'a label')
+
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        !result.isSuccess()
+        result.failureReason == NodeStepFailureReason.NonZeroResultCode
+        result.failureData[NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE] == 1
+    }
+
+    /**
+     * An error handler step (e.g. a Global Variable step exporting the exit code to a parent job) receives
+     * ${result.resultCode} expanded from the failed step's result context.
+     */
+    def "error handler step config expands result.resultCode #resultData"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def dataContext = new BaseDataContext([result: resultData])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), dataContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> dataContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def plugin = Mock(StepPlugin)
+        def wrap = new TestPlugin(
+                impl: plugin,
+                description: DescriptionBuilder.builder()
+                        .name('export-var')
+                        .property(PropertyBuilder.builder().string('value').build())
+                        .build()
+        )
+        def adapter = new StepPluginAdapter(wrap)
+        def item = new TestExecItem(type: 'export-var', stepConfiguration: [value: '${result.resultCode}'], label: 'handler')
+
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        1 * plugin.executeStep(!null as PluginStepContext, [value: expected])
+        result.isSuccess()
+
+        where:
+        resultData                                       || expected
+        [resultCode: '1', reason: 'NonZeroResultCode']   || '1'
+        [reason: 'NonZeroResultCode']                    || ''
+    }
+
+    @Plugin(name = "test7", service = ServiceNameConstants.WorkflowStep)
+    static class Test7Plugin implements StepPlugin {
+        @Override
+        void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
+            throw new StepException(
+                    "Script result code was: 1",
+                    NodeStepFailureReason.NonZeroResultCode,
+                    [(NodeExecutorResultImpl.FAILURE_DATA_RESULT_CODE): 1]
+            )
+        }
     }
 
     @Plugin(name = "test5", service = ServiceNameConstants.WorkflowNodeStep)

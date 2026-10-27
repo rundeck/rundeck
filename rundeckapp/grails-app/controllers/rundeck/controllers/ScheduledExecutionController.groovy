@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -563,6 +564,9 @@ Since: v53''',
         }
 
         def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution)
+        // whether the trigger now skips the run, rather than only warning about it: the
+        // wording differs, so the view needs it alongside the validity flag
+        def executionAclEnforced = jobExecutionAclMetadataComponent.isExecutionAclEnforced()
         // Offer the pre-filled ACL editor only to someone who could actually save it
         def executionAclFixPolicy = null
         // with no saved user there is nobody to grant access to: re-saving the job is the
@@ -579,6 +583,7 @@ Since: v53''',
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
                 executionAclValid: executionAclValid,
+                executionAclEnforced: executionAclEnforced,
                 executionAclFixPolicy: executionAclFixPolicy,
                 isReferenced: isReferenced,
                 parentList: parentList,
@@ -2967,6 +2972,9 @@ Since: v56''',
         params.request = request
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
+        //`params` here is the bound request params map, and createExecutionAndPrep now honors
+        //an executionType found in it. Pin it so a request parameter can't type the execution.
+        params.executionType = ExecutionTypes.SCHEDULED
 
         if (runAdhocRequest.asUser) {
             //authorize RunAs User

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.app.api.homeSummary.HomeSummary
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
@@ -649,6 +650,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
         executionAclValid: executionAclValid,
+        executionAclEnforced: includeExecutionAclValid ? jobExecutionAclMetadataComponent.isExecutionAclEnforced() : false,
         scheduledJobs: allScheduled,
         nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,
@@ -3705,6 +3707,11 @@ if executed in cluster mode.
 
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
             query.jobIdFilter = params.jobIdFilter
+        }
+
+        //Ad hoc steps have their own page and are left out of the generic running list
+        if (request.api_version >= ApiVersions.V60) {
+            query.excludeExecutionTypeFilter = [ExecutionTypes.ADHOC_STEP]
         }
 
         def results = nowrunning(query)

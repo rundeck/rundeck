@@ -29,6 +29,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles teleported overlay content -->
 <style>
 .popover-content {
   max-height: 50vh;

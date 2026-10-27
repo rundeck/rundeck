@@ -1276,6 +1276,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 .activity-list .table {
   margin-bottom: 0;

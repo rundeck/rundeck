@@ -76,11 +76,22 @@
           <%-- label-style() leaves label text to the ambient font colour, which is white in
                the dark theme and would sit on the orange badge at 2.6:1. This token is dark
                in both themes, as .label-muted already relies on. The icon inherits it. --%>
+          <%-- enforced means the trigger already skips the run, so the wording says so
+               rather than warning about something a later release might do --%>
+          <g:set var="executionAclBadgeTitle"
+                 value="${scheduledExecution.user
+                         ? message(
+                                 code: executionAclEnforced
+                                         ? 'job.execution.acl.invalid.blocked.warning.title'
+                                         : 'job.execution.acl.invalid.warning.title',
+                                 args: [scheduledExecution.user])
+                         : message(
+                                 code: executionAclEnforced
+                                         ? 'job.execution.acl.missing.owner.blocked.warning.title'
+                                         : 'job.execution.acl.missing.owner.warning.title')}"/>
           <span class="label label-warning has_tooltip" style="color: var(--grey-900)"
                 data-testid="execution-acl-warning-badge" data-toggle="tooltip"
-                data-placement="auto bottom" title="${scheduledExecution.user
-                        ? message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])
-                        : message(code: 'job.execution.acl.missing.owner.warning.title')}">
+                data-placement="auto bottom" title="${executionAclBadgeTitle}">
               <i class="glyphicon glyphicon-warning-sign"></i>
               <span class="detail"><g:message code="job.execution.acl.invalid.warning.label"/></span>
           </span>

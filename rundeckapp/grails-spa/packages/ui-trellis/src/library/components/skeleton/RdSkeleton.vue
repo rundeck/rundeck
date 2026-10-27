@@ -2,6 +2,7 @@
 import { h, defineComponent, VNode } from "vue";
 
 export default defineComponent({
+  name: "RdSkeleton",
   props: {
     loading: { default: false },
     type: { default: "list" },
@@ -16,12 +17,6 @@ export default defineComponent({
       const slot = this.$slots.default;
       if (!slot) {
         return h("div");
-      } else if (Array.isArray(slot)) {
-        if (slot.length == 1) {
-          return slot[0];
-        } else {
-          return h("div", slot);
-        }
       } else {
         return slot();
       }
@@ -46,8 +41,6 @@ export default defineComponent({
   },
 });
 </script>
-
-<style lang="scss"></style>
 
 <style scoped lang="scss">
 :root {

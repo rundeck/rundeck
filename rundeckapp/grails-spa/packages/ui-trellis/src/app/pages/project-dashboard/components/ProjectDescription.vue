@@ -12,7 +12,7 @@
 
 <script>
 export default {
-  name: "Description",
+  name: "ProjectDescription",
   props: ["project"],
   data() {
     return {};

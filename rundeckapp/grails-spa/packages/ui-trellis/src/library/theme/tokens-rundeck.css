@@ -6,11 +6,13 @@
   --colors-blue-600: #1248bd;
   --colors-blue-600-original: #003f9c;
   --colors-gray-100: #fafafa;
+  --colors-gray-150: #f4f4f5;
   --colors-gray-300: #e4e4e7;
   --colors-gray-300-original: #cbd5e0;
   --colors-gray-400: #d4d4d8;
   --colors-gray-500: #a1a1aa;
   --colors-gray-600: #71717a;
+  --colors-gray-650: #52525b;
   --colors-gray-800-original: #1a202c;
   --colors-gray-800: #27272a;
   --colors-gray-900: #18181b;
@@ -26,6 +28,9 @@
   --colors-secondaryBackgroundOnLight: #f7fafc;
   --colors-cardNumber: #edf2f7;
   --colors-surface-200: #eeeeee;
+
+  /* Divider (Figma divider/color) */
+  --colors-divider: #dee2e6;
 
   /* Menu colors */
   --colors-menuitem-color: #495057;

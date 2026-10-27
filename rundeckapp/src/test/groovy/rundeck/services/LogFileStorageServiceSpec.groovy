@@ -642,6 +642,30 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         'state.json' | true      | '/tmp/test/logs/blah/'                  | '.state.json.part'
     }
 
+    /**
+     * Regression test for RUN-4950 / HackerOne #3960872. See PR description for details.
+     */
+    def "getFileForExecutionFiletype ignores stored outputfilepath pointing at another project's log dir"() {
+        given:
+        def exec = new Execution(dateStarted: new Date(),
+                                 dateCompleted: null,
+                                 user: 'user1',
+                                 project: 'sandbox',
+                                 serverNodeUUID: null,
+                                 outputfilepath: '/tmp/test/logs/rundeck/othersecretproject/run/logs/999.rdlog'
+        ).save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProperties() >> (['framework.logs.dir': '/tmp/test/logs'] as Properties)
+        }
+
+        when:
+        def result = service.getFileForExecutionFiletype(exec, 'rdlog', true, true)
+
+        then:
+        result == new File("/tmp/test/logs/rundeck/sandbox/run/logs/${exec.id}.rdlog.part")
+    }
+
     static interface TestFilePlugin extends ExecutionFileStoragePlugin, ExecutionFileStorageOptions {
 
     }

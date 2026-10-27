@@ -1044,6 +1044,14 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         def e = createExecution()
         e.outputfilepath = "/test/file/path.rdlog"
 
+        //stored path is outside the configured logs root entirely (a legacy custom storage
+        //location), so the cross-project containment check must not reject it
+        def fmock = new MockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/legacy-logs')
+        }
+        service.frameworkService = fmock.proxyInstance()
+
         def file = service.getFileForExecutionFiletype(e, "rdlog", true, false)
         assertNotNull(file)
         assertEquals(file, new File(e.outputfilepath))
@@ -1060,6 +1068,14 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
         def e = createExecution()
         e.outputfilepath = "/test/file/path.rdlog"
+
+        //stored path is outside the configured logs root entirely (a legacy custom storage
+        //location), so the cross-project containment check must not reject it
+        def fmock = new MockFor(FrameworkService)
+        fmock.demand.getFrameworkProperties() {->
+            PropertyResolverFactory.instanceRetriever('framework.logs.dir': '/tmp/legacy-logs')
+        }
+        service.frameworkService = fmock.proxyInstance()
 
         def file = service.getFileForExecutionFiletype(e, "json.state", true, false)
         assertNotNull(file)
