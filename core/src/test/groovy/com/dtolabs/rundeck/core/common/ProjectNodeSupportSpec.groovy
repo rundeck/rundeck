@@ -660,6 +660,42 @@ class ProjectNodeSupportSpec extends Specification {
         seen[2..3].every { it.is(secondLoader) }
     }
 
+    def "a load waiting on a running source that ignores interruption finishes when the project's pool is stopped"() {
+        given:
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def loaders = [
+                { ->
+                    started.countDown()
+                    //ignores interruption, like a source blocked on a monitor
+                    while (release.count > 0) {
+                        try {
+                            release.await(10, TimeUnit.SECONDS)
+                        } catch (InterruptedException ignored) {
+                        }
+                    }
+                    nodes('a', '1')
+                } as Closure<INodeSet>,
+                { -> nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        started.await(10, TimeUnit.SECONDS)
+        ProjectNodeSupport.removeLoadPool(loadProject)
+        loading.join(10000)
+
+        then:
+        !loading.alive
+        results.size() == 1
+        support.getResourceModelSourceExceptionsMap().keySet() == ['1.source', '2.source'] as Set
+
+        cleanup:
+        release.countDown()
+    }
+
     def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
         given:
         def firstThread = null

@@ -41,6 +41,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -304,7 +305,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                     final LoadedResourceModelSource source = sources.get(next++);
                     window.add(pool.submit(() -> querySourceWithLoader(source, loader)));
                 }
-                consumer.accept(consumed, window.peek().get());
+                consumer.accept(consumed, awaitResult(window.peek(), pool));
                 window.poll();
                 consumed++;
             }
@@ -327,6 +328,31 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             window.forEach(f -> f.cancel(true));
+        }
+    }
+
+    /**
+     * Wait for a source query, failing if the pool is stopped (the project was deleted) while the query is still
+     * running, so a source that ignores interruption cannot block the load
+     *
+     * @param future source query
+     * @param pool   pool running the query
+     *
+     * @return query result
+     *
+     * @throws CancellationException if the query was cancelled or the pool was stopped
+     */
+    private static SourceResult awaitResult(final Future<SourceResult> future, final ThreadPoolExecutor pool)
+            throws InterruptedException, ExecutionException
+    {
+        while (true) {
+            try {
+                return future.get(1, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                if (pool.isShutdown()) {
+                    throw new CancellationException("Node source load pool was stopped");
+                }
+            }
         }
     }
 
