@@ -2005,7 +2005,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     @CompileStatic(TypeCheckingMode.SKIP)
     private Long currentProjectId(String name) {
         try {
-            return Project.findByName(name)?.id as Long
+            return Project.withNewTransaction {
+                Project.findByName(name)?.id as Long
+            }
         } catch (Throwable ignored) {
             return null
         }

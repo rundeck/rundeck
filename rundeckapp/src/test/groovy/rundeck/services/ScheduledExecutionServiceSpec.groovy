@@ -5280,6 +5280,28 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             deleteExecutions << [true, false]
     }
 
+    def "post-commit schedule failure does not skip remaining delete callbacks"() {
+        given:
+            def job = new ScheduledExecution(createJobParams()).save()
+            def authContext = Mock(AuthContext)
+            service.executionServiceBean = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService)
+            service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+            service.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+            service.jobStatsDataProvider = new GormJobStatsDataProvider()
+
+        when:
+            def result = service.deleteScheduledExecution(job, false, authContext, 'bob')
+
+        then:
+            result.success
+            1 * service.jobSchedulerService.deleteJobSchedule(_, _) >> {
+                throw new RuntimeException('forced schedule failure')
+            }
+            1 * service.rundeckJobDefinitionManager.afterDelete(job, authContext)
+    }
+
     @Unroll
     def "delete scheduled execution running"() {
         given:

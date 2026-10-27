@@ -1426,11 +1426,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(success){
             afterCommit {
                 rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
-
+            }
+            afterCommit {
                 def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
                 notify('jobChanged', event)
-
-                if(auditEventsService) {
+            }
+            if(auditEventsService) {
+                afterCommit {
                     auditEventsService.eventBuilder()
                         .setResourceType(ResourceTypes.JOB)
                         .setActionType(ActionTypes.DELETE)
@@ -1453,11 +1455,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 void afterCommit() {
-                    action.call()
+                    runPostCommitAction(action)
                 }
             })
         } else {
+            runPostCommitAction(action)
+        }
+    }
+
+    private void runPostCommitAction(Closure action) {
+        try {
             action.call()
+        } catch (Throwable t) {
+            log.error("Post-commit job deletion action failed: ${t.message}", t)
         }
     }
     /**

@@ -20,6 +20,31 @@ import java.util.concurrent.atomic.AtomicInteger
 @Integration
 class ProjectDeleteLockIntegrationSpec extends Specification {
 
+    def "project identity lookup opens its own transaction without a bound session"() {
+        given:
+        def project = Project.withNewTransaction {
+            new Project(name: 'identity-session-project', state: RdProject.State.DISABLED)
+                .save(flush: true, failOnError: true)
+        }
+        def method = ProjectService.getDeclaredMethod('currentProjectId', String)
+        method.accessible = true
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        def foundId = executor.submit({
+            method.invoke(new ProjectService(), 'identity-session-project')
+        } as Callable<Long>).get(30, TimeUnit.SECONDS)
+
+        then:
+        foundId == project.id
+
+        cleanup:
+        executor.shutdownNow()
+        Project.withNewTransaction {
+            Project.findByName('identity-session-project')?.delete(flush: true)
+        }
+    }
+
     def "overlapping cleanup waits for row deletion and skips name-based work"() {
         given:
         def projectRow = Project.withNewTransaction {
