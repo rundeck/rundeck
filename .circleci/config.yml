@@ -1155,9 +1155,3 @@ workflows:
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
-      - test-gradle-functional:
-          name: T Selenium Next UI Mode (host JDK 25)
-          gradle-task: nextUiModeSeleniumCoreTest
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/nextUiMode/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
-          <<: *require-build-jre-17

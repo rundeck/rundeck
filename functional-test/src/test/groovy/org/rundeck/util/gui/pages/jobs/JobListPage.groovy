@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.jobs
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.Cookie
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -209,6 +210,21 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     WebElement getBodyNextUI(){
         el bodyNextUIBy
+    }
+
+    /**
+     * Set the nextUi preference cookie for the current site. A page must already be loaded on the Rundeck host.
+     * @param enabled cookie value
+     */
+    void setNextUiCookie(boolean enabled) {
+        context.driver.manage().addCookie(new Cookie('nextUi', enabled.toString(), '/'))
+    }
+
+    /**
+     * Remove the nextUi preference cookie.
+     */
+    void clearNextUiCookie() {
+        context.driver.manage().deleteCookieNamed('nextUi')
     }
 
     /**
