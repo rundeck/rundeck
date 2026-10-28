@@ -14,7 +14,7 @@ class NextUiInterceptor {
 
     NextUiInterceptor() {
         // Single source of truth for all nextUi-capable pages
-        match(controller: 'scheduledExecution', action: '(update|save|edit|create|copy|createFromExecution)')
+        match(controller: 'scheduledExecution', action: '(update|save|edit|create|copy|createFromExecution|uploadPost)')
         match(controller: 'menu', action: '(jobs|home)')
         match(controller: 'framework', action: 'adhoc')
         match(controller: 'user', action: 'list')
