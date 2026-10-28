@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution
 
+import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
@@ -82,6 +83,70 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         markerSeenByCallback
         executedWith != null
         !hasMarker(executedWith)
+    }
+
+    def "removing the marker keeps the plugin control service the context was supplied with"() {
+        // rebuilding a context recreates a project-only plugin control service, which would drop a custom
+        // one supplied by the caller or by a lifecycle callback
+        given:
+        def customService = Mock(PluginControlService)
+        StepExecutionContext executedWith = null
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                ExecutionContextImpl.builder(contextWithMarker())
+                                    .pluginControlService(customService)
+                                    .build(),
+                null,
+                null
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith != null
+        !hasMarker(executedWith)
+        executedWith.pluginControlService.is(customService)
+    }
+
+    def "a context without the marker is handed to the workflow as it is"() {
+        given:
+        StepExecutionContext context = ExecutionContextImpl.builder().frameworkProject("prj").build()
+        StepExecutionContext executedWith = null
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                context,
+                null,
+                null
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith.is(context)
     }
 
     def "the error handler marker is removed before the workflow runs when there is no lifecycle handler"() {
