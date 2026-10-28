@@ -2887,7 +2887,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
      * both must render the next UI jobs view, anything else the legacy view.
      */
     @Unroll
-    def "jobs renders next ui view when params.nextUi is #nextUi"() {
+    def "jobs view for params.nextUi=#nextUi"() {
         given:
         controller.configurationService = Mock(ConfigurationService)
         controller.scmService = Mock(ScmService)
@@ -2929,7 +2929,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
      * Home must honor the boolean params.nextUi set by NextUiInterceptor.
      */
     @Unroll
-    def "home renders next ui view when params.nextUi is #nextUi"() {
+    def "home view for params.nextUi=#nextUi"() {
         given:
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
@@ -2953,7 +2953,6 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         'false' | false
         null    | false
     }
-
 
     @Unroll
     def "test api executions running list all projects with a valid project"() {
