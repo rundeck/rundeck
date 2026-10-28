@@ -140,6 +140,62 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(updatedFieldValue).toBe("Updated Value");
   });
 
+  describe("syncs on every input event (RUN-5022)", () => {
+    // setValue() fires both `input` and `change`, which would hide a missing
+    // `input` listener, so these tests trigger `input` alone.
+    const typeInto = async (input: any, text: string) => {
+      (input.element as HTMLInputElement).value = text;
+      await input.trigger("input");
+    };
+    const lastEmitted = (wrapper: VueWrapper): string => {
+      const emitted = wrapper.emitted("update:modelValue") as string[][];
+      return emitted[emitted.length - 1][0];
+    };
+
+    it("emits and updates the hidden input on `input`, without a change event", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+      const input = wrapper.find('[data-testid="field-input-0"]');
+
+      await typeInto(input, "typed");
+
+      expect(JSON.parse(lastEmitted(wrapper))[0].value).toBe("typed");
+      const hidden = wrapper.find('input[type="hidden"]');
+      expect(
+        JSON.parse((hidden.element as HTMLInputElement).value)[0].value,
+      ).toBe("typed");
+    });
+
+    it("keeps every character across rapid sequential input events", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+      const input = wrapper.find('[data-testid="field-input-0"]');
+      const text = "abcdefghij0123456789";
+
+      for (let i = 1; i <= text.length; i++) {
+        await typeInto(input, text.slice(0, i));
+      }
+
+      expect(JSON.parse(lastEmitted(wrapper))[0].value).toBe(text);
+      expect((wrapper.vm as any).customFields[0].value).toBe(text);
+      expect((input.element as HTMLInputElement).value).toBe(text);
+      expect(wrapper.emitted("update:modelValue")?.length).toBe(text.length);
+    });
+
+    it("does not reset typed text when the parent echoes back the latest emit", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+      const input = wrapper.find('[data-testid="field-input-0"]');
+
+      await typeInto(input, "abc");
+      await wrapper.setProps({ fields: lastEmitted(wrapper) });
+      await flushPromises();
+
+      expect((wrapper.vm as any).customFields[0].value).toBe("abc");
+      expect((input.element as HTMLInputElement).value).toBe("abc");
+    });
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin

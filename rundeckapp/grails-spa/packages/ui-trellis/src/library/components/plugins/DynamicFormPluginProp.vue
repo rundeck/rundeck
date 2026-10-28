@@ -19,6 +19,7 @@
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
+            @input="changeField()"
             @change="changeField()"
             :data-testid="'field-input-' + index"
           />
@@ -359,6 +360,11 @@ export default defineComponent({
     changeField() {
       this.refreshPlugin();
     },
+    /**
+     * Publishes the current fields as JSON to the hidden form input and to the
+     * parent. Called on every input event (so a save that fires without a
+     * blur still sees the typed value), on change, and on add/remove.
+     */
     refreshPlugin() {
       const fieldsJson = JSON.stringify(this.customFields);
       const hiddenFieldInput = this.$refs.hiddenFieldInput as HTMLInputElement;
