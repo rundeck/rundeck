@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowItemErrorHandlerContext
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import spock.lang.Specification
 
 class WorkflowExecutionServiceThreadSpec extends Specification {
@@ -83,6 +84,47 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         markerSeenByCallback
         executedWith != null
         !hasMarker(executedWith)
+    }
+
+    def "marker removal from a context supplied by a lifecycle callback keeps its other components and plugin control service"() {
+        given:
+        def customService = Mock(PluginControlService)
+        StepExecutionContext callbackContext = ExecutionContextImpl.builder(contextWithMarker())
+                .addComponent("OtherComponent", "kept", String)
+                .pluginControlService(customService)
+                .build()
+        StepExecutionContext executedWith = null
+        def lifecycleHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeJobStarts(_, _) >> Optional.of(Mock(ExecutionLifecycleStatus) {
+                getExecutionContext() >> callbackContext
+            })
+        }
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                contextWithMarker(),
+                null,
+                lifecycleHandler
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith != null
+        !hasMarker(executedWith)
+        executedWith.componentForType(String).get() == "kept"
+        executedWith.pluginControlService.is(customService)
     }
 
     def "removing the marker keeps the plugin control service the context was supplied with"() {
