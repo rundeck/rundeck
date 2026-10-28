@@ -997,6 +997,12 @@ workflows:
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium Next UI Mode
+          gradle-task: nextUiModeSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/nextUiMode/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
 
       # Row 4: Packaging, security scans, and validation
       # Nothing here matters if build and tests don't pass.
@@ -1147,5 +1153,11 @@ workflows:
           name: T Selenium Alpha UI (host JDK 25)
           gradle-task: alphaUiSeleniumCoreTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium Next UI Mode (host JDK 25)
+          gradle-task: nextUiModeSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/nextUiMode/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
