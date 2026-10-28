@@ -290,10 +290,9 @@ describe("LogNodeChunk.vue", () => {
     const wrapper = createWrapper({ follow: false });
     const { el, scrollToBottom } = stubScroller(wrapper);
 
-    (wrapper.vm as any).$options.watch.entries.call(wrapper.vm, [
-      ...mockEntries,
-      extraEntry,
-    ]);
+    await wrapper.setProps({
+      entries: [...mockEntries, extraEntry],
+    });
     await wrapper.vm.$nextTick();
 
     expect(scrollToBottom).not.toHaveBeenCalled();
@@ -304,10 +303,9 @@ describe("LogNodeChunk.vue", () => {
     const wrapper = createWrapper({ follow: true });
     const { el, scrollToBottom } = stubScroller(wrapper);
 
-    (wrapper.vm as any).$options.watch.entries.call(wrapper.vm, [
-      ...mockEntries,
-      extraEntry,
-    ]);
+    await wrapper.setProps({
+      entries: [...mockEntries, extraEntry],
+    });
     await wrapper.vm.$nextTick();
 
     expect(scrollToBottom).not.toHaveBeenCalled();
@@ -316,10 +314,10 @@ describe("LogNodeChunk.vue", () => {
 
   it("stops pinning after follow is turned off", async () => {
     const wrapper = createWrapper({ follow: true });
-    await wrapper.setProps({ follow: false });
     const { el, scrollToBottom } = stubScroller(wrapper);
 
-    (wrapper.vm as any).scrollToLine();
+    await wrapper.setProps({ follow: false });
+    await wrapper.vm.$nextTick();
 
     expect(scrollToBottom).not.toHaveBeenCalled();
     expect(el.scrollTop).toBe(120);
@@ -327,10 +325,9 @@ describe("LogNodeChunk.vue", () => {
 
   it("pins to the bottom when follow is turned on", async () => {
     const wrapper = createWrapper({ follow: false });
-    await wrapper.setProps({ follow: true });
     const { el, scrollToBottom } = stubScroller(wrapper);
 
-    (wrapper.vm as any).$options.watch.follow.call(wrapper.vm, true);
+    await wrapper.setProps({ follow: true });
     await wrapper.vm.$nextTick();
 
     expect(scrollToBottom).not.toHaveBeenCalled();
