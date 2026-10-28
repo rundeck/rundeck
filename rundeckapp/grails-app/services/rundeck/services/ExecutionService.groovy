@@ -1993,8 +1993,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         //Any WorkflowItemErrorHandlerContext marker on origContext is intentionally kept: it describes how
         //THIS job is being invoked by its caller (as an error handler), and execution lifecycle components
-        //read it when the job starts. They are responsible for scoping it to that job start, so it does not
-        //leak into the job's own internal steps, which are not error handlers of anything.
+        //read it when the job starts. WorkflowExecutionServiceThread removes it after those callbacks, so it
+        //does not leak into the job's own internal steps, which are not error handlers of anything.
         return builder.build()
     }
 
