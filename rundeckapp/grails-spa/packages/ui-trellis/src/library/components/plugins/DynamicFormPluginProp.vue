@@ -371,16 +371,13 @@ export default defineComponent({
       this.refreshPlugin();
     },
     /**
-     * Synchronizes generated JSON with the appropriate submitted input.
-     *
-     * Legacy GSP callers supply an external target through element; SPA
-     * callers preserve the RUN-4764 template-ref input behavior.
+     * Synchronizes generated JSON with the component-owned submitted input.
+     * Legacy GSP callers receive the value through the parent event handler.
      */
     refreshPlugin(): void {
       const fieldsJson = JSON.stringify(this.customFields);
-      const inputElement = this.element
-        ? (document.getElementById(this.element) as HTMLInputElement | null)
-        : (this.$refs.hiddenFieldInput as HTMLInputElement | undefined);
+      const inputElement = this.$refs.hiddenFieldInput as
+        HTMLInputElement | undefined;
       if (inputElement) {
         inputElement.value = fieldsJson;
       }

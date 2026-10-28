@@ -9,6 +9,10 @@ const els = document.body.getElementsByClassName("dynamic-form-vue");
 
 for (let i = 0; i < els.length; i++) {
   const el = els[i];
+  const externalInputId = el.attributes.element.value || "";
+  const externalInput = externalInputId
+    ? document.getElementById(externalInputId)
+    : null;
 
   const i18n = initI18n();
 
@@ -21,6 +25,11 @@ for (let i = 0; i < els.length; i++) {
         hasOptions: el.attributes.hasOptions.value || "",
         element: el.attributes.element.value || "",
         name: el.attributes.name.value || "",
+        "onUpdate:modelValue": (value) => {
+          if (externalInput) {
+            externalInput.value = value;
+          }
+        },
       });
     },
   });

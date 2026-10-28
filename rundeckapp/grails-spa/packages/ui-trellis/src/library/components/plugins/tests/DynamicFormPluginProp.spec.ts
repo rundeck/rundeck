@@ -156,14 +156,8 @@ describe("DynamicFormPluginProp.vue", () => {
     );
   });
 
-  it("updates the legacy host input when a field value changes", async () => {
-    const hostInput = document.createElement("input");
-    hostInput.id = "legacy-dynamic-form-input";
-    hostInput.name = "executionLifecyclePlugins.key.configMap.userRoiData";
-    hostInput.type = "hidden";
-    document.body.appendChild(hostInput);
-
-    const wrapper = createWrapper({ element: hostInput.id });
+  it("emits the generated value for the legacy host integration", async () => {
+    const wrapper = createWrapper({ element: "legacy-dynamic-form-input" });
     await flushPromises();
     expect(
       wrapper.find('[data-testid="dynamic-form-value-input"]').exists(),
@@ -173,14 +167,9 @@ describe("DynamicFormPluginProp.vue", () => {
       .setValue("Updated Value");
     await flushPromises();
 
-    expect(hostInput.value).toBe(
-      '[{"key":"field1","label":"Option1","value":"Updated Value","desc":"Description1"}]',
-    );
     expect(wrapper.emitted("update:modelValue")?.[0]).toEqual([
       '[{"key":"field1","label":"Option1","value":"Updated Value","desc":"Description1"}]',
     ]);
-
-    hostInput.remove();
   });
 
   describe("regression for RUN-4764", () => {
