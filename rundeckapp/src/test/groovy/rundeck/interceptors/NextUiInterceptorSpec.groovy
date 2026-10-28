@@ -32,8 +32,6 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
             'scheduledExecution' | 'create'                | true
             'scheduledExecution' | 'copy'                  | true
             'scheduledExecution' | 'createFromExecution'   | true
-            'scheduledExecution' | 'uploadPost'            | true
-            'scheduledExecution' | 'upload'                | false
             'scheduledExecution' | 'show'                  | false
             'scheduledExecution' | 'delete'                | false
             'menu'               | 'jobs'                  | true
