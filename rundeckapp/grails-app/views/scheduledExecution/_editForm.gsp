@@ -16,7 +16,7 @@
 
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
-<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+<g:set var="uiType" value="${params.boolean('nextUi')?'next':params.legacyUi?'legacy':'current'}"/>
 <g:set var="isAdmin" value="${auth.resourceAllowedTest(
         type: AuthConstants.TYPE_RESOURCE,
         kind: AuthConstants.TYPE_SYSTEM,
