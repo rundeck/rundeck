@@ -1,8 +1,6 @@
 package org.rundeck.tests.functional.selenium.nextUiMode
 
 import org.rundeck.util.annotations.NextUiModeSeleniumCoreTest
-import org.rundeck.util.annotations.UiModeFlag
-import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
@@ -12,13 +10,10 @@ import org.rundeck.util.gui.pages.login.LoginPage
  * (Gradle task nextUiModeSeleniumCoreTest). Covers the jobs page with Next UI
  * enabled globally and no nextUi cookie, where the layout and the controller
  * previously picked different templates and showed two job list headers.
+ * No @UiModeFlag: the UI mode is fixed by the container, not varied per test,
+ * so there is no UI_MODES or where: block to pair it with.
  */
 @NextUiModeSeleniumCoreTest
-@UiModeFlag(
-    featureName = "next-ui-mode-global",
-    status      = UiModeStatus.NEXT_UI,
-    description = "Enabled by the global nextUiMode feature flag, not a URL param or cookie"
-)
 class NextUiModeJobsSpec extends SeleniumBase {
 
     static final String PROJECT_NAME = 'next_ui_mode_jobs'
