@@ -10,7 +10,7 @@ trait JobStatsTrait {
     abstract List<WebElement> els(By by)
 
     static By nextUiJobStatsBy = By.cssSelector('#_job_stats_main .vue-ui-socket')
-    static By currentUiJobStatsBy = By.cssSelector('#_job_stats_main .jobstats')
+    static By currentUiJobStatsBy = By.cssSelector('#_job_stats_main > .jobstats')
 
     /**
      * @return true if the Next UI socket placeholder is rendered in the job stats section
