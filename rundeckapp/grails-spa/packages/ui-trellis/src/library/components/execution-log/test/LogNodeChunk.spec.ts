@@ -102,14 +102,55 @@ describe("LogNodeChunk.vue", () => {
     });
   };
 
+  const pendingFrames = new Map<number, FrameRequestCallback>();
+  let nextFrameId = 0;
+
+  const installFrameMock = () => {
+    pendingFrames.clear();
+    nextFrameId = 0;
+    jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      nextFrameId += 1;
+      pendingFrames.set(nextFrameId, cb);
+      return nextFrameId;
+    });
+    jest
+      .spyOn(window, "cancelAnimationFrame")
+      .mockImplementation((id: number) => {
+        pendingFrames.delete(id);
+      });
+  };
+
+  const flushFrames = (max = 12) => {
+    let steps = 0;
+    while (pendingFrames.size > 0 && steps < max) {
+      const next = pendingFrames.entries().next().value as
+        | [number, FrameRequestCallback]
+        | undefined;
+      if (!next) {
+        break;
+      }
+      pendingFrames.delete(next[0]);
+      next[1](0);
+      steps += 1;
+    }
+    return steps;
+  };
+
+  const settlePin = async (wrapper: VueWrapper<any>) => {
+    await wrapper.vm.$nextTick();
+    flushFrames();
+  };
+
   beforeEach(() => {
     mockEventBus = {
       on: jest.fn(),
       emit: jest.fn(),
     } as unknown as typeof EventBus;
+    installFrameMock();
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
@@ -251,19 +292,143 @@ describe("LogNodeChunk.vue", () => {
     expect(wrapper.emitted("line-select")?.[0]).toEqual([3]);
   });
 
-  it.each([true, false])(
-    "scrolls to bottom when follow is %p",
-    (follow: boolean) => {
-      const scrollToBottomMock = jest.fn();
-      const wrapper = createWrapper({ follow });
+  /**
+   * Point the scroller ref at a plain element so tests can read scrollTop.
+   */
+  const stubScroller = (
+    wrapper: VueWrapper<any>,
+    scrollTop = 120,
+    scrollHeight = 4000,
+  ) => {
+    const scroller = (wrapper.vm as any).$refs.scroller;
+    const scrollToBottom = jest.fn();
+    scroller.scrollToBottom = scrollToBottom;
+    scroller.$_undefinedSizes = 0;
+    scroller.getItemSize = jest.fn().mockReturnValue(20);
+    const el = scroller.$el as HTMLElement;
+    Object.defineProperty(el, "scrollHeight", {
+      configurable: true,
+      get: () => scrollHeight,
+    });
+    el.scrollTop = scrollTop;
+    return { el, scrollToBottom, scroller };
+  };
 
-      // Mock the $refs.scroller
-      (wrapper.vm as any).$refs.scroller.scrollToBottom = scrollToBottomMock;
+  it.each([true, false])(
+    "pins the viewport to the bottom when follow is %p",
+    async (follow: boolean) => {
+      const wrapper = createWrapper({ follow });
+      const { el, scrollToBottom } = stubScroller(wrapper);
 
       (wrapper.vm as any).scrollToLine();
-      expect(scrollToBottomMock).toHaveBeenCalledTimes(follow ? 1 : 0);
+      await settlePin(wrapper);
+
+      expect(scrollToBottom).not.toHaveBeenCalled();
+      expect(el.scrollTop).toBe(follow ? 9000 : 120);
     },
   );
+
+  const extraEntry = {
+    ...mockEntries[0],
+    log: "another line",
+    lineNumber: 4,
+  };
+
+  it("does not pin to the bottom when entries arrive with follow off", async () => {
+    const wrapper = createWrapper({ follow: false });
+    const { el, scrollToBottom } = stubScroller(wrapper);
+
+    await wrapper.setProps({
+      entries: [...mockEntries, extraEntry],
+    });
+    await settlePin(wrapper);
+
+    expect(scrollToBottom).not.toHaveBeenCalled();
+    expect(el.scrollTop).toBe(120);
+  });
+
+  it("pins to the bottom when entries arrive with follow on", async () => {
+    const wrapper = createWrapper({ follow: true });
+    const { el, scrollToBottom } = stubScroller(wrapper);
+
+    await wrapper.setProps({
+      entries: [...mockEntries, extraEntry],
+    });
+    await settlePin(wrapper);
+
+    expect(scrollToBottom).not.toHaveBeenCalled();
+    expect(el.scrollTop).toBe(9000);
+  });
+
+  it("keeps pinning until visible rows are measured", async () => {
+    const wrapper = createWrapper({ follow: true });
+    const { el, scroller } = stubScroller(wrapper, 0, 100);
+    scroller.$_undefinedSizes = 4;
+    let height = 100;
+    Object.defineProperty(el, "scrollHeight", {
+      configurable: true,
+      get: () => height,
+    });
+
+    await wrapper.setProps({
+      entries: [...mockEntries, extraEntry],
+    });
+    await wrapper.vm.$nextTick();
+    flushFrames(4);
+
+    expect(el.scrollTop).toBe(5100);
+
+    height = 4000;
+    scroller.$_undefinedSizes = 0;
+    flushFrames();
+
+    expect(el.scrollTop).toBe(9000);
+    expect(pendingFrames.size).toBe(0);
+  });
+
+  it("stops pinning after follow is turned off", async () => {
+    const wrapper = createWrapper({ follow: true });
+    const { el, scrollToBottom } = stubScroller(wrapper);
+
+    await wrapper.setProps({ follow: false });
+    await settlePin(wrapper);
+
+    expect(scrollToBottom).not.toHaveBeenCalled();
+    expect(el.scrollTop).toBe(120);
+  });
+
+  it("stops a pin that is still measuring when follow is turned off", async () => {
+    const wrapper = createWrapper({ follow: true });
+    const { el, scroller } = stubScroller(wrapper, 0, 100);
+    scroller.$_undefinedSizes = 4;
+
+    await wrapper.setProps({
+      entries: [...mockEntries, extraEntry],
+    });
+    await wrapper.vm.$nextTick();
+    expect(el.scrollTop).toBe(5100);
+
+    await wrapper.setProps({ follow: false });
+    Object.defineProperty(el, "scrollHeight", {
+      configurable: true,
+      get: () => 8000,
+    });
+    flushFrames();
+
+    expect(el.scrollTop).toBe(5100);
+    expect(pendingFrames.size).toBe(0);
+  });
+
+  it("pins to the bottom when follow is turned on", async () => {
+    const wrapper = createWrapper({ follow: false });
+    const { el, scrollToBottom } = stubScroller(wrapper);
+
+    await wrapper.setProps({ follow: true });
+    await settlePin(wrapper);
+
+    expect(scrollToBottom).not.toHaveBeenCalled();
+    expect(el.scrollTop).toBe(9000);
+  });
 
   describe("_isLastEntryMeasured", () => {
     it("returns true when there are no entries", () => {
