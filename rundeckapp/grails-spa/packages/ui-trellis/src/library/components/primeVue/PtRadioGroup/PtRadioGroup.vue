@@ -197,7 +197,7 @@ export default defineComponent({
   --p-radiobutton-background: var(--grey-800);
   --p-radiobutton-border-color: var(--grey-300);
   --p-radiobutton-hover-border-color: var(--white, #fff);
-  --p-radiobutton-invalid-border-color: #e55b5b;
+  --p-radiobutton-invalid-border-color: var(--colors-red-400);
   --p-radiobutton-disabled-background: var(--grey-700);
   --p-radiobutton-checked-disabled-border-color: var(--grey-500);
   --p-radiobutton-icon-disabled-color: var(--grey-300);
