@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+<g:set var="uiType" value="${params.nextUi in [true,'true']?'next':params.legacyUi?'legacy':'current'}"/>
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
     <g:render template="/common/errorFragment"/>
