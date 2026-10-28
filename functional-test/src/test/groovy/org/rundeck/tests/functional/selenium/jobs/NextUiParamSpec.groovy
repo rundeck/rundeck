@@ -12,7 +12,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 
 /**
  * Verifies that the base layout and the page template agree on uiType for the
- * nextUi URL parameter on pages not matched by NextUiInterceptor (RUN-5124).
+ * nextUi URL parameter on pages not matched by NextUiInterceptor.
  * A disagreement leaves Next UI placeholders that never mount.
  */
 @SeleniumCoreTest
