@@ -156,12 +156,13 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
 
         then:
             params.nextUi == expected
+            params.containsKey('nextUi') == hasKey
 
         where:
-            urlValue | expected
-            'true'   | true
-            'false'  | false
-            null     | null
+            urlValue | expected | hasKey
+            'true'   | true     | true
+            'false'  | false    | true
+            null     | null     | false
     }
 
     /**
