@@ -211,6 +211,20 @@ class JobListPage extends BasePage implements ActivityListTrait {
         el bodyNextUIBy
     }
 
+    /**
+     * @return true if the Next UI job list template (jobs.next.gsp) was rendered
+     */
+    boolean hasNextUiJobListTemplate() {
+        !els(By.id('pageQueryParams')).isEmpty()
+    }
+
+    /**
+     * @return true if the Current UI job list template (jobs.gsp) was rendered
+     */
+    boolean hasCurrentUiJobListTemplate() {
+        !els(By.id('nextScheduled')).isEmpty()
+    }
+
     def getCountJobList(){
         (els jobRunLinkBy).size()
     }
