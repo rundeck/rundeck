@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.common.PropertyRetriever
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
@@ -68,6 +69,7 @@ import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
+import rundeck.services.scm.ScmSecurityConfigLookup
 import rundeck.services.scm.ScmUser
 
 import java.util.function.Function
@@ -643,7 +645,22 @@ class ScmService {
             userInfo lookupUserInfo(auth.username)
             storageTree(storageService.storageTreeWithContext(auth))
             jobId job
+            runtimePropertyRetriever(scmSecurityPropertyRetriever())
         }
+    }
+
+    /**
+     * Git SCM security properties, read on each operation.
+     * System Configuration and rundeck-config.properties win when non-blank.
+     * framework.properties applies when those sources leave the key blank.
+     *
+     * @return live property retriever
+     */
+    private PropertyRetriever scmSecurityPropertyRetriever() {
+        new ScmSecurityConfigLookup(
+            configurationService,
+            frameworkService?.rundeckFramework?.propertyRetriever as PropertyRetriever
+        )
     }
 
     /**

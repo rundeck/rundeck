@@ -150,6 +150,7 @@
             href="http://en.wikipedia.org/wiki/Markdown"
             target="_blank"
             class="text-info"
+            :aria-label="$t('markdown.help.link.label')"
           >
             <i class="glyphicon glyphicon-question-sign"></i>
           </a>
@@ -289,9 +290,7 @@
               />
             </label>
             <span class="help-block">
-              <VMarkdownView
-                class="markdown-body"
-                mode=""
+              <MarkdownView
                 :content="$t(`form.option.dateFormat.description.md`)"
               />
             </span>
@@ -379,7 +378,10 @@
               </label>
             </div>
             <template v-if="features['optionValuesPlugin']">
-              <template v-for="optionValPlugin in optionValuesPlugins">
+              <template
+                v-for="optionValPlugin in optionValuesPlugins"
+                :key="optionValPlugin.name"
+              >
                 <div class="radio">
                   <input
                     :id="'optvalplugin_' + optionValPlugin.name"
@@ -396,6 +398,7 @@
                     <img
                       v-if="optionValPlugin.iconUrl"
                       :src="optionValPlugin.iconUrl"
+                      alt=""
                       style="width: 16px; height: 16px; margin-right: 5px"
                     />
                     {{ optionValPlugin.title || optionValPlugin.name }}
@@ -575,13 +578,9 @@
             :placeholder="$t('form.option.regex.placeholder')"
           />
           <span class="help-block">
-            <VMarkdownView
-              class="markdown-body"
-              :content="$t(`form.option.regex.description.md`)"
-            />
-            <VMarkdownView
+            <MarkdownView :content="$t(`form.option.regex.description.md`)" />
+            <MarkdownView
               v-if="isMultilineType"
-              class="markdown-body"
               :content="$t(`form.option.regex.multiline.description.md`)"
             />
           </span>
@@ -833,7 +832,7 @@ import { validateJobOption } from "../../../../library/services/jobEdit";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 
-import { VMarkdownView } from "vue3-markdown";
+import MarkdownView from "../../../../library/components/utils/MarkdownView.vue";
 import { getRundeckContext } from "../../../../library";
 import KeyStorageSelector from "../../../../library/components/plugins/KeyStorageSelector.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
@@ -859,7 +858,7 @@ export default defineComponent({
     KeyStorageSelector,
     PluginConfig,
     AceEditor,
-    VMarkdownView,
+    MarkdownView,
     PluginInfo,
     OptionUsagePreview,
     OptionRemoteUrlConfig,

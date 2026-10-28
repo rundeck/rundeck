@@ -3,6 +3,8 @@ package rundeck.controllers
 import grails.web.mime.MimeType
 
 class ErrorController {
+    /** Direct requests to /error (e.g. scanners) carry no action; answer 404 instead of failing on missing index */
+    static defaultAction = 'notFound'
     static final String XML_500 = "<error>An internal server error occurred</error>"
     static final String JSON_500 = '{"error":"A server error occurred"}'
     static final String XML_405 = "<error>Method not allowed</error>"

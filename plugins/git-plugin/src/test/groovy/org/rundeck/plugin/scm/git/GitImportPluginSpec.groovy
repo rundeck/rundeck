@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.util.FileUtils
 import org.eclipse.jgit.util.SystemReader
@@ -963,5 +965,75 @@ class GitImportPluginSpec extends Specification {
 
         cleanup:
         git.close()
+    }
+
+    def "cluster fix continues when the automatic pull fails"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        Git git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+        def failure = new ScmPluginException(
+                'Could not access the Git repository. See the server log for details.',
+                new TransportException('https', new IOException('config'))
+        )
+        def plugin = new GitImportPlugin(config, []) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw failure
+            }
+        }
+        plugin.initialize(context)
+
+        git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah2')
+        git.push()
+        git.close()
+
+        when:
+        def status = plugin.clusterFixJobs(context, [])
+
+        then:
+        status == [:]
+    }
+
+    def "cluster fix still fails when the automatic pull fails for another reason"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        Git git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+        def failure = new ScmPluginException('other', new IllegalStateException('nope'))
+        def plugin = new GitImportPlugin(config, []) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw failure
+            }
+        }
+        plugin.initialize(context)
+
+        git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah2')
+        git.push()
+        git.close()
+
+        when:
+        plugin.clusterFixJobs(context, [])
+
+        then:
+        def thrown = thrown(ScmPluginException)
+        thrown.is(failure)
     }
 }

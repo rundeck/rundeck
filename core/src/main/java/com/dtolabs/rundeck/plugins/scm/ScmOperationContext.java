@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.plugins.scm;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
@@ -55,4 +56,13 @@ public interface ScmOperationContext {
      * @return username
      */
     public ScmUserInfo getUserInfo();
+
+    /**
+     * Framework properties for this operation. Null when the caller has no framework lookup.
+     *
+     * @return property retriever, or null
+     */
+    default PropertyRetriever getRuntimePropertyRetriever() {
+        return null;
+    }
 }

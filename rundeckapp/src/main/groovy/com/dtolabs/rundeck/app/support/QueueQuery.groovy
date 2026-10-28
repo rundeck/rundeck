@@ -28,9 +28,15 @@ import grails.validation.Validateable
 public class QueueQuery extends ExecQuery implements Validateable{
     String runningFilter
     Boolean considerPostponedRunsAsRunningFilter = true
+    /**
+     * Execution types to leave out. The running query has its own hierarchy and builder, so this
+     * mirrors {@link ExecutionQuery#excludeExecutionTypeFilter} rather than inheriting it.
+     */
+    List<String> excludeExecutionTypeFilter
 
     static constraints = {
         runningFilter(nullable:true,inList:["scheduled","running","completed","killed","cancelled" /*,"pattern"*/])
         considerPostponedRunsAsRunningFilter(nullable:true, defaultValue: true)
+        excludeExecutionTypeFilter(nullable:true)
     }
 }

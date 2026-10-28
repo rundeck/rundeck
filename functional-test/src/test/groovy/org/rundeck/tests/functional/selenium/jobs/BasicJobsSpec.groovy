@@ -19,6 +19,7 @@ import org.rundeck.util.gui.UiModes
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
+@ExcludePro
 @Stepwise
 @UiModeFlag(
     featureName = "basic-jobs",

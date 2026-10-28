@@ -74,7 +74,7 @@ export default {
   emits: ["removeHandler", "edit"],
 };
 </script>
-<style lang="scss">
+<style scoped lang="scss">
 .error-handler-section {
   border: 1px solid var(--list-item-border-color);
   border-radius: 5px;

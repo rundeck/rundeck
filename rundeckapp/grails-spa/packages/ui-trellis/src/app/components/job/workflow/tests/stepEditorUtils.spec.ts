@@ -548,6 +548,7 @@ describe("stepEditorUtils", () => {
         ServiceType.WorkflowNodeStep,
         "script-inline",
         { adhocLocalString: "echo hello" },
+        "Project",
       );
       expect(result.valid).toBe(true);
       expect(result.errors).toEqual({});
@@ -614,6 +615,7 @@ describe("stepEditorUtils", () => {
         ServiceType.WorkflowNodeStep,
         "script-inline",
         {},
+        "Project",
       );
     });
 
@@ -664,6 +666,7 @@ describe("stepEditorUtils", () => {
         ServiceType.WorkflowStep,
         "exec-command",
         { adhocRemoteString: "echo err" },
+        "Project",
       );
       expect(result.valid).toBe(true);
     });

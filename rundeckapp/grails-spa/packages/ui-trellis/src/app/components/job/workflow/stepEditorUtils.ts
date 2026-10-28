@@ -5,7 +5,11 @@
 import { mkid } from "./types/workflowFuncs";
 import type { EditStepData, JobRefDefinition } from "./types/workflowTypes";
 import { getRundeckContext } from "../../../../library";
-import { ServiceType, type Plugin } from "../../../../library/stores/Plugins";
+import {
+  ServiceType,
+  type Plugin,
+  type PluginOutput,
+} from "../../../../library/stores/Plugins";
 import { validatePluginConfig } from "../../../../library/modules/pluginService";
 
 export interface PluginDetails {
@@ -14,6 +18,8 @@ export interface PluginDetails {
   iconUrl: string;
   tooltip: string;
   providerMetadata?: { glyphicon?: string; faicon?: string; fabicon?: string };
+  /** Values the plugin exposes for conditional logic, if any. */
+  outputs?: PluginOutput[];
 }
 
 /** Field name -> error message, as returned by validatePluginConfig. */
@@ -160,6 +166,7 @@ export function getPluginDetailsForStep(
       ...(plugin.providerMetadata && {
         providerMetadata: plugin.providerMetadata,
       }),
+      ...(plugin.outputs && { outputs: plugin.outputs }),
     };
   }
 
@@ -180,6 +187,13 @@ export function getPluginDetailsForStep(
     tooltip: "",
   };
 }
+
+/**
+ * Property scope ignored when validating a step at save time. Project and
+ * Framework scoped properties are not editable in the step form, so they are
+ * only validated when the plugin executes (matches the legacy editor).
+ */
+const SAVE_IGNORED_SCOPE = "Project";
 
 /**
  * Validates a step for save.
@@ -209,6 +223,7 @@ export async function validateStepForSave(
       serviceName,
       step.type!,
       step.config || {},
+      SAVE_IGNORED_SCOPE,
     );
 
     if (!response.valid || Object.keys(response.errors || {}).length > 0) {
@@ -238,6 +253,7 @@ export async function validateStepForSave(
       errorHandlerService,
       step.errorhandler.type,
       step.errorhandler.config || {},
+      SAVE_IGNORED_SCOPE,
     );
 
     if (

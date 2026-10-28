@@ -76,6 +76,7 @@
                 <label for="jobIdFilter" class="sr-only">
                   {{ $t("jobquery.title.jobFilter") }}
                 </label>
+                <!-- eslint-disable vuejs-accessibility/no-autofocus -- intentional initial focus on the job filter input -->
                 <input
                   v-model="query.jobFilter"
                   type="text"
@@ -85,6 +86,7 @@
                   :placeholder="$t('jobquery.title.jobFilter')"
                   data-test-id="job-filter"
                 />
+                <!-- eslint-enable vuejs-accessibility/no-autofocus -->
               </div>
               <div v-if="query.jobIdFilter" class="form-group">
                 <label for="jobIdFilter" class="sr-only">
@@ -253,14 +255,12 @@
 </template>
 <script>
 import { defineComponent } from "vue";
-import DateTimePicker from "./dateTimePicker.vue";
 import DateFilter from "./dateFilter.vue";
 import SavedFilters from "./savedFilters.vue";
 
 export default defineComponent({
   name: "ActivityFilter",
   components: {
-    DateTimePicker,
     DateFilter,
     SavedFilters,
   },

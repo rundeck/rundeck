@@ -36,6 +36,9 @@ class JobCreatePage extends BasePage {
     By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
+    By scheduleTabPaneBy = By.id('tab_schedule')
+    By scheduleRunYesLabelBy = By.cssSelector("label[for='scheduledTrue']")
+    By scheduleEveryDayLabelBy = By.cssSelector("label[for='everyDay']")
     By scheduleRunYesBy = By.id('scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
@@ -543,6 +546,31 @@ class JobCreatePage extends BasePage {
         el scheduleDaysCheckboxDivBy
     }
 
+    /**
+     * Open the Schedule tab and turn on a simple every-day schedule.
+     *
+     * The tab's controls are rendered by a Vue component mounted after the tab is
+     * shown, so each one is waited for rather than read straight after the click.
+     */
+    void enableDailySchedule() {
+        // saveStep returns as soon as the new step row appears, so the step editor's
+        // modal can still be open and over the tabs
+        waitForModal(0)
+        WebElement scheduleTab = tab(JobTab.SCHEDULE)
+        waitForElementToBeClickable scheduleTab
+        scheduleTab.click()
+        // fail on the pane rather than 30s later on a control inside it
+        waitForElementVisible scheduleTabPaneBy
+        // the theme gives these inputs opacity:0 and draws the control on the label, so
+        // the label is both what a user clicks and the only part Selenium sees as visible
+        byAndWaitClickable(scheduleRunYesLabelBy).click()
+        // the day-of-week panel appearing is the reactive model having caught up
+        waitForElementVisible scheduleDaysCheckboxDivBy
+        if (!scheduleEveryDayCheckboxField.isSelected()) {
+            byAndWaitClickable(scheduleEveryDayLabelBy).click()
+        }
+    }
+
     List<WebElement> getExecutionPluginsRows() {
         driver.findElements(executionPluginsRows)
     }
@@ -622,6 +650,15 @@ class JobCreatePage extends BasePage {
 
     WebElement getCreateJobButton() {
         el createJobBy
+    }
+
+    /**
+     * Submit a new job, waiting for the button to be interactable first. The schedule
+     * editor is Vue-driven, so the form can still be settling when the caller is ready.
+     */
+    void clickCreateJob() {
+        byAndWaitClickable createJobBy
+        createJobButton.click()
     }
 
     void clickTimeZone(){

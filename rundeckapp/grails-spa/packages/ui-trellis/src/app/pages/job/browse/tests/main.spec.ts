@@ -177,11 +177,12 @@ describe("job browse main", () => {
       const locations = jobBrowseItems.map((i) => i.location);
 
       expect(locations).toContain("after-job-name:meta:schedule");
+      expect(locations).toContain("after-job-name:meta:executionAclValid");
       expect(locations).toContain("before-job-name");
       expect(locations).toContain("after-job-name");
     });
 
-    it("registers 8 items; job-list-page/main and main-content/before are hidden when hideHeader", () => {
+    it("registers 9 items; job-list-page/main and main-content/before are hidden when hideHeader", () => {
       setupJsonDataElement("jobTreeUiMeta", {
         hideActions: true,
         hideHeader: true,
@@ -189,7 +190,7 @@ describe("job browse main", () => {
 
       triggerInit();
 
-      expect(rootStore.ui.items).toHaveLength(8);
+      expect(rootStore.ui.items).toHaveLength(9);
       const main = rootStore.ui.items.find(
         (i) => i.section === "job-list-page" && i.location === "main",
       );
@@ -200,13 +201,13 @@ describe("job browse main", () => {
       expect(header!.visible).toBe(false);
     });
 
-    it("registers 8 items; job-list-page/main and main-content/before are visible when showHeader", () => {
+    it("registers 9 items; job-list-page/main and main-content/before are visible when showHeader", () => {
       setupJsonDataElement("pageUiMeta", { uiType: "next" });
       setupJsonDataElement("jobTreeUiMeta", { hideHeader: false });
 
       triggerInit();
 
-      expect(rootStore.ui.items).toHaveLength(8);
+      expect(rootStore.ui.items).toHaveLength(9);
       const main = rootStore.ui.items.find(
         (i) => i.section === "job-list-page" && i.location === "main",
       );

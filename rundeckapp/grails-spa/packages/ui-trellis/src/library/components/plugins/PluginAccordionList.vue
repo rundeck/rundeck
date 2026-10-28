@@ -140,7 +140,6 @@ import Skeleton from "primevue/skeleton";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
-import AccordionContent from "primevue/accordioncontent";
 
 export default defineComponent({
   name: "PluginAccordionList",
@@ -151,7 +150,6 @@ export default defineComponent({
     Accordion,
     AccordionPanel,
     AccordionHeader,
-    AccordionContent,
   },
   props: {
     groupedProviders: {
@@ -227,6 +225,16 @@ export default defineComponent({
   }
 }
 
+// Spacing from the Figma "Workflow modal": 12px between a section title and
+// its list, 36px between the end of one list and the next section title.
+.subsection-heading {
+  margin: 0 0 12px;
+}
+
+.divider-title {
+  margin-top: 36px;
+}
+
 .provider-count {
   color: var(--colors-gray-600);
   margin-left: var(--space-1);
@@ -236,5 +244,16 @@ export default defineComponent({
   padding: var(--space-8);
   text-align: center;
   color: var(--colors-gray-600);
+}
+
+*[data-color-theme="dark"] {
+  .placeholder-group .placeholder {
+    border-bottom-color: var(--grey-300);
+  }
+
+  .provider-count,
+  .no-results {
+    color: var(--grey-200);
+  }
 }
 </style>
