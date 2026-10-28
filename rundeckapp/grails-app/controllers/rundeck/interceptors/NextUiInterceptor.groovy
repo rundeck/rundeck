@@ -33,6 +33,9 @@ class NextUiInterceptor {
             params.nextUi = false
         } else if (cookieValue == 'true' || systemEnabled) {
             params.nextUi = true
+        } else {
+            // Normalize URL value so templates can use plain truthiness ('false' must be false)
+            params.nextUi = params.boolean('nextUi')
         }
 
         return true

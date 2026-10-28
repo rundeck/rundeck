@@ -2883,7 +2883,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
     }
 
     /**
-     * RUN-5124: NextUiInterceptor sets params.nextUi to boolean true, URL sets string 'true';
+     * NextUiInterceptor sets params.nextUi to boolean true, URL sets string 'true';
      * both must render the next UI jobs view, anything else the legacy view.
      */
     @Unroll
@@ -2926,7 +2926,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
     }
 
     /**
-     * RUN-5124: home must honor the boolean params.nextUi set by NextUiInterceptor.
+     * Home must honor the boolean params.nextUi set by NextUiInterceptor.
      */
     @Unroll
     def "home renders next ui view when params.nextUi is #nextUi"() {
