@@ -35,6 +35,10 @@ class CachedProjectNodes implements IProjectNodes {
      * True while the first load runs in the background, so the cache does not start a refresh before it finishes
      */
     volatile boolean loading
+    /**
+     * When the background first load finished, used for the cache delay instead of cacheTime if set
+     */
+    volatile Date loadedTime
 
     List<ReadableProjectNodes> getResourceModelSources() {
         nodeSupport.resourceModelSources

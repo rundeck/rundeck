@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.cache.RemovalCause
 import com.google.common.cache.RemovalListener
 import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
@@ -157,6 +158,11 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 new RemovalListener<String, CachedProjectNodes>() {
                     @Override
                     void onRemoval(final RemovalNotification<String, CachedProjectNodes> notification) {
+                        //a refresh that keeps the same value still reports it as replaced, do not close it then
+                        if (notification.cause == RemovalCause.REPLACED &&
+                            nodeCache.getIfPresent(notification.key).is(notification.value)) {
+                            return
+                        }
                         Closeables.closeQuietly(notification.getValue()?.nodeSupport)
                     }
                 }
@@ -205,13 +211,14 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
         def delay = projectNodeCacheDelayConfig(rdprojectconfig)
-        log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - oldNodes.cacheTime.time}...")
+        def loadedTime = oldNodes.loadedTime ?: oldNodes.cacheTime
+        log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - loadedTime.time}...")
         if(rdprojectconfig.configLastModifiedTime > oldNodes.cacheTime){
             log.debug("config changed, forcing node reload for ${project}")
             //refresh if config has changed
             return true
         }
-        if(now.time - oldNodes.cacheTime.time < delay){
+        if(now.time - loadedTime.time < delay){
             log.debug("within cache duration, not reloading for ${project}")
             return false
         }
@@ -331,8 +338,9 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 try {
                     metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
                 } finally {
-                    //count the cache delay from when the first load finished
-                    cachedNodes.cacheTime = new Date()
+                    //count the cache delay from when the first load finished; cacheTime stays the load start, so a
+                    //config change made during the load still triggers a reload
+                    cachedNodes.loadedTime = new Date()
                     cachedNodes.loading = false
                 }
             }

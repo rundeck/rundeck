@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -601,7 +602,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 'resources.source.1.config.file'                     : '/tmp/test.xml',
                 'resources.source.1.config.generateFileAutomatically': 'false',
                 'project.nodeCache.enabled'                          : 'true',
-                'project.nodeCache.delay'                            : '0',
+                'project.nodeCache.delay'                            : '60',
         ]
         def projConfig = new PropsConfig(
                 projectProperties: properties,
@@ -610,13 +611,20 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 configLastModifiedTime: new Date(0)
         )
         def modelSource = Mock(ResourceModelSource)
+        //needsReload reads the config modified time as a property, which PropsConfig.getProperty hides
+        Date configModified = new Date(0)
+        def reloadConfig = Stub(IRundeckProjectConfig) {
+            hasProperty('project.nodeCache.delay') >> true
+            getProperty('project.nodeCache.delay') >> '60'
+            getConfigLastModifiedTime() >> { configModified }
+        }
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 loadProjectConfig('test1') >> projConfig
             }
             getProjectManager() >> Mock(ProjectManager) {
-                loadProjectConfig('test1') >> projConfig
+                loadProjectConfig('test1') >> reloadConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
                 getSourceForConfiguration('file', _) >> modelSource
@@ -625,21 +633,39 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
                 getGeneratorForFormat('resourcexml') >> Mock(ResourceFormatGenerator)
             }
         }
+        service.afterPropertiesSet()
+        def nodeSupport = Mock(ProjectNodeSupport)
         Runnable firstLoad = null
 
         when: "the first load is queued in the background"
         def result = service.getNodes('test1')
 
-        then: "the elapsed delay does not trigger a refresh"
+        then:
         1 * service.nodeTaskExecutor.execute(_) >> { args -> firstLoad = args[0] }
         result.loading
-        !service.needsReload('test1', result)
 
-        when: "the first load finishes"
+        when: "the cache refreshes while the first load runs"
+        result.nodeSupport = nodeSupport
+        service.nodeCache.refresh('test1')
+
+        then: "the cached value is kept and not closed"
+        !service.needsReload('test1', result)
+        service.nodeCache.getIfPresent('test1').is(result)
+        0 * nodeSupport.close()
+
+        when: "the first load, started 10 seconds ago, finishes"
+        long now = System.currentTimeMillis()
+        result.cacheTime = new Date(now - 10000)
         firstLoad.run()
 
-        then: "refreshes resume"
+        then: "the cache delay counts from when it finished"
         !result.loading
+        !service.needsReload('test1', result)
+
+        when: "the project config was changed during the first load"
+        configModified = new Date(now - 5000)
+
+        then: "the change triggers a reload"
         service.needsReload('test1', result)
     }
 
