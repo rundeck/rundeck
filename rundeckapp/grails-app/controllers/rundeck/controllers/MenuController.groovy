@@ -250,7 +250,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def defaultRecentFilter = executionService.getActivityDefaultTimeFilter(params)
 
         if (params.boolean('nextUi')) {
-            params.nextUi = true
             return render(view: 'jobs.next', model: [defaultRecentFilter: defaultRecentFilter])
         }
 
@@ -1849,7 +1848,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         if (params.boolean('nextUi')) {
-            params.nextUi = true
             return render(view: 'home.next', model: [
                     isFirstRun:isFirstRun,
                     projectNames: fprojects,
