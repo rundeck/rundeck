@@ -4,6 +4,10 @@ parameters:
   disable-wizcli-scan:
     type: boolean
     default: true
+  run-jre17-tests:
+    description: Run the JRE 17 Docker-image test workflow from a schedule trigger.
+    type: boolean
+    default: false
 
 orbs:
   aws-cli: circleci/aws-cli@5.4.2
@@ -875,6 +879,7 @@ workflows:
     when:
       and:
         - << pipeline.git.branch >>
+        - not: << pipeline.parameters.run-jre17-tests >>
         - not:
             matches:
               pattern: /^pull\/[0-9]+$/
@@ -1035,18 +1040,9 @@ workflows:
 
   # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
   build_and_test_with_jre_17:
-    triggers:
-      - schedule:
-          cron: "0 23 * * *"
-          filters:
-            branches:
-              only:
-                - main
     when:
-      or:
-        - matches:
-            pattern: release/6\..*
-            value: << pipeline.git.branch >>
+      and:
+        - << pipeline.parameters.run-jre17-tests >>
         - equal: [ main, << pipeline.git.branch >> ]
     jobs:
       - build-rundeck:
