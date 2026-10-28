@@ -364,6 +364,32 @@ abstract class BasePage {
         context.driver.findElements(by)
     }
 
+    /**
+     * Read the uiType that the base layout emitted in the pageUiMeta JSON block.
+     * @return 'next', 'current' or 'legacy'
+     */
+    String getPageUiType() {
+        waitForNumberOfElementsToBeOne(By.id('pageUiMeta'))
+        (String) ((JavascriptExecutor) context.driver).executeScript(
+                "return JSON.parse(document.getElementById('pageUiMeta').textContent).uiType")
+    }
+
+    /**
+     * Job stats section shared by the job show and execution show pages.
+     * @return true if the Next UI socket placeholder is rendered there
+     */
+    boolean hasNextUiJobStats() {
+        !els(By.cssSelector('#_job_stats_main .vue-ui-socket')).isEmpty()
+    }
+
+    /**
+     * Job stats section shared by the job show and execution show pages.
+     * @return true if the Current UI stats markup is rendered there
+     */
+    boolean hasCurrentUiJobStats() {
+        !els(By.cssSelector('#_job_stats_main .jobstats')).isEmpty()
+    }
+
     WebElement getLink(String text){
         el By.partialLinkText(text)
     }
