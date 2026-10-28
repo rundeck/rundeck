@@ -70,9 +70,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     /**
      * Node source query pool per project, so a slow project does not hold threads another project needs. Idle
      * threads time out.
+     * <p>
+     * Known limitation: a load that races a project delete can re-add that project's pool. The pool then stays in
+     * the map as an idle executor with no threads. Remove pools after their last load if this ever matters.
      */
-    // ponytail: a load racing a project delete can re-add that project's pool, which keeps an idle executor (no
-    // threads) in the map; remove pools after their last load if deleted projects ever accumulate
     private static final ConcurrentMap<String, ThreadPoolExecutor> LOAD_POOLS = new ConcurrentHashMap<>();
     /**
      * Set while a pool thread queries a source, so a node load started from that query can be detected
@@ -312,12 +313,14 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 window.poll();
                 consumed++;
             }
-        } catch (InterruptedException | CancellationException | RejectedExecutionException e) {
-            //interrupted, or the project's pool was stopped because the project was deleted
+        } catch (InterruptedException | CancellationException | RejectedExecutionException | ExecutionException e) {
+            //interrupted, or the project's pool was stopped because the project was deleted (querySource catches
+            //Throwable, so ExecutionException is not expected)
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            //report the failure for sources not yet consumed
+            //report the failure for sources not yet consumed. Intended: the load returns the nodes merged so far,
+            //like any load with failed sources, and the node cache keeps that partial set until its next refresh
             final SourceResult failed = new SourceResult(
                     null,
                     new ResourceModelSourceException("Failed loading nodes: " + e, e)
@@ -325,9 +328,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             while (consumed < total) {
                 consumer.accept(consumed++, failed);
             }
-        } catch (ExecutionException e) {
-            //querySource catches Throwable, so a task cannot fail
-            throw new IllegalStateException(e.getCause());
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             window.forEach(f -> f.cancel(true));

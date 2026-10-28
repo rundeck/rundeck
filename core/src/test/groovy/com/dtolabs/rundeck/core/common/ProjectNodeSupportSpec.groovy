@@ -486,7 +486,7 @@ class ProjectNodeSupportSpec extends Specification {
         loadThreads << [null, '1', '0', 'not-a-number']
     }
 
-    def "concurrency is capped at the shared maximum even if loadThreads is higher"() {
+    def "concurrency is capped at the per-project maximum even if loadThreads is higher"() {
         given:
         def total = ProjectNodeSupport.MAX_LOAD_THREADS + 10
         def active = new AtomicInteger()
