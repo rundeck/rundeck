@@ -69,14 +69,6 @@
           ><b>{{ $t("message_warning") }}</b>
           {{ $t("message_duplicated") }}.</alert
         >
-        <alert
-          v-if="invalidKey"
-          ref="invalidKeyWarningRef"
-          type="warning"
-          data-testid="invalid-key-warning"
-          ><b>{{ $t("message_warning") }}</b>
-          {{ $t("message_fieldKeyRequired") }}.</alert
-        >
 
         <div class="col-md-10">
           <div v-if="useOptions" class="form">
@@ -113,7 +105,6 @@
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
-                  required
                   :aria-describedby="`${uid}-key-help`"
                   data-testid="field-key-input"
                 />
@@ -251,7 +242,6 @@ export default defineComponent({
       useOptions: false,
       modalAddField: false,
       duplicate: false,
-      invalidKey: false,
       newField: "",
       newLabelField: "",
       newFieldDescription: "",
@@ -315,21 +305,14 @@ export default defineComponent({
     },
     openNewField() {
       this.duplicate = false;
-      this.invalidKey = false;
       this.modalAddField = true;
     },
     addField() {
       let field = {} as CustomField;
       this.duplicate = false;
-      this.invalidKey = false;
 
-      const key = (
-        this.useOptions ? this.selectedField?.value : this.newField
-      )?.trim();
-      if (!key) {
-        this.invalidKey = true;
-        return;
-      }
+      const key =
+        (this.useOptions ? this.selectedField?.value : this.newField) ?? "";
 
       const typed = this.newFieldDescription;
       const desc =

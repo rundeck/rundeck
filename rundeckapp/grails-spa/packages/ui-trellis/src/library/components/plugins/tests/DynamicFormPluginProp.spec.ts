@@ -142,9 +142,8 @@ describe("DynamicFormPluginProp.vue", () => {
 
   it("shows help text for the Field Label and Field Key inputs on the free-text path", async () => {
     // The "Add Field" modal previously gave no guidance on what these two
-    // inputs mean or whether they're required, which made it easy to add a
-    // field with a blank key (silently dropped/meaningless downstream) or
-    // to not realize the label is optional and falls back to the key.
+    // inputs mean, which made it easy to not realize the label is optional
+    // and falls back to the key.
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -157,7 +156,7 @@ describe("DynamicFormPluginProp.vue", () => {
     );
   });
 
-  it("associates the Field Key and Field Label inputs with their labels and help text, and marks Key required", async () => {
+  it("associates the Field Key and Field Label inputs with their labels and help text", async () => {
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -168,7 +167,6 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(keyInput.attributes("aria-describedby")).toBe(
       keyHelp.attributes("id"),
     );
-    expect(keyInput.attributes("required")).toBeDefined();
 
     const labelInput = wrapper.find('[data-testid="field-label-input"]');
     const labelHelp = wrapper.find('[data-testid="field-label-help"]');
@@ -247,67 +245,6 @@ describe("DynamicFormPluginProp.vue", () => {
       expect(idA).toBeTruthy();
       expect(idA).toBe(idB);
     });
-  });
-
-  it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
-    const wrapper = createWrapper({ hasOptions: "false" });
-    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
-    await flushPromises();
-
-    // createWrapper's data() override pre-seeds newField as "field1" for
-    // other tests' benefit - clear it explicitly so this test's key is
-    // actually blank.
-    await wrapper.find('[data-testid="field-key-input"]').setValue("");
-    await wrapper
-      .find('[data-testid="field-label-input"]')
-      .setValue("Some Label");
-    await wrapper
-      .find('[data-testid="confirm-add-field-button"]')
-      .trigger("click");
-    await flushPromises();
-
-    expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
-    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
-      true,
-    );
-  });
-
-  it("blocks adding a field via the options path when nothing is selected", async () => {
-    const wrapper = createWrapper();
-    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
-    await flushPromises();
-
-    await wrapper
-      .find('[data-testid="confirm-add-field-button"]')
-      .trigger("click");
-    await flushPromises();
-
-    expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
-    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
-      true,
-    );
-  });
-
-  it("clears a stale invalid-key warning when the modal is reopened", async () => {
-    const wrapper = createWrapper({ hasOptions: "false" });
-    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
-    await flushPromises();
-
-    await wrapper.find('[data-testid="field-key-input"]').setValue("");
-    await wrapper
-      .find('[data-testid="confirm-add-field-button"]')
-      .trigger("click");
-    await flushPromises();
-    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
-      true,
-    );
-
-    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
-    await flushPromises();
-
-    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
-      false,
-    );
   });
 
   it("shows help text for the Description input using its own key, not the reused message_empty", async () => {
