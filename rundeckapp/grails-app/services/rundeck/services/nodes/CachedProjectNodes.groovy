@@ -31,6 +31,10 @@ class CachedProjectNodes implements IProjectNodes {
     INodeSet nodes
     boolean doCache
     Date cacheTime
+    /**
+     * True while the first load runs in the background, so the cache does not start a refresh before it finishes
+     */
+    volatile boolean loading
 
     List<ReadableProjectNodes> getResourceModelSources() {
         nodeSupport.resourceModelSources

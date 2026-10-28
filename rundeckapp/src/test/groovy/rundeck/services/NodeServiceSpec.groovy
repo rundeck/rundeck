@@ -587,6 +587,62 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
 
     }
 
+    def "no refresh while the background first load is running"() {
+        given:
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('nodeService.nodeCache.enabled', true) >> true
+            getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> true
+        }
+        def properties = [
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'project.nodeCache.enabled'                          : 'true',
+                'project.nodeCache.delay'                            : '0',
+        ]
+        def projConfig = new PropsConfig(
+                projectProperties: properties,
+                properties: properties,
+                name: 'test1',
+                configLastModifiedTime: new Date(0)
+        )
+        def modelSource = Mock(ResourceModelSource)
+        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                existsFrameworkProject('test1') >> true
+                loadProjectConfig('test1') >> projConfig
+            }
+            getProjectManager() >> Mock(ProjectManager) {
+                loadProjectConfig('test1') >> projConfig
+            }
+            getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
+                getSourceForConfiguration('file', _) >> modelSource
+            }
+            getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                getGeneratorForFormat('resourcexml') >> Mock(ResourceFormatGenerator)
+            }
+        }
+        Runnable firstLoad = null
+
+        when: "the first load is queued in the background"
+        def result = service.getNodes('test1')
+
+        then: "the elapsed delay does not trigger a refresh"
+        1 * service.nodeTaskExecutor.execute(_) >> { args -> firstLoad = args[0] }
+        result.loading
+        !service.needsReload('test1', result)
+
+        when: "the first load finishes"
+        firstLoad.run()
+
+        then: "refreshes resume"
+        !result.loading
+        service.needsReload('test1', result)
+    }
+
     def "project nodecache delay"(String confval, long expected) {
         given:
         def properties = [:]

@@ -197,6 +197,10 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     }
 
     boolean needsReload(String project, CachedProjectNodes oldNodes) {
+        if (oldNodes.loading) {
+            log.debug("first load still running, not reloading for ${project}")
+            return false
+        }
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
@@ -322,8 +326,15 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         }
         if (firstLoadInBg) {
             //want to return something asap, and have some cache data, so perform first reload in background thread
+            cachedNodes.loading = true
             nodeTaskExecutor.execute {
-                metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+                try {
+                    metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+                } finally {
+                    //count the cache delay from when the first load finished
+                    cachedNodes.cacheTime = new Date()
+                    cachedNodes.loading = false
+                }
             }
         } else {
             //we are refreshing the data in asynch thread already, so can perform this synchronously
