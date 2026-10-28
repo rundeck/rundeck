@@ -249,7 +249,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def defaultRecentFilter = executionService.getActivityDefaultTimeFilter(params)
 
-        if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.boolean('nextUi')) {
+        if (params.boolean('nextUi')) {
             params.nextUi = true
             return render(view: 'jobs.next', model: [defaultRecentFilter: defaultRecentFilter])
         }
