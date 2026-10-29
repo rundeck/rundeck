@@ -143,6 +143,15 @@ public class CLIUtils {
         return stringBuilder.toString();
     }
 
+    public static String quotePowerShellArg(String arg) {
+        if (StringUtils.containsNone(arg, WINDOWS_CMD_CHARS) &&
+                StringUtils.containsNone(arg, WINDOWS_WS_CHARS) &&
+                StringUtils.containsNone(arg, " ")) {
+            return arg;
+        }
+        return "'" + arg.replace("'", "''") + "'";
+    }
+
     /**
      * Quote a Windows argument using double quotes following the
      * {@code CommandLineToArgvW} escaping rules. Single quotes have no quoting
@@ -243,7 +252,7 @@ public class CLIUtils {
      * Create a converter for quoting arguments for the given operating system type and command interpreter.
      *
      * @param type               "unix" or "windows"
-     * @param commandInterpreter "cmd" for Windows cmd.exe, or null for default
+     * @param commandInterpreter "cmd" for Windows cmd.exe, "powershell" for PowerShell, or null for default
      * @return a Converter that quotes arguments appropriately for the specified OS and command interpreter
      */
     public static Converter<String, String> argumentQuoteForOperatingSystem(String type, String commandInterpreter) {
@@ -253,6 +262,8 @@ public class CLIUtils {
         }else if("windows".equalsIgnoreCase(type)){
             if("cmd".equalsIgnoreCase(commandInterpreter)){
                 return WINDOWS_CMD_ESCAPE;
+            } else if ("powershell".equalsIgnoreCase(commandInterpreter)) {
+                return WINDOWS_POWERSHELL_ARGUMENT_QUOTE;
             }
             return WINDOWS_ARGUMENT_QUOTE;
         }else {
@@ -276,6 +287,15 @@ public class CLIUtils {
     public static final Converter<String, String> WINDOWS_ARGUMENT_QUOTE= new Converter<String, String>() {
         public String convert(String s) {
             return quoteWindowsCMDArg(s);
+        }
+    };
+
+    /**
+     * Converter that quotes PowerShell arguments with literal single-quoted strings
+     */
+    public static final Converter<String, String> WINDOWS_POWERSHELL_ARGUMENT_QUOTE = new Converter<String, String>() {
+        public String convert(String s) {
+            return quotePowerShellArg(s);
         }
     };
 

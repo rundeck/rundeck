@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.cli
 
+import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.utils.Converter
 import spock.lang.Specification
 
@@ -58,9 +59,9 @@ class CLIUtilsSpec extends Specification {
         when: "Windows PowerShell case"
         Converter<String, String> windowsPsConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", "powershell")
         then:
-        windowsPsConverter.convert("foo bar") == '"foo bar"'
-        windowsPsConverter.convert("foo&bar") == '"foo&bar"'
-        windowsPsConverter.convert("`foobar`") == '"`foobar`"'
+        windowsPsConverter.convert("foo bar") == "'foo bar'"
+        windowsPsConverter.convert("foo&bar") == "'foo&bar'"
+        windowsPsConverter.convert("`foobar`") == "'`foobar`'"
 
         when: "Windows default case (no interpreter)"
         Converter<String, String> windowsDefaultConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", null)
@@ -68,6 +69,20 @@ class CLIUtilsSpec extends Specification {
         windowsDefaultConverter.convert("foo bar") == '"foo bar"'
         windowsDefaultConverter.convert("foo&bar") == '"foo&bar"'
         windowsDefaultConverter.convert("`foobar`") == '"`foobar`"'
+    }
+
+    def "PowerShell preserves unresolved file references"() {
+        given:
+        def command = ExecArgList.fromStrings(false, true, "script.ps1", '${file.ImportCSV}')
+
+        expect:
+        command.buildCommandForNode(null, "node", "windows", "powershell") ==
+            ["script.ps1", "'\${file.ImportCSV}'"]
+    }
+
+    def "quotePowerShellArg escapes embedded single quotes"() {
+        expect:
+        CLIUtils.quotePowerShellArg("it's safe") == "'it''s safe'"
     }
 
     def "quoteWindowsCMDArg escapes internal double quotes"() {

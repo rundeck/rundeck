@@ -17,10 +17,14 @@
 package com.dtolabs.rundeck.core.execution
 
 import com.dtolabs.rundeck.core.common.IExecutionProviders
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.PluginControlService
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -30,8 +34,48 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ExecutionServiceImplSpec extends Specification {
+
+    @Unroll
+    def "resolve command interpreter for #provider with #attributes as #expected"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getProperty(_) >> { String key -> projectProperties[key] }
+        }
+        def projectManager = Mock(ProjectManager) {
+            getFrameworkProject("test-project") >> project
+        }
+        def nodeExecutorService = Mock(NodeExecutorService) {
+            getDefaultProviderNameForNodeAndProject(_, "test-project") >> provider
+        }
+        def framework = Mock(IFramework) {
+            getFrameworkProjectMgr() >> projectManager
+            getNodeExecutorService() >> nodeExecutorService
+            isLocalNode(_) >> false
+        }
+        def context = Mock(ExecutionContext) {
+            getFrameworkProject() >> "test-project"
+            getIFramework() >> framework
+        }
+        def node = new NodeEntryImpl("node")
+        node.setAttributes(attributes)
+
+        expect:
+        ExecutionServiceImpl.resolveCommandInterpreter(context, node) == expected
+
+        where:
+        provider       | attributes                                                            | projectProperties                                              || expected
+        "WinRMPython"  | ["node-executor": "WinRMPython"]                                       | [:]                                                            || "powershell"
+        "WinRMPython"  | ["node-executor": "WinRMPython", "winrm-shell": "powershell"]           | [:]                                                            || "powershell"
+        "WinRMPython"  | ["node-executor": "WinRMPython", "winrm-shell": "cmd"]                  | [:]                                                            || null
+        "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": "powershell"] || "powershell"
+        "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": "cmd"]        || null
+        "sshj-ssh"     | [:]                                                                    | [:]                                                            || null
+        "WinRMPython"  | ["node-executor": "WinRMPython", "shell-escaping-interpreter": "cmd"]   | [:]                                                            || "cmd"
+        "WinRMPython"  | ["node-executor": "WinRMPython", "shell-escaping-interpreter": "powershell"] | [:]                                                        || "powershell"
+    }
 
     /**
      * RUN-3651: when secureOption storagePath contains a node variable (resolved per-node),
