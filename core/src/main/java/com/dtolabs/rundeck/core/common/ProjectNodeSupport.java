@@ -208,14 +208,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return number of threads used to query node sources, from {@link #PROJECT_RESOURCES_LOAD_THREADS}
      */
     private int getLoadThreads() {
-        final String value = projectConfig.hasProperty(PROJECT_RESOURCES_LOAD_THREADS)
-                             ? projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS)
-                             : null;
-        if (value == null || value.trim().isEmpty()) {
+        final String raw = projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS);
+        final String value = raw == null ? "" : raw.trim();
+        if (value.isEmpty()) {
             return DEFAULT_LOAD_THREADS;
         }
         try {
-            return Integer.parseInt(value.trim());
+            return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             logger.warn("Invalid value for " + PROJECT_RESOURCES_LOAD_THREADS + ", using default: " + e.getMessage());
             return DEFAULT_LOAD_THREADS;
