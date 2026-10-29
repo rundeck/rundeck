@@ -224,12 +224,14 @@ class ImportTracker {
 
     @Override
     public String toString() {
-        return "ImportTracker{" +
-                "renamedTrackedItems=" + renamedTrackedItems +
-                ", trackedCommits=" + trackedCommits +
-                ", trackedJobIds=" + trackedJobIds +
-                ", trackedPathsMap=" + trackedPathsMap +
-                ", orphanedJobIds=" + orphanedJobIds +
-                '}'
+        synchronized (this) {
+            return "ImportTracker{" +
+                    "renamedTrackedItems=" + renamedTrackedItems +
+                    ", trackedCommits=" + trackedCommits +
+                    ", trackedJobIds=" + trackedJobIds +
+                    ", trackedPathsMap=" + trackedPathsMap +
+                    ", orphanedJobIds=" + orphanedJobIds +
+                    '}'
+        }
     }
 }
