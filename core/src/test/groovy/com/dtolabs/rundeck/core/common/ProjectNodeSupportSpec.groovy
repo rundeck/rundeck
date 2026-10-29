@@ -19,14 +19,29 @@ package com.dtolabs.rundeck.core.common
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.SourceType
+import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
+import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class ProjectNodeSupportSpec extends Specification {
     static final String PROJECT_NAME = 'ProjectNodeSupportSpec'
+    /**
+     * Project name for sources from supportWithSources, unique per feature so no feature inherits another's load pool
+     */
+    String loadProject = "${PROJECT_NAME}-${UUID.randomUUID()}".toString()
     Framework framework
     FrameworkProject testProject
     File directory
@@ -40,6 +55,7 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     def cleanup() {
+        ProjectNodeSupport.removeLoadPool(loadProject)
         if (directory.exists()) {
             FileUtils.deleteDir(directory)
         }
@@ -341,4 +357,559 @@ class ProjectNodeSupportSpec extends Specification {
         result[1].extraProps == [:]
     }
 
+
+    /**
+     * Create a support whose n sources are the given closures, each invoked by getNodes()
+     */
+    private ProjectNodeSupport supportWithSources(Map extraProps, List<Closure<INodeSet>> loaders) {
+        def props = new Properties()
+        loaders.eachWithIndex { c, i ->
+            props["resources.source.${i + 1}.type".toString()] = 'file'
+            props["resources.source.${i + 1}.config.file".toString()] = "/tmp/file${i}".toString()
+        }
+        extraProps.each { k, v -> props[k] = v }
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> loadProject
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> { String type, Properties p ->
+                int idx = (p.getProperty('file') - '/tmp/file') as int
+                if (null == loaders[idx]) {
+                    throw new ExecutionServiceException("failed to initialize source ${idx + 1}")
+                }
+                // not a Spock Mock: mock invocations are serialized, which would defeat parallel loading
+                def source = new ResourceModelSource() {
+                    @Override
+                    INodeSet getNodes() throws ResourceModelSourceException {
+                        loaders[idx].call()
+                    }
+                }
+                Closeables.closeableProvider(source)
+            }
+        }
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
+        new ProjectNodeSupport(File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"), config, generatorService, sourceService)
+    }
+
+    private static INodeSet nodes(String name, String value) {
+        def set = new NodeSetImpl()
+        def node = new NodeEntryImpl(name)
+        node.setAttribute('x', value)
+        set.putNode(node)
+        set
+    }
+
+    def "sources are queried in parallel and merged in source order"() {
+        given:
+        // every source waits for all the others to start, which can only complete if they run concurrently
+        def allStarted = new CountDownLatch(4)
+        def loaders = (1..4).collect { int n ->
+            { ->
+                allStarted.countDown()
+                if (!allStarted.await(10, TimeUnit.SECONDS)) {
+                    throw new ResourceModelSourceException('sources did not run concurrently')
+                }
+                nodes('a', "v${n}")
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '4'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        support.getResourceModelSourceExceptionsMap().isEmpty()
+        result.getNode('a').getAttributes().x == 'v4'
+    }
+
+    def "a slow early source holds back later sources so at most loadThreads results wait to be merged"() {
+        given:
+        def firstStarted = new CountDownLatch(1)
+        def releaseFirst = new CountDownLatch(1)
+        def secondDone = new CountDownLatch(1)
+        def started = Collections.synchronizedList([])
+        def loaders = (1..4).collect { int n ->
+            { ->
+                started << n
+                if (n == 1) {
+                    firstStarted.countDown()
+                    releaseFirst.await(10, TimeUnit.SECONDS)
+                }
+                def result = nodes("n${n}", 'v')
+                if (n == 2) {
+                    secondDone.countDown()
+                }
+                result
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        //sources 1 and 2 run concurrently, so wait for both before checking that no later source started
+        firstStarted.await(10, TimeUnit.SECONDS)
+        secondDone.await(10, TimeUnit.SECONDS)
+        def startedWhileFirstBlocked = new ArrayList(started).sort()
+        releaseFirst.countDown()
+        loading.join(10000)
+
+        then:
+        startedWhileFirstBlocked == [1, 2]
+        results[0].nodeNames as List == ['n1', 'n2', 'n3', 'n4']
+        support.getResourceModelSourceExceptionsMap().isEmpty()
+    }
+
+    def "sources are queried serially by default and when loadThreads is #loadThreads"() {
+        given:
+        def threads = Collections.synchronizedList([])
+        def loaders = (1..4).collect { int n ->
+            { -> threads << Thread.currentThread(); nodes("n${n}", 'v') } as Closure<INodeSet>
+        }
+        def support = supportWithSources(
+                loadThreads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): loadThreads],
+                loaders
+        )
+
+        when:
+        def result = support.getNodeSet()
+
+        then: "every source ran on the calling thread, one after another"
+        threads == [Thread.currentThread()] * 4
+        result.nodeNames as List == ['n1', 'n2', 'n3', 'n4']
+
+        where:
+        loadThreads << [null, '1', '0', 'not-a-number']
+    }
+
+    def "concurrency is capped at the per-project maximum even if loadThreads is higher"() {
+        given:
+        def total = ProjectNodeSupport.MAX_LOAD_THREADS + 10
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        // sources block until released, so the cap is reached and held without relying on timing
+        def release = new CountDownLatch(1)
+        def loaders = (1..total).collect { int n ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                release.await(10, TimeUnit.SECONDS)
+                active.decrementAndGet()
+                nodes("n${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '1000'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+
+        then:
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+        }
+
+        when:
+        release.countDown()
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames.size() == total
+        maxActive.get() == ProjectNodeSupport.MAX_LOAD_THREADS
+    }
+
+    def "a serial load on an interrupted thread still queries every source"() {
+        given:
+        def support = supportWithSources([:], [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> nodes('b', '2') } as Closure<INodeSet>
+        ])
+        def results = []
+
+        when:
+        def loading = Thread.start {
+            Thread.currentThread().interrupt()
+            results << support.getNodeSet()
+        }
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames as Set == ['a', 'b'] as Set
+        support.getResourceModelSourceExceptionsMap().isEmpty()
+    }
+
+    def "a load started from a source query on a pool thread runs serially on that thread"() {
+        given:
+        def innerThreads = Collections.synchronizedList([])
+        def inner = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], [
+                { -> innerThreads << Thread.currentThread(); nodes('i1', '1') } as Closure<INodeSet>,
+                { -> innerThreads << Thread.currentThread(); nodes('i2', '2') } as Closure<INodeSet>
+        ])
+        def outerThread = null
+        def outer = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], [
+                { -> outerThread = Thread.currentThread(); inner.getNodeSet() } as Closure<INodeSet>,
+                { -> nodes('o2', '2') } as Closure<INodeSet>
+        ])
+
+        when:
+        def result = outer.getNodeSet()
+
+        then:
+        result.nodeNames as Set == ['i1', 'i2', 'o2'] as Set
+        outerThread.name.startsWith('ProjectNodeSupport-load-')
+        innerThreads == [outerThread, outerThread]
+    }
+
+    def "parallel loads use the project's own pool, which is stopped when the project is deleted"() {
+        given:
+        def threads = Collections.synchronizedList([])
+        def loaders = [
+                { -> threads << Thread.currentThread(); nodes('a', '1') } as Closure<INodeSet>,
+                { -> threads << Thread.currentThread(); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+
+        when:
+        support.getNodeSet()
+        ProjectNodeSupport.removeLoadPool(loadProject)
+        threads.each { it.join(10000) }
+        def reloaded = support.getNodeSet()
+
+        then:
+        threads.size() == 4
+        threads.every { it.name.startsWith("ProjectNodeSupport-load-${loadProject}-".toString()) }
+        !threads[0].alive
+        !threads[1].alive
+        reloaded.nodeNames as List == ['a', 'b']
+    }
+
+    def "loads waiting on queued tasks finish when the project's pool is stopped"() {
+        given: "two loads of 20 slow sources each, so 20 tasks are queued behind the pool's 20 threads"
+        def started = new CountDownLatch(20)
+        def loaders = (1..20).collect {
+            { -> started.countDown(); new CountDownLatch(1).await(30, TimeUnit.SECONDS); nodes('n', '1') } as Closure<INodeSet>
+        }
+        def supports = (1..2).collect {
+            supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '20'], loaders)
+        }
+        def results = Collections.synchronizedList([])
+
+        when:
+        def loads = supports.collect { support -> Thread.start { results << support.getNodeSet() } }
+        started.await(10, TimeUnit.SECONDS)
+        ProjectNodeSupport.removeLoadPool(loadProject)
+        loads.each { it.join(10000) }
+
+        then:
+        loads.every { !it.alive }
+        results.size() == 2
+        supports.every { it.getResourceModelSourceExceptionsMap().size() == 20 }
+    }
+
+    def "a load that submits to the project's stopped pool reports the remaining sources as failed"() {
+        given: "the first source is still running when the pool is stopped, so the third source is submitted after"
+        def firstStarted = new CountDownLatch(1)
+        def loaders = [
+                { -> firstStarted.countDown(); new CountDownLatch(1).await(30, TimeUnit.SECONDS); nodes('a', '1') } as Closure<INodeSet>,
+                { -> nodes('b', '2') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        firstStarted.await(10, TimeUnit.SECONDS)
+        ProjectNodeSupport.removeLoadPool(loadProject)
+        loading.join(10000)
+
+        then:
+        !loading.alive
+        results.size() == 1
+        support.getResourceModelSourceExceptionsMap().keySet().containsAll(['1.source', '3.source'])
+    }
+
+    def "pool threads use each loading thread's context classloader, also when reused by a later load"() {
+        given:
+        def firstLoader = new URLClassLoader(new URL[0])
+        def secondLoader = new URLClassLoader(new URL[0])
+        def seen = Collections.synchronizedList([])
+        def loaders = [
+                { -> seen << Thread.currentThread().contextClassLoader; nodes('a', '1') } as Closure<INodeSet>,
+                { -> seen << Thread.currentThread().contextClassLoader; nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def loadWith = { ClassLoader loader ->
+            def loading = Thread.start {
+                Thread.currentThread().contextClassLoader = loader
+                support.getNodeSet()
+            }
+            loading.join(10000)
+        }
+
+        //start every pool thread up front so both loads run on reused threads, not new ones that inherit the loader
+        ProjectNodeSupport.LOAD_POOLS.computeIfAbsent(loadProject, ProjectNodeSupport.&createLoadPool).prestartAllCoreThreads()
+
+        when: "both loads run on pool threads created before either load"
+        loadWith(firstLoader)
+        loadWith(secondLoader)
+
+        then:
+        seen.size() == 4
+        seen[0..1].every { it.is(firstLoader) }
+        seen[2..3].every { it.is(secondLoader) }
+    }
+
+    def "a load waiting on a running source that ignores interruption finishes when the project's pool is stopped"() {
+        given:
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def loaders = [
+                { ->
+                    started.countDown()
+                    //ignores interruption, like a source blocked on a monitor
+                    while (release.count > 0) {
+                        try {
+                            release.await(10, TimeUnit.SECONDS)
+                        } catch (InterruptedException ignored) {
+                        }
+                    }
+                    nodes('a', '1')
+                } as Closure<INodeSet>,
+                { -> nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        started.await(10, TimeUnit.SECONDS)
+        ProjectNodeSupport.removeLoadPool(loadProject)
+        loading.join(10000)
+
+        then:
+        !loading.alive
+        results.size() == 1
+        support.getResourceModelSourceExceptionsMap().keySet() == ['1.source', '2.source'] as Set
+
+        cleanup:
+        release.countDown()
+    }
+
+    def "a reload after an interrupted load shares the project's pool with sources still running from that load"() {
+        given: "the first load's sources ignore interruption and keep every pool thread busy"
+        def max = ProjectNodeSupport.MAX_LOAD_THREADS
+        def active = new AtomicInteger()
+        def maxActive = new AtomicInteger()
+        def release = new CountDownLatch(1)
+        def track = { Closure<INodeSet> body ->
+            { ->
+                maxActive.accumulateAndGet(active.incrementAndGet(), { a, b -> Math.max(a, b) })
+                try {
+                    body.call()
+                } finally {
+                    active.decrementAndGet()
+                }
+            } as Closure<INodeSet>
+        }
+        def stuck = (1..max).collect { int n ->
+            track { ->
+                while (release.count > 0) {
+                    try {
+                        release.await(10, TimeUnit.SECONDS)
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                nodes("s${n}", 'v')
+            }
+        }
+        def quick = (1..max).collect { int n -> track { -> nodes("q${n}", 'v') } }
+        def props = [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): "${max}".toString()]
+        def first = supportWithSources(props, stuck)
+        def second = supportWithSources(props, quick)
+        def results = []
+
+        when: "the first load is interrupted while its sources run, then the project reloads"
+        def firstLoad = Thread.start { first.getNodeSet() }
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == max
+        }
+        firstLoad.interrupt()
+        firstLoad.join(10000)
+        def reload = Thread.start { results << second.getNodeSet() }
+        reload.join(500)
+
+        then: "the reload waits for a pool thread instead of starting more queries"
+        !firstLoad.alive
+        reload.alive
+        active.get() == max
+
+        when:
+        release.countDown()
+        reload.join(10000)
+
+        then:
+        !reload.alive
+        results[0].nodeNames.size() == max
+        maxActive.get() == max
+
+        cleanup:
+        release.countDown()
+    }
+
+    def "an interrupted load removes its queued tasks from the project's pool"() {
+        given: "one load's sources ignore interruption and keep every pool thread busy"
+        def max = ProjectNodeSupport.MAX_LOAD_THREADS
+        def active = new AtomicInteger()
+        def release = new CountDownLatch(1)
+        def stuck = (1..max).collect { int n ->
+            { ->
+                active.incrementAndGet()
+                while (release.count > 0) {
+                    try {
+                        release.await(10, TimeUnit.SECONDS)
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                nodes("s${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def queued = (1..max).collect { int n -> { -> nodes("q${n}", 'v') } as Closure<INodeSet> }
+        def props = [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): "${max}".toString()]
+        def busy = supportWithSources(props, stuck)
+        def waiting = supportWithSources(props, queued)
+
+        when: "a second load queues its sources, then is interrupted"
+        def busyLoad = Thread.start { busy.getNodeSet() }
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == max
+        }
+        def pool = ProjectNodeSupport.LOAD_POOLS[loadProject]
+        def waitingLoad = Thread.start { waiting.getNodeSet() }
+        new PollingConditions(timeout: 10).eventually {
+            assert pool.queue.size() == max
+        }
+        waitingLoad.interrupt()
+        waitingLoad.join(10000)
+
+        then: "its cancelled tasks are no longer queued"
+        !waitingLoad.alive
+        pool.queue.isEmpty()
+
+        cleanup:
+        release.countDown()
+        busyLoad?.join(10000)
+    }
+
+    def "pool threads do not inherit the loading thread's inheritable thread-local values"() {
+        given:
+        def bound = new InheritableThreadLocal<String>()
+        def seen = Collections.synchronizedList([])
+        def loaders = [
+                { -> seen << bound.get(); nodes('a', '1') } as Closure<INodeSet>,
+                { -> seen << bound.get(); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+
+        when:
+        def loading = Thread.start {
+            bound.set('execution-output')
+            support.getNodeSet()
+        }
+        loading.join(10000)
+
+        then:
+        seen == [null, null]
+    }
+
+    def "an interrupted load keeps the nodes already loaded and reports the sources that did not complete"() {
+        given:
+        def firstThread = null
+        def firstDone = new CountDownLatch(1)
+        def secondStarted = new CountDownLatch(1)
+        def loaders = [
+                { -> firstThread = Thread.currentThread(); firstDone.countDown(); nodes('a', '1') } as Closure<INodeSet>,
+                { -> secondStarted.countDown(); new CountDownLatch(1).await(10, TimeUnit.SECONDS); nodes('b', '2') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '2'], loaders)
+        def results = []
+
+        when:
+        def loading = Thread.start { results << support.getNodeSet() }
+        firstDone.await(10, TimeUnit.SECONDS)
+        secondStarted.await(10, TimeUnit.SECONDS)
+        // the first source's task has completed once its pool thread is idle again, so the interrupt can only
+        // arrive while the load waits for the second source
+        new PollingConditions(timeout: 10).eventually {
+            assert firstThread.state == Thread.State.TIMED_WAITING
+        }
+        loading.interrupt()
+        loading.join(10000)
+
+        then:
+        results[0].nodeNames as List == ['a']
+        support.getResourceModelSourceExceptionsMap().keySet() == ['2.source'] as Set
+    }
+
+    def "failure merging one source is reported by source index and later sources still load"() {
+        given:
+        def broken = Mock(INodeSet) {
+            iterator() >> { throw new IllegalStateException('bad node data') }
+        }
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> broken } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '3'], loaders)
+
+        when:
+        def result = support.getNodeSet()
+        def errors = support.getResourceModelSourceExceptionsMap()
+
+        then:
+        result.nodeNames as List == ['a', 'c']
+        errors.keySet() == ['2.source'] as Set
+        errors['2.source'].message == 'bad node data'
+    }
+
+    def "a source failure after a source that failed to initialize is reported by its configured index"() {
+        given: "source 1 fails to initialize, so source 2 is the first loaded source"
+        def support = supportWithSources([:], [
+                null,
+                { -> throw new RuntimeException('query failed') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ])
+
+        when:
+        def result = support.getNodeSet()
+
+        then:
+        result.nodeNames as List == ['c']
+        def errors = support.getResourceModelSourceExceptionsMap()
+        errors.keySet() == ['1.source', '2.source'] as Set
+        errors['2.source'].message.contains('query failed')
+    }
+
+    def "failure of one source is reported by source index and others still load"() {
+        given:
+        def loaders = [
+                { -> nodes('a', '1') } as Closure<INodeSet>,
+                { -> throw new ResourceModelSourceException('boom') } as Closure<INodeSet>,
+                { -> nodes('c', '3') } as Closure<INodeSet>
+        ]
+        def support = supportWithSources([:], loaders)
+
+        when:
+        def result = support.getNodeSet()
+        def errors = support.getResourceModelSourceExceptionsMap()
+
+        then:
+        result.nodeNames as List == ['a', 'c']
+        errors.keySet() == ['2.source'] as Set
+        errors['2.source'].message == 'boom'
+    }
 }

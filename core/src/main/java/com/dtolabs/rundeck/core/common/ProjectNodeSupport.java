@@ -32,6 +32,18 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,6 +57,28 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final  String RESOURCES_SOURCE_PROP_PREFIX            = "resources.source";
     public static final  String NODE_ENHANCER_PROP_PREFIX               = "nodes.plugin";
     public static final  String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
+    /**
+     * Project property: number of node sources queried concurrently. The default of 1 (or less) queries sources
+     * serially. Limited by {@link #MAX_LOAD_THREADS}.
+     */
+    public static final  String PROJECT_RESOURCES_LOAD_THREADS          = "project.resources.loadThreads";
+    private static final int    DEFAULT_LOAD_THREADS                    = 1;
+    /**
+     * Upper bound on parallel node source queries running at once for a project
+     */
+    public static final  int    MAX_LOAD_THREADS                        = 20;
+    /**
+     * Node source query pool per project, so a slow project does not hold threads another project needs. Idle
+     * threads time out.
+     * <p>
+     * Known limitation: a load that races a project delete can re-add that project's pool. The pool then stays in
+     * the map as an idle executor with no threads. Remove pools after their last load if this ever matters.
+     */
+    private static final ConcurrentMap<String, ThreadPoolExecutor> LOAD_POOLS = new ConcurrentHashMap<>();
+    /**
+     * Set while a pool thread queries a source, so a node load started from that query can be detected
+     */
+    private static final ThreadLocal<Boolean> IN_SOURCE_QUERY = ThreadLocal.withInitial(() -> false);
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -127,72 +161,263 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * Returns the set of nodes for the project
+     * Returns the set of nodes for the project. Sources can be queried in parallel (see
+     * {@link #PROJECT_RESOURCES_LOAD_THREADS}), but results are always merged in source order so attribute
+     * merging behaves the same as a serial load.
      *
      * @return an instance of {@link INodeSet}
      */
     @Override
     public INodeSet getNodeSet() {
-        //iterate through sources, and add nodes
         final NodeSetMerge list = getNodeSetMerge();
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
-        int index=1;
+        Map<String,Exception> exceptions = new HashMap<>();
 
         nodesSourceExceptions.clear();
-        for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
-            try {
-                INodeSet nodes = nodesSource.getNodes();
-                if (null == nodes) {
-                    logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
-                } else {
-                    list.addNodeSet(nodes);
+        final List<LoadedResourceModelSource> sources = new ArrayList<>(getResourceModelSourcesInternal());
+        querySources(sources, (i, result) -> {
+            //configured source index: sources that failed to initialize are not in the list
+            final int index = sources.get(i).getIndex();
+            ResourceModelSourceException error = result.error();
+            if (result.nodes() != null) {
+                try {
+                    list.addNodeSet(result.nodes());
+                } catch (RuntimeException e) {
+                    logger.error("Cannot merge nodes from source #" + index + ": " + e.getMessage());
+                    logger.debug("Cannot merge nodes from source #" + index + ": " + e.getMessage(), e);
+                    error = new ResourceModelSourceException(e.getMessage(), e);
                 }
-                if(nodesSource instanceof ResourceModelSourceErrors){
-                    ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
-                    List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
-                    if(modelSourceErrors!=null && modelSourceErrors.size()>0){
-
-                        logger.error("Some errors getting nodes from [" +
-                                     nodesSource.toString() +
-                                     "]: " +
-                                     modelSourceErrors);
-                        exceptions.put(
-                                index + ".source",
-                                new ResourceModelSourceException(
-                                        TextUtils.join(
-                                                modelSourceErrors.toArray(new String[0]),
-                                                ';'
-                                        )
-                                )
-                        );
-                    }
-                }
-            } catch (ResourceModelSourceException | RuntimeException e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-                logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-                exceptions.put(
-                        index+".source",
-                        new ResourceModelSourceException(
-                                e.getMessage(), e
-                        )
-                );
-            } catch (Throwable e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-                logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-                exceptions.put(
-                        index+".source",
-                        new ResourceModelSourceException(
-                                e.getMessage()
-                        )
-                );
             }
-            index++;
-        }
+            if (error != null) {
+                exceptions.put(index + ".source", error);
+            }
+        });
         synchronized (nodesSourceExceptions){
             nodesSourceExceptions.putAll(exceptions);
         }
         return list;
 
+    }
+
+    /**
+     * Result of querying a single node source
+     */
+    private record SourceResult(INodeSet nodes, ResourceModelSourceException error) {
+    }
+
+    /**
+     * @return number of threads used to query node sources, from {@link #PROJECT_RESOURCES_LOAD_THREADS}
+     */
+    private int getLoadThreads() {
+        final String raw = projectConfig.getProperty(PROJECT_RESOURCES_LOAD_THREADS);
+        final String value = raw == null ? "" : raw.trim();
+        if (value.isEmpty()) {
+            return DEFAULT_LOAD_THREADS;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid value for " + PROJECT_RESOURCES_LOAD_THREADS + ", using default: " + e.getMessage());
+            return DEFAULT_LOAD_THREADS;
+        }
+    }
+
+    /**
+     * Create the node source query pool for a project: {@link #MAX_LOAD_THREADS} daemon threads that time out when
+     * idle and do not inherit inheritable thread-local values.
+     *
+     * @param project project name
+     *
+     * @return new pool
+     */
+    private static ThreadPoolExecutor createLoadPool(final String project) {
+        final AtomicInteger count = new AtomicInteger();
+        final ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                MAX_LOAD_THREADS,
+                MAX_LOAD_THREADS,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                r -> {
+                    //no inherited thread-local values: a worker outlives the load that created it, so it must not keep
+                    //that load's thread-bound state, such as an execution's output streams
+                    Thread t = new Thread(
+                            null,
+                            r,
+                            "ProjectNodeSupport-load-" + project + "-" + count.incrementAndGet(),
+                            0,
+                            false
+                    );
+                    t.setDaemon(true);
+                    return t;
+                }
+        );
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
+
+    /**
+     * Stop and discard the node source query pool of a deleted project
+     *
+     * @param project project name
+     */
+    public static void removeLoadPool(final String project) {
+        final ThreadPoolExecutor pool = LOAD_POOLS.remove(project);
+        if (pool != null) {
+            //cancel queued tasks, so a load waiting on one fails instead of blocking forever
+            pool.shutdownNow().forEach(task -> ((Future<?>) task).cancel(true));
+        }
+    }
+
+    /**
+     * Query all sources, in parallel if more than one thread is configured, and pass each result to the consumer in
+     * source order. Sources are submitted in a sliding window of the configured size, read in order, so at most that
+     * many results are held at once even when an early source is slow. Parallel loads use the project's own pool;
+     * serial loads run on the calling thread and do not use a pool. A load started from a node
+     * source query on a pool thread (a source that loads another project's nodes) runs serially, so it never waits
+     * for the pool it is running on.
+     *
+     * @param sources  sources to query
+     * @param consumer receives the source index and its result, in source order, on the calling thread
+     */
+    private void querySources(
+            final List<LoadedResourceModelSource> sources,
+            final BiConsumer<Integer, SourceResult> consumer
+    )
+    {
+        final int total = sources.size();
+        final int threads = Math.min(Math.min(getLoadThreads(), MAX_LOAD_THREADS), total);
+        if (threads <= 1 || IN_SOURCE_QUERY.get()) {
+            for (int i = 0; i < total; i++) {
+                consumer.accept(i, querySource(sources.get(i)));
+            }
+            return;
+        }
+        final ThreadPoolExecutor pool = LOAD_POOLS.computeIfAbsent(
+                projectConfig.getName(),
+                ProjectNodeSupport::createLoadPool
+        );
+        //each task runs with the loading thread's context classloader, as a serial load would, whichever load
+        //created the pool thread
+        final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        final Deque<Future<SourceResult>> window = new ArrayDeque<>();
+        int next = 0;
+        int consumed = 0;
+        try {
+            while (consumed < total) {
+                while (next < total && window.size() < threads) {
+                    final LoadedResourceModelSource source = sources.get(next++);
+                    window.add(pool.submit(() -> querySourceWithLoader(source, loader)));
+                }
+                consumer.accept(consumed, awaitResult(window.peek(), pool));
+                window.poll();
+                consumed++;
+            }
+        } catch (InterruptedException | CancellationException | RejectedExecutionException | ExecutionException e) {
+            //interrupted, or the project's pool was stopped because the project was deleted (querySource catches
+            //Throwable, so ExecutionException is not expected)
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            //report the failure for sources not yet consumed. Intended: the load returns the nodes merged so far,
+            //like any load with failed sources, and the node cache keeps that partial set until its next refresh
+            final SourceResult failed = new SourceResult(
+                    null,
+                    new ResourceModelSourceException("Failed loading nodes: " + e, e)
+            );
+            while (consumed < total) {
+                consumer.accept(consumed++, failed);
+            }
+        } finally {
+            //no-op for completed tasks, stops queued or running ones if the load was abandoned
+            window.forEach(f -> f.cancel(true));
+            //cancelled tasks stay in the queue until a worker reaches them, so remove them now
+            pool.purge();
+        }
+    }
+
+    /**
+     * Wait for a source query, failing if the pool is stopped (the project was deleted) while the query is still
+     * running, so a source that ignores interruption cannot block the load
+     *
+     * @param future source query
+     * @param pool   pool running the query
+     *
+     * @return query result
+     *
+     * @throws CancellationException if the query was cancelled or the pool was stopped
+     */
+    private static SourceResult awaitResult(final Future<SourceResult> future, final ThreadPoolExecutor pool)
+            throws InterruptedException, ExecutionException
+    {
+        while (true) {
+            try {
+                return future.get(1, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                if (pool.isShutdown()) {
+                    throw new CancellationException("Node source load pool was stopped");
+                }
+            }
+        }
+    }
+
+    /**
+     * Query a single source on a pool thread with the loading thread's context classloader
+     *
+     * @param nodesSource source
+     * @param loader      context classloader of the loading thread
+     *
+     * @return result with nodes and/or error
+     */
+    private static SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader previous = thread.getContextClassLoader();
+        thread.setContextClassLoader(loader);
+        IN_SOURCE_QUERY.set(true);
+        try {
+            return querySource(nodesSource);
+        } finally {
+            IN_SOURCE_QUERY.remove();
+            thread.setContextClassLoader(previous);
+        }
+    }
+
+    /**
+     * Query a single source, capturing any failure in the result
+     *
+     * @param nodesSource source
+     *
+     * @return result with nodes and/or error
+     */
+    private static SourceResult querySource(final ResourceModelSource nodesSource) {
+        INodeSet nodes = null;
+        ResourceModelSourceException error = null;
+        try {
+            nodes = nodesSource.getNodes();
+            if (null == nodes) {
+                logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
+            }
+            if (nodesSource instanceof ResourceModelSourceErrors errs) {
+                List<String> modelSourceErrors = errs.getModelSourceErrors();
+                if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
+                    logger.error("Some errors getting nodes from [" +
+                                 nodesSource.toString() +
+                                 "]: " +
+                                 modelSourceErrors);
+                    error = new ResourceModelSourceException(
+                            TextUtils.join(modelSourceErrors.toArray(new String[0]), ';')
+                    );
+                }
+            }
+        } catch (ResourceModelSourceException | RuntimeException e) {
+            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
+            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+            error = new ResourceModelSourceException(e.getMessage(), e);
+        } catch (Throwable e) {
+            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
+            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+            error = new ResourceModelSourceException(e.getMessage());
+        }
+        return new SourceResult(nodes, error);
     }
 
     /**

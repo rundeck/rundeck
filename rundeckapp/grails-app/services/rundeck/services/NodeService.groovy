@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.cache.RemovalCause
 import com.google.common.cache.RemovalListener
 import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
@@ -75,7 +76,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getCategories() {
-        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource']
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource', loadThreads: 'resourceModelSource']
     }
     @Override
     List<Property> getProjectConfigProperties() {
@@ -103,6 +104,14 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                     required(false)
                     defaultValue 'true'
                     renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
+                }.build(),
+                PropertyBuilder.builder().with {
+                    integer 'loadThreads'
+                    title 'Load Threads'
+                    description "Number of Node Sources queried concurrently when loading nodes.\n\nThe default of 1 queries Node Sources one at a time. Higher values reduce load time for projects with many Node Sources, but increase concurrent requests to the systems behind them, which may throttle. At most ${ProjectNodeSupport.MAX_LOAD_THREADS} Node Sources are queried in parallel at once in each project."
+                    required(false)
+                    defaultValue '1'
+                    renderingOption(StringRenderingConstants.GROUP_NAME, 'Node Sources')
                 }.build()
         ]
     }
@@ -111,7 +120,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
 
     @Override
     Map<String, String> getPropertiesMapping() {
-        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH]
+        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH, 'loadThreads': ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS]
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
@@ -149,6 +158,11 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 new RemovalListener<String, CachedProjectNodes>() {
                     @Override
                     void onRemoval(final RemovalNotification<String, CachedProjectNodes> notification) {
+                        //a refresh that keeps the same value still reports it as replaced, do not close it then
+                        if (notification.cause == RemovalCause.REPLACED &&
+                            nodeCache.getIfPresent(notification.key).is(notification.value)) {
+                            return
+                        }
                         Closeables.closeQuietly(notification.getValue()?.nodeSupport)
                     }
                 }
@@ -189,17 +203,22 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     }
 
     boolean needsReload(String project, CachedProjectNodes oldNodes) {
+        if (oldNodes.loading) {
+            log.debug("first load still running, not reloading for ${project}")
+            return false
+        }
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(project)
         def now = new Date()
         def delay = projectNodeCacheDelayConfig(rdprojectconfig)
-        log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - oldNodes.cacheTime.time}...")
+        def loadedTime = oldNodes.loadedTime ?: oldNodes.cacheTime
+        log.debug("check needs reload ${project} delay ${delay}, elapsed ${now.time - loadedTime.time}...")
         if(rdprojectconfig.configLastModifiedTime > oldNodes.cacheTime){
             log.debug("config changed, forcing node reload for ${project}")
             //refresh if config has changed
             return true
         }
-        if(now.time - oldNodes.cacheTime.time < delay){
+        if(now.time - loadedTime.time < delay){
             log.debug("within cache duration, not reloading for ${project}")
             return false
         }
@@ -314,8 +333,16 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
         }
         if (firstLoadInBg) {
             //want to return something asap, and have some cache data, so perform first reload in background thread
+            cachedNodes.loading = true
             nodeTaskExecutor.execute {
-                metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+                try {
+                    metricService?.withTimer(this.class.name, "project.${project}.loadNodes", clos) ?: clos()
+                } finally {
+                    //count the cache delay from when the first load finished; cacheTime stays the load start, so a
+                    //config change made during the load still triggers a reload
+                    cachedNodes.loadedTime = new Date()
+                    cachedNodes.loading = false
+                }
             }
         } else {
             //we are refreshing the data in asynch thread already, so can perform this synchronously

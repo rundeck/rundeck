@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -127,6 +128,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
         nodes1.nodeNames as List == ['anode']
+    }
+
+    def "project load threads config is exposed as a project property"() {
+        expect:
+        service.propertiesMapping['loadThreads'] == 'project.resources.loadThreads'
+        service.projectConfigProperties.find { it.name == 'loadThreads' }.defaultValue == '1'
     }
 
     class PropsConfig implements IRundeckProjectConfig {
@@ -579,6 +586,87 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         0 * modelSource.getNodes() >> modelNodes
         1 * cacheModelsource.getNodes() >> null
 
+    }
+
+    def "no refresh while the background first load is running"() {
+        given:
+        service.nodeTaskExecutor = Mock(AsyncTaskExecutor)
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('nodeService.nodeCache.enabled', true) >> true
+            getBoolean('nodeService.nodeCache.firstLoadAsynch', false) >> true
+        }
+        def properties = [
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'project.nodeCache.enabled'                          : 'true',
+                'project.nodeCache.delay'                            : '60',
+        ]
+        def projConfig = new PropsConfig(
+                projectProperties: properties,
+                properties: properties,
+                name: 'test1',
+                configLastModifiedTime: new Date(0)
+        )
+        def modelSource = Mock(ResourceModelSource)
+        //needsReload reads the config modified time as a property, which PropsConfig.getProperty hides
+        Date configModified = new Date(0)
+        def reloadConfig = Stub(IRundeckProjectConfig) {
+            hasProperty('project.nodeCache.delay') >> true
+            getProperty('project.nodeCache.delay') >> '60'
+            getConfigLastModifiedTime() >> { configModified }
+        }
+        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                existsFrameworkProject('test1') >> true
+                loadProjectConfig('test1') >> projConfig
+            }
+            getProjectManager() >> Mock(ProjectManager) {
+                loadProjectConfig('test1') >> reloadConfig
+            }
+            getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
+                getSourceForConfiguration('file', _) >> modelSource
+            }
+            getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                getGeneratorForFormat('resourcexml') >> Mock(ResourceFormatGenerator)
+            }
+        }
+        service.afterPropertiesSet()
+        def nodeSupport = Mock(ProjectNodeSupport)
+        Runnable firstLoad = null
+
+        when: "the first load is queued in the background"
+        def result = service.getNodes('test1')
+
+        then:
+        1 * service.nodeTaskExecutor.execute(_) >> { args -> firstLoad = args[0] }
+        result.loading
+
+        when: "the cache refreshes while the first load runs"
+        result.nodeSupport = nodeSupport
+        service.nodeCache.refresh('test1')
+
+        then: "the cached value is kept and not closed"
+        !service.needsReload('test1', result)
+        service.nodeCache.getIfPresent('test1').is(result)
+        0 * nodeSupport.close()
+
+        when: "the first load, started longer ago than the cache delay, finishes"
+        long now = System.currentTimeMillis()
+        result.cacheTime = new Date(now - 120000)
+        firstLoad.run()
+
+        then: "the cache delay counts from when it finished"
+        !result.loading
+        !service.needsReload('test1', result)
+
+        when: "the project config was changed during the first load"
+        configModified = new Date(now - 5000)
+
+        then: "the change triggers a reload"
+        service.needsReload('test1', result)
     }
 
     def "project nodecache delay"(String confval, long expected) {
