@@ -735,6 +735,10 @@ class BaseGitPlugin {
                     if (repo != null) {
                         repo.close()
                     }
+                    //null out so a failed performClone() below leaves no closed-repository
+                    //reference for a subsequent operation to run against
+                    git = null
+                    repo = null
                     handedOff = true
                     removeWorkdir(base)
                     performClone(base, url, context, integration)
@@ -776,6 +780,7 @@ class BaseGitPlugin {
         try {
             git = cloneCommand.call()
         } catch (Exception e) {
+            git = null
             throw remoteAccessFailure('Failed cloning the repository', e, branch)
         }
         try {
@@ -786,6 +791,8 @@ class BaseGitPlugin {
         } catch (Exception e) {
             logger.debug("Failed configuring cloned repository from ${url}: ${e.message}", e)
             git.getRepository().close()
+            git = null
+            repo = null
             throw new ScmPluginException("Failed configuring cloned repository from ${url}: ${e.message}", e)
         }
     }

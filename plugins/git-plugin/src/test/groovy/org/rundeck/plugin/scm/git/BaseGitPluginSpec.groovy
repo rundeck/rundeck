@@ -140,6 +140,36 @@ class BaseGitPluginSpec extends Specification {
         git.close()
     }
 
+    def "cloneOrCreate leaves git/repo null, not a closed reference, when a re-clone fails"() {
+        given: "a workdir whose configured remote url differs from the requested one, forcing a re-clone"
+        def origindir = new File(tempdir, 'origin')
+        def gitdir = new File(tempdir, 'scm')
+        def origin = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, origin, 'testcommit.txt', 'blah')
+        origin.close()
+
+        def git = Git.cloneRepository()
+                .setURI(origindir.absolutePath)
+                .setDirectory(gitdir)
+                .setBranch('master')
+                .call()
+
+        def plugin = new BaseGitPlugin(new Common())
+        plugin.branch = 'master'
+        //simulate an already-initialized plugin pointing at the old (about to be replaced) repo
+        plugin.git = git
+        plugin.repo = git.repository
+        def context = Mock(ScmOperationContext)
+
+        when: "cloneOrCreate re-clones from a different, unreachable url and the clone fails"
+        plugin.cloneOrCreate(context, gitdir, new File(tempdir, 'gone').absolutePath, 'export')
+
+        then: "the failure surfaces, and git/repo are null rather than left pointing at a closed repository"
+        thrown(ScmPluginException)
+        plugin.git == null
+        plugin.repo == null
+    }
+
     @Unroll
     def "serialize job to valid file path"() {
         given:
