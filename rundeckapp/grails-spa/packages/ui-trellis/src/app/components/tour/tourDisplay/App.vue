@@ -84,10 +84,10 @@ export default defineComponent({
     return {
       modalData: {
         show: false,
-        image: null,
-        alt: null,
+        image: null as string | null,
+        alt: null as string | null,
       },
-      tour: null as any,
+      tour: null as Tour | null,
       display: false,
       stepIndex: 0,
       progress: 0,
@@ -109,7 +109,7 @@ export default defineComponent({
       if (tourParts[2] != null) {
         this.initUrl = tourParts[2];
       }
-      TourServices.getTour(tourParts[0], tourParts[1]).then((tour: any) => {
+      TourServices.getTour(tourParts[0], tourParts[1]).then((tour) => {
         let tourStep = 0;
         if (window._rundeck.activeTourStep) {
           if (Number.isInteger(parseInt(window._rundeck.activeTourStep))) {
@@ -122,7 +122,9 @@ export default defineComponent({
   },
   methods: {
     showIndicator() {
-      const indicator = this.tour.steps[this.stepIndex].stepIndicator;
+      const tour = this.tour;
+      if (!tour) return;
+      const indicator = tour.steps[this.stepIndex].stepIndicator;
       if (indicator != null) {
         const indicatorTarget = document.getElementById(indicator);
         if (indicatorTarget == null) {
@@ -137,9 +139,9 @@ export default defineComponent({
           indicatorElement.style.top = `${indicatorTargetViewportOffset.y + (indicatorTargetViewportOffset.height / 2 - 25)}px `;
           indicatorElement.style.left = `${indicatorTargetViewportOffset.x + indicatorTargetViewportOffset.width}px`;
 
-          if (this.tour.steps[this.stepIndex].stepIndicatorPosition) {
+          if (tour.steps[this.stepIndex].stepIndicatorPosition) {
             const stepIndicatorPosition =
-              this.tour.steps[this.stepIndex].stepIndicatorPosition;
+              tour.steps[this.stepIndex].stepIndicatorPosition;
 
             if (stepIndicatorPosition === "bottom") {
               indicatorElement.classList.add("bottom");
@@ -184,7 +186,7 @@ export default defineComponent({
         element?.parentNode?.removeChild(element);
       }
     },
-    initTour(tour: Tour, tourStep: any) {
+    initTour(tour: Tour, tourStep: number) {
       this.tour = tour;
       this.display = true;
       this.stepIndex = 0;
@@ -197,7 +199,7 @@ export default defineComponent({
     },
     stopTour() {
       TourServices.unsetTour().then(() => {
-        this.tour = null as any;
+        this.tour = null;
         this.display = false;
         document.body.classList.remove("tour-open");
         this.removeIndicator();
@@ -216,7 +218,9 @@ export default defineComponent({
       }
     },
     nextStep() {
-      if (this.stepIndex !== this.tour.steps.length - 1) {
+      const tour = this.tour;
+      if (!tour) return;
+      if (this.stepIndex !== tour.steps.length - 1) {
         this.stepIndex++;
         Trellis.FilterPrefs.setFilterPref(
           "activeTourStep",
@@ -229,13 +233,17 @@ export default defineComponent({
       }
     },
     initNextUrl() {
-      const step = this.tour.steps[0];
+      const tour = this.tour;
+      if (!tour) return;
+      const step = tour.steps[0];
       if (step.currentUrl != null && this.currentUrl !== step.currentUrl) {
         window.location.replace(`${window._rundeck.rdBase}${step.currentUrl}`);
       }
     },
-    getNextUrl(stepIndex: any) {
-      const nextStep = this.tour.steps[stepIndex];
+    getNextUrl(stepIndex: number) {
+      const tour = this.tour;
+      if (!tour) return;
+      const nextStep = tour.steps[stepIndex];
       let nextUrl = null;
 
       if (nextStep != null) {
@@ -253,18 +261,18 @@ export default defineComponent({
       }
     },
     setProgress() {
+      const tour = this.tour;
+      if (!tour) return;
       // Updating the Progress Bar and Label
-      const progressStep = 100 / this.tour.steps.length;
+      const progressStep = 100 / tour.steps.length;
       this.progress = Math.ceil(progressStep * (this.stepIndex + 1));
       if (this.stepIndex === 0) {
         this.progressText = " ";
       } else {
-        this.progressText = `${this.stepIndex + 1} of ${
-          this.tour.steps.length
-        }`;
+        this.progressText = `${this.stepIndex + 1} of ${tour.steps.length}`;
       }
       // Handling the Step Indicator
-      if (this.tour.steps[this.stepIndex].stepIndicator) {
+      if (tour.steps[this.stepIndex].stepIndicator) {
         this.showIndicator();
       } else {
         this.removeIndicator();
@@ -278,13 +286,16 @@ export default defineComponent({
         });
       });
     },
-    openImageModal(event: any) {
-      this.modalData.image = event.target.src;
-      this.modalData.alt = event.target.alt;
+    openImageModal(event: MouseEvent) {
+      const target = event.target as HTMLImageElement;
+      this.modalData.image = target.src;
+      this.modalData.alt = target.alt;
       this.modalData.show = true;
     },
     resume() {
-      const step = this.tour.steps[this.stepIndex];
+      const tour = this.tour;
+      if (!tour) return;
+      const step = tour.steps[this.stepIndex];
       if (step.currentUrl != null && step.currentUrl !== "") {
         if (this.currentUrl !== step.currentUrl) {
           window.location.replace(

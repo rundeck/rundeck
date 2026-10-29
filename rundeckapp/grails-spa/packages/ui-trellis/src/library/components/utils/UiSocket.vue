@@ -47,12 +47,12 @@ export default defineComponent({
       default: undefined,
     },
     socketData: {
-      type: [String, Object] as PropType<string | Record<string, any>>,
+      type: [String, Object] as PropType<string | object>,
       required: false,
       default: undefined,
     },
     modelValue: {
-      type: [String, Object] as PropType<string | Record<string, any>>,
+      type: [String, Object] as PropType<string | object>,
       required: false,
       default: undefined,
     },
@@ -73,7 +73,7 @@ export default defineComponent({
       get() {
         return this.modelValue;
       },
-      set(val: any) {
+      set(val: string | object | undefined) {
         this.$emit("update:modelValue", val);
       },
     },

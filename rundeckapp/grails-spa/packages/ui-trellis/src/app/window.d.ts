@@ -11,5 +11,14 @@ declare global {
       isEditing: boolean;
       hasUnsavedChanges: boolean;
     };
+    SVGInject: typeof import("@iconfu/svg-inject").default;
+    markdeep: {
+      format(content: string, inline?: boolean): string;
+      format(
+        content: string,
+        inline: boolean,
+        callback: (formatted: string, error?: string) => void,
+      ): void;
+    };
   }
 }

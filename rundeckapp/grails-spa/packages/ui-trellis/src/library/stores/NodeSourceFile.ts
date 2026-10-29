@@ -136,7 +136,7 @@ export class NodeSourceFile {
           Tokens.setNewUIToken(e.response.headers);
         }
         throw e;
-      })) as AxiosResponse<any>;
+      })) as AxiosResponse<string>;
     await Tokens.setNewUIToken(response.headers);
     if (response.status === 200 && typeof response.data === "string") {
       return response.data;

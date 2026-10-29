@@ -39,9 +39,10 @@ import EditPluginModal from "../../../../library/components/plugins/EditPluginMo
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import {
   getPluginProvidersForService,
+  type PluginProviderDescription,
   validatePluginConfig,
 } from "../../../../library/modules/pluginService";
-import { ServiceType, Plugin } from "../../../../library/stores/Plugins";
+import { ServiceType } from "../../../../library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 import { resetValidation } from "./stepEditorUtils";
@@ -76,8 +77,8 @@ export default defineComponent({
   data() {
     return {
       ServiceType,
-      pluginProviders: [] as Plugin[],
-      pluginLabels: [],
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
       addFilterModal: false,
       editFilterModal: false,
       model: {
@@ -108,7 +109,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue) as { type: string; config: any };
+    this.model = cloneDeep(this.modelValue) as PluginConfig;
     this.eventBus.on("edit", () => {
       if (!this.addFilterModal) {
         this.editFilterModal = true;
@@ -161,9 +162,9 @@ export default defineComponent({
       const response = await getPluginProvidersForService(
         ServiceType.LogFilter,
       );
-      if (response.service) {
+      if (response?.service) {
         this.pluginProviders = response.descriptions;
-        this.pluginLabels = response.labels;
+        this.pluginLabels = response.labels ?? {};
       }
     },
   },

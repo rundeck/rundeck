@@ -48,20 +48,10 @@
 import { defineComponent } from "vue";
 import Trellis, { getRundeckContext } from "../../../../library";
 import TourServices from "../services";
+import type { TourLoader, TourManifestEntry } from "../services";
 import { RootStore } from "../../../../library/stores/RootStore";
 
 const context = getRundeckContext();
-
-interface Tour {
-  name: string;
-  author: string;
-  provider: string;
-}
-interface TourLoader {
-  tours: Tour[];
-  provider: string;
-  loader: string;
-}
 
 export default defineComponent({
   name: "TourPicker",
@@ -99,8 +89,8 @@ export default defineComponent({
     window._rundeck.eventBus.off("refresh-tours");
   },
   methods: {
-    startTour: function (tourLoader: string, tourEntry: any) {
-      TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
+    startTour: function (tourLoader: string, tourEntry: TourManifestEntry) {
+      TourServices.getTour(tourLoader, tourEntry.key).then((tour) => {
         Trellis.FilterPrefs.setFilterPref(
           "activeTour",
           tourLoader + ":" + tourEntry.key,

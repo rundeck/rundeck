@@ -1,4 +1,23 @@
 import { PluginConfig } from "../../../../../library/interfaces/PluginConfig";
+import {
+  ErrorHandlerDefinition,
+  JobRefDefinition,
+  StepPluginConfig,
+} from "../../../../../library/types/jobs/WorkflowTypes";
+
+export {
+  CommandEditData,
+  CommandExecPluginConfig,
+  EditStepData,
+  ErrorHandlerDefinition,
+  JobRefDefinition,
+  ScriptFilePluginConfig,
+  ScriptGeneralPluginConfig,
+  ScriptInlinePluginConfig,
+  StepPluginConfig,
+  StepPluginConfigExtension,
+  StepsEditData,
+} from "../../../../../library/types/jobs/WorkflowTypes";
 
 /**
  * Input config for script steps
@@ -18,23 +37,6 @@ export interface ScriptInlineData extends ScriptArgsData {
 }
 
 /**
- * Output Plugin common fields for script plugin types
- */
-export interface ScriptGeneralPluginConfig {
-  argString?: string;
-  scriptInterpreter?: string;
-  interpreterArgsQuoted?: boolean;
-  fileExtension?: string;
-}
-
-/**
- * Ouput Plugin config for script-inline plugin type
- */
-export interface ScriptInlinePluginConfig extends ScriptGeneralPluginConfig {
-  adhocLocalString: string;
-}
-
-/**
  * Input config for script steps with script file
  */
 export interface ScriptFileData extends ScriptArgsData {
@@ -43,46 +45,8 @@ export interface ScriptFileData extends ScriptArgsData {
   expandTokenInScriptFile?: boolean;
 }
 
-/**
- * Ouput Plugin config for script-inline plugin type
- */
-export interface ScriptFilePluginConfig extends ScriptGeneralPluginConfig {
-  adhocFilepath: string;
-  expandTokenInScriptFile?: boolean;
-}
-
 export interface CommandExecData {
   exec?: string;
-}
-
-/**
- * Output Plugin config for exec-command plugin type
- */
-export interface CommandExecPluginConfig {
-  adhocRemoteString: string;
-}
-export interface JobRefDefinition {
-  group: string;
-  name: string;
-  project?: string;
-  uuid?: string;
-  args?: string;
-  failOnDisable?: boolean;
-  childNodes?: boolean;
-  importOptions?: boolean;
-  ignoreNotifications?: boolean;
-  nodeStep?: boolean;
-  useName?: boolean;
-  nodefilters?: {
-    filter: string;
-    dispatch?: {
-      threadcount?: number;
-      keepgoing?: boolean;
-      rankAttribute?: string;
-      rankOrder?: string;
-      nodeIntersect?: boolean;
-    };
-  };
 }
 export interface JobRefData {
   description?: string;
@@ -91,19 +55,19 @@ export interface JobRefData {
 }
 export interface PluginStepData {
   type?: string;
-  configuration?: any;
+  configuration?: StepPluginConfig;
   nodeStep?: boolean;
 }
 export interface CommandData {
   description?: string;
-  plugins?: { [key: string]: any };
+  plugins?: Record<string, unknown>;
 }
 export interface BasicData {
   keepgoing: boolean;
 }
 
 export interface WorkflowStrategyPluginConfig {
-  WorkflowStrategy?: { [key: string]: any };
+  WorkflowStrategy?: Record<string, Record<string, unknown>>;
 }
 
 export interface WorkflowLogFilterConfig {
@@ -111,23 +75,22 @@ export interface WorkflowLogFilterConfig {
 }
 
 export interface WorkflowPluginConfig {
-  pluginConfig?: WorkflowStrategyPluginConfig & WorkflowLogFilterConfig & any;
+  pluginConfig?: WorkflowStrategyPluginConfig &
+    WorkflowLogFilterConfig &
+    Record<string, unknown>;
 }
 
 export interface StrategyConfig {
   strategy?: string;
 }
 
-export interface ErrorHandlerDefinition {
-  config: any;
-  keepgoingOnSuccess?: boolean;
-  nodeStep: boolean;
-  jobref?: JobRefDefinition;
-  type: string;
-  id: string;
-}
 export interface ErrorHandlerData {
   errorhandler?: ErrorHandlerDefinition;
+}
+export interface StepErrorHandlerData {
+  errorhandler?: StepData & {
+    keepgoingOnSuccess?: boolean;
+  };
 }
 
 export interface GlobalLogFiltersData {
@@ -141,29 +104,20 @@ export type StepData = CommandData &
   ScriptFileData &
   ScriptInlineData &
   CommandExecData &
-  ErrorHandlerData;
+  StepErrorHandlerData;
 
 export interface StepsData {
   commands: StepData[];
 }
-export interface CommandEditData extends PluginConfig {
-  nodeStep: boolean;
-  description?: string;
-  jobref?: JobRefDefinition;
-  errorhandler?: ErrorHandlerDefinition;
-  //simply to provide a unique id for each step on client side
-  id: string;
-  filters?: PluginConfig[];
-}
-export type EditStepData = CommandEditData;
-export interface StepsEditData {
-  commands: EditStepData[];
-}
 
 export interface WorkflowData
-  extends BasicData, StrategyConfig, WorkflowPluginConfig, StepsData {}
+  extends
+    Partial<BasicData>,
+    StrategyConfig,
+    WorkflowPluginConfig,
+    Partial<StepsData> {}
 
-export function createBasicData({ keepgoing }: any): BasicData {
+export function createBasicData({ keepgoing }: Partial<BasicData>): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
@@ -177,11 +131,11 @@ export function createStrategyData(workflowData: WorkflowData): PluginConfig {
 export function exportPluginData(
   strategy: PluginConfig,
   logFilters: GlobalLogFiltersData,
-): any {
+): WorkflowPluginConfig & StrategyConfig {
   const obj: {
     pluginConfig: {
-      WorkflowStrategy: { [x: string]: any };
-      [key: string]: any;
+      WorkflowStrategy: Record<string, Record<string, unknown>>;
+      LogFilter?: PluginConfig[];
     };
     strategy: string;
   } = {
@@ -191,13 +145,13 @@ export function exportPluginData(
     strategy: strategy.type,
   };
   if (logFilters && logFilters.LogFilter && logFilters.LogFilter.length > 0) {
-    obj.pluginConfig["LogFilter"] = logFilters.LogFilter;
+    obj.pluginConfig.LogFilter = logFilters.LogFilter;
   }
   return obj;
 }
 export function createLogFiltersData({
   pluginConfig,
-}: any): GlobalLogFiltersData {
+}: WorkflowPluginConfig): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
 }
 

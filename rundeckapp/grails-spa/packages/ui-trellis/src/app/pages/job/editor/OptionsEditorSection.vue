@@ -19,7 +19,10 @@ import { mapActions, mapState } from "pinia";
 import OptionsEditor from "../../../components/job/options/OptionsEditor.vue";
 import JsonEmbed from "./JsonEmbed.vue";
 import { defineComponent } from "vue";
-import type { JobOptionsData } from "../../../../library/types/jobs/JobEdit";
+import type {
+  JobOptionEdit,
+  JobOptionsData,
+} from "../../../../library/types/jobs/JobEdit";
 
 import { getRundeckContext } from "../../../../library";
 
@@ -35,54 +38,57 @@ export default defineComponent({
       features: {},
       optionsData: null as JobOptionsData | null,
       updatedData: null as JobOptionsData | null,
-      subs: {} as Record<string, any>,
+      scheduleChangedHandler: null as
+        ((data: { scheduled: boolean }) => void) | null,
       uuid: "",
     };
   },
   async mounted() {
-    if (getRundeckContext() && getRundeckContext().data) {
-      this.uuid = getRundeckContext().data.otherData?.uuid || "!new";
+    const data = getRundeckContext().data;
+    if (data) {
+      this.uuid = data.otherData?.uuid || "!new";
 
-      this.features = getRundeckContext().data.features;
-      this.optionsData = getRundeckContext().data.optionsData;
-      this.updatedData = this.optionsData;
-      this.subs["job-edit-schedules-changed"] = eventBus.on(
-        "job-edit-schedules-changed",
-        (data) => {
-          if (this.optionsData)
-            this.optionsData.jobWasScheduled = data.scheduled;
-        },
-      );
+      this.features = data.features ?? {};
+      if (data.optionsData) {
+        this.optionsData = data.optionsData;
+        this.updatedData = this.optionsData;
+      }
+      this.scheduleChangedHandler = (data: { scheduled: boolean }) => {
+        if (this.optionsData) this.optionsData.jobWasScheduled = data.scheduled;
+      };
+      eventBus.on("job-edit-schedules-changed", this.scheduleChangedHandler);
       if (!this.hasJob(this.uuid)) {
-        this.initializeJobPlaceholder();
+        this.initializeJobPlaceholder(this.uuid);
       }
 
       await this.updateStore();
     }
   },
   async beforeUnmount() {
-    eventBus.off(
-      "job-edit-schedules-changed",
-      this.subs["job-edit-schedules-changed"],
-    );
+    if (this.scheduleChangedHandler) {
+      eventBus.off("job-edit-schedules-changed", this.scheduleChangedHandler);
+    }
   },
   computed: {
-    ...mapState(useJobStore, ["hasJob"]),
+    ...mapState(useJobStore, ["hasJob", "jobDefinition"]),
   },
   methods: {
     async updateStore() {
       await this.setActiveId(this.uuid);
-      await this.updateJobDefinition(
-        {
-          options: this.updatedData?.options || [],
-        } as any,
-        this.uuid,
-      );
+      if (this.jobDefinition) {
+        await this.updateJobDefinition(
+          {
+            ...this.jobDefinition,
+            options: this.updatedData?.options || [],
+          },
+          this.uuid,
+        );
+      }
     },
-    async changed(data: unknown[]) {
+    async changed(data: JobOptionEdit[]) {
       if (!_.isEqual(data, this.updatedData?.options)) {
         if (this.updatedData) {
-          this.updatedData.options = cloneDeep(data) as any;
+          this.updatedData.options = cloneDeep(data);
         }
 
         await this.updateStore();

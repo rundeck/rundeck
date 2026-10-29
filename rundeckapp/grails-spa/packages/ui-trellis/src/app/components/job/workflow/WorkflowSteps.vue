@@ -258,6 +258,7 @@ import {
   mkid,
 } from "./types/workflowFuncs";
 import { EditStepData, StepsData, StepsEditData } from "./types/workflowTypes";
+import type { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { getRundeckContext } from "../../../../library";
 import ChoosePluginModal from "../../../../library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "../../../../library/components/plugins/EditPluginModal.vue";
@@ -636,7 +637,7 @@ export default defineComponent({
       this.editIndex = index;
       this.addStepModal = true;
     },
-    updateHistoryWithLogFiltersData(index: number, data: any) {
+    updateHistoryWithLogFiltersData(index: number, data: PluginConfig[]) {
       const command = cloneDeep(this.model.commands[index]);
       command.filters = cloneDeep(data);
       const orig = this.$refs.historyControls.operationModify(index, command);
@@ -650,7 +651,7 @@ export default defineComponent({
         undo: Operation.Modify,
       });
     },
-    handleSuccessOnValidation(saveData: any) {
+    handleSuccessOnValidation(saveData: EditStepData) {
       const dataForUpdatingHistory = {
         index: this.model.commands.length,
         operation: Operation.Insert,

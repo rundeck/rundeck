@@ -1,6 +1,6 @@
 export interface NodeFilters {
   filter: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface JobRef {
@@ -78,13 +78,13 @@ export interface JobDefinition extends JobBasic {
   loglevel: LogLevel;
   nodeFilterEditable: boolean;
   nodesSelectedByDefault: boolean;
-  plugins?: any;
+  plugins?: Record<string, unknown>;
   runnerSelector?: {
     runnerFilterMode: string;
     runnerFilterType: string;
   };
   schedule?: ScheduleCronTab | ScheduleTime;
-  schedules?: any;
+  schedules?: Array<ScheduleCronTab | ScheduleTime>;
   uuid?: string;
   orchestrator?: string;
   configuration?: {

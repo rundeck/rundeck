@@ -4,7 +4,7 @@ import HomeView from "../../components/home/HomeView.vue";
 import HomeHeader from "../../components/home/HomeHeader.vue";
 import SVGInject from "@iconfu/svg-inject";
 
-(window as any).SVGInject = SVGInject;
+window.SVGInject = SVGInject;
 
 const rundeckContext = getRundeckContext();
 function init() {

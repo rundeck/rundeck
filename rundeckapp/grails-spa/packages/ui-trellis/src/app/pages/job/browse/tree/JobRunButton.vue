@@ -61,8 +61,8 @@ export default defineComponent({
     job(): JobBrowseItem {
       return this.itemData?.job;
     },
-    authz(): Record<string, any> | undefined {
-      const data: any = this.job?.meta?.find(
+    authz(): Record<string, unknown> {
+      const data = this.job?.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "authz",
       )?.data;
       return data || {};
@@ -71,10 +71,10 @@ export default defineComponent({
       return !!this.authz?.run;
     },
     jobEnabled(): boolean {
-      const data: any = this.job?.meta?.find(
+      const data = this.job?.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "schedule",
       )?.data;
-      return data?.executionEnabled || false;
+      return !!data?.executionEnabled;
     },
     projEnabled(): boolean {
       return (

@@ -4,7 +4,10 @@ import { getAppLinks } from "../rundeckService";
 import Tokens from "./tokens";
 import Generators from "./generators";
 
-export const setFilterPref = (key: any, value: any) => {
+export const setFilterPref = (
+  key: string,
+  value: string | number | boolean,
+) => {
   return new Promise((resolve) => {
     Tokens.getUIAjaxTokens().then((uiToken) => {
       Generators.generateUrl(getAppLinks().userAddFilterPref, {

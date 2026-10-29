@@ -64,11 +64,17 @@ import { defineComponent } from "vue";
 import KeyStorageView from "../../components/storage/KeyStorageView.vue";
 import KeyStorageEdit from "../../components/storage/KeyStorageEdit.vue";
 import { UploadSetting } from "../storage/KeyStorageEdit.vue";
+import type { StorageKeyMetadata } from "../../services/storage";
 
 export default defineComponent({
   name: "KeyStorageSelector",
   components: { KeyStorageEdit, KeyStorageView },
-  props: ["modelValue", "storageFilter", "allowUpload", "readOnly"],
+  props: {
+    modelValue: { type: String, default: "" },
+    storageFilter: { type: String, default: "" },
+    allowUpload: { type: Boolean, default: false },
+    readOnly: { type: Boolean, default: false },
+  },
   emits: ["update:modelValue"],
   data() {
     return {
@@ -83,7 +89,7 @@ export default defineComponent({
     };
   },
   methods: {
-    cleanPath(path: any) {
+    cleanPath(path: string | null | undefined): string {
       if (path != null) {
         while (path.indexOf("/") == 0) {
           path = path.substring(1);
@@ -93,7 +99,7 @@ export default defineComponent({
       }
       return path;
     },
-    beforeModalClose(args: string | Array<any>) {
+    beforeModalClose(args: string | unknown[]) {
       if (args === "ok") {
         // Save the selected value - Emit a key changed event with the selected value
         if (this.selectedKey !== this.modelValue) {
@@ -108,7 +114,7 @@ export default defineComponent({
       this.invalid = false;
       this.errorMsg = "";
     },
-    handleFinishEditing(selectedKey: any) {
+    handleFinishEditing(selectedKey: StorageKeyMetadata) {
       (
         this.$refs.keyStorageViewRef as { loadKeys(key: unknown): void }
       ).loadKeys(selectedKey);

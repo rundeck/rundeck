@@ -95,10 +95,10 @@ export const navBar: StoryFn<typeof UtilityBar> = () => {
     template:
       '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
     mounted: function () {
-      const el = this.$el as any;
-      el.parentNode.style.height = "100vh";
-      el.parentNode.style.overflow = "hidden";
-      el.parentNode.style.position = "relative";
+      const el = this.$el as HTMLElement;
+      el.parentElement!.style.height = "100vh";
+      el.parentElement!.style.overflow = "hidden";
+      el.parentElement!.style.position = "relative";
       document.body.style.overflow = "hidden";
     },
     provide: () => ({
@@ -136,10 +136,10 @@ export const widgetCounter: StoryFn<typeof UtilityBar> = (args) => {
     template:
       '<div style="display: flex; flex-direction: column-reverse; height: 100%"><div id="section-utility" style="width: 100%; height: 22px;"><UtilityBar /></div></div>',
     mounted: function () {
-      const el = this.$el as any;
-      el.parentNode.style.height = "100vh";
-      el.parentNode.style.overflow = "hidden";
-      el.parentNode.style.position = "relative";
+      const el = this.$el as HTMLElement;
+      el.parentElement!.style.height = "100vh";
+      el.parentElement!.style.overflow = "hidden";
+      el.parentElement!.style.position = "relative";
       document.body.style.overflow = "hidden";
     },
     provide: () => ({

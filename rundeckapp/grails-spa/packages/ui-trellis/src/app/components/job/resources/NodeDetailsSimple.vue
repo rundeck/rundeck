@@ -219,11 +219,18 @@ import NodeFilterLink from "../../job/resources/NodeFilterLink.vue";
 import NodeStatus from "../../job/resources/NodeStatus.vue";
 import { defineComponent, ref } from "vue";
 import type { PropType } from "vue";
+import type { NodeAttributes, NodeFilterSelection } from "./types/nodeTypes";
 
 const OsAttributeNames =
   "nodename hostname username description tags osFamily osName osVersion osArch".split(
     " ",
   );
+
+interface NamespacedAttribute {
+  name: string;
+  shortname: string;
+  value: string;
+}
 
 export default defineComponent({
   name: "NodeDetailsSimple",
@@ -233,7 +240,7 @@ export default defineComponent({
   },
   props: {
     attributes: {
-      type: Object as PropType<{ [key: string]: string }>,
+      type: Object as PropType<NodeAttributes>,
       required: true,
     },
     tags: {
@@ -293,7 +300,7 @@ export default defineComponent({
       return result;
     },
     attributeNamespaces() {
-      const index: any = {};
+      const index: Record<string, NamespacedAttribute[]> = {};
       const names: string[] = [];
       for (const e in this.attributes) {
         const found = e.match(this.attributeNamespaceRegex);
@@ -311,10 +318,10 @@ export default defineComponent({
       }
       names.sort();
 
-      const results: { ns: string; values: any[] }[] = [];
+      const results: { ns: string; values: NamespacedAttribute[] }[] = [];
       for (let i = 0; i < names.length; i++) {
         const values = index[names[i]];
-        values.sort(function (a: any, b: any) {
+        values.sort(function (a, b) {
           return a.shortname.localeCompare(b.shortname);
         });
         results.push({ ns: names[i], values: values });
@@ -327,7 +334,7 @@ export default defineComponent({
     attributeNamespaceRegex() {
       return /^(.+?):.+$/;
     },
-    attributesWithNoNamespaces(): { [key: string]: any } {
+    attributesWithNoNamespaces(): NodeAttributes {
       return this.useNamespace ? this.displayAttributes : this.attributes;
     },
     filteredAttrs() {
@@ -345,13 +352,13 @@ export default defineComponent({
       return this.OsTestNames.findIndex((val) => this.attributes[val]) >= 0;
     },
 
-    filterClick(filter: any) {
+    filterClick(filter: NodeFilterSelection) {
       this.$emit("filter", filter);
     },
     startsWith(a: string, b: string) {
       return a.length >= b.length && a.substring(0, b.length) == b;
     },
-    attributesInNamespace(attrs: any, ns: string) {
+    attributesInNamespace(attrs: NodeAttributes, ns: string) {
       const result: { name: string; value: string; shortname: string }[] = [];
       for (const e in attrs) {
         if (this.startsWith(e, ns + ":") && attrs[e]) {
@@ -367,7 +374,7 @@ export default defineComponent({
       });
       return result;
     },
-    attributeNamespaceNames(attrs: any) {
+    attributeNamespaceNames(attrs: NodeAttributes) {
       const namespaces: string[] = [];
       for (const e in attrs) {
         const found = e.match(this.attributeNamespaceRegex);

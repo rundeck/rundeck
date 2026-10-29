@@ -22,29 +22,34 @@
 import { defineComponent, type PropType } from "vue";
 import SelectButton from "primevue/selectbutton";
 
+type SelectButtonOption = unknown;
+type OptionLabelField = string | ((option: SelectButtonOption) => string);
+type OptionValueField = string | ((option: SelectButtonOption) => unknown);
+type OptionDisabledField = string | ((option: SelectButtonOption) => boolean);
+
 export default defineComponent({
   name: "PtSelectButton",
   // eslint-disable-next-line vue/no-reserved-component-names
   components: { SelectButton },
   props: {
     modelValue: {
-      type: [String, Number, Object, Array] as PropType<any>,
+      type: [String, Number, Object, Array] as PropType<unknown>,
       default: undefined,
     },
     options: {
-      type: Array as PropType<any[]>,
+      type: Array as PropType<SelectButtonOption[]>,
       required: true,
     },
     optionLabel: {
-      type: [String, Function] as PropType<string | ((option: any) => string)>,
+      type: [String, Function] as PropType<OptionLabelField>,
       default: undefined,
     },
     optionValue: {
-      type: [String, Function] as PropType<string | ((option: any) => any)>,
+      type: [String, Function] as PropType<OptionValueField>,
       default: undefined,
     },
     optionDisabled: {
-      type: [String, Function] as PropType<string | ((option: any) => boolean)>,
+      type: [String, Function] as PropType<OptionDisabledField>,
       default: undefined,
     },
     multiple: {
@@ -88,7 +93,7 @@ export default defineComponent({
   },
   emits: ["update:modelValue", "change"],
   methods: {
-    onUpdateModelValue(value: any) {
+    onUpdateModelValue(value: unknown) {
       this.$emit("update:modelValue", value);
       this.$emit("change", value);
     },

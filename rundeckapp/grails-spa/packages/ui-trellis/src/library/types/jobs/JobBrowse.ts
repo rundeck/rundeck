@@ -9,7 +9,7 @@ type JobBrowseItem = {
 
 interface JobBrowseMeta {
   name: string;
-  data: { [key: string]: any };
+  data: Record<string, unknown>;
 }
 interface JobBrowseList {
   path: string;

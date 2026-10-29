@@ -20,6 +20,18 @@ interface NodesState {
   nodeFilterStore: NodeFilterStore;
 }
 
+function errorMessage(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return String(error);
+}
+
 export const useNodesStore = defineStore("nodes", {
   state: (): NodesState => ({
     entities: {},
@@ -61,7 +73,7 @@ export const useNodesStore = defineStore("nodes", {
       }
     },
 
-    async fetchNodes(params: Record<string, any> = {}) {
+    async fetchNodes(params: Record<string, unknown> = {}) {
       try {
         const response = await getNodes(
           {
@@ -73,8 +85,8 @@ export const useNodesStore = defineStore("nodes", {
         );
         this.upsertNodes(response.allnodes);
         this.lastCountFetched = response.total;
-      } catch (error: any) {
-        throw new Error(`Failed to fetch nodes: ${error.message}`);
+      } catch (error: unknown) {
+        throw new Error(`Failed to fetch nodes: ${errorMessage(error)}`);
       }
     },
 
@@ -82,8 +94,8 @@ export const useNodesStore = defineStore("nodes", {
       try {
         const results = await getNodeTags();
         this.tags = results.tags;
-      } catch (error: any) {
-        throw new Error(`Failed to fetch tags: ${error.message}`);
+      } catch (error: unknown) {
+        throw new Error(`Failed to fetch tags: ${errorMessage(error)}`);
       }
     },
 

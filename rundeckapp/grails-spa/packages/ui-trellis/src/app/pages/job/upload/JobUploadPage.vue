@@ -9,9 +9,16 @@ import { JobBrowseItem } from "@/library/types/jobs/JobBrowse";
 import BrowserJobItem from "../browse/tree/BrowserJobItem.vue";
 import { defineComponent, inject } from "vue";
 import { RecycleScroller } from "vue-virtual-scroller";
+import type { JobSaveInfo } from "@/library/types/jobs/JobEdit";
 
 const rundeckContext = getRundeckContext();
 const rootStore = rundeckContext.rootStore;
+
+interface BulkActionInfo {
+  action: string;
+  jobs: JobBrowseItem[];
+}
+
 export default defineComponent({
   name: "JobUploadPage",
   components: { JobBulkEditControls, RecycleScroller, BrowserJobItem },
@@ -28,14 +35,14 @@ export default defineComponent({
       validateJobref: "false",
       project: "",
       uploading: false,
-      selectedFile: null,
+      selectedFile: null as File | null,
       // Response data
-      errors: [],
-      errjobs: [],
-      skipjobs: [],
-      jobs: [],
+      errors: [] as string[],
+      errjobs: [] as JobSaveInfo[],
+      skipjobs: [] as JobSaveInfo[],
+      jobs: [] as JobSaveInfo[],
       didupload: false,
-      error: null,
+      error: null as string | null,
     };
   },
   computed: {
@@ -53,7 +60,7 @@ export default defineComponent({
     await this.jobPageStore.loadProjAuthz();
   },
   created() {
-    this.project = (window as any)._rundeck?.projectName || "";
+    this.project = window._rundeck?.projectName || "";
   },
   methods: {
     onFileChange(event: Event) {
@@ -139,10 +146,23 @@ export default defineComponent({
         if (fileInput) {
           fileInput.value = "";
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error uploading jobs:", error);
-        if (error.response?.data?.message) {
-          this.setError(error.response.data.message);
+        const message =
+          typeof error === "object" &&
+          error !== null &&
+          "response" in error &&
+          typeof error.response === "object" &&
+          error.response !== null &&
+          "data" in error.response &&
+          typeof error.response.data === "object" &&
+          error.response.data !== null &&
+          "message" in error.response.data &&
+          typeof error.response.data.message === "string"
+            ? error.response.data.message
+            : null;
+        if (message) {
+          this.setError(message);
         } else {
           this.setError("An error occurred while uploading the file");
         }
@@ -150,7 +170,7 @@ export default defineComponent({
         this.uploading = false;
       }
     },
-    bulkActionPerformed(info: any) {
+    bulkActionPerformed(info: BulkActionInfo) {
       if (info.action === "delete") {
         this.jobs = this.jobs.filter(
           (job) => !info.jobs.find((j) => j.id === job.id),
