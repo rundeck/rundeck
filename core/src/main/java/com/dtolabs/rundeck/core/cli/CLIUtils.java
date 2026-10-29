@@ -153,7 +153,9 @@ public class CLIUtils {
         return "'" + arg
                 .replace("'", "''")
                 .replace("\u2018", "\u2018\u2018")
-                .replace("\u2019", "\u2019\u2019") + "'";
+                .replace("\u2019", "\u2019\u2019")
+                .replace("\u201A", "\u201A\u201A")
+                .replace("\u201B", "\u201B\u201B") + "'";
     }
 
     /**
@@ -341,7 +343,7 @@ public class CLIUtils {
 
     public static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><`";
     public static final String WINDOWS_CMD_CHARS = "&|<>^%!;,()\\/:*?\"<>|$`'\"{}";
-    private static final String POWERSHELL_SINGLE_QUOTES = "\u2018\u2019";
+    private static final String POWERSHELL_SINGLE_QUOTES = "\u2018\u2019\u201A\u201B";
     public static final String UNIX_SHELL_CHARS_NO_QUOTES = ";{}()&$\\|*?><";
     /**
      * non-space whitespace

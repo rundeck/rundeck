@@ -89,6 +89,8 @@ class CLIUtilsSpec extends Specification {
         "it's safe"          || "'it''s safe'"
         "left\u2018quote"    || "'left\u2018\u2018quote'"
         "right\u2019quote"   || "'right\u2019\u2019quote'"
+        "low\u201Aquote"     || "'low\u201A\u201Aquote'"
+        "reverse\u201Bquote" || "'reverse\u201B\u201Bquote'"
         "x\u2019;whoami;#"   || "'x\u2019\u2019;whoami;#'"
     }
 
