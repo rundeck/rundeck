@@ -55,9 +55,11 @@ class ExecutionServiceImplSpec extends Specification {
             getNodeExecutorService() >> nodeExecutorService
             isLocalNode(_) >> false
         }
+        def dataContext = new BaseDataContext("node", [remoteShell: "powershell"])
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> "test-project"
             getIFramework() >> framework
+            getDataContext() >> dataContext
         }
         def node = new NodeEntryImpl("node")
         node.setAttributes(attributes)
@@ -72,6 +74,7 @@ class ExecutionServiceImplSpec extends Specification {
         "WinRMPython"  | ["node-executor": "WinRMPython", "winrm-shell": "cmd"]                  | [:]                                                            || null
         "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": "powershell"] || "powershell"
         "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": "cmd"]        || null
+        "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": '${node.remoteShell}'] || "powershell"
         "sshj-ssh"     | [:]                                                                    | [:]                                                            || null
         "WinRMPython"  | ["node-executor": "WinRMPython", "shell-escaping-interpreter": "cmd"]   | [:]                                                            || "cmd"
         "WinRMPython"  | ["node-executor": "WinRMPython", "shell-escaping-interpreter": "powershell"] | [:]                                                        || "powershell"

@@ -145,11 +145,15 @@ public class CLIUtils {
 
     public static String quotePowerShellArg(String arg) {
         if (StringUtils.containsNone(arg, WINDOWS_CMD_CHARS) &&
+                StringUtils.containsNone(arg, POWERSHELL_SINGLE_QUOTES) &&
                 StringUtils.containsNone(arg, WINDOWS_WS_CHARS) &&
                 StringUtils.containsNone(arg, " ")) {
             return arg;
         }
-        return "'" + arg.replace("'", "''") + "'";
+        return "'" + arg
+                .replace("'", "''")
+                .replace("\u2018", "\u2018\u2018")
+                .replace("\u2019", "\u2019\u2019") + "'";
     }
 
     /**
@@ -337,6 +341,7 @@ public class CLIUtils {
 
     public static final String UNIX_SHELL_CHARS = "\"';{}()&$\\|*?><`";
     public static final String WINDOWS_CMD_CHARS = "&|<>^%!;,()\\/:*?\"<>|$`'\"{}";
+    private static final String POWERSHELL_SINGLE_QUOTES = "\u2018\u2019";
     public static final String UNIX_SHELL_CHARS_NO_QUOTES = ";{}()&$\\|*?><";
     /**
      * non-space whitespace

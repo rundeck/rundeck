@@ -80,9 +80,16 @@ class CLIUtilsSpec extends Specification {
             ["script.ps1", "'\${file.ImportCSV}'"]
     }
 
-    def "quotePowerShellArg escapes embedded single quotes"() {
+    def "quotePowerShellArg escapes embedded PowerShell single quotes"() {
         expect:
-        CLIUtils.quotePowerShellArg("it's safe") == "'it''s safe'"
+        CLIUtils.quotePowerShellArg(input) == expected
+
+        where:
+        input                || expected
+        "it's safe"          || "'it''s safe'"
+        "left\u2018quote"    || "'left\u2018\u2018quote'"
+        "right\u2019quote"   || "'right\u2019\u2019quote'"
+        "x\u2019;whoami;#"   || "'x\u2019\u2019;whoami;#'"
     }
 
     def "quoteWindowsCMDArg escapes internal double quotes"() {

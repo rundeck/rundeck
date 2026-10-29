@@ -425,7 +425,7 @@ public class ExecutionServiceImpl implements ExecutionService {
                 .nodeContextData(node)
                 .build();
 
-        String commandInterpreter = resolveCommandInterpreter(context, node);
+        String commandInterpreter = resolveCommandInterpreter(nodeContext, node);
 
         final ArrayList<String> commandList = command.buildCommandForNode(
                 nodeContext.getSharedDataContext(),
@@ -484,6 +484,9 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
         if (winrmShell == null && context.getIFramework().getPropertyRetriever() != null) {
             winrmShell = context.getIFramework().getPropertyRetriever().getProperty(WINRM_FRAMEWORK_SHELL);
+        }
+        if (winrmShell != null) {
+            winrmShell = DataContextUtils.replaceDataReferencesInString(winrmShell, context.getDataContext());
         }
         return winrmShell == null || POWERSHELL.equalsIgnoreCase(winrmShell) ? POWERSHELL : null;
     }
