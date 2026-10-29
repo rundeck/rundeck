@@ -166,27 +166,25 @@ commands:
       - store_artifacts:
           path: ~/test-results/junit
 
-  # Restore Gradle Cache
+  # Restore npm's content-addressed download cache only. Gradle's cache is
+  # intentionally disabled until the dependency-resolution issue is resolved.
   restore-build-cache:
-    description: Restore Build cache
+    description: Restore npm cache
     steps:
       - restore_cache:
           keys:
-            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
-            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-
-            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-
+            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
+            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-
+            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-
 
-  #Save gradle cache
+  # Save npm's content-addressed download cache only.
   save-build-cache:
-    description: Save Build cache (dependencies only)
+    description: Save npm cache
     steps:
       - save_cache:
           paths:
-            - ~/.gradle/wrapper
-            - ~/.gradle/caches/modules-2  # Dependency metadata only
-            - ~/.gradle/caches/jars-9     # Downloaded JARs only
             - ~/.npm/_cacache
-          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
+          key: cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
 
   ## Deps Installers quick references.
   # Install node
