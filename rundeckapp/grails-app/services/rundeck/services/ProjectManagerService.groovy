@@ -544,8 +544,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             log.error("Failed to delete all associated resources for project ${projectName}")
         }
         projectCache.invalidate(projectName)
-        rundeckNodeService.refreshProjectNodes(projectName)
         ProjectNodeSupport.removeLoadPool(projectName)
+        rundeckNodeService.refreshProjectNodes(projectName)
     }
 
     private static IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {

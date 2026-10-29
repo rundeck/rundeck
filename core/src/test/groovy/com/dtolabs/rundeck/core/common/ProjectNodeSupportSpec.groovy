@@ -650,7 +650,10 @@ class ProjectNodeSupportSpec extends Specification {
             loading.join(10000)
         }
 
-        when: "the second load reuses the pool threads created by the first"
+        //start every pool thread up front so both loads run on reused threads, not new ones that inherit the loader
+        ProjectNodeSupport.LOAD_POOLS.computeIfAbsent(loadProject, ProjectNodeSupport.&createLoadPool).prestartAllCoreThreads()
+
+        when: "both loads run on pool threads created before either load"
         loadWith(firstLoader)
         loadWith(secondLoader)
 

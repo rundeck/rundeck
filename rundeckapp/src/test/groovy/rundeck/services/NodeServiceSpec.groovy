@@ -653,9 +653,9 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         service.nodeCache.getIfPresent('test1').is(result)
         0 * nodeSupport.close()
 
-        when: "the first load, started 10 seconds ago, finishes"
+        when: "the first load, started longer ago than the cache delay, finishes"
         long now = System.currentTimeMillis()
-        result.cacheTime = new Date(now - 10000)
+        result.cacheTime = new Date(now - 120000)
         firstLoad.run()
 
         then: "the cache delay counts from when it finished"
