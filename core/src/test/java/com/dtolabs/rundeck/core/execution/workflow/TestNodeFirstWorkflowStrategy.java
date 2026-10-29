@@ -82,10 +82,12 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         services.setExecutionProviders(frameworkExecutionPlugins);
         testnode = testFramework.getFrameworkNodeName();
         final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-                TEST_PROJECT,
-                generateProjectResourcesFile(
-                        new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml")
-                )
+                TEST_PROJECT
+        );
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                frameworkProject,
+                true
         );
         extResourcesfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes2.xml");
         extResourcesfile2 = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes4.xml");

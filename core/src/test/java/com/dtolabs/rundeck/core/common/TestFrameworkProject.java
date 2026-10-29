@@ -592,7 +592,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
         //add framework.resources.url property
         Properties props1 = new Properties();
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
-        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");
+        props1.setProperty(
+                FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file",
+                new File(projectBasedir, "etc/test-file-path").getAbsolutePath()
+        );
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.type", "url");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.config.url", "http://example.com/test2");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
@@ -664,7 +667,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
         //add framework.resources.url property
         Properties props1 = new Properties();
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
-        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");
+        props1.setProperty(
+                FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file",
+                new File(projectBasedir, "etc/test-file-path").getAbsolutePath()
+        );
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.type", "url");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.config.url", "http://example.com/test2");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
@@ -737,7 +743,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
         service.setCacheInstances(true);
 
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
-        props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");
+        props1.setProperty(
+                FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file",
+                new File(projectBasedir, "etc/test-file-path").getAbsolutePath()
+        );
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.type", "url");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".2.config.url", "http://example.com/test2");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".3.type", "directory");
