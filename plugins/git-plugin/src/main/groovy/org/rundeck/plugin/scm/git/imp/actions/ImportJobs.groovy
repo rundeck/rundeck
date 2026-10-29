@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
-import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.rundeck.plugin.scm.git.BaseAction
@@ -102,9 +101,12 @@ class ImportJobs extends BaseAction implements GitImportAction {
             def size = loader.getSize()
             plugin.log.debug("import data: ${size} = ${path}")
             if (size > GitUtil.MAX_BLOB_SIZE) {
-                throw new ScmPluginException(
-                        "Job definition file at path ${path} is too large to import (${size} bytes, max ${GitUtil.MAX_BLOB_SIZE})"
-                )
+                //record and skip, rather than throw: an exception here would abort the whole
+                //walk, leaving jobsChanged incomplete and skipping refreshJobsStatus() below for
+                //every job already imported earlier in this same batch
+                success = false
+                sb << ("Failed importing: ${path}: too large to import (${size} bytes, max ${GitUtil.MAX_BLOB_SIZE})")
+                return
             }
             def bytes = loader.getBytes(GitUtil.MAX_BLOB_SIZE as int)
 
