@@ -2095,19 +2095,29 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     @Subscriber('rundeck.bootstrap')
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void resumeDisabledProjectsFromBootstrap() {
-        def pending = executionService?.startupCleanupFuture
-        if (pending != null) {
-            try {
-                pending.get()
-            } catch (Throwable t) {
-                log.error("Startup execution cleanup did not finish before project delete recovery: ${t.message}", t)
+        try {
+            Promises.task {
+                try {
+                    def pending = executionService?.startupCleanupFuture
+                    if (pending != null) {
+                        try {
+                            pending.get()
+                        } catch (Throwable t) {
+                            log.error("Startup execution cleanup did not finish before project delete recovery: ${t.message}", t)
+                        }
+                    }
+                    Project.withNewTransaction {
+                        def framework = frameworkService?.rundeckFramework
+                        if (framework) {
+                            resumeDisabledProjects((IFramework) framework)
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("Failed to resume project deletion after startup: ${t.message}", t)
+                }
             }
-        }
-        Project.withNewTransaction {
-            def framework = frameworkService?.rundeckFramework
-            if (framework) {
-                resumeDisabledProjects((IFramework) framework)
-            }
+        } catch (Throwable t) {
+            log.error("Failed to schedule project deletion recovery after startup: ${t.message}", t)
         }
     }
 

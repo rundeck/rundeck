@@ -125,6 +125,13 @@ class CapturingPromiseFactory extends org.grails.async.factory.SynchronousPromis
     }
 }
 
+class FailingPromiseFactory extends org.grails.async.factory.SynchronousPromiseFactory {
+    @Override
+    public <T> Promise<T> createPromise(Closure<T>... closures) {
+        throw new RuntimeException('forced scheduling failure')
+    }
+}
+
 /**
  * Created by greg on 8/5/15.
  */
@@ -1089,12 +1096,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "project delete recovery waits for startup execution cleanup"() {
         given:
+        def factory = new CapturingPromiseFactory()
+        Promises.promiseFactory = factory
         def order = []
-        service.executionService = Mock(ExecutionService) {
-            getStartupCleanupFuture() >> Mock(java.util.concurrent.Future) {
-                get() >> { order << 'cleanup'; null }
-            }
-        }
+        def pending = Mock(java.util.concurrent.Future)
+        service.executionService = Mock(ExecutionService)
         def fwk = Mock(Framework) {
             getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 listDisabledFrameworkProjectNames() >> { order << 'resume'; [] }
@@ -1107,7 +1113,76 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.resumeDisabledProjectsFromBootstrap()
 
         then:
+        factory.captured
+        order.empty
+        0 * service.executionService.getStartupCleanupFuture()
+        0 * pending.get()
+
+        when:
+        factory.captured.call()
+
+        then:
+        1 * service.executionService.getStartupCleanupFuture() >> pending
+        1 * pending.get() >> { order << 'cleanup'; null }
         order == ['cleanup', 'resume']
+    }
+
+    def "project delete recovery contains failures outside the bootstrap subscriber"() {
+        given:
+        def factory = new CapturingPromiseFactory()
+        Promises.promiseFactory = factory
+        service.executionService = Mock(ExecutionService)
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> { throw new RuntimeException('forced recovery failure') }
+        }
+
+        when:
+        service.resumeDisabledProjectsFromBootstrap()
+
+        then:
+        factory.captured
+        noExceptionThrown()
+
+        when:
+        factory.captured.call()
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "project delete recovery contains startup cleanup lookup failures"() {
+        given:
+        def factory = new CapturingPromiseFactory()
+        Promises.promiseFactory = factory
+        service.executionService = Mock(ExecutionService)
+
+        when:
+        service.resumeDisabledProjectsFromBootstrap()
+
+        then:
+        factory.captured
+        noExceptionThrown()
+
+        when:
+        factory.captured.call()
+
+        then:
+        1 * service.executionService.getStartupCleanupFuture() >> {
+            throw new RuntimeException('forced cleanup lookup failure')
+        }
+        noExceptionThrown()
+    }
+
+    def "project delete recovery contains task scheduling failures"() {
+        given:
+        Promises.promiseFactory = new FailingPromiseFactory()
+        service.executionService = Mock(ExecutionService)
+
+        when:
+        service.resumeDisabledProjectsFromBootstrap()
+
+        then:
+        noExceptionThrown()
     }
 
     def "failed deferred delete stays disabled and is resumed on the next bootstrap"() {
