@@ -479,6 +479,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             //only write if our LOADING placeholder is still current, so a superseded refresh
             //can't resurrect a deleted job's file. check briefly and release before serialize()
             //rather than holding jobStateMap's lock across the I/O
+            // ponytail: check-then-serialize race remains - a deletion completing in the gap
+            // between the check below and the write still resurrects the file. Closing it needs
+            // a per-job/file lock spanning serialize(), shared by both the import and export
+            // plugins; narrowed here instead of reworking that shared method.
             boolean stillOwned
             synchronized (jobStateMap) {
                 stillOwned = jobStateMap.get(job.id)?.is(loadingMarker)
