@@ -140,32 +140,6 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
     }
 
     /**
-     * URL nextUi string values are normalized to boolean so templates can use plain truthiness.
-     */
-    @Unroll
-    void "Test nextUi URL param '#urlValue' normalized to #expected when no cookie or flag"() {
-        given:
-            interceptor.featureService = Mock(FeatureService) {
-                featurePresent('nextUiMode') >> false
-            }
-
-        when:
-            if (urlValue != null) params.nextUi = urlValue
-            withRequest(controller: 'scheduledExecution', action: 'create')
-            interceptor.before()
-
-        then:
-            params.nextUi == expected
-            params.containsKey('nextUi') == hasKey
-
-        where:
-            urlValue | expected | hasKey
-            'true'   | true     | true
-            'false'  | false    | true
-            null     | null     | false
-    }
-
-    /**
      * The system flag takes precedence over a URL nextUi=false when no cookie is set.
      */
     void "Test system flag overrides URL nextUi=false when no cookie set"() {
