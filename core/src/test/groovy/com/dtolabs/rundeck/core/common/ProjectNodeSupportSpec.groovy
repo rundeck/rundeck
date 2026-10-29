@@ -757,6 +757,50 @@ class ProjectNodeSupportSpec extends Specification {
         release.countDown()
     }
 
+    def "an interrupted load removes its queued tasks from the project's pool"() {
+        given: "one load's sources ignore interruption and keep every pool thread busy"
+        def max = ProjectNodeSupport.MAX_LOAD_THREADS
+        def active = new AtomicInteger()
+        def release = new CountDownLatch(1)
+        def stuck = (1..max).collect { int n ->
+            { ->
+                active.incrementAndGet()
+                while (release.count > 0) {
+                    try {
+                        release.await(10, TimeUnit.SECONDS)
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+                nodes("s${n}", 'v')
+            } as Closure<INodeSet>
+        }
+        def queued = (1..max).collect { int n -> { -> nodes("q${n}", 'v') } as Closure<INodeSet> }
+        def props = [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): "${max}".toString()]
+        def busy = supportWithSources(props, stuck)
+        def waiting = supportWithSources(props, queued)
+
+        when: "a second load queues its sources, then is interrupted"
+        def busyLoad = Thread.start { busy.getNodeSet() }
+        new PollingConditions(timeout: 10).eventually {
+            assert active.get() == max
+        }
+        def pool = ProjectNodeSupport.LOAD_POOLS[loadProject]
+        def waitingLoad = Thread.start { waiting.getNodeSet() }
+        new PollingConditions(timeout: 10).eventually {
+            assert pool.queue.size() == max
+        }
+        waitingLoad.interrupt()
+        waitingLoad.join(10000)
+
+        then: "its cancelled tasks are no longer queued"
+        !waitingLoad.alive
+        pool.queue.isEmpty()
+
+        cleanup:
+        release.countDown()
+        busyLoad?.join(10000)
+    }
+
     def "pool threads do not inherit the loading thread's inheritable thread-local values"() {
         given:
         def bound = new InheritableThreadLocal<String>()

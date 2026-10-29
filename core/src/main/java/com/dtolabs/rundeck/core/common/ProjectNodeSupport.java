@@ -331,6 +331,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } finally {
             //no-op for completed tasks, stops queued or running ones if the load was abandoned
             window.forEach(f -> f.cancel(true));
+            //cancelled tasks stay in the queue until a worker reaches them, so remove them now
+            pool.purge();
         }
     }
 
