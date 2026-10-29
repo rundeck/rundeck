@@ -68,11 +68,10 @@ class SshjSession implements RemoteSession {
         SSHClient ssh = new SSHClient(defaultConfig)
 
         try {
-            if (sshConfig.get("StrictHostKeyChecking") == "no") {
-                ssh.addHostKeyVerifier(new PromiscuousVerifier())
-            } else {
-                //fail secure: default to strict host key checking unless explicitly disabled
+            if (sshConfig.get("StrictHostKeyChecking") == "yes") {
                 ssh.loadKnownHosts()
+            } else {
+                ssh.addHostKeyVerifier(new PromiscuousVerifier())
             }
 
             if (port > 0) {
