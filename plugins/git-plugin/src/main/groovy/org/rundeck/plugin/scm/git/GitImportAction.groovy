@@ -35,4 +35,5 @@ interface GitImportAction extends Action {
             final List<String> selectedPaths,
             final Map<String, String> input
     )
+
 }

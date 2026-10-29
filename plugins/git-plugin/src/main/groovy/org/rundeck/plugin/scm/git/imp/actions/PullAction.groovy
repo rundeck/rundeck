@@ -29,6 +29,7 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 
+
 /**
  * Created by greg on 9/28/15.
  */
@@ -39,6 +40,7 @@ class PullAction extends BaseAction implements GitImportAction {
 
     @Override
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
+
         def status = plugin.getStatusInternal(context, false)
         def props = [
                 BuilderUtil.property {
@@ -98,8 +100,10 @@ Pulling from remote branch: `${plugin.branch}`"""
             final JobImporter importer,
             final List<String> selectedPaths,
             final Map<String, String> input
-    ) throws ScmPluginException {
+    ) throws ScmPluginException
+    {
         def status = plugin.getStatusInternal(context, false)
+
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
             plugin.gitResolve(context, input.refresh == 'rebase', input.resolution)
@@ -112,6 +116,7 @@ Pulling from remote branch: `${plugin.branch}`"""
             result.extendedMessage = "Git Pull not needed"
             result
         }
+
     }
 
     ScmExportResult gitPull(final ScmOperationContext context, final GitImportPlugin plugin) {
@@ -122,4 +127,5 @@ Pulling from remote branch: `${plugin.branch}`"""
         result.extendedMessage = pullResult.mergeResult?.toString()?:null
         result
     }
+
 }

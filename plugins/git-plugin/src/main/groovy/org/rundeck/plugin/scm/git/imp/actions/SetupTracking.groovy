@@ -33,13 +33,16 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
+
 /**
  * Created by greg on 9/10/15.
  */
 class SetupTracking extends BaseAction implements GitImportAction {
+
     SetupTracking(final String id, final String title, final String description, final String iconName) {
         super(id, title, description, iconName)
     }
+
 
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
         BuilderUtil.inputViewBuilder(id) {
@@ -65,7 +68,8 @@ files will be watched for changes.'''
             final GitImportPlugin plugin,
             final List<String> selectedPaths,
             final Map<String, String> input
-    ) {
+    )
+    {
         if (selectedPaths != null) {
             GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (true)")
             plugin.trackedItems = selectedPaths
@@ -81,7 +85,9 @@ files will be watched for changes.'''
             final JobImporter importer,
             final List<String> selectedPaths,
             final Map<String, String> input
-    ) {
+    )
+    {
+
         setupWithInput(plugin, selectedPaths, input)
 
         def result = new ScmExportResultImpl()
@@ -90,4 +96,5 @@ files will be watched for changes.'''
 
         result
     }
+
 }

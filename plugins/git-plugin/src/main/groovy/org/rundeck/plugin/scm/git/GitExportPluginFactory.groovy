@@ -60,6 +60,7 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
         Common.addDirDefaultValue(getSetupProperties(), basedir, ServiceNameConstants.ScmExport)
     }
 
+
     static List<Property> getSetupProperties() {
         Config.listProperties(Export)
     }
@@ -73,9 +74,10 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
     ScmExportPlugin createPlugin(final ScmOperationContext context, final Map<String, String> input, boolean initialize) {
         def config = Config.create(Export, input)
         def plugin = new GitExportPlugin(config)
-        if (initialize) {
+        if(initialize){
             plugin.initialize(context)
         }
         return plugin
     }
+
 }

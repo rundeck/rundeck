@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
  * Groovy helpers for builder
  */
 class BuilderUtil {
+
     static Description pluginDescription(@DelegatesTo(DescriptionBuilder) Closure clos) {
         def builder = DescriptionBuilder.builder()
         clos.delegate = builder

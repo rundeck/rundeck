@@ -27,6 +27,7 @@ import groovy.transform.CompileStatic
  * Created by greg on 10/13/15.
  */
 class Export extends Common {
+
     @PluginProperty(
             title = 'Committer Name',
             description = '''Name of committer/author of changes.
@@ -47,6 +48,7 @@ Can be set to `${user.email}` to expand
 as the email of the committing user''',
             defaultValue = '${user.email}',
             required = true
+
     )
     String committerEmail
 
@@ -93,12 +95,16 @@ Template".
             description = "Create the new branch based on the existent branch",
             defaultValue = 'master',
             required = false
+
     )
     @RenderingOption(
             key = StringRenderingConstants.GROUP_NAME,
             value = "Git Repository"
     )
     String baseBranch
+
+
+
 
     boolean isExportPreserve() {
         exportUuidBehavior == 'preserve' || !exportUuidBehavior
@@ -110,7 +116,7 @@ Template".
         exportUuidBehavior == 'remove'
     }
 
-    boolean shouldPullAutomatically() {
+    boolean shouldPullAutomatically(){
         return pullAutomatically in ['true']
     }
 }
