@@ -952,6 +952,38 @@ class GitExportPluginSpec extends Specification {
         !result.id
         result.message=='No git changes needed'
     }
+
+    def "an explicitly requested tag is still created even when there are no git changes to commit"() {
+        given: "the same 'nothing to commit for this request' situation as above"
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah', 'blah')
+        def localfile = new File(gitdir, 'blah')
+        localfile << 'newtext'
+
+        def input = [message: "test", tagName: "v-no-changes"]
+        when: "a tag is explicitly requested alongside the commit action"
+        def result = plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, ['dne'] as Set, input)
+
+        then: "the tag is created, not silently skipped because there was nothing new to commit"
+        result != null
+        result.success
+        GitUtil.findTag('v-no-changes', plugin.git) != null
+    }
+
     def "commit with invalid tag should fail at validation without committing"() {
         given:
 

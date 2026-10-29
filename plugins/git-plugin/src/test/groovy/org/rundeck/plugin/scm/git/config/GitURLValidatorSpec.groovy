@@ -26,6 +26,18 @@ class GitURLValidatorSpec extends Specification {
         System.clearProperty(GitScmSecurityConfig.ALLOWED_SCHEMES)
     }
 
+    def "a null url is rejected with a validation error, not an NPE"() {
+        given:
+        def validator = new GitURLValidator()
+
+        when:
+        validator.isValid(null)
+
+        then:
+        def e = thrown(ValidationException)
+        e.message == 'URL is required.'
+    }
+
     def "whitespace is rejected and a normal url is accepted when no allowlist is set"() {
         given:
         def validator = new GitURLValidator()

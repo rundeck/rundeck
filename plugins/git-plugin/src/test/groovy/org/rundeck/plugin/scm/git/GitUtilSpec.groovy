@@ -17,6 +17,9 @@
 package org.rundeck.plugin.scm.git
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.ObjectLoader
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.util.FileUtils
@@ -144,6 +147,47 @@ class GitUtilSpec extends Specification {
 
         cleanup:
         git.close()
+    }
+
+    def "getBytes rejects a blob larger than the configured max size"() {
+        given: "a loader reporting a size over the 100MB guard, without actually allocating that memory"
+        def id = ObjectId.zeroId()
+        def loader = Mock(ObjectLoaderMock) {
+            getSize() >> (GitUtil.MAX_BLOB_SIZE + 1)
+        }
+        def repo = Mock(BaseGitPluginSpec.RepositoryMock) {
+            open(id, Constants.OBJ_BLOB) >> loader
+        }
+
+        when:
+        GitUtil.getBytes(repo, id)
+
+        then:
+        def e = thrown(com.dtolabs.rundeck.plugins.scm.ScmPluginException)
+        e.message.contains('too large')
+
+        and: "the oversized content is never actually read into memory"
+        0 * loader.getCachedBytes(_)
+    }
+
+    def "getBytes loads a blob at or under the max size"() {
+        given:
+        def content = 'hello world'.bytes
+        def id = ObjectId.zeroId()
+        def loader = Mock(ObjectLoaderMock) {
+            getSize() >> content.length
+            getCachedBytes(_) >> content
+        }
+        def repo = Mock(BaseGitPluginSpec.RepositoryMock) {
+            open(id, Constants.OBJ_BLOB) >> loader
+        }
+
+        expect:
+        GitUtil.getBytes(repo, id) == content
+    }
+
+    //Signed Jar classes cannot be directly mocked - see BaseGitPluginSpec.RepositoryMock
+    static abstract class ObjectLoaderMock extends ObjectLoader {
     }
 
     private static PersonIdent committer(long epochSeconds) {
