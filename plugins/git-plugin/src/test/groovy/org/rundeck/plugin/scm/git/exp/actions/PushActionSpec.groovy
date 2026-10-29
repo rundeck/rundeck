@@ -31,6 +31,7 @@ import spock.lang.Specification
  */
 class PushActionSpec extends Specification {
     File tempdir
+    GitExportPlugin openedPlugin
 
     def setup() {
         tempdir = File.createTempFile("PushActionSpec", "-test")
@@ -38,6 +39,9 @@ class PushActionSpec extends Specification {
     }
 
     def cleanup() {
+        //close the plugin's open repository before deleting tempdir, or its JGit resources stay
+        //open (can block pack-file deletion on Windows, and IGNORE_ERRORS below would hide it)
+        openedPlugin?.cleanup()
         if (tempdir.exists()) {
             FileUtils.delete(tempdir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
         }
@@ -51,6 +55,7 @@ class PushActionSpec extends Specification {
         }
         def plugin = new GitExportPlugin(config)
         plugin.initialize(ctxt)
+        openedPlugin = plugin
         plugin
     }
 

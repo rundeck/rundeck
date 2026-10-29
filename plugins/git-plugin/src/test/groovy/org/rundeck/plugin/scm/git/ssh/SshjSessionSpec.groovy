@@ -85,10 +85,15 @@ class SshjSessionSpec extends Specification {
         when: "whatever happens when actually connecting (success or a network-level failure) is" +
                 " irrelevant here and depends on the test machine; only the port value matters"
         Throwable caught = null
+        SshjSession session = null
         try {
-            new SshjSession(uri, [:], null, null)
+            //a real sshd on the test machine's localhost:22 makes this succeed instead of
+            //throwing - disconnect it below so that case doesn't leak a live SSH client
+            session = new SshjSession(uri, [:], null, null)
         } catch (Throwable t) {
             caught = t
+        } finally {
+            session?.disconnect()
         }
 
         then: "never the raw IllegalArgumentException an invalid negative port would throw" +

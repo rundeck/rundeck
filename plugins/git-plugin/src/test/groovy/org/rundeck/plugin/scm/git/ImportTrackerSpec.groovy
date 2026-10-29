@@ -154,6 +154,42 @@ class ImportTrackerSpec extends Specification {
         tracker.trackedItemIsUnknown(newpath)
     }
 
+    def "trackJobAtPath cleans up an orphaned forward mapping even when the reverse entry was already claimed by another job"() {
+        given: "job1 renamed A->B, then re-asserted at A, leaving two forward mappings by design"
+        def pathA = "a/b"
+        def pathB = "c/d"
+        def pathC = "e/f"
+        def job1 = Mock(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> [commitId: 'abc']
+        }
+        def job2 = Mock(JobScmReference) {
+            getId() >> '456'
+            getScmImportMetadata() >> [commitId: 'def']
+        }
+        def tracker = new ImportTracker()
+        tracker.trackJobAtPath(job1, pathA)
+        tracker.jobRenamed(job1, pathA, pathB)
+        tracker.trackJobAtPath(job1, pathA)
+
+        when: "job2 claims A, removing job1's reverse entry but not its forward mapping at B"
+        tracker.trackJobAtPath(job2, pathA)
+
+        then:
+        tracker.trackedJob(pathA) == '456'
+        tracker.trackedJob(pathB) == '123'
+
+        when: "job1 is then tracked at a third path, a direct move with no reverse entry to compare against"
+        tracker.trackJobAtPath(job1, pathC)
+
+        then: "the orphaned mapping at B is cleaned up instead of surviving as a phantom DELETE_NEEDED"
+        tracker.trackedJob(pathB) == null
+        tracker.trackedCommit(pathB) == null
+        tracker.trackedJob(pathC) == '123'
+        tracker.trackedPath('123') == pathC
+        tracker.trackedPaths() == [pathA, pathC] as Set
+    }
+
     def "untrackJob removes every tracked path for the deleted job"() {
         given:
         def originalPath = "a/b"

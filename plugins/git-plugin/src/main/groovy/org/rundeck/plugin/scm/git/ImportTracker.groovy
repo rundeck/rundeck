@@ -94,10 +94,14 @@ class ImportTracker {
                 renamedTrackedItems.untrack(path)
             }
             def previousPath = trackedPathsMap[job.id]
-            if (previousPath != null && previousPath != path && renamedTrackedItems.originalValue(previousPath) != path) {
+            if (previousPath != path &&
+                    (previousPath == null || renamedTrackedItems.originalValue(previousPath) != path)) {
                 //direct move (e.g. path-template change) bypassing jobRenamed: clear every forward
                 //mapping the job holds, not just previousPath, since a prior rename re-assertion can
-                //leave two. skipped when `path` re-asserts the canonical path right after a rename.
+                //leave two - including when the reverse entry (trackedPathsMap[job.id]) is already
+                //missing, e.g. because another job claimed the old reverse-mapped path first, which
+                //would otherwise leave this job's other forward mapping orphaned. skipped when `path`
+                //re-asserts the canonical path right after a rename.
                 untrackJobPaths(job.id).each { String stalePath ->
                     renamedTrackedItems.untrack(stalePath)
                 }

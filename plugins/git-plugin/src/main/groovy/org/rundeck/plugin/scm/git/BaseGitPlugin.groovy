@@ -813,11 +813,10 @@ class BaseGitPlugin {
             git.getRepository().config.save()
             repo = git.getRepository()
         } catch (Exception e) {
-            logger.debug("Failed configuring cloned repository from ${url}: ${e.message}", e)
             git.getRepository().close()
             git = null
             repo = null
-            throw new ScmPluginException("Failed configuring cloned repository from ${url}: ${e.message}", e)
+            throw remoteAccessFailure('Failed configuring cloned repository', e, branch)
         }
     }
 
