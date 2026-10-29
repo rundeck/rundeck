@@ -190,6 +190,29 @@ class ImportTrackerSpec extends Specification {
         tracker.trackedPaths() == [pathA, pathC] as Set
     }
 
+    def "first-time registration of many jobs does not scan every previously tracked job"() {
+        given: "trackJobAtPath must not confuse an ordinary never-tracked-before job with an orphan." +
+                " Uses a lightweight map-coerced stub, not Mock(), so per-job object creation" +
+                " overhead doesn't mask an O(n²) regression in the tracker itself"
+        def tracker = new ImportTracker()
+        int jobCount = 20000
+
+        when: "each job is registered for the first time at its own distinct path"
+        long start = System.currentTimeMillis()
+        (1..jobCount).each { int i ->
+            JobScmReference job = [
+                    getId               : { "job${i}".toString() },
+                    getScmImportMetadata: { [commitId: "commit${i}".toString()] },
+            ] as JobScmReference
+            tracker.trackJobAtPath(job, "path${i}".toString())
+        }
+        long elapsedMs = System.currentTimeMillis() - start
+
+        then: "linear-time registration, not the ~n²/2 entry visits an orphan-cleanup-on-every-call regression would cause"
+        tracker.trackedPaths().size() == jobCount
+        elapsedMs < 5000
+    }
+
     def "untrackJob removes every tracked path for the deleted job"() {
         given:
         def originalPath = "a/b"

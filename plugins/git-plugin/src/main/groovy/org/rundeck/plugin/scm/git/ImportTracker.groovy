@@ -30,6 +30,13 @@ class ImportTracker {
      * job ID -> path
      */
     Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
+    /**
+     * Job IDs whose reverse mapping was just cleared by a different job claiming their path,
+     * so they may still hold another forward mapping elsewhere that needs cleanup next time
+     * they're tracked again. Lets trackJobAtPath tell that case apart from ordinary first-time
+     * registration (also previousPath == null) without scanning trackedJobIds on every call.
+     */
+    private final Set<String> orphanedJobIds = new HashSet<>()
 
     /**
      * Return a stable snapshot of all tracked repository paths.
@@ -89,19 +96,24 @@ class ImportTracker {
         synchronized (this) {
             def previousJobId = trackedJobIds[path]
             if (previousJobId != null && previousJobId != job.id) {
-                //path claimed by a different job: clear its stale reverse and rename mappings
+                //path claimed by a different job: clear its stale reverse and rename mappings,
+                //and flag it, since it may still hold another forward mapping elsewhere
                 trackedPathsMap.remove(previousJobId, path)
                 renamedTrackedItems.untrack(path)
+                orphanedJobIds.add(previousJobId)
             }
             def previousPath = trackedPathsMap[job.id]
+            //consume this job's own orphan flag (if any) regardless of the outcome below, so a
+            //later call for the same job doesn't re-trigger the scan on stale information
+            boolean wasOrphaned = orphanedJobIds.remove(job.id)
             if (previousPath != path &&
-                    (previousPath == null || renamedTrackedItems.originalValue(previousPath) != path)) {
-                //direct move (e.g. path-template change) bypassing jobRenamed: clear every forward
-                //mapping the job holds, not just previousPath, since a prior rename re-assertion can
-                //leave two - including when the reverse entry (trackedPathsMap[job.id]) is already
-                //missing, e.g. because another job claimed the old reverse-mapped path first, which
-                //would otherwise leave this job's other forward mapping orphaned. skipped when `path`
-                //re-asserts the canonical path right after a rename.
+                    (wasOrphaned || (previousPath != null && renamedTrackedItems.originalValue(previousPath) != path))) {
+                //direct move (e.g. path-template change) bypassing jobRenamed, or cleaning up after
+                //a prior orphaning (see above): clear every forward mapping the job holds, not just
+                //previousPath, since a prior rename re-assertion can leave two. The orphan-flag check
+                //avoids scanning trackedJobIds (in untrackJobPaths) on every first-time registration,
+                //which previousPath == null alone can't distinguish from a real orphan. skipped when
+                //`path` re-asserts the canonical path right after a rename.
                 untrackJobPaths(job.id).each { String stalePath ->
                     renamedTrackedItems.untrack(stalePath)
                 }
@@ -142,6 +154,8 @@ class ImportTracker {
                 //clear any rename mapping too, or wasRenamed() keeps reporting true for a dead job
                 renamedTrackedItems.untrack(path)
             }
+            //the job is gone, so any pending orphan flag for it would never be consumed otherwise
+            orphanedJobIds.remove(jobId)
             pathsToRemove ? pathsToRemove.iterator().next() : null
         }
     }
@@ -215,6 +229,7 @@ class ImportTracker {
                 ", trackedCommits=" + trackedCommits +
                 ", trackedJobIds=" + trackedJobIds +
                 ", trackedPathsMap=" + trackedPathsMap +
+                ", orphanedJobIds=" + orphanedJobIds +
                 '}'
     }
 }
