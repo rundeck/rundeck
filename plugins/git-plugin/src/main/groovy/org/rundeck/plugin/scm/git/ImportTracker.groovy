@@ -34,19 +34,16 @@ class ImportTracker {
     /**
      * Return a stable snapshot of all tracked repository paths.
      *
-     * <p>Iterates under the map locks - synchronizedMap's key-set views aren't iteration-safe.
+     * <p>Iterates under this tracker's own lock - synchronizedMap's key-set views aren't
+     * iteration-safe, and every external access to these maps goes through this class's own
+     * synchronized methods, so that single lock is sufficient.
      *
      * @return tracked repository paths
      */
     public Set<String> trackedPaths() {
         synchronized (this) {
-            Set<String> result
-            synchronized (trackedCommits) {
-                result = new LinkedHashSet<>(trackedCommits.keySet())
-            }
-            synchronized (trackedJobIds) {
-                result.addAll(trackedJobIds.keySet())
-            }
+            Set<String> result = new LinkedHashSet<>(trackedCommits.keySet())
+            result.addAll(trackedJobIds.keySet())
             return result
         }
     }
@@ -159,11 +156,9 @@ class ImportTracker {
             if (canonicalPath) {
                 pathsToRemove.add(canonicalPath)
             }
-            synchronized (trackedJobIds) {
-                pathsToRemove.addAll(
-                        trackedJobIds.findAll { String ignored, String id -> id == jobId }.keySet()
-                )
-            }
+            pathsToRemove.addAll(
+                    trackedJobIds.findAll { String ignored, String id -> id == jobId }.keySet()
+            )
             pathsToRemove.each { String path ->
                 trackedCommits.remove(path)
                 trackedJobIds.remove(path)
@@ -179,13 +174,8 @@ class ImportTracker {
      */
     Set<String> trackedJobIdSet() {
         synchronized (this) {
-            Set<String> result
-            synchronized (trackedPathsMap) {
-                result = new HashSet<>(trackedPathsMap.keySet())
-            }
-            synchronized (trackedJobIds) {
-                result.addAll(trackedJobIds.values())
-            }
+            Set<String> result = new HashSet<>(trackedPathsMap.keySet())
+            result.addAll(trackedJobIds.values())
             result
         }
     }

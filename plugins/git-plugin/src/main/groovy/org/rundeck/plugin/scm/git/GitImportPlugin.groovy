@@ -394,10 +394,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } else if (job.scmImportMetadata?.commitId) {
             // check and track atomically, so a newer refresh can't install its own marker and
             // path in between and get clobbered by this slower, older one
-            synchronized (jobStateMap) {
-                if (jobStateMap.get(job.id)?.is(loadingMarker)) {
-                    importTracker.trackJobAtPath(job, path)
-                }
+            ifCurrentRefresh(job.id, loadingMarker) {
+                importTracker.trackJobAtPath(job, path)
             }
         }
         log.debug(
@@ -474,10 +472,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         log.error("Rename detected from ${oldPath} to ${newPath}")
                         //only track if still current, so a concurrent delete's cleanup can't be
                         //undone by resurrecting a rename mapping here
-                        synchronized (jobStateMap) {
-                            if (jobStateMap.get(job.id)?.is(loadingMarker)) {
-                                this.importTracker.jobRenamed(job, oldPath, newPath)
-                            }
+                        ifCurrentRefresh(job.id, loadingMarker) {
+                            this.importTracker.jobRenamed(job, oldPath, newPath)
                         }
                         return ImportSynchState.IMPORT_NEEDED
                     }

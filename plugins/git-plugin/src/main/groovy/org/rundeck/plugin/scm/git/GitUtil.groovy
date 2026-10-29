@@ -223,13 +223,7 @@ class GitUtil {
         def log = logb.call()
         try {
             def iter = log.iterator()
-            if (iter.hasNext()) {
-                def commit = iter.next()
-                if (commit) {
-                    return commit
-                }
-            }
-            null
+            iter.hasNext() ? iter.next() : null
         } finally {
             log.close()
         }

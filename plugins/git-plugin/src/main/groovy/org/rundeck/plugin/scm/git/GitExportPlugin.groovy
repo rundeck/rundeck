@@ -483,11 +483,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             // between the check below and the write still resurrects the file. Closing it needs
             // a per-job/file lock spanning serialize(), shared by both the import and export
             // plugins; narrowed here instead of reworking that shared method.
-            boolean stillOwned
-            synchronized (jobStateMap) {
-                stillOwned = jobStateMap.get(job.id)?.is(loadingMarker)
-            }
-            if (stillOwned) {
+            if (isCurrentRefresh(job.id, loadingMarker)) {
                 serialize(job, format, config.exportPreserve, config.exportOriginal)
             }
         }

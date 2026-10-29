@@ -206,6 +206,30 @@ class BaseGitPlugin {
     }
 
     /**
+     * True only if the given placeholder is still the one installed for this job. Does not
+     * itself act on the result - a caller needing to act atomically with the check (so a
+     * concurrent refresh/deletion can't land in between) must use {@link #ifCurrentRefresh}
+     * instead of calling this and then acting separately.
+     */
+    protected boolean isCurrentRefresh(String jobId, Map loadingMarker) {
+        synchronized (jobStateMap) {
+            jobStateMap.get(jobId)?.is(loadingMarker)
+        }
+    }
+
+    /**
+     * Runs {@code action} only if the given placeholder is still current, checked and run under
+     * the same lock so a concurrent refresh/deletion can't land in between.
+     */
+    protected void ifCurrentRefresh(String jobId, Map loadingMarker, Closure action) {
+        synchronized (jobStateMap) {
+            if (jobStateMap.get(jobId)?.is(loadingMarker)) {
+                action()
+            }
+        }
+    }
+
+    /**
      * Initialize a job-status cache entry only when one is not already present.
      *
      * <p>The synchronized wrapper used for {@link #jobStateMap} only serializes individual map
