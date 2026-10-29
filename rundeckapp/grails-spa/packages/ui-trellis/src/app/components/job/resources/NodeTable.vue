@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="nodeSet.tagsummary" id="nodes_tags">
-      <span v-for="tag in Object.entries(nodeSet.tagsummary)">
+      <span v-for="tag in Object.entries(nodeSet.tagsummary)" :key="tag[0]">
         <span class="summary nodetags">
           <node-filter-link
             class="label label-muted link-quiet"
@@ -25,6 +25,7 @@
                 </th>
                 <th
                   v-for="filter in filterColumns"
+                  :key="filter"
                   class="text-capitalize table-header"
                 >
                   {{ filter }}
@@ -41,7 +42,10 @@
               </tr>
             </thead>
             <tbody>
-              <template v-for="(node, index) in nodeSet.nodes">
+              <template
+                v-for="(node, index) in nodeSet.nodes"
+                :key="node.nodename"
+              >
                 <tr
                   :data-testid="'node-entry-' + index"
                   class="node_entry hover-action-holder ansicolor-on"
@@ -101,13 +105,14 @@
                     <span class="nodedesc"></span>
 
                     <span class="text-strong">
-                      <i
-                        v-for="badge in glyphiconBadges(node.attributes)"
-                        v-if="node.attributes['ui:badges']"
-                        :key="badge"
-                        :class="glyphiconForName(badge)"
-                        data-testid="node-badge-icon"
-                      ></i>
+                      <template v-if="node.attributes['ui:badges']">
+                        <i
+                          v-for="badge in glyphiconBadges(node.attributes)"
+                          :key="badge"
+                          :class="glyphiconForName(badge)"
+                          data-testid="node-badge-icon"
+                        ></i>
+                      </template>
                       <span>
                         {{ node.attributes.description }}
                       </span>
@@ -128,7 +133,7 @@
                     </span>
                   </td>
 
-                  <td v-for="filter in filterColumns">
+                  <td v-for="filter in filterColumns" :key="filter">
                     <span v-if="node.attributes[filter]" class="value">
                       <span v-if="filter === 'tags'">
                         <span class="nodetags">
@@ -165,7 +170,7 @@
                     <td title="Tags" class="nodetags">
                       <span v-if="node.tags">
                         <span class="nodetags">
-                          <span v-for="tag in node.tags">
+                          <span v-for="tag in node.tags" :key="tag">
                             <node-filter-link
                               class="link-quiet"
                               style="margin-right: 2px"
@@ -549,7 +554,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 .nodesTable {
   border-spacing: 0;
   border-collapse: collapse;

@@ -321,6 +321,30 @@ export default defineComponent({
   }
 }
 
+/* Dark mode (Figma: Dark Mode/Grey scale) */
+*[data-color-theme="dark"] .config-section {
+  border-bottom-color: var(--grey-400);
+  color: var(--white, #fff);
+
+  &.edit-view + .config-section {
+    border-top-color: var(--grey-400);
+  }
+
+  .link-button {
+    color: #50b776;
+  }
+
+  .p-chip {
+    background-color: var(--grey-600);
+    color: var(--white, #fff);
+  }
+
+  .edit-view-add-btn {
+    background: #1a3a2a;
+    color: #78c494;
+  }
+}
+
 .chips-slide-enter-active,
 .chips-slide-leave-active {
   transition: all 0.25s ease-out;
@@ -362,6 +386,7 @@ export default defineComponent({
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style>
 .p-chip-icon.fa {
   width: auto !important;

@@ -36,6 +36,9 @@ class JobCreatePage extends BasePage {
     By groupNameOption = By.cssSelector("span.groupname.jobgroupexpand")
     By descriptionTextareaBy = By.cssSelector("form textarea[name='description']")
     By jobGroupBy = By.cssSelector("input#schedJobGroup")
+    By scheduleTabPaneBy = By.id('tab_schedule')
+    By scheduleRunYesLabelBy = By.cssSelector("label[for='scheduledTrue']")
+    By scheduleEveryDayLabelBy = By.cssSelector("label[for='everyDay']")
     By scheduleRunYesBy = By.id('scheduledTrue')
     By scheduleEveryDayCheckboxBy = By.cssSelector('input#everyDay')
     By scheduleDaysCheckboxDivBy = By.cssSelector('div#DayOfWeekDialog')
@@ -104,6 +107,7 @@ class JobCreatePage extends BasePage {
     By nodeFilterLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown")
     By nodeFilterSelectAllLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_all")
     By nodeMatchedCountBy = By.xpath("//span[@class='text-info node_filter_results__matched_nodes_count']")
+    By nodePopoverBy = By.cssSelector(".popover.node-embed-popover")
     By excludeFilterTrueBy = By.xpath("//*[@id='excludeFilterTrue']")
     By editableFalseBy = By.xpath("//*[@id='editableFalse']")
     By schedJobNodeThreadCountBy = By.xpath("//*[@id='schedJobnodeThreadcount']")
@@ -411,10 +415,40 @@ class JobCreatePage extends BasePage {
         el selectNode
     }
 
+    /**
+     * Returns the "add to filter" (+) link of a tag inside the open node popover.
+     * Scoped to the node popover so a tag of a node rendered elsewhere is never matched,
+     * and waits until the link is clickable.
+     * @param tabName tag name as rendered in the popover
+     */
     WebElement selectTabAddFilterByName(String tabName){
-        def selector = By.xpath("//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']")
+        def selector = By.xpath("//*[contains(@class,'node-embed-popover')]//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']")
         waitForElementToBeClickable(selector)
         el selector
+    }
+
+    /**
+     * Opens the details popover of a node in the matched nodes list.
+     * Waits for any previously open node popover to close first, because clicking a node
+     * while another popover is still hiding (or while the list is re-rendering) is ignored.
+     * @param nodeName name of the node to open
+     */
+    void openNodePopover(String nodeName) {
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.invisibilityOfElementLocated(nodePopoverBy))
+        getNodeByName(nodeName).click()
+        waitForElementVisible(By.xpath("//*[contains(@class,'node-embed-popover')]//*[contains(@class,'node-header')]/span[normalize-space(.)=\"${nodeName}\"]"))
+    }
+
+    /**
+     * Waits until the node filter input contains {@code text} and the matched nodes
+     * query triggered by that filter change has finished loading.
+     * @param text expected fragment of the node filter
+     */
+    void waitForNodeFilterApplied(String text) {
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.attributeContains(nodeFilterInputBy, "value", text))
+        waitForElementVisible(nodeMatchedCountBy)
     }
 
     WebElement getNodeFilterInput(){
@@ -512,6 +546,31 @@ class JobCreatePage extends BasePage {
         el scheduleDaysCheckboxDivBy
     }
 
+    /**
+     * Open the Schedule tab and turn on a simple every-day schedule.
+     *
+     * The tab's controls are rendered by a Vue component mounted after the tab is
+     * shown, so each one is waited for rather than read straight after the click.
+     */
+    void enableDailySchedule() {
+        // saveStep returns as soon as the new step row appears, so the step editor's
+        // modal can still be open and over the tabs
+        waitForModal(0)
+        WebElement scheduleTab = tab(JobTab.SCHEDULE)
+        waitForElementToBeClickable scheduleTab
+        scheduleTab.click()
+        // fail on the pane rather than 30s later on a control inside it
+        waitForElementVisible scheduleTabPaneBy
+        // the theme gives these inputs opacity:0 and draws the control on the label, so
+        // the label is both what a user clicks and the only part Selenium sees as visible
+        byAndWaitClickable(scheduleRunYesLabelBy).click()
+        // the day-of-week panel appearing is the reactive model having caught up
+        waitForElementVisible scheduleDaysCheckboxDivBy
+        if (!scheduleEveryDayCheckboxField.isSelected()) {
+            byAndWaitClickable(scheduleEveryDayLabelBy).click()
+        }
+    }
+
     List<WebElement> getExecutionPluginsRows() {
         driver.findElements(executionPluginsRows)
     }
@@ -591,6 +650,15 @@ class JobCreatePage extends BasePage {
 
     WebElement getCreateJobButton() {
         el createJobBy
+    }
+
+    /**
+     * Submit a new job, waiting for the button to be interactable first. The schedule
+     * editor is Vue-driven, so the form can still be settling when the caller is ready.
+     */
+    void clickCreateJob() {
+        byAndWaitClickable createJobBy
+        createJobButton.click()
     }
 
     void clickTimeZone(){

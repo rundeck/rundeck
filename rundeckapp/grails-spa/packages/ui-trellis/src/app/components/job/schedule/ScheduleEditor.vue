@@ -151,6 +151,7 @@
                                   <template v-if="!modelData.everyDayOfWeek">
                                     <div
                                       v-for="(day, n) in days"
+                                      :key="day.shortName"
                                       class="_defaultInput checkbox"
                                     >
                                       <input
@@ -189,6 +190,7 @@
                                   <template v-if="!modelData.allMonths">
                                     <div
                                       v-for="(month, n) in months"
+                                      :key="month.shortName"
                                       class="_defaultInput checkbox"
                                     >
                                       <input
@@ -220,6 +222,7 @@
                                 <div class="row">
                                   <div class="col-sm-6">
                                     <div class="form-group">
+                                      <!-- eslint-disable vuejs-accessibility/no-autofocus -- intentional initial focus on the crontab expression input -->
                                       <input
                                         ref="crontabInput"
                                         v-model="modelData.crontabString"
@@ -233,6 +236,7 @@
                                         @change="validateCronExpression"
                                         @blur="crontabBlur"
                                       />
+                                      <!-- eslint-enable vuejs-accessibility/no-autofocus -->
                                       <input
                                         v-model="modelData.useCrontabString"
                                         type="hidden"
@@ -329,6 +333,7 @@
             {{ $t("scheduledExecution.property.timezone.prompt") }}
           </div>
           <div class="col-sm-5">
+            <!-- eslint-disable vuejs-accessibility/no-autofocus -- intentional initial focus on the time zone input -->
             <input
               id="timeZone"
               v-model="modelData.timeZone"
@@ -338,6 +343,7 @@
               class="form-control input-sm"
               size="50"
             />
+            <!-- eslint-enable vuejs-accessibility/no-autofocus -->
             <typeahead
               v-model="modelData.timeZone"
               target="#timeZone"
@@ -620,8 +626,8 @@ function getCrontabSection(pos: number, text: string): number {
  */
 function getCaretPos() {
   const el = document.getElementsByName("crontabString")[0] as HTMLInputElement;
-  let rng,
-    ii = -1;
+  let rng;
+  const ii = -1;
   if (typeof el.selectionStart == "number") {
     return el.selectionStart;
   } else if ((document as any).selection && (el as any).createTextRange) {

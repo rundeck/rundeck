@@ -1,10 +1,16 @@
 package rundeck.controllers
 
 import grails.testing.web.controllers.ControllerUnitTest
+import org.grails.core.DefaultGrailsControllerClass
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class ErrorControllerSpec extends Specification implements ControllerUnitTest<ErrorController> {
+
+    void "requests resolving to the error controller without an action use notFound"() {
+        expect:
+        new DefaultGrailsControllerClass(ErrorController).defaultAction == 'notFound'
+    }
 
     @Unroll
     void "test 500 #format"() {

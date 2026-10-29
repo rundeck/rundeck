@@ -359,6 +359,154 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
     }
 
     // ========================================================================
+    // SCENARIO 7: stale jasypt-encryption:encrypted flag on plaintext content
+    //
+    // Reproduces a real-world condition seen after a 5.x -> 6.x upgrade: project.properties
+    // content is genuine plaintext (a normal Java properties file starting with the header
+    // java.util.Properties.store() writes), but the metadata still carries a stale
+    // jasypt-encryption:encrypted=true flag from the old 5.x plugin. readResource() must
+    // recover the plaintext instead of throwing, since decrypting already-plaintext bytes can
+    // never succeed -- but ONLY for this specific path and header, never for SCM config or
+    // anything else flagged as legacy-encrypted.
+    // ========================================================================
+
+    private static final String PROJECT_PROPERTIES_STORAGE_PATH = "projects/test/etc/project.properties"
+
+    def "plaintext project.properties with a stale jasypt-encryption:encrypted flag is returned as-is"() {
+        given: "content that is genuine plaintext, using the real header java.util.Properties.store() writes"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> PROJECT_PROPERTIES_STORAGE_PATH
+        }
+        def baos = new ByteArrayOutputStream()
+        new Properties().with {
+            setProperty("project.name", "test")
+            setProperty("project.description", "blah")
+            store(baos, "text/x-java-properties;name=test")
+        }
+        def plaintextProperties = baos.toByteArray()
+
+        and: "metadata carries a stale legacy-encrypted flag despite the plaintext content"
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when:
+        def result = plugin.readResource(path, meta, mockStream(plaintextProperties))
+
+        then: "the plaintext is recovered unchanged instead of throwing"
+        readAllBytes(result) == plaintextProperties
+    }
+
+    def "plaintext content whose length is coincidentally CBC-block-aligned is still returned as-is, never decrypted"() {
+        given: "the real header, padded to a length that happens to be block-aligned for AES-CBC -- if this were ever run through decrypt() (instead of being recognized as plaintext beforehand), legacy CBC being unauthenticated means it could coincidentally accept the padding and return garbage rather than throwing"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> PROJECT_PROPERTIES_STORAGE_PATH
+        }
+        def content = "#text/x-java-properties;name=test\nproject.name=test\n"
+        def paddingNeeded = (16 - (content.length() % 16)) % 16
+        def plaintextProperties = (content + (" " * paddingNeeded)).getBytes("ISO-8859-1")
+        assert plaintextProperties.length % 16 == 0
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when:
+        def result = plugin.readResource(path, meta, mockStream(plaintextProperties))
+
+        then: "the exact original bytes come back unchanged -- the path+header match is checked BEFORE decrypt() is ever called, so this coincidental alignment can never trigger a false decrypt 'success'"
+        readAllBytes(result) == plaintextProperties
+    }
+
+    def "plaintext content on an unrelated non-project path (e.g. Key Storage) is NOT returned as-is, even with the real header"() {
+        given: "the real project.properties header, but under a Key Storage path rather than a real projects/<name>/... path -- this plugin class is also configured for Key Storage (rundeck.storage.converter), so a stored key file could coincidentally be named/pathed this way"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> "keys/foo/etc/project.properties"
+        }
+        def raw = "#text/x-java-properties;name=test\nproject.name=test\n".getBytes("ISO-8859-1")
+        // Guard against the (currently false, but not load-bearing) coincidence of this literal's
+        // length being a multiple of the cipher block size: keep it off that boundary so the decrypt
+        // attempt below deterministically throws IllegalBlockSizeException rather than reaching
+        // padding validation, whose accept/reject on non-ciphertext bytes is otherwise probabilistic.
+        def plaintextLookingContent = (raw.length % 16 == 0) ? (new String(raw, "ISO-8859-1") + " ").getBytes("ISO-8859-1") : raw
+        assert plaintextLookingContent.length % 16 != 0
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "the decrypt-triggering read is actually consumed"
+        readAllBytes(plugin.readResource(path, meta, mockStream(plaintextLookingContent)))
+
+        then: "the path is not an exact projects/<name>/etc/project.properties match, so the fallback never applies and the failure still propagates"
+        thrown(RuntimeException)
+    }
+
+    def "genuinely corrupt, non-plaintext-shaped content still throws (SCM config stays loud)"() {
+        given: "corrupt/undecryptable binary content, simulating a real scm-export.properties failure"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> "projects/test/some-uuid/etc/scm-export.properties"
+        }
+        def corrupt = new byte[40]
+        Arrays.fill(corrupt, (byte) 0xFF)
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "the decrypt-triggering read is actually consumed"
+        readAllBytes(plugin.readResource(path, meta, mockStream(corrupt)))
+
+        then: "the plaintext fallback does not apply, and the failure still propagates unchanged"
+        thrown(RuntimeException)
+    }
+
+    def "SCM config content whose undecryptable ciphertext happens to start with '#' still throws (path-scoped fallback)"() {
+        given: "content on an SCM path, undecryptable, whose first byte happens to be '#' -- the same byte a real plaintext project.properties header starts with"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> "projects/test/some-uuid/etc/scm-export.properties"
+        }
+        def corrupt = new byte[40]
+        Arrays.fill(corrupt, (byte) 0xFF)
+        corrupt[0] = (byte) '#'
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "the decrypt-triggering read is actually consumed"
+        readAllBytes(plugin.readResource(path, meta, mockStream(corrupt)))
+
+        then: "a leading '#' alone is not enough -- this is an SCM path, not project.properties, so the fallback never applies and the failure still propagates"
+        thrown(RuntimeException)
+    }
+
+    def "Base64-wrapped legacy payload with the wrong password is never returned unchanged (SCM stays safe)"() {
+        given: "a Base64-encoded legacy Jasypt payload -- the shape the Base64 fallback targets -- encrypted with a DIFFERENT password than the plugin is configured with, on an SCM-like path"
+        def plugin = createModernPlugin() // configured with PRODUCTION_PASSWORD
+        def path = Mock(Path) {
+            getPath() >> "projects/test/some-uuid/etc/scm-export.properties"
+        }
+        def wrongPasswordEncryptor = LegacyJasyptEncryptor.defaultStorage()
+        def rawEncrypted = wrongPasswordEncryptor.encrypt("a-completely-different-password", "some secret value".bytes)
+        def base64Wrapped = Base64.encoder.encode(rawEncrypted)
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "reading it with the wrong (configured) password -- legacy CBC is unauthenticated, so a wrong key can occasionally produce valid padding and 'succeed' with garbage instead of throwing"
+        byte[] result = null
+        RuntimeException caught = null
+        try {
+            result = readAllBytes(plugin.readResource(path, meta, mockStream(base64Wrapped)))
+        } catch (RuntimeException e) {
+            caught = e
+        }
+
+        then: "either it throws, or -- if padding happened to validate by chance -- the Base64 text is never handed back unchanged as if it were plaintext"
+        caught != null || result != base64Wrapped
+    }
+
+    // ========================================================================
     // Helpers
     // ========================================================================
 

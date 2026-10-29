@@ -115,8 +115,7 @@ Pushing to remote branch: `${plugin.branch}`"""
         try {
             push = pushb.call()
         } catch (Exception e) {
-            plugin.logger.debug("Failed push to remote: ${e.message}", e)
-            throw new ScmPluginException("Failed push to remote: ${e.message}", e)
+            throw plugin.remoteAccessFailure('Failed push to remote', e)
         }
         def updates = (push*.remoteUpdates).flatten()
         def failedUpdates = updates.findAll {

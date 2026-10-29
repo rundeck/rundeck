@@ -48,7 +48,7 @@ jest.mock("@/library/rundeckService", () => {
       rootStore: {
         plugins: {
           load: jest.fn(),
-          getServicePlugins: jest.fn(),
+          getServicePlugins: jest.fn().mockReturnValue([]),
         },
       },
     })),
@@ -166,7 +166,10 @@ describe("WorkflowSteps", () => {
             configuration: {
               test: true,
             },
-            description: undefined,
+            // Auto-generated Step Name default (see createStepFromProvider /
+            // resolveStepTypeTitle): falls back to the raw provider id "b"
+            // here since no matching plugin is loaded in this test.
+            description: "b",
             nodeStep: false,
             type: "c",
           },
@@ -234,6 +237,26 @@ describe("WorkflowSteps", () => {
         "workflow-editor-workflowsteps-updated",
         wrapper.vm.model,
       );
+    });
+
+    it("backfills a non-empty Step Name when saving an existing step that had none", async () => {
+      const localWrapper = await createWrapper({
+        commands: [{ ...baseCommand, description: undefined }],
+      });
+
+      await localWrapper
+        .find('[data-testid="edit-step-item"]')
+        .trigger("click");
+      await localWrapper.vm.$nextTick();
+
+      const editModal = localWrapper.findAllComponents(EditPluginModal)[1];
+      editModal.vm.$emit("save");
+      await flushPromises();
+
+      const saved = localWrapper.emitted("update:modelValue")![1][0] as {
+        commands: StepData[];
+      };
+      expect(saved.commands[0].description).toBeTruthy();
     });
 
     it("duplicates a step with all its properties", async () => {

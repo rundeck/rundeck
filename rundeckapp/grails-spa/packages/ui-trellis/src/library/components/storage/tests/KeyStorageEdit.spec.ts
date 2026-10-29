@@ -213,6 +213,62 @@ describe("KeyStorageEdit", () => {
     expect(wrapper.emitted().finishEditing[0]).toEqual(expectedEmittedEvent);
   });
 
+  describe("uploadSetting binding", () => {
+    it("emits update:uploadSetting with the edited value without mutating the prop", async () => {
+      const uploadSetting = { ...defaultProps.uploadSetting };
+      const wrapper = await mountKeyStorageEdit({ uploadSetting });
+
+      await wrapper.find('[data-testid="key-name-input"]').setValue("new-key");
+      await flushPromises();
+
+      const emitted = wrapper.emitted("update:uploadSetting") ?? [];
+      expect(emitted.length).toBeGreaterThan(0);
+      expect(emitted[emitted.length - 1][0]).toEqual({
+        ...defaultProps.uploadSetting,
+        fileName: "new-key",
+      });
+      expect(uploadSetting.fileName).toBeNull();
+    });
+
+    it("updates the displayed fields when the parent replaces uploadSetting", async () => {
+      const wrapper = await mountKeyStorageEdit();
+
+      await wrapper.setProps({
+        uploadSetting: {
+          ...defaultProps.uploadSetting,
+          inputPath: "parent/dir",
+          fileName: "parent-key",
+        },
+      });
+      await wrapper.vm.$nextTick();
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+      expect((pathInput.element as HTMLInputElement).value).toBe("parent/dir");
+      expect((nameInput.element as HTMLInputElement).value).toBe("parent-key");
+      expect(wrapper.emitted("update:uploadSetting")).toBeFalsy();
+    });
+
+    it("emits the error message in update:uploadSetting when save fails validation", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: { ...defaultProps.uploadSetting, inputType: "text" },
+      });
+
+      await wrapper.find('[data-testid="key-name-input"]').setValue("bad#key");
+      await wrapper.find('[data-testid="save-btn"]').trigger("click");
+      await flushPromises();
+
+      const emitted = wrapper.emitted("update:uploadSetting") ?? [];
+      expect(emitted.length).toBeGreaterThan(0);
+      expect(emitted[emitted.length - 1][0]).toEqual(
+        expect.objectContaining({
+          fileName: "bad#key",
+          errorMsg: "storage.keyPath.error.invalidChar",
+        }),
+      );
+    });
+  });
+
   describe("Path validation", () => {
     it("validates path and shows error when user enters @ in path", async () => {
       const wrapper = await mountKeyStorageEdit({

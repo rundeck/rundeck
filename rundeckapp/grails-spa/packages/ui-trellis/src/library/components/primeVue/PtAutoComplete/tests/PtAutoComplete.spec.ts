@@ -2,14 +2,16 @@ import { mount } from "@vue/test-utils";
 import AutoComplete from "primevue/autocomplete";
 import { PtAutoComplete } from "../../index";
 import type { TabConfig } from "../PtAutoCompleteTypes";
+import type { ContextVariable } from "../../../../stores/contextVariables";
 
 const SUGGESTIONS = [
   { name: "${job.execid}", title: "Execution ID", type: "job" },
   { name: "${job.id}", title: "Job ID", type: "job" },
 ];
 
-const createWrapper = async (props = {}): Promise<any> => {
+const createWrapper = async (props = {}, mountOptions = {}): Promise<any> => {
   const wrapper = mount(PtAutoComplete, {
+    ...mountOptions,
     props: {
       modelValue: "",
       suggestions: SUGGESTIONS,
@@ -169,6 +171,38 @@ describe("PtAutoComplete", () => {
       expect(suggestions).toContain("${job.id}");
     });
 
+    it("refreshes the rendered options when the suggestions prop changes while the panel is already open (e.g. a consumer toggling an accordion group inside the list)", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({ showOptionsOnFocus: true });
+
+      // Focus with an empty query shows everything (showOptionsOnFocus branch)
+      await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
+        query: "",
+        originalEvent: { target: { selectionStart: 0 } },
+      });
+      jest.advanceTimersByTime(200);
+      await wrapper.vm.$nextTick();
+
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toContain("${job.execid}");
+
+      // Parent reactively narrows the suggestions list (no new @complete
+      // event fires — this is exactly what happens when a caller collapses
+      // an accordion group inside the list) — the already-open panel must
+      // reflect the change without the user retyping/refocusing.
+      await wrapper.setProps({
+        suggestions: [{ name: "${job.id}", title: "Job ID", type: "job" }],
+      });
+      await wrapper.vm.$nextTick();
+
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
+      expect(suggestions).not.toContain("${job.execid}");
+      expect(suggestions).toContain("${job.id}");
+    });
+
     it("restricts suggestions to the active tab's category when tabMode is enabled", async () => {
       jest.useFakeTimers();
 
@@ -211,6 +245,328 @@ describe("PtAutoComplete", () => {
         .props("suggestions");
       expect(suggestions).toContain("${job.execid}");
       expect(suggestions).not.toContain("${option.myopt}");
+    });
+  });
+
+  describe("tab badges", () => {
+    const tabs: TabConfig[] = [
+      {
+        label: "Job",
+        filter: (s) => s.type === "job",
+        getCount: (s) => s.length,
+      },
+    ];
+
+    const renderHeader = (wrapper: any) => {
+      const headerSlot = wrapper.findComponent(AutoComplete).vm.$slots.header;
+      const vnodes = headerSlot!({});
+      return mount({ render: () => vnodes[0] });
+    };
+
+    it("shows the per-tab result-count badge by default", async () => {
+      const wrapper = await createWrapper({ tabMode: true, tabs });
+      const rendered = renderHeader(wrapper);
+
+      expect(rendered.findComponent({ name: "Badge" }).exists()).toBe(true);
+    });
+
+    it("hides the per-tab result-count badge when showTabBadges is false, keeping the tabs themselves", async () => {
+      const wrapper = await createWrapper({
+        tabMode: true,
+        tabs,
+        showTabBadges: false,
+      });
+      const rendered = renderHeader(wrapper);
+
+      expect(rendered.findComponent({ name: "Badge" }).exists()).toBe(false);
+      expect(rendered.text()).toContain("Job");
+    });
+  });
+
+  describe("clearing the input", () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("re-shows the full option list when the focused input is emptied and reopenOnClear is set", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper(
+        { showOptionsOnFocus: true, reopenOnClear: true },
+        { attachTo: document.body },
+      );
+      const inner = wrapper.findComponent(AutoComplete);
+      const show = jest.spyOn(inner.vm as any, "show");
+      wrapper.find("input").element.focus();
+
+      await inner.vm.$emit("clear");
+      jest.runAllTimers();
+
+      expect(show).toHaveBeenCalled();
+      wrapper.unmount();
+    });
+
+    it("does not reopen when the input was cleared as it lost focus, so an option click is not swallowed", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper(
+        { showOptionsOnFocus: true, reopenOnClear: true },
+        { attachTo: document.body },
+      );
+      const inner = wrapper.findComponent(AutoComplete);
+      const show = jest.spyOn(inner.vm as any, "show");
+      wrapper.find("input").element.blur();
+
+      await inner.vm.$emit("clear");
+      jest.runAllTimers();
+
+      expect(show).not.toHaveBeenCalled();
+      wrapper.unmount();
+    });
+
+    it("leaves the panel closed when the input is emptied without reopenOnClear, even with showOptionsOnFocus", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({ showOptionsOnFocus: true });
+      const inner = wrapper.findComponent(AutoComplete);
+      const show = jest.spyOn(inner.vm as any, "show");
+
+      await inner.vm.$emit("clear");
+      jest.runAllTimers();
+
+      expect(show).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("object mode (optionValue provided)", () => {
+    // Still plain ContextVariable objects — `description` stands in as the
+    // field carrying the underlying committed value (distinct from the
+    // display label in `title`), to prove label/value resolution works
+    // against arbitrary fields, not just the legacy name/title pair.
+    const OBJECT_SUGGESTIONS: ContextVariable[] = [
+      {
+        name: "exitcode",
+        title: "Exit code",
+        type: "job",
+        description: "[steps.['Create JIRA Ticket'].exitcode]",
+      },
+      {
+        name: "output",
+        title: "Output",
+        type: "job",
+        description: "[steps.['Create JIRA Ticket'].output]",
+      },
+    ];
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("forwards optionDisabled to the underlying AutoComplete only in object mode", async () => {
+      const optionDisabled = (option: ContextVariable) =>
+        option.type === "note";
+
+      const objectModeWrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionDisabled,
+      });
+      expect(
+        objectModeWrapper.findComponent(AutoComplete).props("optionDisabled"),
+      ).toBe(optionDisabled);
+
+      const legacyWrapper = await createWrapper({ optionDisabled });
+      expect(
+        legacyWrapper.findComponent(AutoComplete).props("optionDisabled"),
+      ).toBeUndefined();
+    });
+
+    it("forwards force-selection to the underlying AutoComplete when selectOnly is set", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        selectOnly: true,
+      });
+      expect(wrapper.findComponent(AutoComplete).props("forceSelection")).toBe(
+        true,
+      );
+    });
+
+    it("does not force selection by default, preserving existing free-text consumers", async () => {
+      const wrapper = await createWrapper();
+      expect(wrapper.findComponent(AutoComplete).props("forceSelection")).toBe(
+        false,
+      );
+    });
+
+    it("passes ContextVariable objects through (not flattened to a name) when optionValue is set", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+      });
+
+      await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
+        query: "Exit",
+        originalEvent: { target: { selectionStart: 4 } },
+      });
+      jest.advanceTimersByTime(200);
+      await wrapper.vm.$nextTick();
+
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
+      expect(suggestions).toEqual([OBJECT_SUGGESTIONS[0]]);
+    });
+
+    it("commits the resolved optionValue (not the display label) on selection", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[1] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toBeTruthy();
+      expect(
+        wrapper.emitted("update:modelValue")![
+          wrapper.emitted("update:modelValue")!.length - 1
+        ],
+      ).toEqual(["[steps.['Create JIRA Ticket'].output]"]);
+    });
+
+    it("keeps showing the committed value (not the label) when displaySelectedLabel is off", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[1] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "[steps.['Create JIRA Ticket'].output]",
+      );
+    });
+
+    it("shows the option label in the input while committing the underlying value when displaySelectedLabel is on", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+        displaySelectedLabel: true,
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[1] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "Output",
+      );
+      expect(wrapper.emitted("update:modelValue")!.slice(-1)[0]).toEqual([
+        "[steps.['Create JIRA Ticket'].output]",
+      ]);
+    });
+
+    it("displays the label for an incoming committed modelValue, even after its option leaves suggestions", async () => {
+      const committed = "[steps.['Create JIRA Ticket'].exitcode]";
+      const wrapper = await createWrapper({
+        modelValue: committed,
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+        displaySelectedLabel: true,
+      });
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "Exit code",
+      );
+
+      await wrapper.setProps({
+        suggestions: [OBJECT_SUGGESTIONS[1]],
+        modelValue: "",
+      });
+      await wrapper.setProps({ modelValue: committed });
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "Exit code",
+      );
+    });
+
+    it("uses fallbackLabel for a committed value with no matching option, and maps it back on change", async () => {
+      const wrapper = await createWrapper({
+        modelValue: "stale-value",
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+        displaySelectedLabel: true,
+        fallbackLabel: (v: string) => `Stale [${v}]`,
+      });
+      const inner = wrapper.findComponent(AutoComplete);
+      expect(inner.props("modelValue")).toBe("Stale [stale-value]");
+
+      await inner.vm.$emit("change", {});
+      await wrapper.vm.$nextTick();
+      expect(wrapper.emitted("update:modelValue")!.slice(-1)[0]).toEqual([
+        "stale-value",
+      ]);
+    });
+
+    it("resolves optionValue/optionLabel via functions when provided", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: (option: ContextVariable) => option.description ?? "",
+        optionLabel: (option: ContextVariable) => option.title,
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[0] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+        "[steps.['Create JIRA Ticket'].exitcode]",
+      ]);
+    });
+
+    it("renders a caller-provided #option slot instead of the built-in title/name rendering", async () => {
+      const wrapper = mount(PtAutoComplete, {
+        props: {
+          modelValue: "",
+          suggestions: OBJECT_SUGGESTIONS,
+          optionValue: "description",
+        },
+        slots: {
+          option: `<div class="custom-option">{{ params.option.title }}</div>`,
+        },
+        global: { components: { AutoComplete } },
+      });
+      await wrapper.vm.$nextTick();
+
+      const optionSlot = wrapper.findComponent(AutoComplete).vm.$slots.option;
+      const vnodes = optionSlot!({ option: OBJECT_SUGGESTIONS[0], index: 0 });
+      const rendered = mount({ render: () => vnodes[0] });
+
+      expect(rendered.html()).toContain("custom-option");
+      expect(rendered.text()).toBe("Exit code");
+    });
+
+    it("falls back to the built-in title/name rendering when no #option slot is provided", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+      });
+
+      const optionSlot = wrapper.findComponent(AutoComplete).vm.$slots.option;
+      const vnodes = optionSlot!({ option: OBJECT_SUGGESTIONS[0], index: 0 });
+      const rendered = mount({ render: () => vnodes[0] });
+
+      expect(rendered.html()).toContain("autocomplete-option-content");
     });
   });
 });

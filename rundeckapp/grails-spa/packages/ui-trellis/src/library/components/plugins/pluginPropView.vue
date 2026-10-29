@@ -149,6 +149,8 @@
             height="200"
             width="100%"
             :read-only="true"
+            :min-lines="12"
+            :max-lines="Infinity"
           />
         </expandable>
       </template>
@@ -171,6 +173,8 @@
             height="200"
             width="100%"
             :read-only="true"
+            :min-lines="12"
+            :max-lines="Infinity"
           />
         </expandable>
       </template>
@@ -240,7 +244,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import Expandable from "../utils/Expandable.vue";
+import Expandable from "../utils/RdExpandable.vue";
 import AceEditor from "../utils/AceEditor.vue";
 import PluginPropVal from "./pluginPropVal.vue";
 import { CopyToClipboard } from "../../utilities/Clipboard";
@@ -294,6 +298,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- classes shared with the global theme stylesheet -->
 <style>
 .customattributes {
   border-bottom: 1px solid #eeeeee;

@@ -56,10 +56,14 @@
     </div>
     <div class="stepCardHeader-buttons">
       <Tag
-        v-if="showErrorTag && editing"
+        v-if="showErrorTag && (editing || showInvalidCondition)"
         icon="pi pi-exclamation-triangle"
         severity="danger"
-        :value="errorMessage"
+        :value="
+          showInvalidCondition
+            ? $t('Workflow.validation.invalidConditionCriteria')
+            : errorMessage
+        "
         data-testid="step-card-header-error-tag"
       />
       <PtButton
@@ -96,7 +100,7 @@
           data-testid="step-card-header-more-btn"
           @click="handleMoreActions"
         />
-        <Menu ref="menu" id="overlay_menu" :model="menuItems" popup />
+        <PMenu ref="menu" id="overlay_menu" :model="menuItems" popup />
       </template>
     </div>
   </div>
@@ -112,7 +116,7 @@ import type PluginValidation from "../../../interfaces/PluginValidation";
 
 export default defineComponent({
   name: "StepCardHeader",
-  components: { Menu, PluginInfo, PtButton, Tag },
+  components: { PMenu: Menu, PluginInfo, PtButton, Tag },
   props: {
     pluginDetails: {
       type: Object,
@@ -139,6 +143,10 @@ export default defineComponent({
       default: true,
     },
     disabled: {
+      type: Boolean,
+      default: false,
+    },
+    showInvalidCondition: {
       type: Boolean,
       default: false,
     },
@@ -217,6 +225,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
 .stepCardHeader {
   p,
@@ -299,6 +308,39 @@ export default defineComponent({
 
 .stepCardHeader .tag-workflow {
   color: var(--colors-gray-900);
+}
+
+/* Dark mode (Figma: Dark Mode/Grey scale) */
+*[data-color-theme="dark"] .stepCardHeader {
+  background-color: var(--grey-600);
+  border-bottom: 1px solid var(--grey-400);
+  color: var(--white, #fff);
+
+  p,
+  .pi-info-circle {
+    color: var(--white, #fff);
+  }
+
+  .link-title,
+  .link-title + .pi,
+  .link-title .pi {
+    color: #50b776;
+  }
+
+  .tag-node {
+    background-color: #7086af;
+    color: var(--white, #fff);
+  }
+
+  .p-button-secondary {
+    background: var(--grey-900);
+    border: 1px solid var(--grey-300);
+    color: var(--white, #fff);
+
+    .p-button-icon {
+      color: var(--white, #fff);
+    }
+  }
 }
 
 /* Link title styles with hover behavior for pencil icon */
