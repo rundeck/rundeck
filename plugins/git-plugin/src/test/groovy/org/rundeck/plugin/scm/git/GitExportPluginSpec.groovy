@@ -984,6 +984,39 @@ class GitExportPluginSpec extends Specification {
         GitUtil.findTag('v-no-changes', plugin.git) != null
     }
 
+    def "an explicitly requested tag and push both still happen when there are no git changes to commit"() {
+        given: "the same 'nothing to commit for this request' situation as above, but with" +
+                " push also requested - performTagAndPush's nothingCommittedAndNoPushRequested" +
+                " check must not short-circuit before the push when push IS requested"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def commit = addCommitFile(gitdir, plugin.git, 'blah', 'blah')
+        def localfile = new File(gitdir, 'blah')
+        localfile << 'newtext'
+
+        def input = [message: "test", tagName: "v-no-changes-push", (CommitJobsAction.P_PUSH): 'true']
+        when: "a tag and a push are both explicitly requested alongside the commit action"
+        def result = plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [] as Set, ['dne'] as Set, input)
+
+        then: "the tag was created locally, and the result reflects the push, not just the commit"
+        GitUtil.findTag('v-no-changes-push', plugin.git) != null
+        result != null
+        result.success
+        result.message.startsWith('Remote push result:')
+    }
+
     def "commit with invalid tag should fail at validation without committing"() {
         given:
 
