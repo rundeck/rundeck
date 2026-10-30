@@ -332,7 +332,7 @@ export default defineComponent({
           : this.$t("message_fieldKeyAppendedDescription", [typed, key]);
 
       if (this.useOptions) {
-        field = { key, label: this.selectedField.label, desc };
+        field = { key, label: this.selectedField?.label, desc };
       } else {
         // Falls back to the key, per message_fieldLabelHelp.
         field = {

@@ -275,6 +275,27 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(lastEmittedFields[1].label).toBe("env_name");
   });
 
+  it("adds a field when both the Field Key and Field Label are left blank", async () => {
+    // Label-only consumers accept keyless rows, so the editor must not block them.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("");
+    await wrapper.find('[data-testid="field-label-input"]').setValue("");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    const emitted = wrapper.emitted("update:modelValue");
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields).toHaveLength(2);
+    expect(lastEmittedFields[1]).toMatchObject({ key: "", label: "" });
+  });
+
   it("renders a stored field with a blank label as just its Key, without mutating it", async () => {
     const wrapper = createWrapper({
       fields: JSON.stringify({
