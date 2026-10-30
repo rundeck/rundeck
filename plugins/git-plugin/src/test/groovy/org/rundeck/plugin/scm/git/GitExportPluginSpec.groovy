@@ -775,6 +775,13 @@ class GitExportPluginSpec extends Specification {
             localfile << 'newdata'
         } else if (data.remove) {
             localfile.delete()
+        } else if (data.untrack) {
+            //commit the removal from the index without touching the file on disk: status.removed
+            //only covers a *pending* (uncommitted) removal, so the removal must itself be
+            //committed for git status to report the still-present file as untracked rather than
+            //removed - matching the committed-but-untracked case the UNTRACKED branch covers
+            git.rm().setCached(true).addFilepattern(path).call()
+            revCommit = git.commit().setMessage('untrack').setCommitter('test', 'test@example.com').call()
         }
         def status = git.status().addPath(path).call()
 
@@ -792,11 +799,12 @@ class GitExportPluginSpec extends Specification {
 
 
         where:
-        data                           | scmStatus
-        [:]                            | 'NOT_FOUND'
-        [create: true]                 | 'NEW'
-        [mkcommit: true, create: true] | 'MODIFIED'
-        [mkcommit: true, remove: true] | 'DELETED'
+        data                            | scmStatus
+        [:]                             | 'NOT_FOUND'
+        [create: true]                  | 'NEW'
+        [mkcommit: true, create: true]  | 'MODIFIED'
+        [mkcommit: true, remove: true]  | 'DELETED'
+        [mkcommit: true, untrack: true] | 'UNTRACKED'
     }
 
 
