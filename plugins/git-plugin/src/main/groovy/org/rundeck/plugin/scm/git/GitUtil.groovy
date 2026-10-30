@@ -98,6 +98,10 @@ class GitUtil {
 
     /**
      * Guard against loading an oversized blob fully into memory: reject rather than risk an OOM.
+     *
+     * ponytail: fixed at 100MB, no config knob - still a sizable heap allocation per blob, and
+     * concurrent imports each allocate independently. Acceptable today; add a config property if
+     * a deployment needs it lower (or needs to bound total concurrent blob memory, not just one).
      */
     static final long MAX_BLOB_SIZE = 100L * 1024 * 1024
 
