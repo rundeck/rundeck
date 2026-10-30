@@ -126,6 +126,9 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
@@ -1364,14 +1367,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     DeleteJobResult deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
-                                 AuthContext authContext=null, String username){
+                                 AuthContext authContext=null, String username, boolean skipExecutionAuthorization = false){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def originalRef=jobEventRevRef(scheduledExecution)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
         String errmsg=null
         boolean success = false
-        Execution.withTransaction {
+        Execution.withTransaction { TransactionStatus status ->
             //find any currently running executions for this job, and if so, throw exception
             def found = Execution.createCriteria().list {
                 delegate.'scheduledExecution' {
@@ -1387,24 +1390,30 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return new DeleteJobResult(success:false,error:errmsg)
             }
             
-            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
-            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){
-                executionService.deleteBulkExecutionIds(result*.id,authContext, username)
+                def bulk = executionService.deleteBulkExecutionIds(result*.id, authContext, username, skipExecutionAuthorization)
+                if (bulk != null && !bulk.success) {
+                    def detail = bulk.failures?.collect { it?.message ?: it?.error ?: it?.id }?.findAll { it }?.join('; ')
+                    errmsg = detail ?: 'Failed to delete executions'
+                    status.setRollbackOnly()
+                    return new DeleteJobResult(success: false, error: errmsg)
+                }
             }else{
 
                 result.each { Execution exec ->
                     exec.scheduledExecution = null
                 }
             }
+            jobStatsDataProvider.deleteByJobUuid(scheduledExecution.uuid)
+            referencedExecutionDataProvider.deleteByJobUuid(scheduledExecution.uuid)
             fileUploadService.deleteRecordsForScheduledExecution(scheduledExecution)
             //before delete job
             rundeckJobDefinitionManager.beforeDelete(scheduledExecution, authContext)
             try {
                 scheduledExecution.delete(flush: true)
-                deleteJob(jobname, groupname)
+                deleteJobAfterCommit(jobname, groupname)
                 success = true
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 scheduledExecution.discard()
@@ -1415,25 +1424,51 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if(success){
-
-            //after delete job
-            rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
-
-            //issue event directly
-            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
-            notify('jobChanged', event)
-
-            // publish audit event
-            if(auditEventsService) {
-                auditEventsService.eventBuilder()
-                    .setResourceType(ResourceTypes.JOB)
-                    .setActionType(ActionTypes.DELETE)
-                    .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
-                    .publish()
+            afterCommit {
+                rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
             }
-
+            afterCommit {
+                def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
+                notify('jobChanged', event)
+            }
+            if(auditEventsService) {
+                afterCommit {
+                    auditEventsService.eventBuilder()
+                        .setResourceType(ResourceTypes.JOB)
+                        .setActionType(ActionTypes.DELETE)
+                        .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
+                        .publish()
+                }
+            }
         }
         return new DeleteJobResult(id:scheduledExecution.id,success:success,error:errmsg)
+    }
+
+    protected void deleteJobAfterCommit(String jobname, String groupname) {
+        afterCommit {
+            deleteJob(jobname, groupname)
+        }
+    }
+
+    protected void afterCommit(Closure action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                void afterCommit() {
+                    runPostCommitAction(action)
+                }
+            })
+        } else {
+            runPostCommitAction(action)
+        }
+    }
+
+    private void runPostCommitAction(Closure action) {
+        try {
+            action.call()
+        } catch (Throwable t) {
+            log.error("Post-commit job deletion action failed: ${t.message}", t)
+        }
     }
     /**
      * Attempt to delete a job given an id

@@ -114,6 +114,8 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -143,6 +145,7 @@ import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
@@ -188,6 +191,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
+    /** In-flight startup cleanup, so project-delete recovery can wait for it. */
+    Future startupCleanupFuture
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecycleComponentService
 
@@ -956,7 +961,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
 
-        executorService.submit {
+        startupCleanupFuture = executorService.submit {
             def found = executionIds.collect { Execution.get(it) }
             cleanupRunningJobs(found, status)
         }
@@ -2211,7 +2216,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext
      * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
      */
-    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username) {
+    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username, boolean skipAuthorization = false) {
         def failures=[]
         def failed=false
         def count=0;
@@ -2221,7 +2226,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (!exec) {
                 result = [success: false, message: 'Execution Not found: ' + id, id: id]
             } else {
-                result = deleteExecution(exec, authContext, username)
+                result = skipAuthorization ? deleteExecutionAuthorized(exec, username) : deleteExecution(exec, authContext, username)
                 result.id = id
             }
             if(!result.success){
@@ -2284,6 +2289,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             reportService.deleteByExecution(e)
 
             List<File> files = []
+            List<Closure<Map>> remoteFileRemovals = []
             def execs = []
 
             def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
@@ -2291,6 +2297,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //aggregate all files to delete
             execs << e
             executionFiles.each { ftype, executionFile ->
+                remoteFileRemovals << logFileStorageService.prepareRemoteLogFileRemoval(e, ftype)
 
                 def localFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
                 if (null != localFile && localFile.exists()) {
@@ -2302,10 +2309,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     files << partialFile
                 }
 
-                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
-                if(!resultDeleteRemote.started){
-                    log.debug(resultDeleteRemote.error)
-                }
             }
             //delete all job file records
             fileUploadService.deleteRecordsForExecution(e)
@@ -2319,22 +2322,51 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete()
-            //delete all files
-            def deletedfiles = 0
-            files.each { file ->
-                if (!FileUtils.deleteQuietly(file)) {
-                    log.warn("Failed to delete file while deleting execution ${e.id}: ${file.absolutePath}")
-                } else {
-                    deletedfiles++
-                }
-            }
-            log.debug("${deletedfiles} files removed")
+            deleteExecutionFilesAfterCommit(e, remoteFileRemovals, files)
             result = [success: true]
         } catch (Exception ex) {
             log.error("Failed to delete execution ${e.id}", ex)
             result = [error:'failure',message: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
         }
         return result
+    }
+
+    private void deleteExecutionFilesAfterCommit(
+        Execution execution,
+        Collection<Closure<Map>> remoteFileRemovals,
+        Collection<File> files
+    ) {
+        def cleanup = {
+            remoteFileRemovals.each { Closure<Map> removeRemoteFile ->
+                try {
+                    def resultDeleteRemote = removeRemoteFile.call()
+                    if (!resultDeleteRemote.started) {
+                        log.debug(resultDeleteRemote.error)
+                    }
+                } catch (Throwable t) {
+                    log.warn("Failed to delete a remote log file for execution ${execution.id}: ${t.message}", t)
+                }
+            }
+            int deletedFiles = 0
+            files.each { File file ->
+                if (!FileUtils.deleteQuietly(file)) {
+                    log.warn("Failed to delete file while deleting execution ${execution.id}: ${file.absolutePath}")
+                } else {
+                    deletedFiles++
+                }
+            }
+            log.debug("${deletedFiles} files removed")
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                void afterCommit() {
+                    cleanup.call()
+                }
+            })
+        } else {
+            cleanup.call()
+        }
     }
 
     /**

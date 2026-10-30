@@ -49,8 +49,6 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
     def setupSpec() { mockDomains Project }
 
     def setup() {
-
-
         mockDataService(ProjectDataService)
         GormProjectDataProvider provider = new GormProjectDataProvider()
         provider.projectDataService = applicationContext.getBean(ProjectDataService)
@@ -77,6 +75,29 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         result
+    }
+
+    void "disable project only when the row identity matches"() {
+        given:
+        def project = new Project(name: 'test1').save(flush: true, failOnError: true)
+        def lockingService = new TestProjectManagerService()
+
+        expect:
+        lockingService.disableFrameworkProject('test1', project.id)
+        Project.get(project.id).state == RdProject.State.DISABLED
+    }
+
+    void "disable project rejects a recreated row"() {
+        given:
+        def original = new Project(name: 'test1').save(flush: true, failOnError: true)
+        Long originalId = original.id
+        original.delete(flush: true)
+        def replacement = new Project(name: 'test1').save(flush: true, failOnError: true)
+        def lockingService = new TestProjectManagerService()
+
+        expect:
+        !lockingService.disableFrameworkProject('test1', originalId)
+        Project.get(replacement.id).state == null
     }
     void "get project does not exist"(){
         when:
@@ -550,20 +571,117 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         def p = new Project(name:'test1')
         p.save(flush: true)
 
-        service.configStorageService=Mock(ConfigStorageService){
-            1*deleteAllFileResources("projects/test1")
+        def manager = new TestProjectManagerService()
+        manager.projectDataProvider = service.projectDataProvider
+        manager.configStorageService=Mock(ConfigStorageService){
+            1*deleteAllFileResources("projects/test1") >> true
         }
-        service.rundeckNodeService=Mock(NodeService)
-        service.projectCache=Mock(LoadingCache)
+        manager.rundeckNodeService=Mock(NodeService)
+        manager.projectCache=Mock(LoadingCache)
         when:
 
-        service.removeFrameworkProject('test1')
+        manager.removeFrameworkProject('test1')
 
         then:
-        1*service.projectCache.invalidate('test1')
-        1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*manager.projectCache.invalidate('test1')
+        1*manager.rundeckNodeService.refreshProjectNodes('test1')
         null==Project.findByName('test1')
 
+    }
+
+    void "remove project keeps row and external resources when transaction does not commit"() {
+        given:
+        new Project(name: 'test1').save(flush: true, failOnError: true)
+        service.configStorageService = Mock(ConfigStorageService) {
+            deleteAllFileResources('projects/test1') >> true
+        }
+        service.rundeckNodeService = Mock(NodeService)
+        service.projectCache = Mock(LoadingCache)
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization()
+
+        when:
+        service.deleteProjectResourcesAfterCommit('test1')
+
+        then:
+        Project.findByName('test1')
+        0 * service.configStorageService.deleteAllFileResources(_)
+        0 * service.projectCache.invalidate(_)
+        0 * service.rundeckNodeService.refreshProjectNodes(_)
+
+        cleanup:
+        org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization()
+    }
+
+    void "remove project deletes resources and row after commit"() {
+        given:
+        new Project(name: 'test1').save(flush: true, failOnError: true)
+        def manager = new TestProjectManagerService(projectDataProvider: service.projectDataProvider)
+        manager.configStorageService = Mock(ConfigStorageService) {
+            deleteAllFileResources('projects/test1') >> true
+        }
+        manager.rundeckNodeService = Mock(NodeService)
+        manager.projectCache = Mock(LoadingCache)
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization()
+        manager.deleteProjectResourcesAfterCommit('test1')
+        def synchronizations = org.springframework.transaction.support.TransactionSynchronizationManager.synchronizations
+        org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization()
+
+        when:
+        synchronizations*.afterCommit()
+
+        then:
+        !Project.findByName('test1')
+        1 * manager.configStorageService.deleteAllFileResources('projects/test1') >> true
+        1 * manager.projectCache.invalidate('test1')
+        1 * manager.rundeckNodeService.refreshProjectNodes('test1')
+    }
+
+    void "remove project keeps its tombstone when post-commit cleanup fails"() {
+        given:
+        def project = new Project(name: 'test1').save(flush: true, failOnError: true)
+        def manager = new TestProjectManagerService(projectDataProvider: service.projectDataProvider)
+        manager.configStorageService = Mock(ConfigStorageService) {
+            deleteAllFileResources('projects/test1') >> true
+        }
+        manager.rundeckNodeService = Mock(NodeService)
+        manager.projectCache = Mock(LoadingCache)
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization()
+        manager.deleteProjectResourcesAfterCommit('test1')
+        def synchronizations = org.springframework.transaction.support.TransactionSynchronizationManager.synchronizations
+        org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization()
+
+        when:
+        synchronizations*.afterCommit()
+
+        then:
+        manager.isFrameworkProjectRemovalPending('test1', project.id)
+        1 * manager.configStorageService.deleteAllFileResources('projects/test1') >> true
+        1 * manager.projectCache.invalidate('test1')
+        1 * manager.rundeckNodeService.refreshProjectNodes('test1') >> {
+            throw new RuntimeException('refresh failed')
+        }
+    }
+
+    void "remove project keeps its tombstone when resource deletion returns false"() {
+        given:
+        def project = new Project(name: 'test1').save(flush: true, failOnError: true)
+        def manager = new TestProjectManagerService(projectDataProvider: service.projectDataProvider)
+        manager.configStorageService = Mock(ConfigStorageService)
+        manager.rundeckNodeService = Mock(NodeService)
+        manager.projectCache = Mock(LoadingCache)
+        org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization()
+        manager.deleteProjectResourcesAfterCommit('test1', project.id)
+        def synchronizations = org.springframework.transaction.support.TransactionSynchronizationManager.synchronizations
+        org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization()
+
+        when:
+        synchronizations*.afterCommit()
+
+        then:
+        manager.isFrameworkProjectRemovalPending('test1', project.id)
+        1 * manager.configStorageService.deleteAllFileResources('projects/test1') >> false
+        0 * manager.projectCache.invalidate(_)
+        0 * manager.rundeckNodeService.refreshProjectNodes(_)
     }
 
     void "valid config file"(String data, boolean valid){
@@ -1331,5 +1449,27 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
             [a: 'aaa', b: 'XXX'] | ['b']
             [a: 'aaa']           | ['b']
             [:]                  | ['a', 'b']
+    }
+}
+
+class TestProjectManagerService extends ProjectManagerService {
+    @Override
+    protected Object lockProject(Long projectId) {
+        Project.get(projectId)
+    }
+
+    @Override
+    protected void withProjectRemovalTransaction(Closure<?> work) {
+        work.call()
+    }
+
+    @Override
+    protected void finishProjectRemoval(String projectName, Long expectedProjectId) {
+        Project project = Project.get(expectedProjectId)
+        if (project == null || project.name != projectName) {
+            return
+        }
+        deleteProjectResources(projectName)
+        project.delete(flush: true, failOnError: true)
     }
 }

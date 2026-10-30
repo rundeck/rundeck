@@ -89,6 +89,26 @@ public interface ProjectManager {
     void removeFrameworkProject(String projectName);
 
     /**
+     * Remove a project definition only when its persistent identity still matches.
+     *
+     * @param projectName name of the project
+     * @param expectedProjectId persistent identity being removed
+     */
+    default void removeFrameworkProject(String projectName, Long expectedProjectId) {
+        throw new UnsupportedOperationException("Identity-aware project removal is not supported");
+    }
+
+    /**
+     * Return true when removal of the expected persistent project row has not completed.
+     *
+     * @param projectName name of the project
+     * @param expectedProjectId persistent identity being removed
+     */
+    default boolean isFrameworkProjectRemovalPending(String projectName, Long expectedProjectId) {
+        return false;
+    }
+
+    /**
      * Create a new project if it doesn't, otherwise throw exception
      * @param projectName name of project
      * @param properties config properties
@@ -104,6 +124,18 @@ public interface ProjectManager {
     void disableFrameworkProject(String projectName);
 
     /**
+     * Disable a project only when its persistent identity still matches.
+     *
+     * @param projectName name of the project
+     * @param expectedProjectId persistent identity read before the transition
+     * @return true when the expected project was disabled, false when it changed
+     */
+    default boolean disableFrameworkProject(String projectName, Long expectedProjectId) {
+        disableFrameworkProject(projectName);
+        return true;
+    }
+
+    /**
      * Enables a previously disabled project.
      * @param projectName name of the project.
      */
@@ -113,6 +145,13 @@ public interface ProjectManager {
      * @return true if the project exists and is disabled. false otherwise.
      */
     boolean isFrameworkProjectDisabled(String projectName);
+
+    /**
+     * @return names of projects whose state is DISABLED. Empty when storage cannot represent that state.
+     */
+    default Collection<String> listDisabledFrameworkProjectNames() {
+        return java.util.Collections.emptyList();
+    }
 
     /**
      * Gets the project description

@@ -57,10 +57,13 @@ import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
+import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -183,6 +186,11 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Override
     Collection<String> listFrameworkProjectNames() {
         return projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.ENABLED) 
+    }
+
+    @Override
+    Collection<String> listDisabledFrameworkProjectNames() {
+        return projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.DISABLED)
     }
 
     @Override
@@ -538,9 +546,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         vals
     }
     @CompileStatic(TypeCheckingMode.SKIP)
-    private void deleteProjectResources(String projectName) {
+    protected void deleteProjectResources(String projectName) {
         if (!deleteAllProjectFileResources(projectName)) {
-            log.error("Failed to delete all associated resources for project ${projectName}")
+            throw new DataAccessException("Failed to delete all associated resources for project ${projectName}")
         }
         projectCache.invalidate(projectName)
         rundeckNodeService.refreshProjectNodes(projectName)
@@ -614,8 +622,75 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     void removeFrameworkProject(final String projectName) {
-        projectDataProvider.delete(projectName)
-        deleteProjectResources(projectName)
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            RdProject project = projectDataProvider.findByName(projectName)
+            if (project == null) {
+                throw new DataAccessException("Project does not exist: ${projectName}")
+            }
+            deleteProjectResourcesAfterCommit(projectName, project.id as Long)
+        } else {
+            projectDataProvider.delete(projectName)
+            deleteProjectResources(projectName)
+        }
+    }
+
+    @Override
+    void removeFrameworkProject(final String projectName, final Long expectedProjectId) {
+        if (expectedProjectId == null) {
+            removeFrameworkProject(projectName)
+            return
+        }
+        RdProject project = projectDataProvider.findByName(projectName)
+        if (project == null || project.id != expectedProjectId) {
+            throw new DataAccessException("Project changed before removal: ${projectName}")
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            deleteProjectResourcesAfterCommit(projectName, expectedProjectId)
+        } else {
+            finishProjectRemoval(projectName, expectedProjectId)
+        }
+    }
+
+    protected void deleteProjectResourcesAfterCommit(final String projectName) {
+        RdProject project = projectDataProvider.findByName(projectName)
+        if (project == null) {
+            throw new DataAccessException("Project does not exist: ${projectName}")
+        }
+        deleteProjectResourcesAfterCommit(projectName, project.id as Long)
+    }
+
+    protected void deleteProjectResourcesAfterCommit(final String projectName, final Long expectedProjectId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            void afterCommit() {
+                try {
+                    finishProjectRemoval(projectName, expectedProjectId)
+                } catch (Throwable t) {
+                    log.error("Failed to finish deleting project ${projectName}: ${t.message}", t)
+                }
+            }
+        })
+    }
+
+    protected void finishProjectRemoval(final String projectName, final Long expectedProjectId) {
+        withProjectRemovalTransaction {
+            rundeck.Project project = (rundeck.Project) lockProject(expectedProjectId)
+            if (project == null || project.name != projectName) {
+                return
+            }
+            deleteProjectResources(projectName)
+            project.delete(flush: true, failOnError: true)
+        }
+    }
+
+    protected void withProjectRemovalTransaction(Closure<?> work) {
+        rundeck.Project.withNewTransaction(work)
+    }
+
+    @Override
+    boolean isFrameworkProjectRemovalPending(String projectName, Long expectedProjectId) {
+        RdProject project = projectDataProvider.findByName(projectName)
+        project != null && project.id == expectedProjectId
     }
 
     @Override
@@ -624,6 +699,22 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
         projectData.setState(RdProject.State.DISABLED)
         projectDataProvider.update(projectData.id, projectData)
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean disableFrameworkProject(String projectName, Long expectedProjectId) {
+        rundeck.Project project = (rundeck.Project) lockProject(expectedProjectId)
+        if (project == null || project.name != projectName) {
+            return false
+        }
+        project.state = RdProject.State.DISABLED
+        project.save(flush: true, failOnError: true)
+        true
+    }
+
+    protected Object lockProject(Long projectId) {
+        rundeck.Project.lock(projectId)
     }
 
     @Override

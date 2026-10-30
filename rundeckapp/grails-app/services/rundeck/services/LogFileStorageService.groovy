@@ -2357,39 +2357,46 @@ class LogFileStorageService
     }
 
     /**
+     * Resolve the configured storage plugin while the execution's project still exists,
+     * and return the file operation to run after the database transaction commits.
+     */
+    Closure<Map> prepareRemoteLogFileRemoval(Execution e, String filetype) {
+        def plugin = getConfiguredPluginForExecution(
+            e,
+            frameworkService.getFrameworkPropertyResolverFactory(e.project)
+        )
+        if (!plugin) {
+            return { [started: false, error: "Not plugin enabled"] }
+        }
+        return {
+            def remote = plugin.isAvailable(filetype)
+            def started = false
+            def errorMessage = null
+            if (remote) {
+                try {
+                    logFileStorageDeleteRemoteTask.execute({
+                        plugin.deleteFile(filetype)
+                    })
+                    started = true
+                } catch (Exception ex) {
+                    errorMessage = "Failed retrieve log file: ${ex.message}"
+                    log.warn("removing the remote log file failed: ${ex.message}")
+                }
+            } else {
+                errorMessage = "Remote file is not available"
+            }
+            [started: started, error: errorMessage]
+        }
+    }
+
+    /**
      * Remove log storage file
      * @param execution
      * @param file type
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
    Map removeRemoteLogFile(Execution e, String filetype, int delay=0) {
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
-
-       if(!plugin){
-           return [started: false, error: "Not plugin enabled"]
-       }
-
-        def remote = plugin.isAvailable(filetype)
-        def started=false
-        def errorMessage=null
-
-        if(remote){
-            try{
-                logFileStorageDeleteRemoteTask.execute({
-                    plugin.deleteFile(filetype)
-                })
-
-                started = true
-
-            }catch(Exception ex){
-                errorMessage = "Failed retrieve log file: ${ex.message}"
-                log.warn("removing the remote log file failed: ${ex.message}")
-            }
-        }else{
-            errorMessage = "Remote file is not available"
-        }
-
-        return [started: started, error: errorMessage]
+        prepareRemoteLogFileRemoval(e, filetype).call()
     }
 
     @Override
