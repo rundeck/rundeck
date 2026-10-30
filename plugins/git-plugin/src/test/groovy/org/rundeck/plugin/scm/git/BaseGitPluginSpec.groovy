@@ -886,6 +886,8 @@ class BaseGitPluginSpec extends Specification {
         failure.cause.class == leaked.class
         !failure.cause.is(leaked)
         !failure.cause.message.contains('secret')
+        //the real failure site, not wherever the reconstruction itself happened to run
+        failure.cause.stackTrace == leaked.stackTrace
     }
 
     def "remoteAccessFailure reconstructs a non-transport error's cause with the credential redacted"() {
@@ -905,6 +907,7 @@ class BaseGitPluginSpec extends Specification {
         failure.cause.class == leaked.class
         !failure.cause.is(leaked)
         !failure.cause.message.contains('secret')
+        failure.cause.stackTrace == leaked.stackTrace
     }
 
     def "remoteAccessFailure drops the cause when its type has no (String) constructor to redact it with"() {
@@ -936,6 +939,7 @@ class BaseGitPluginSpec extends Specification {
         failure.cause.class == leaked.class
         !failure.cause.is(leaked)
         !failure.cause.message.contains('secret')
+        failure.cause.stackTrace == leaked.stackTrace
     }
 
     static class NoStringCtorException extends RuntimeException {

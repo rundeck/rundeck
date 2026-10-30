@@ -1092,13 +1092,23 @@ class BaseGitPlugin {
      * without the original message (or its own further causes) surviving. Returns {@code null}
      * when the type can't be safely reconstructed this way; a lost cause is still safer than a
      * leaked credential.
+     * <p>
+     * Copies {@code original}'s stack trace onto the rebuilt instance - a fresh exception would
+     * otherwise carry this method's own call stack instead of pointing at the real failure site,
+     * which is exactly what cluster-fix failures need to be diagnosable. This is safe to copy
+     * unredacted: a {@code StackTraceElement} is class/method/file/line only, never message text,
+     * so it can't carry the credential the rest of this method exists to strip. The original's own
+     * further {@link Throwable#getCause() cause} is deliberately left behind rather than chained
+     * on, since it wasn't redacted and may itself still carry the credential.
      */
     private static Throwable redactedCauseOf(Throwable original, String redactedMessage) {
         if (original == null) {
             return null
         }
         try {
-            return original.class.getDeclaredConstructor(String).newInstance(redactedMessage)
+            Throwable rebuilt = original.class.getDeclaredConstructor(String).newInstance(redactedMessage)
+            rebuilt.setStackTrace(original.stackTrace)
+            return rebuilt
         } catch (Throwable ignored) {
             return null
         }
