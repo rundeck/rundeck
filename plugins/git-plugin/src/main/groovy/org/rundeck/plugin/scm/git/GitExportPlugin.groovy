@@ -387,11 +387,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     //CLEAN) - replace whatever's cached (even a stale CLEAN entry from before
                     //this failed delete) with EXPORT_NEEDED, so the stale file isn't reported as
                     //gone or up to date. Writing a plain, differently-shaped map also means an
-                    //in-flight refresh's later publishJobStatusIfCurrent (a reference/content
-                    //compare against its own placeholder) can't overwrite this with a stale CLEAN
+                    //in-flight refresh's later publishJobStatusIfCurrent (an identity compare
+                    //against its own placeholder, see RefreshPlaceholder) can't overwrite this
+                    //with a stale CLEAN - that compare fails the same whether this entry is
+                    //still here or gone, so don't leave it cached forever: the job's Rundeck
+                    //record is already gone (see above), so nothing will ever look it up again
                     def status = [synch: SynchState.EXPORT_NEEDED]
-                    jobStateMap[exportReference.id] = status
-                    return createJobStatus(status, jobActionsForStatus(status))
+                    try {
+                        jobStateMap[exportReference.id] = status
+                        return createJobStatus(status, jobActionsForStatus(status))
+                    } finally {
+                        jobStateMap.remove(exportReference.id)
+                    }
                 }
                 //forget the cached status even if refreshJobStatus below throws
                 try {

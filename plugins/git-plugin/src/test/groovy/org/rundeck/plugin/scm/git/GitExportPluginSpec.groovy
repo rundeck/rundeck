@@ -1345,9 +1345,11 @@ class GitExportPluginSpec extends Specification {
                 " JobEventsService.jobChanged/multiJobChanged), and the file isn't reported clean"
         noExceptionThrown()
         localfile.exists()
-        plugin.jobStateMap['xyz'].synch == SynchState.EXPORT_NEEDED
         result != null
         result.synchState == SynchState.EXPORT_NEEDED
+        //the job's Rundeck record is already gone, so nothing will ever look this id up again -
+        //don't leave a permanent per-failure entry behind (a small but real leak)
+        plugin.jobStateMap['xyz'] == null
     }
 
     def "job change delete with a failed file removal replaces a stale CLEAN cache entry"() {
@@ -1388,10 +1390,10 @@ class GitExportPluginSpec extends Specification {
         when: "the deletion fails"
         def result = plugin.jobChanged(event, jobref)
 
-        then: "the stale CLEAN entry is replaced, not left in place"
+        then: "the stale CLEAN entry is replaced, not left in place - and not left cached forever"
         noExceptionThrown()
         result.synchState == SynchState.EXPORT_NEEDED
-        plugin.jobStateMap['xyz'].synch == SynchState.EXPORT_NEEDED
+        plugin.jobStateMap['xyz'] == null
     }
 
     def "job change modify overwrites file"() {
