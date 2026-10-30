@@ -375,8 +375,19 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 if (origfile.exists() && !origfile.delete()) {
-                    //fail so the deletion can be retried, instead of marking the job clean
-                    throw new ScmPluginException("Failed to delete job file: ${origfile.absolutePath}")
+                    //log, don't throw: the Rundeck job and its DB record are already gone by the
+                    //time this runs (ScmService.ExportChangeListener.jobChangeEvent calls
+                    //recordDeletedJob before plugin.jobChanged), so there is no later job
+                    //reference to retry the deletion - throwing doesn't make this retryable.
+                    //It does propagate out of JobEventsService's listener/batch loop
+                    //(jobChanged's listeners?.each, multiJobChanged's e.each), aborting every
+                    //other listener for this event and every other job in the same bulk delete.
+                    logger.error("Failed to delete job file: ${origfile.absolutePath}")
+                    //don't refresh (the still-present, still-committed file would read back as
+                    //CLEAN) or clear the cache - leave whatever's cached, or default to
+                    //EXPORT_NEEDED, so the stale file isn't reported as gone or up to date
+                    def status = jobStateMap[exportReference.id] ?: [synch: SynchState.EXPORT_NEEDED]
+                    return createJobStatus(status, jobActionsForStatus(status))
                 }
                 //forget the cached status even if refreshJobStatus below throws
                 try {

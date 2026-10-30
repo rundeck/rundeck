@@ -1214,6 +1214,51 @@ class GitExportPluginSpec extends Specification {
         result.synchState == SynchState.EXPORT_NEEDED
     }
 
+    def "job change delete logs and continues, without throwing, when the file cannot be deleted"() {
+        given: "the job's file is a non-empty directory, so File.delete() returns false"
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+        localfile.mkdirs()
+        new File(localfile, 'child').text = 'blocks deletion'
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> jobref
+            getJobReference() >> jobref
+            getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
+        }
+
+        when: "the deletion fails"
+        def result = plugin.jobChanged(event, jobref)
+
+        then: "no exception propagates (it would abort sibling listeners/events - see" +
+                " JobEventsService.jobChanged/multiJobChanged), and the file isn't reported clean"
+        noExceptionThrown()
+        localfile.exists()
+        plugin.jobStateMap['xyz'] == null
+        result != null
+        result.synchState == SynchState.EXPORT_NEEDED
+    }
+
     def "job change modify overwrites file"() {
         given:
 
