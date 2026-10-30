@@ -51,6 +51,7 @@ import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.model.v1.execution.dto.StatsContent
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -3981,6 +3982,135 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         success      | trigger
         true         | 'success'
         false        | 'failure'
+    }
+
+    def "avgduration notification on job ref uses the job threshold"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1',
+                notifyAvgDurationThreshold: threshold
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.jobStatsDataProvider = Mock(GormJobStatsDataProvider) {
+            getStatsContent(_) >> Mock(StatsContent) {
+                getExecCount() >> 1L
+                getTotalTime() >> 1L
+            }
+        }
+
+            service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+                _ * filterAuthorizedNodes(_, _, _, _) >> { args ->
+                    nodeSet
+                }
+                authorizeProjectJobAll(*_) >> true
+            }
+        service.frameworkService = Mock(FrameworkService) {
+
+        }
+
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+
+
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                false,
+                false
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>true
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                // run longer than the 1ms average
+                Thread.sleep(20)
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        avgCount * service.notificationService.asyncTriggerJobNotification('avgduration', _, _)
+        where:
+        threshold | avgCount
+        null      | 1
+        '1%'      | 1
+        '10m'     | 0
+        '+10m'    | 0
+        '5000%'   | 0
     }
 
     def "export variables on job ref are added to output context"(){
