@@ -154,10 +154,9 @@ class ImportTrackerSpec extends Specification {
         tracker.trackedItemIsUnknown(newpath)
     }
 
-    def "trackJobAtPath cleans up an orphaned forward mapping even when the reverse entry was already claimed by another job"() {
-        given: "job1 renamed A->B, then re-asserted at A, leaving two forward mappings by design"
+    def "trackJobAtPath clears a stale reverse mapping when a different job claims the path, and the orphan flag is consumed cleanly on the next tracking call"() {
+        given: "job1 tracked at A, then job2 claims A directly (a different job wins the same path)"
         def pathA = "a/b"
-        def pathB = "c/d"
         def pathC = "e/f"
         def job1 = Mock(JobScmReference) {
             getId() >> '123'
@@ -169,25 +168,45 @@ class ImportTrackerSpec extends Specification {
         }
         def tracker = new ImportTracker()
         tracker.trackJobAtPath(job1, pathA)
-        tracker.jobRenamed(job1, pathA, pathB)
-        tracker.trackJobAtPath(job1, pathA)
 
-        when: "job2 claims A, removing job1's reverse entry but not its forward mapping at B"
+        when: "job2 claims A"
         tracker.trackJobAtPath(job2, pathA)
 
-        then:
+        then: "job1's reverse mapping is cleared immediately, and it's flagged orphaned"
         tracker.trackedJob(pathA) == '456'
-        tracker.trackedJob(pathB) == '123'
+        tracker.trackedPath('123') == null
 
-        when: "job1 is then tracked at a third path, a direct move with no reverse entry to compare against"
+        when: "job1 is later tracked at a new path"
         tracker.trackJobAtPath(job1, pathC)
 
-        then: "the orphaned mapping at B is cleaned up instead of surviving as a phantom DELETE_NEEDED"
-        tracker.trackedJob(pathB) == null
-        tracker.trackedCommit(pathB) == null
+        then: "the consumed orphan flag doesn't leave anything stale behind, and doesn't misfire as a scan for mappings that no longer exist"
         tracker.trackedJob(pathC) == '123'
         tracker.trackedPath('123') == pathC
         tracker.trackedPaths() == [pathA, pathC] as Set
+    }
+
+    def "trackJobAtPath directly reverting to a renamed-from path clears the stale forward mapping at the old path"() {
+        given: "job renamed A->B via jobRenamed, then moved back to A directly - e.g. a " +
+                "path-template revert that bypasses jobRenamed entirely"
+        def pathA = "a/b"
+        def pathB = "c/d"
+        def job = Mock(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> [commitId: 'abc']
+        }
+        def tracker = new ImportTracker()
+        tracker.trackJobAtPath(job, pathA)
+        tracker.jobRenamed(job, pathA, pathB)
+
+        when: "the job is tracked directly back at A, without going through jobRenamed"
+        tracker.trackJobAtPath(job, pathA)
+
+        then: "B's stale forward mapping doesn't survive to be falsely reported as DELETE_NEEDED"
+        tracker.trackedJob(pathB) == null
+        tracker.trackedCommit(pathB) == null
+        tracker.trackedJob(pathA) == '123'
+        tracker.trackedPath('123') == pathA
+        tracker.trackedPaths() == [pathA] as Set
     }
 
     def "first-time registration of many jobs does not scan every previously tracked job"() {

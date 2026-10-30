@@ -106,14 +106,19 @@ class ImportTracker {
             //consume this job's own orphan flag (if any) regardless of the outcome below, so a
             //later call for the same job doesn't re-trigger the scan on stale information
             boolean wasOrphaned = orphanedJobIds.remove(job.id)
-            if (previousPath != path &&
-                    (wasOrphaned || (previousPath != null && renamedTrackedItems.originalValue(previousPath) != path))) {
-                //direct move (e.g. path-template change) bypassing jobRenamed, or cleaning up after
-                //a prior orphaning (see above): clear every forward mapping the job holds, not just
-                //previousPath, since a prior rename re-assertion can leave two. The orphan-flag check
-                //avoids scanning trackedJobIds (in untrackJobPaths) on every first-time registration,
-                //which previousPath == null alone can't distinguish from a real orphan. skipped when
-                //`path` re-asserts the canonical path right after a rename.
+            if (previousPath != path && (wasOrphaned || previousPath != null)) {
+                //direct move (e.g. path-template change, or reverting to a path this job was
+                //previously renamed from) bypassing jobRenamed, or cleaning up after a prior
+                //orphaning (see above): clear every forward mapping the job holds, not just
+                //previousPath, since a prior rename can leave two. The orphan-flag check (rather
+                //than previousPath == null alone) is what lets ordinary first-time registration
+                //skip this scan - previousPath == null doesn't by itself distinguish the two.
+                //
+                //previously also skipped when `renamedTrackedItems.originalValue(previousPath) ==
+                //path` (i.e. path and previousPath are opposite ends of a known rename) on the
+                //theory that nothing needed cleaning up then - wrong: that's exactly the case where
+                //a direct move back to `path` (bypassing jobRenamed) must still drop the stale
+                //forward mapping at previousPath, or it lingers forever as a phantom DELETE_NEEDED.
                 untrackJobPaths(job.id).each { String stalePath ->
                     renamedTrackedItems.untrack(stalePath)
                 }

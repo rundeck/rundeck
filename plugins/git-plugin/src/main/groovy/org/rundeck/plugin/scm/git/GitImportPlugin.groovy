@@ -389,9 +389,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             // job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
-        } else if (job.scmImportMetadata?.commitId) {
+        } else if (job.scmImportMetadata?.commitId && !importTracker.wasRenamed(path)) {
             // check and track atomically, so a newer refresh can't install its own marker and
-            // path in between and get clobbered by this slower, older one
+            // path in between and get clobbered by this slower, older one.
+            // skipped when `path` is itself a known rename source (e.g. importSynchStateForStatus
+            // just recorded one above, in this same call) - path is stale by definition then, and
+            // (re-)tracking the job there would make ImportTracker.trackJobAtPath see a real move
+            // away from the just-recorded rename target, clearing it as collateral damage
             ifCurrentRefresh(job.id, loadingMarker) {
                 importTracker.trackJobAtPath(job, path)
             }
