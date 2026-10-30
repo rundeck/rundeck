@@ -6,5 +6,9 @@
  * is handed back untouched when the user picks it.
  */
 export interface EntitySuggestion {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
+
+/** Resolves display or state data from an entity suggestion. */
+export type EntityFieldResolver<T> = string | ((option: EntitySuggestion) => T);
