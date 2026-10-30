@@ -151,6 +151,7 @@
                 {{ $t(`job.bulk.${action}_execution.button`) }}
               </a>
             </li>
+            <ui-socket section="job-list-page" location="bulk-actions-menu" />
           </template>
         </dropdown>
       </div>
