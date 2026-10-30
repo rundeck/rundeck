@@ -58,7 +58,7 @@
     "fuse.js": "6.6.2",
     "graphlib": "2.1.8",
     "jointjs": "3.7.7",
-    "markdown-it": "14.3.0",
+    "markdown-it": "14.3.3",
     "mitt": "3.0.1",
     "mobx": "5.15.7",
     "mobx-utils": "5.6.2",
