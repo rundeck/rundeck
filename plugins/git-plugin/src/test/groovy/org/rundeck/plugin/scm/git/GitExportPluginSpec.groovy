@@ -1449,13 +1449,15 @@ class GitExportPluginSpec extends Specification {
         JobChangeEvent.JobChangeEventType.MODIFY | _
     }
 
-    def "a single job's in-flight status refresh reports project-wide LOADING"() {
-        given: "getStatusInternal treats any LOADING jobStateMap entry as project-wide LOADING" +
-                " (behavior change: refreshJobStatus used to remove the entry while refreshing," +
-                " so it was simply absent and didn't trigger this; it now installs a LOADING" +
-                " placeholder instead, so every single-job refresh - each status poll, each" +
-                " commit's cleanJobStatusCache, each jobChanged - now makes getStatus briefly" +
-                " report the whole project as LOADING)"
+    def "a single job's in-flight status refresh does not report project-wide LOADING"() {
+        given: "only the one-time bulk initJobsStatus()/refreshJobsStatus() sequence should make" +
+                " getStatusInternal report the whole project as LOADING. An ordinary single-job" +
+                " refresh (a status poll, a commit's cleanJobStatusCache, a jobChanged) installs" +
+                " its own per-job LOADING placeholder in jobStateMap too, but that must not be" +
+                " mistaken for the project-wide condition: doing so made getStatus (and anything" +
+                " built on it, e.g. actionsAvailableForContext, CommitJobsAction, PushAction)" +
+                " report LOADING with no git status attached for the duration of any unrelated" +
+                " job's refresh"
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
@@ -1468,7 +1470,13 @@ class GitExportPluginSpec extends Specification {
         def plugin = new GitExportPlugin(config)
         plugin.initialize(ctxt)
 
+        //another job's change is already sitting uncommitted in the working tree - unrelated to
+        //the job being refreshed below, but it's what CommitJobsAction would be invoked to commit
+        new File(gitdir, 'a/b/otherjob-uncommitted.xml').text = 'needs commit'
+
         GitExportSynchState statusDuringRefresh = null
+        def actionsDuringRefresh = null
+        boolean ownPlaceholderStillLoadingDuringRefresh = false
         def serializer = Mock(JobSerializer)
         def jobref = Stub(JobScmReference) {
             getJobName() >> 'testjob'
@@ -1485,18 +1493,71 @@ class GitExportPluginSpec extends Specification {
         when:
         def result = plugin.refreshJobStatus(jobref, 'a/b/testjob-xyz.xml')
 
-        then: "project status was LOADING while this one job's refresh was in flight"
+        then: "project status and actions stayed real (not LOADING/empty) while this job's refresh was in flight"
         1 * serializer.serialize('xml', !null, true, null) >> { args ->
-            //captured mid-refresh, before the LOADING placeholder is replaced with the result
+            //captured mid-refresh, while this job's own jobStateMap entry is still a placeholder
+            ownPlaceholderStillLoadingDuringRefresh = plugin.jobStateMap['xyz'].synch == SynchState.LOADING
             statusDuringRefresh = plugin.getStatusInternal(ctxt, false)
+            actionsDuringRefresh = plugin.actionsAvailableForContext(Stub(ScmOperationContext) {
+                getFrameworkProject() >> 'testproj'
+            })
             args[1].write('data'.bytes)
         }
+        ownPlaceholderStillLoadingDuringRefresh
         statusDuringRefresh != null
-        statusDuringRefresh.state == SynchState.LOADING
+        statusDuringRefresh.state != SynchState.LOADING
+        //a real gitStatus is attached - CommitJobsAction/PushAction read this without NPE
+        statusDuringRefresh.gitStatus != null
+        !statusDuringRefresh.gitStatus.isClean()
+        //the other job's uncommitted change is still visible and actionable
+        actionsDuringRefresh*.id == [GitExportPlugin.PROJECT_COMMIT_ACTION_ID]
 
         and: "the real result replaces the placeholder once the refresh completes"
         result != null
         result.synch == SynchState.EXPORT_NEEDED
+        plugin.getStatusInternal(ctxt, false).state != SynchState.LOADING
+    }
+
+    def "project status is LOADING only during the one-time bulk initJobsStatus/refreshJobsStatus sequence"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getSourceId() >> '123'
+            getVersion() >> 1L
+            getScmImportMetadata() >> [:]
+            getJobSerializer() >> Stub(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+
+        expect: "LOADING before the bulk sequence starts is simply the uninitialized default"
+        !plugin.bulkStatusLoading
+
+        when:
+        plugin.initJobsStatus([jobref])
+
+        then: "the whole project is LOADING once the bulk placeholders are installed"
+        plugin.bulkStatusLoading
+        plugin.getStatusInternal(ctxt, false).state == SynchState.LOADING
+
+        when:
+        plugin.refreshJobsStatus([jobref])
+
+        then: "LOADING clears once the bulk refresh completes"
+        !plugin.bulkStatusLoading
         plugin.getStatusInternal(ctxt, false).state != SynchState.LOADING
     }
 

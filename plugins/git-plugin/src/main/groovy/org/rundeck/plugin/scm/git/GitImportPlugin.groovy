@@ -189,9 +189,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
-        def loadingStatus = snapshotJobStateMap().find {key, meta -> meta["synch"] == SynchState.LOADING }
-
-        if (loadingStatus) {
+        if (bulkStatusLoading) {
             def synchState = new GitExportSynchState()
             synchState.state = SynchState.LOADING
             return synchState
@@ -825,6 +823,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
+        bulkStatusLoading = true
         jobs.each { job ->
             initializeJobStatusIfAbsent(job.id, initJobStatus(job))
         }
@@ -840,8 +839,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void refreshJobsStatus(List<JobScmReference> jobs) {
-        jobs.each { job ->
-            refreshJobStatus(job, null)
+        try {
+            jobs.each { job ->
+                refreshJobStatus(job, null)
+            }
+        } finally {
+            bulkStatusLoading = false
         }
     }
 }

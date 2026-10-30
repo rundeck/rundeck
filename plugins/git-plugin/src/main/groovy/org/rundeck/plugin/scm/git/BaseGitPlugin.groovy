@@ -81,6 +81,18 @@ class BaseGitPlugin {
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
 
+    /**
+     * True only during the one-time bulk {@code initJobsStatus()}/{@code refreshJobsStatus()}
+     * sequence run by {@code ScmLoaderService} the first time a project is loaded, when every
+     * job's status is genuinely unknown. An ordinary single-job refresh (a job save, a job-page
+     * cache miss, {@code cleanJobStatusCache}) installs its own per-job LOADING placeholder in
+     * {@link #jobStateMap} too, but must not be mistaken for this project-wide condition - doing
+     * so made the project's git status (and anything that reads it, e.g. commit/push actions)
+     * report LOADING, with no git status attached, for the duration of any unrelated job's
+     * refresh.
+     */
+    protected volatile boolean bulkStatusLoading = false
+
     BaseGitPlugin(Common commonConfig) {
         this.input = commonConfig.rawInput
         this.commonConfig = commonConfig
