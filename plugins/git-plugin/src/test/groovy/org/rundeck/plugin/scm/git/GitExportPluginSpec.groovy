@@ -2261,6 +2261,33 @@ class GitExportPluginSpec extends Specification {
         e.message=="Failed cloning the repository: Remote branch 'dev2' not found in upstream origin"
     }
 
+    def "setup is a no-op on an already-initialized plugin, so cloneOrCreate never reruns against a live repo"() {
+        given: "cloneOrCreate's repo.close() calls only ever run inside setup(), guarded by `inited`," +
+                " on an instance the host hasn't published yet (ScmService's factory always constructs a" +
+                " fresh plugin per load, before registering it where getStatus()/jobChanged()/actions can" +
+                " reach it). If that guard were ever lost, a second setup() call on an already-published," +
+                " in-use instance could close its live repo/git fields out from under a concurrent status" +
+                " refresh or action - this locks in the guard that prevents it."
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+        def repoAfterFirstSetup = plugin.repo
+        def gitAfterFirstSetup = plugin.git
+
+        when: "initialize (setup) is called again on the same, already-inited instance"
+        plugin.initialize(Mock(ScmOperationContext))
+
+        then: "it's a no-op - the live repo/git fields are untouched, not closed and replaced"
+        plugin.repo.is(repoAfterFirstSetup)
+        plugin.git.is(gitAfterFirstSetup)
+    }
+
     def "initialize plugin creates branch when branch does not exist on remote"() {
         given:
         def gitdir = new File(tempdir, 'scm')
