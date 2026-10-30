@@ -1254,9 +1254,53 @@ class GitExportPluginSpec extends Specification {
                 " JobEventsService.jobChanged/multiJobChanged), and the file isn't reported clean"
         noExceptionThrown()
         localfile.exists()
-        plugin.jobStateMap['xyz'] == null
+        plugin.jobStateMap['xyz'].synch == SynchState.EXPORT_NEEDED
         result != null
         result.synchState == SynchState.EXPORT_NEEDED
+    }
+
+    def "job change delete with a failed file removal replaces a stale CLEAN cache entry"() {
+        given: "the job's cache already says CLEAN (from before this failed delete attempt)," +
+                " and the file is a non-empty directory so File.delete() returns false"
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        def git = createGit(origindir)
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext) {
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+        localfile.mkdirs()
+        new File(localfile, 'child').text = 'blocks deletion'
+        plugin.jobStateMap['xyz'] = [synch: SynchState.CLEAN]
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        JobChangeEvent event = Mock(JobChangeEvent) {
+            getOriginalJobReference() >> jobref
+            getJobReference() >> jobref
+            getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
+        }
+
+        when: "the deletion fails"
+        def result = plugin.jobChanged(event, jobref)
+
+        then: "the stale CLEAN entry is replaced, not left in place"
+        noExceptionThrown()
+        result.synchState == SynchState.EXPORT_NEEDED
+        plugin.jobStateMap['xyz'].synch == SynchState.EXPORT_NEEDED
     }
 
     def "job change modify overwrites file"() {

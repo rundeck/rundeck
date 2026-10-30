@@ -1113,7 +1113,14 @@ class BaseGitPlugin {
         String actionText = redactUserInfo(action)
         String detail = redactUserInfo(error?.message)
         String line = "${actionText}: ${detail}"
-        logger.warn(line, error)
+        //only pass the throwable to the logger when nothing was actually redacted - otherwise its
+        //own (unredacted) message/stack trace would print the very credentials line just hid
+        boolean redacted = actionText != action || detail != error?.message
+        if (redacted) {
+            logger.warn(line)
+        } else {
+            logger.warn(line, error)
+        }
         return new ScmPluginException(line, error)
     }
 

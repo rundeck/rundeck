@@ -384,9 +384,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     //other listener for this event and every other job in the same bulk delete.
                     logger.error("Failed to delete job file: ${origfile.absolutePath}")
                     //don't refresh (the still-present, still-committed file would read back as
-                    //CLEAN) or clear the cache - leave whatever's cached, or default to
-                    //EXPORT_NEEDED, so the stale file isn't reported as gone or up to date
-                    def status = jobStateMap[exportReference.id] ?: [synch: SynchState.EXPORT_NEEDED]
+                    //CLEAN) - replace whatever's cached (even a stale CLEAN entry from before
+                    //this failed delete) with EXPORT_NEEDED, so the stale file isn't reported as
+                    //gone or up to date. Writing a plain, differently-shaped map also means an
+                    //in-flight refresh's later publishJobStatusIfCurrent (a reference/content
+                    //compare against its own placeholder) can't overwrite this with a stale CLEAN
+                    def status = [synch: SynchState.EXPORT_NEEDED]
+                    jobStateMap[exportReference.id] = status
                     return createJobStatus(status, jobActionsForStatus(status))
                 }
                 //forget the cached status even if refreshJobStatus below throws
