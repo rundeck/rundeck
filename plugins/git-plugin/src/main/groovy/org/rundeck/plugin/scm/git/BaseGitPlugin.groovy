@@ -206,20 +206,11 @@ class BaseGitPlugin {
     }
 
     /**
-     * True only if the given placeholder is still the one installed for this job. Does not
-     * itself act on the result - a caller needing to act atomically with the check (so a
-     * concurrent refresh/deletion can't land in between) must use {@link #ifCurrentRefresh}
-     * instead of calling this and then acting separately.
-     */
-    protected boolean isCurrentRefresh(String jobId, Map loadingMarker) {
-        synchronized (jobStateMap) {
-            jobStateMap.get(jobId)?.is(loadingMarker)
-        }
-    }
-
-    /**
      * Runs {@code action} only if the given placeholder is still current, checked and run under
-     * the same lock so a concurrent refresh/deletion can't land in between.
+     * the same lock so a concurrent refresh/deletion can't land in between. For a caller that
+     * must release the lock before its own action (e.g. to avoid holding it across I/O), check
+     * {@code jobStateMap.get(jobId)?.is(loadingMarker)} under {@code synchronized (jobStateMap)}
+     * directly instead - this method always holds the lock across the whole action.
      */
     protected void ifCurrentRefresh(String jobId, Map loadingMarker, Closure action) {
         synchronized (jobStateMap) {
