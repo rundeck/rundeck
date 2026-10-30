@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Covers two correctness fixes from RUN-4881:
+ * Covers two correctness fixes:
  *  - StrictHostKeyChecking only enables verification for the literal value "yes" (verifies
  *    only when explicitly requested, not fail-open or fail-closed on a missing/other value).
  *  - the port handling bug where a primitive-int `port != null` check was always true after

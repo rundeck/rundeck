@@ -28,7 +28,7 @@ import org.rundeck.plugin.scm.git.GitExportPluginSpec
 import spock.lang.Specification
 
 /**
- * Covers RUN-4881: fetchFromRemote already wraps its own failure in remoteAccessFailure()
+ * fetchFromRemote already wraps its own failure in remoteAccessFailure()
  * (redacted, user-facing), including failures from setupTransportAuthentication. FetchAction
  * must not wrap that again - doing so doubled the message prefix and, for a
  * setupTransportAuthentication failure (which runs before fetchFromRemote's own try/catch),

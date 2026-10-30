@@ -25,9 +25,9 @@ import org.rundeck.plugin.scm.git.GitExportPluginSpec
 import spock.lang.Specification
 
 /**
- * Covers the UP_TO_DATE / null-HEAD handling added alongside the resource-lifecycle fixes
- * (RUN-4881): a successful push with nothing new to send must not be reported as a failure,
- * and pushing from a brand-new repository with no commits yet must not NPE.
+ * Covers the UP_TO_DATE / null-HEAD handling added alongside the resource-lifecycle fixes:
+ * a successful push with nothing new to send must not be reported as a failure, and pushing
+ * from a brand-new repository with no commits yet must not NPE.
  */
 class PushActionSpec extends Specification {
     File tempdir
