@@ -131,3 +131,9 @@
     color: inherit;
   }
 }
+
+// uiv Notification toasts are appended to <body> as fixed-position alerts.
+// Keep them above the fixed Next UI header ($zindex-navbar-fixed + 2) and open modals.
+body > .alert {
+  z-index: $zindex-popover;
+}

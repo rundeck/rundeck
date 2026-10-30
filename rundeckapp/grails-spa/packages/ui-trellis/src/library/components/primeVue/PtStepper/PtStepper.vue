@@ -93,7 +93,13 @@ export default defineComponent({
   methods: {
     getPtOptions(item: Item) {
       return {
-        root: ({ context, props }: StepPassThroughMethodOptions) => {
+        root: ({
+          context,
+          props,
+        }: {
+          context: StepPassThroughMethodOptions["context"];
+          props: StepPassThroughMethodOptions["props"];
+        }) => {
           return {
             class:
               item.completed ||
@@ -216,6 +222,27 @@ export default defineComponent({
     margin: 4px 0 4px 11px;
     padding: 12px 0 12px 20px;
     border-left: 1px solid var(--colors-gray-400);
+  }
+
+  :deep(.p-stepitem:last-of-type) .pt-stepper-content {
+    border-left-color: transparent;
+  }
+}
+
+*[data-color-theme="dark"] .pt-stepper-vertical {
+  :deep(.p-step-header) {
+    .p-step-number {
+      background: var(--grey-600);
+      color: var(--white, #fff);
+    }
+
+    .p-step-title {
+      color: var(--white, #fff);
+    }
+  }
+
+  .pt-stepper-content {
+    border-left-color: var(--grey-400);
   }
 
   :deep(.p-stepitem:last-of-type) .pt-stepper-content {

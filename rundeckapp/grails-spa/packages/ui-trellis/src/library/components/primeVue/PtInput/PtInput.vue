@@ -344,7 +344,8 @@ export default defineComponent({
 
 // Dark mode
 *[data-color-theme="dark"] {
-  .p-inputtext {
+  .p-inputtext,
+  .p-textarea {
     @include form-input-dark;
 
     &.p-invalid {
