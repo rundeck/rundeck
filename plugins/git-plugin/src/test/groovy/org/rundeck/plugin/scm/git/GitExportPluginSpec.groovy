@@ -1312,6 +1312,57 @@ class GitExportPluginSpec extends Specification {
         JobChangeEvent.JobChangeEventType.MODIFY | _
     }
 
+    def "a single job's in-flight status refresh reports project-wide LOADING"() {
+        given: "getStatusInternal treats any LOADING jobStateMap entry as project-wide LOADING" +
+                " (behavior change: refreshJobStatus used to remove the entry while refreshing," +
+                " so it was simply absent and didn't trigger this; it now installs a LOADING" +
+                " placeholder instead, so every single-job refresh - each status poll, each" +
+                " commit's cleanJobStatusCache, each jobChanged - now makes getStatus briefly" +
+                " report the whole project as LOADING)"
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        GitExportSynchState statusDuringRefresh = null
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getSourceId() >> '123'
+            getVersion() >> 1L
+            //a stored commit id that doesn't match local HEAD forces doRefreshJobStatus into its
+            //serialize() branch, which only runs while this job's LOADING placeholder is installed
+            getScmImportMetadata() >> ["commitId": "mismatched-commit-id"]
+            getJobSerializer() >> serializer
+        }
+
+        when:
+        def result = plugin.refreshJobStatus(jobref, 'a/b/testjob-xyz.xml')
+
+        then: "project status was LOADING while this one job's refresh was in flight"
+        1 * serializer.serialize('xml', !null, true, null) >> { args ->
+            //captured mid-refresh, before the LOADING placeholder is replaced with the result
+            statusDuringRefresh = plugin.getStatusInternal(ctxt, false)
+            args[1].write('data'.bytes)
+        }
+        statusDuringRefresh != null
+        statusDuringRefresh.state == SynchState.LOADING
+
+        and: "the real result replaces the placeholder once the refresh completes"
+        result != null
+        result.synch == SynchState.EXPORT_NEEDED
+        plugin.getStatusInternal(ctxt, false).state != SynchState.LOADING
+    }
+
     def "job change serializer fails does not overwrite file"() {
         given:
 
