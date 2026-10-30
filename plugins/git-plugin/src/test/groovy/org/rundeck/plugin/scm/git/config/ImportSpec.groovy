@@ -16,12 +16,41 @@
 
 package org.rundeck.plugin.scm.git.config
 
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import spock.lang.Specification
 
 /**
  * Created by greg on 11/8/16.
  */
 class ImportSpec extends Specification {
+    def "PathTemplateValidator accepts a null value since filePattern is optional"() {
+        given:
+        def validator = new Import.PathTemplateValidator()
+
+        expect:
+        validator.isValid(null)
+    }
+
+    def "PathTemplateValidator accepts a valid regular expression"() {
+        given:
+        def validator = new Import.PathTemplateValidator()
+
+        expect:
+        validator.isValid('.*\\.xml')
+    }
+
+    def "PathTemplateValidator rejects an invalid regular expression with a validation error, not an uncaught exception"() {
+        given:
+        def validator = new Import.PathTemplateValidator()
+
+        when:
+        validator.isValid('[invalid(regex')
+
+        then:
+        def e = thrown(ValidationException)
+        e.message.startsWith('Invalid regular expression:')
+    }
+
     def "importUuidBehavior default preserve"() {
         given:
         Map<String, String> input = config(behavior)

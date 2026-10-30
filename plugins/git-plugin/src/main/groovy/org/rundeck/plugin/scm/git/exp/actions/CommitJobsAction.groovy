@@ -29,12 +29,10 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-
 /**
  * Created by greg on 9/8/15.
  */
 class CommitJobsAction extends BaseAction implements GitExportAction {
-
     public static final String P_MESSAGE = 'message'
     public static final String P_PUSH = 'push'
 
@@ -82,10 +80,14 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         //determine action
         def internal = plugin.getStatusInternal(context, false)
+        if (internal.state == SynchState.LOADING) {
+            //gitStatus is only set on the non-LOADING path (the brief bulk-init window) - reading
+            //it here would NPE instead of giving the user something actionable
+            throw new ScmPluginException("Git status is still loading, please try again shortly")
+        }
         def localGitChanges = !internal.gitStatus.isClean()
 
         RevCommit commit
@@ -118,7 +120,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         plugin.serializeAll(jobs, plugin.format, plugin.config.exportPreserve, plugin.config.exportOriginal)
         String commitMessage = input[P_MESSAGE].toString()
         Status status = plugin.git.status().call()
-        int pathcount=0
+        int pathcount = 0
         //add all changes to index
         if (jobs) {
             AddCommand addCommand = plugin.git.add()
@@ -142,7 +144,8 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         if (!pathcount) {
             result.success = true
             result.message = 'No git changes needed'
-            return result
+            //still honor an explicitly requested tag/push even though there was nothing new to commit
+            return performTagAndPush(plugin, jobs, pathsToDelete, context, input, result)
         }
         CommitCommand commit1 = plugin.git.commit().
                 setMessage(commitMessage).
@@ -155,22 +158,38 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         }
         commit = commit1.call()
         result.success = true
-        result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
+        result.id = commit?.name
+        result.commit = new GitScmCommit(GitUtil.metaForCommit(commit))
         plugin.cleanJobStatusCache(jobs)
 
-        if (result.success && input[TagAction.P_TAG_NAME]) {
+        return performTagAndPush(plugin, jobs, pathsToDelete, context, input, result)
+    }
+
+    /**
+     * Perform the tag/push sub-actions requested alongside a commit, if any were selected.
+     * @return the tag failure result, the push result, or (unchanged) the given result if neither was requested
+     */
+    private ScmExportResult performTagAndPush(
+            final GitExportPlugin plugin,
+            final Set<JobExportReference> jobs,
+            final Set<String> pathsToDelete,
+            final ScmOperationContext context,
+            final Map<String, String> input,
+            final ScmExportResult result
+    ) {
+        if (input[TagAction.P_TAG_NAME]) {
             def tagResult = plugin.export(context, GitExportPlugin.PROJECT_TAG_ACTION_ID, jobs, pathsToDelete, input)
             if (!tagResult.success) {
                 return tagResult
             }
+            boolean nothingCommittedAndNoPushRequested = !result.id && input[P_PUSH] != 'true'
+            if (nothingCommittedAndNoPushRequested) {
+                return tagResult
+            }
         }
-        if (result.success && input[P_PUSH] == 'true') {
+        if (input[P_PUSH] == 'true') {
             return plugin.export(context, GitExportPlugin.PROJECT_PUSH_ACTION_ID, jobs, pathsToDelete, input)
         }
-        result.id = commit?.name
-
-
         result
     }
-
 }

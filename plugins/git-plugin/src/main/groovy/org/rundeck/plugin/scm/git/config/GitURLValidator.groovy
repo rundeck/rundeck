@@ -31,6 +31,9 @@ import org.rundeck.plugin.scm.git.GitUrlPolicy
 class GitURLValidator implements PropertyValidator {
     @Override
     boolean isValid(String value) throws ValidationException {
+        if (!value) {
+            throw new ValidationException("URL is required.")
+        }
         if (value.trim() != value) {
             throw new ValidationException("Leading/trailing whitespace must be removed.")
         }

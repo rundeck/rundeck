@@ -37,6 +37,25 @@ class SynchAction extends BaseAction implements GitExportAction {
     @Override
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
         def status = plugin.getStatusInternal(context, false)
+        if (status.state == SynchState.LOADING) {
+            //branchTrackingStatus/message are only set on the non-LOADING path (the brief
+            //bulk-init window) - every read below assumes they're present, so return a minimal
+            //placeholder view instead of NPEing on them
+            return BuilderUtil.inputViewBuilder(id) {
+                title this.title
+                description this.description
+                buttonTitle "Synch"
+                properties([
+                        BuilderUtil.property {
+                            string "status"
+                            title "Git Status"
+                            renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
+                            renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
+                            defaultValue "Git status is still loading, please try again shortly"
+                        },
+                ])
+            }
+        }
         def props = [
                 BuilderUtil.property {
                     string "status"
@@ -99,7 +118,11 @@ Pulling from remote branch: `${plugin.branch}`"""
     ) throws ScmPluginException
     {
         def status = plugin.getStatusInternal(context, false)
-
+        if (status.state == SynchState.LOADING) {
+            //branchTrackingStatus is only set on the non-LOADING path (the brief bulk-init
+            //window) - reading it here would NPE instead of giving the user something actionable
+            throw new ScmPluginException("Git status is still loading, please try again shortly")
+        }
 
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
             plugin.gitResolve(context, input.refresh == 'rebase', input.resolution)

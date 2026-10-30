@@ -24,31 +24,35 @@ import com.dtolabs.rundeck.plugins.scm.JobScmReference
 class ImportTracker {
     RenameTracker<String> renamedTrackedItems = new RenameTracker<>()
 
-    Map<String, String> trackedCommits = Collections.synchronizedMap([:])
-    Map<String, String> trackedJobIds = Collections.synchronizedMap([:])
+    private Map<String, String> trackedCommits = Collections.synchronizedMap([:])
+    private Map<String, String> trackedJobIds = Collections.synchronizedMap([:])
     /**
      * job ID -> path
      */
-    Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
+    private Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
+    /**
+     * Job IDs whose reverse mapping was just cleared by a different job claiming their path,
+     * so they may still hold another forward mapping elsewhere that needs cleanup next time
+     * they're tracked again. Lets trackJobAtPath tell that case apart from ordinary first-time
+     * registration (also previousPath == null) without scanning trackedJobIds on every call.
+     */
+    private final Set<String> orphanedJobIds = new HashSet<>()
 
     /**
      * Return a stable snapshot of all tracked repository paths.
      *
-     * <p>The backing maps are synchronized wrappers whose key set views are not safe to iterate
-     * without holding the map monitor: the SCM loader mutates them while request handling reads
-     * them, which would surface as a ConcurrentModificationException on the request path.
+     * <p>Iterates under this tracker's own lock - synchronizedMap's key-set views aren't
+     * iteration-safe, and every external access to these maps goes through this class's own
+     * synchronized methods, so that single lock is sufficient.
      *
      * @return tracked repository paths
      */
     public Set<String> trackedPaths() {
-        Set<String> result
-        synchronized (trackedCommits) {
-            result = new LinkedHashSet<>(trackedCommits.keySet())
-        }
-        synchronized (trackedJobIds) {
+        synchronized (this) {
+            Set<String> result = new LinkedHashSet<>(trackedCommits.keySet())
             result.addAll(trackedJobIds.keySet())
+            return result
         }
-        return result
     }
     /**
      * Return true if the path has not been imported
@@ -72,23 +76,57 @@ class ImportTracker {
     }
 
     void jobRenamed(JobScmReference job, String oldpath, String newpath) {
-        if(oldpath == newpath){
-            def originalPath=originalValue(newpath)
-            if(originalPath){
-                renamedTrackedItems.trackItem(originalPath, originalPath)
-                untrackPath(originalPath)
+        synchronized (this) {
+            if (oldpath == newpath) {
+                def originalPath = originalValue(newpath)
+                if (originalPath) {
+                    renamedTrackedItems.trackItem(originalPath, originalPath)
+                    untrackPath(originalPath)
+                }
+            } else {
+                //forward mappings only - trackItem() below needs the rename chain intact to detect a revert
+                untrackJobPaths(job.id)
+                trackJobAtPath(job, newpath)
+                renamedTrackedItems.trackItem(oldpath, newpath)
             }
-        }else{
-            untrackPath(oldpath)
-            trackJobAtPath(job, newpath)
-            renamedTrackedItems.trackItem(oldpath, newpath)
         }
     }
 
     void trackJobAtPath(JobScmReference job, String path) {
-        trackedCommits[path] = job.scmImportMetadata?.commitId
-        trackedJobIds[path] = job.id
-        trackedPathsMap[job.id] = path
+        synchronized (this) {
+            def previousJobId = trackedJobIds[path]
+            if (previousJobId != null && previousJobId != job.id) {
+                //path claimed by a different job: clear its stale reverse and rename mappings,
+                //and flag it, since it may still hold another forward mapping elsewhere
+                trackedPathsMap.remove(previousJobId, path)
+                renamedTrackedItems.untrack(path)
+                orphanedJobIds.add(previousJobId)
+            }
+            def previousPath = trackedPathsMap[job.id]
+            //consume this job's own orphan flag (if any) regardless of the outcome below, so a
+            //later call for the same job doesn't re-trigger the scan on stale information
+            boolean wasOrphaned = orphanedJobIds.remove(job.id)
+            if (previousPath != path && (wasOrphaned || previousPath != null)) {
+                //direct move (e.g. path-template change, or reverting to a path this job was
+                //previously renamed from) bypassing jobRenamed, or cleaning up after a prior
+                //orphaning (see above): clear every forward mapping the job holds, not just
+                //previousPath, since a prior rename can leave two. The orphan-flag check (rather
+                //than previousPath == null alone) is what lets ordinary first-time registration
+                //skip this scan - previousPath == null doesn't by itself distinguish the two.
+                //
+                //previously also skipped when `renamedTrackedItems.originalValue(previousPath) ==
+                //path` (i.e. path and previousPath are opposite ends of a known rename) on the
+                //theory that nothing needed cleaning up then - wrong: that's exactly the case where
+                //a direct move back to `path` (bypassing jobRenamed) must still drop the stale
+                //forward mapping at previousPath, or it lingers forever as a phantom DELETE_NEEDED.
+                untrackJobPaths(job.id).each { String stalePath ->
+                    renamedTrackedItems.untrack(stalePath)
+                }
+            }
+            trackedCommits[path] = job.scmImportMetadata?.commitId
+            trackedJobIds[path] = job.id
+            trackedPathsMap[job.id] = path
+        }
     }
 
     /**
@@ -98,12 +136,14 @@ class ImportTracker {
      * @return job ID previously associated with the path
      */
     String untrackPath(String path) {
-        trackedCommits.remove(path)
-        String jobId = trackedJobIds.remove(path)
-        if (jobId) {
-            trackedPathsMap.remove(jobId)
+        synchronized (this) {
+            trackedCommits.remove(path)
+            String jobId = trackedJobIds.remove(path)
+            if (jobId) {
+                trackedPathsMap.remove(jobId)
+            }
+            jobId
         }
-        jobId
     }
 
     /**
@@ -113,17 +153,41 @@ class ImportTracker {
      * @return repository path previously associated with the job
      */
     String untrackJob(String jobId) {
-        String path = trackedPath(jobId)
-        if (!path) {
-            synchronized (trackedJobIds) {
-                path = trackedJobIds.find { String ignored, String id -> id == jobId }?.key
+        synchronized (this) {
+            Set<String> pathsToRemove = untrackJobPaths(jobId)
+            pathsToRemove.each { String path ->
+                //clear any rename mapping too, or wasRenamed() keeps reporting true for a dead job
+                renamedTrackedItems.untrack(path)
             }
+            //the job is gone, so any pending orphan flag for it would never be consumed otherwise
+            orphanedJobIds.remove(jobId)
+            pathsToRemove ? pathsToRemove.iterator().next() : null
         }
-        if (path) {
-            untrackPath(path)
+    }
+
+    /**
+     * Remove every forward mapping for a job, without touching rename tracking (used by
+     * {@link #jobRenamed}, which needs the rename chain left intact).
+     *
+     * @param jobId Rundeck job ID
+     * @return paths that were forward-mapped to this job, canonical path first
+     */
+    private Set<String> untrackJobPaths(String jobId) {
+        synchronized (this) {
+            String canonicalPath = trackedPathsMap.remove(jobId)
+            Set<String> pathsToRemove = new LinkedHashSet<>()
+            if (canonicalPath) {
+                pathsToRemove.add(canonicalPath)
+            }
+            pathsToRemove.addAll(
+                    trackedJobIds.findAll { String ignored, String id -> id == jobId }.keySet()
+            )
+            pathsToRemove.each { String path ->
+                trackedCommits.remove(path)
+                trackedJobIds.remove(path)
+            }
+            pathsToRemove
         }
-        trackedPathsMap.remove(jobId)
-        path
     }
 
     /**
@@ -132,39 +196,47 @@ class ImportTracker {
      * @return tracked job IDs
      */
     Set<String> trackedJobIdSet() {
-        Set<String> result
-        synchronized (trackedPathsMap) {
-            result = new HashSet<>(trackedPathsMap.keySet())
-        }
-        synchronized (trackedJobIds) {
+        synchronized (this) {
+            Set<String> result = new HashSet<>(trackedPathsMap.keySet())
             result.addAll(trackedJobIds.values())
+            result
         }
-        result
     }
 
     String trackedCommit(String path) {
-        trackedCommits[path]
+        synchronized (this) {
+            trackedCommits[path]
+        }
     }
 
     String trackedJob(String path) {
-        trackedJobIds[path]
+        synchronized (this) {
+            trackedJobIds[path]
+        }
     }
 
     String trackedPath(String jobId) {
-        trackedPathsMap[jobId]
+        synchronized (this) {
+            trackedPathsMap[jobId]
+        }
     }
 
     Map<String, String> trackedDetail(String path) {
-        [id: trackedJobIds[path], commitId: trackedCommits[path]]
+        synchronized (this) {
+            [id: trackedJobIds[path], commitId: trackedCommits[path]]
+        }
     }
 
     @Override
     public String toString() {
-        return "ImportTracker{" +
-                "renamedTrackedItems=" + renamedTrackedItems +
-                ", trackedCommits=" + trackedCommits +
-                ", trackedJobIds=" + trackedJobIds +
-                ", trackedPathsMap=" + trackedPathsMap +
-                '}';
+        synchronized (this) {
+            return "ImportTracker{" +
+                    "renamedTrackedItems=" + renamedTrackedItems +
+                    ", trackedCommits=" + trackedCommits +
+                    ", trackedJobIds=" + trackedJobIds +
+                    ", trackedPathsMap=" + trackedPathsMap +
+                    ", orphanedJobIds=" + orphanedJobIds +
+                    '}'
+        }
     }
 }
