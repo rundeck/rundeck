@@ -256,7 +256,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 notExpected.remove(walk.getPathString())
                 tracked = true
             }
-            String trackedJobId = !tracked ? importTracker.getTrackedJobIds().get(walk.getPathString()) : null
+            String trackedJobId = !tracked ? importTracker.trackedJob(walk.getPathString()) : null
             Map jobState = trackedJobId ? jobStateSnapshot.get(trackedJobId) : null
             if(!tracked && jobState){
 

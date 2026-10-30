@@ -24,12 +24,12 @@ import com.dtolabs.rundeck.plugins.scm.JobScmReference
 class ImportTracker {
     RenameTracker<String> renamedTrackedItems = new RenameTracker<>()
 
-    Map<String, String> trackedCommits = Collections.synchronizedMap([:])
-    Map<String, String> trackedJobIds = Collections.synchronizedMap([:])
+    private Map<String, String> trackedCommits = Collections.synchronizedMap([:])
+    private Map<String, String> trackedJobIds = Collections.synchronizedMap([:])
     /**
      * job ID -> path
      */
-    Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
+    private Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
     /**
      * Job IDs whose reverse mapping was just cleared by a different job claiming their path,
      * so they may still hold another forward mapping elsewhere that needs cleanup next time

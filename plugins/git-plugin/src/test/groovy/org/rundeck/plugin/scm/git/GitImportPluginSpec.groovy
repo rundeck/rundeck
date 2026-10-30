@@ -348,7 +348,13 @@ class GitImportPluginSpec extends Specification {
         })
         plugin.jobStateMap = new DisappearingEntryMap<String, Map>()
         plugin.jobStateMap['123'] = ['synch': ImportSynchState.CLEAN, 'path': 'job1-123.xml']
-        plugin.importTracker.trackedJobIds['job1-123.xml'] = '123'
+        plugin.importTracker.trackJobAtPath(
+                Stub(JobScmReference) {
+                    getId() >> '123'
+                    getScmImportMetadata() >> [:]
+                },
+                'job1-123.xml'
+        )
 
         when:
         def status = plugin.getStatusInternal(Mock(ScmOperationContext), false)

@@ -228,7 +228,11 @@ class ImportTrackerSpec extends Specification {
                 super.entrySet()
             }
         }
-        tracker.trackedJobIds = countingMap
+        //trackedJobIds is private (deliberately - see ImportTracker's class Javadoc), so this
+        //instrumentation-only substitution goes through reflection rather than a production setter
+        def trackedJobIdsField = ImportTracker.getDeclaredField('trackedJobIds')
+        trackedJobIdsField.setAccessible(true)
+        trackedJobIdsField.set(tracker, countingMap)
         int jobCount = 2000
 
         when: "each job is registered for the first time at its own distinct path"
