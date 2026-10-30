@@ -58,14 +58,11 @@ class FetchAction extends BaseAction implements GitExportAction {
             final ScmOperationContext context,
             final Map<String, String> input
     ) throws ScmPluginException {
-        //fetch remote changes
-        def update
-        try {
-            update = plugin.fetchFromRemote(context)
-        } catch (Exception e) {
-            plugin.logger.debug("Failed fetch from the repository: ${e.message}", e)
-            throw new ScmPluginException("Failed fetch from the repository: ${e.message}", e)
-        }
+        //fetch remote changes. fetchFromRemote already wraps its own failure in
+        //remoteAccessFailure() (redacted, user-facing); wrapping again here only doubled the
+        //message prefix and, for a failure thrown by setupTransportAuthentication (which runs
+        //before fetchFromRemote's own try/catch), bypassed that redaction entirely
+        def update = plugin.fetchFromRemote(context)
 
         def result = new ScmExportResultImpl()
         result.success = true
