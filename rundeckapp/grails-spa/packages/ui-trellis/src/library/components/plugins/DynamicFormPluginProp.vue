@@ -15,9 +15,11 @@
         :class="['form-group']"
         data-testid="field-item"
       >
-        <label class="col-sm-2 control-label input-sm">{{
-          field.label?.trim() || field.key
-        }}</label>
+        <label
+          class="col-sm-2 control-label input-sm"
+          data-testid="field-item-label"
+          >{{ field.label?.trim() || field.key }}</label
+        >
         <div class="col-sm-9">
           <input
             v-model="field.value"
@@ -102,9 +104,12 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4" :for="`${uid}-key-input`">{{
-                $t("message_fieldKey")
-              }}</label>
+              <label
+                class="col-md-4"
+                :for="`${uid}-key-input`"
+                data-testid="field-key-label"
+                >{{ $t("message_fieldKey") }}</label
+              >
               <div class="col-md-8">
                 <input
                   :id="`${uid}-key-input`"
@@ -124,9 +129,12 @@
               </div>
             </div>
             <div :class="['form-group']">
-              <label class="col-md-4" :for="`${uid}-label-input`">{{
-                $t("message_fieldLabel")
-              }}</label>
+              <label
+                class="col-md-4"
+                :for="`${uid}-label-input`"
+                data-testid="field-label-label"
+                >{{ $t("message_fieldLabel") }}</label
+              >
               <div class="col-md-8">
                 <input
                   :id="`${uid}-label-input`"
@@ -149,7 +157,11 @@
 
           <div class="form">
             <div :class="useOptions ? 'form-data' : 'form-group'">
-              <label class="col-md-4" :for="`${uid}-description-input`">
+              <label
+                class="col-md-4"
+                :for="`${uid}-description-input`"
+                data-testid="field-description-label"
+              >
                 {{ $t("message_description") }}
               </label>
               <div class="col-md-8">

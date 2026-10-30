@@ -58,6 +58,33 @@ const createWrapper = (props = {}) => {
   });
 };
 
+// Each entry point mounts one Vue app per element, and useId() is only
+// unique within a single app, so the entry points give each app its own
+// app.config.idPrefix. Mount the component as two separate apps, like the
+// entry points do.
+const mountInOwnApp = async (idPrefix?: string) => {
+  const wrapper = mount(DynamicFormPluginProp, {
+    props: { fields: "{}", hasOptions: "false", name: "sameName" },
+    global: {
+      mocks: { $t: translate },
+      components: { Btn, Modal },
+      plugins: [
+        (app: any) => {
+          if (idPrefix) app.config.idPrefix = idPrefix;
+        },
+      ],
+      stubs: {
+        Modal: {
+          template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
+        },
+      },
+    },
+  });
+  await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+  await flushPromises();
+  return wrapper.find('[data-testid="field-key-input"]').attributes("id");
+};
+
 describe("DynamicFormPluginProp.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -186,48 +213,18 @@ describe("DynamicFormPluginProp.vue", () => {
       descriptionHelp.attributes("id"),
     );
 
-    const keyLabelEl = wrapper
-      .findAll("label")
-      .find((l) => l.attributes("for") === keyInput.attributes("id"));
-    const fieldLabelEl = wrapper
-      .findAll("label")
-      .find((l) => l.attributes("for") === labelInput.attributes("id"));
-    const descriptionLabelEl = wrapper
-      .findAll("label")
-      .find((l) => l.attributes("for") === descriptionInput.attributes("id"));
-    expect(keyLabelEl).toBeTruthy();
-    expect(fieldLabelEl).toBeTruthy();
-    expect(descriptionLabelEl).toBeTruthy();
+    expect(
+      wrapper.find('[data-testid="field-key-label"]').attributes("for"),
+    ).toBe(keyInput.attributes("id"));
+    expect(
+      wrapper.find('[data-testid="field-label-label"]').attributes("for"),
+    ).toBe(labelInput.attributes("id"));
+    expect(
+      wrapper.find('[data-testid="field-description-label"]').attributes("for"),
+    ).toBe(descriptionInput.attributes("id"));
   });
 
   describe("ids across independent Vue apps", () => {
-    // Each entry point mounts one Vue app per element, and useId() is only
-    // unique within a single app, so the entry points give each app its own
-    // app.config.idPrefix. Mount the component as two separate apps, like the
-    // entry points do.
-    const mountInOwnApp = async (idPrefix?: string) => {
-      const wrapper = mount(DynamicFormPluginProp, {
-        props: { fields: "{}", hasOptions: "false", name: "sameName" },
-        global: {
-          mocks: { $t: translate },
-          components: { Btn, Modal },
-          plugins: [
-            (app: any) => {
-              if (idPrefix) app.config.idPrefix = idPrefix;
-            },
-          ],
-          stubs: {
-            Modal: {
-              template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
-            },
-          },
-        },
-      });
-      await wrapper.find('[data-testid="add-field-button"]').trigger("click");
-      await flushPromises();
-      return wrapper.find('[data-testid="field-key-input"]').attributes("id");
-    };
-
     it("generates different ids when each app has a distinct idPrefix", async () => {
       const idA = await mountInOwnApp("dynamic-form-0");
       const idB = await mountInOwnApp("dynamic-form-1");
@@ -309,7 +306,7 @@ describe("DynamicFormPluginProp.vue", () => {
     });
     await flushPromises();
 
-    expect(wrapper.find('[data-testid="field-item"] label').text()).toBe(
+    expect(wrapper.find('[data-testid="field-item-label"]').text()).toBe(
       "legacy_field",
     );
     expect(wrapper.emitted("update:modelValue")).toBeFalsy();
