@@ -828,8 +828,16 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
         bulkStatusLoading = true
-        jobs.each { job ->
-            initializeJobStatusIfAbsent(job.id, initJobStatus(job))
+        bulkStatusLoadingJobs = jobs
+        try {
+            jobs.each { job ->
+                initializeJobStatusIfAbsent(job.id, initJobStatus(job))
+            }
+        } catch (Throwable t) {
+            //don't leave the project stuck LOADING forever if the bulk sequence never reaches
+            //its matching refreshJobsStatus() call
+            bulkStatusLoading = false
+            throw t
         }
     }
 
@@ -843,12 +851,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void refreshJobsStatus(List<JobScmReference> jobs) {
+        //only the exact list initJobsStatus() just saw is the bulk sequence's own matching call -
+        //an unrelated call (e.g. ImportJobs.performAction, for a different job subset) must not
+        //clear bulkStatusLoading early
+        boolean isBulkLoad = jobs.is(bulkStatusLoadingJobs)
         try {
             jobs.each { job ->
                 refreshJobStatus(job, null)
             }
         } finally {
-            bulkStatusLoading = false
+            if (isBulkLoad) {
+                bulkStatusLoading = false
+            }
         }
     }
 }

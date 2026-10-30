@@ -93,6 +93,17 @@ class BaseGitPlugin {
      */
     protected volatile boolean bulkStatusLoading = false
 
+    /**
+     * The exact job-list instance most recently passed to {@code initJobsStatus()}. {@code
+     * ScmLoaderService} calls {@code initJobsStatus(joblist)} then {@code refreshJobsStatus(joblist)}
+     * back to back with that same list reference, so {@code refreshJobsStatus} uses this to tell
+     * that matching completion call apart from an unrelated one for a different job subset (e.g.
+     * {@code ImportJobs.performAction} calling {@code refreshJobsStatus} after an import, possibly
+     * while the project's own bulk load is still in flight) - only the matching call may clear
+     * {@link #bulkStatusLoading}, so an unrelated refresh can't end it early.
+     */
+    protected volatile List bulkStatusLoadingJobs = null
+
     BaseGitPlugin(Common commonConfig) {
         this.input = commonConfig.rawInput
         this.commonConfig = commonConfig

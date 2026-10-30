@@ -1543,20 +1543,87 @@ class GitExportPluginSpec extends Specification {
             }
         }
 
+        //the same list instance ScmLoaderService passes to both calls - refreshJobsStatus tells
+        //this apart from an unrelated call (e.g. ImportJobs) by reference, not just contents
+        def joblist = [jobref]
+
         expect: "LOADING before the bulk sequence starts is simply the uninitialized default"
         !plugin.bulkStatusLoading
 
         when:
-        plugin.initJobsStatus([jobref])
+        plugin.initJobsStatus(joblist)
 
         then: "the whole project is LOADING once the bulk placeholders are installed"
         plugin.bulkStatusLoading
         plugin.getStatusInternal(ctxt, false).state == SynchState.LOADING
 
         when:
-        plugin.refreshJobsStatus([jobref])
+        plugin.refreshJobsStatus(joblist)
 
         then: "LOADING clears once the bulk refresh completes"
+        !plugin.bulkStatusLoading
+        plugin.getStatusInternal(ctxt, false).state != SynchState.LOADING
+    }
+
+    def "refreshJobsStatus for an unrelated job list (e.g. ImportJobs after an import) does not clear an in-progress bulk load"() {
+        given: "the bulk sequence is mid-flight (initJobsStatus ran, its matching refreshJobsStatus" +
+                " hasn't yet) when an unrelated refreshJobsStatus call comes in for a different," +
+                " equal-content-but-different-instance job list"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getSourceId() >> '123'
+            getVersion() >> 1L
+            getScmImportMetadata() >> [:]
+            getJobSerializer() >> Stub(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+
+        when:
+        plugin.initJobsStatus([jobref])
+        //a different List instance with the same content, as an unrelated caller would build
+        plugin.refreshJobsStatus(new ArrayList([jobref]))
+
+        then: "the bulk load is still reported in progress - the unrelated call didn't end it"
+        plugin.bulkStatusLoading
+        plugin.getStatusInternal(ctxt, false).state == SynchState.LOADING
+    }
+
+    def "initJobsStatus does not leave the project stuck LOADING forever if it throws"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def failingJobref = Stub(JobScmReference) {
+            getId() >> { throw new RuntimeException('boom') }
+        }
+
+        when:
+        plugin.initJobsStatus([failingJobref])
+
+        then:
+        thrown(RuntimeException)
         !plugin.bulkStatusLoading
         plugin.getStatusInternal(ctxt, false).state != SynchState.LOADING
     }
