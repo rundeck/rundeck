@@ -816,7 +816,10 @@ class BaseGitPlugin {
             git.getRepository().close()
             git = null
             repo = null
-            throw remoteAccessFailure('Failed configuring cloned repository', e, branch)
+            //writing .git/config is local disk I/O, not a remote-access failure - using
+            //remoteAccessFailure() here would mislabel it if GitTransportErrors' sensitive-failure
+            //check ever widens to catch a plain IOException
+            throw localIoFailure('Failed configuring cloned repository', e)
         }
     }
 
@@ -1097,6 +1100,21 @@ class BaseGitPlugin {
             logger.debug(line, error)
         }
         return new ScmPluginException("${actionText}: ${detail}", error)
+    }
+
+    /**
+     * Wrap a failure from local git repository I/O (e.g. writing .git/config), redacting any
+     * credentials embedded in the action text or exception message. Deliberately does not route
+     * through {@link #remoteAccessFailure} - that helper's generic-message substitution is scoped
+     * to actual network transport failures, and reusing it for a local I/O failure would mislabel
+     * it as a remote-access problem to the user.
+     */
+    ScmPluginException localIoFailure(String action, Exception error) {
+        String actionText = redactUserInfo(action)
+        String detail = redactUserInfo(error?.message)
+        String line = "${actionText}: ${detail}"
+        logger.warn(line, error)
+        return new ScmPluginException(line, error)
     }
 
     /**
