@@ -1715,6 +1715,48 @@ class GitExportPluginSpec extends Specification {
         thrown(RuntimeException)
         !plugin.bulkStatusLoading
         plugin.getStatusInternal(ctxt, false).state != SynchState.LOADING
+        plugin.bulkStatusLoadingJobs == null
+    }
+
+    def "bulkStatusLoadingJobs is released once the bulk load completes"() {
+        given: "a completed bulk initJobsStatus/refreshJobsStatus sequence"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getSourceId() >> '123'
+            getVersion() >> 1L
+            getScmImportMetadata() >> [:]
+            getJobSerializer() >> Stub(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+        def joblist = [jobref]
+
+        when:
+        plugin.initJobsStatus(joblist)
+
+        then: "the reference is still held while the bulk load is in progress"
+        plugin.bulkStatusLoadingJobs != null
+
+        when:
+        plugin.refreshJobsStatus(joblist)
+
+        then: "it's released once the matching refreshJobsStatus call completes, so the stale" +
+                " job list (and the ScheduledExecution refs its LazySerializer holds) doesn't" +
+                " outlive the bulk load that needed it"
+        plugin.bulkStatusLoadingJobs == null
     }
 
     def "job change serializer fails does not overwrite file"() {

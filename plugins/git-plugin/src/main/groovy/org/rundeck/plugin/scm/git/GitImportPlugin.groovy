@@ -837,6 +837,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             //don't leave the project stuck LOADING forever if the bulk sequence never reaches
             //its matching refreshJobsStatus() call
             bulkStatusLoading = false
+            //release the job-list reference (holds LazySerializer->ScheduledExecution refs) so
+            //it doesn't outlive this failed bulk load
+            bulkStatusLoadingJobs = null
             throw t
         }
     }
@@ -862,6 +865,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } finally {
             if (isBulkLoad) {
                 bulkStatusLoading = false
+                //release the job-list reference (holds LazySerializer->ScheduledExecution refs)
+                //now that the bulk load it was tracking is done
+                bulkStatusLoadingJobs = null
             }
         }
     }

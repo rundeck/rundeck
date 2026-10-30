@@ -40,9 +40,12 @@ class PushAction extends BaseAction implements GitExportAction {
     @Override
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
         def status = plugin.getStatusInternal(context, false)
-        //status.message is only set on the non-LOADING path (the brief bulk-init window) -
-        //null-safe default avoids NPEing on it
-        def statusMessage = status.message ?: "Git status is still loading, please try again shortly"
+        //status.message is null both during the brief bulk-init LOADING window and for an
+        //already-clean, fully-synced repo with nothing to report - only the former should say
+        //"loading"
+        def statusMessage = status.state == SynchState.LOADING ?
+                "Git status is still loading, please try again shortly" :
+                (status.message ?: "")
         BuilderUtil.inputViewBuilder(id) {
             title "Push remote Git changes"
             buttonTitle "Push"

@@ -128,4 +128,25 @@ class PushActionSpec extends Specification {
         result.commit == null
         result.message == 'Remote push result: OK.'
     }
+
+    def "get input view for a clean, fully-synced repo does not claim git is still loading"() {
+        given: "a repo with nothing uncommitted and no ahead/behind remote-tracking divergence - " +
+                "getStatusInternal's message is null here same as during the brief bulk-init " +
+                "LOADING window, but the state itself is not LOADING"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def origin = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, origin, 'testcommit.txt', 'blah')
+        origin.close()
+
+        def plugin = initedPlugin(gitdir, origindir)
+        def action = new PushAction('push', 'Push', 'desc')
+
+        when:
+        def view = action.getInputView(Mock(ScmOperationContext), plugin)
+
+        then: "the static-text status property doesn't say the status is still loading"
+        def statusProp = view.properties.find { it.name == 'status' }
+        !(statusProp.defaultValue =~ /(?i)still loading/)
+    }
 }
