@@ -898,6 +898,67 @@ class GitImportPluginSpec extends Specification {
         status.content !=null
     }
 
+    def "ImportJobs resolves the renamed job's UUID through the target path, not the stale original path"() {
+        given: "a rename A->B already detected by a prior status refresh - jobRenamed's" +
+                " untrackJobPaths already cleared the job's forward mapping at A (the original" +
+                " path), leaving only B mapped to the job and the A->B rename record in" +
+                " renamedTrackedItems"
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        GitExportPluginSpec.renameCommitFile(origindir, git, 'job1-123.xml', 'job1-rename-123.xml', 'blah 333')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        //a prior status refresh detects the rename and records it in the tracker
+        plugin.getJobStatus(job, null)
+        assert plugin.importTracker.trackedJob('job1-123.xml') == null
+        assert plugin.importTracker.trackedJob('job1-rename-123.xml') == '123'
+
+        def importer = Mock(JobImporter)
+        com.dtolabs.rundeck.plugins.scm.JobRenamed capturedRenamedJob = null
+
+        when: "the user imports the renamed path"
+        new org.rundeck.plugin.scm.git.imp.actions.ImportJobs('import-jobs', 'Import', 'Import', null)
+                .performAction(
+                        Mock(ScmOperationContext) { getFrameworkProject() >> projectName },
+                        plugin,
+                        importer,
+                        ['job1-rename-123.xml'],
+                        [:]
+                )
+
+        then: "the importer is told the existing job's real UUID, not null"
+        1 * importer.importFromStream(_, _, _, _, _) >> { args ->
+            capturedRenamedJob = args[4]
+            Mock(ImportResult) {
+                isSuccessful() >> true
+                getJob() >> null
+            }
+        }
+        capturedRenamedJob != null
+        capturedRenamedJob.uuid == '123'
+    }
+
     def "get status fetch fails throws ScmPluginException"() {
         given:
         def gitdir = new File(tempdir, 'scm')

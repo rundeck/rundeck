@@ -116,8 +116,13 @@ class ImportJobs extends BaseAction implements GitImportAction {
 
             JobRenamedImp renamedJob = null
             if (plugin.importTracker.originalValue(path)) {
-                def originalPath = plugin.importTracker.originalValue(path)
-                def jobUUID = plugin.importTracker.trackedJob(originalPath)
+                //originalValue(path) only identifies this as a rename - the job's forward mapping
+                //at its old path is already gone by now (jobRenamed's untrackJobPaths cleared it
+                //when the rename was first detected), so the UUID must be resolved through the
+                //current path, not the stale original one, or renamedJob.uuid comes back null and
+                //ScmJobImporter.importJob's `jobData.job.uuid = renamedJob.uuid` creates a new job
+                //instead of updating the existing one
+                def jobUUID = plugin.importTracker.trackedJob(path)
                 def jobCache = plugin.jobStateMap[jobUUID]
                 renamedJob = new JobRenamedImp(uuid: jobUUID)
                 if (jobCache?.sourceId) {
