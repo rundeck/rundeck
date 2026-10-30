@@ -174,7 +174,11 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
     ) {
         if (input[TagAction.P_TAG_NAME]) {
             def tagResult = plugin.export(context, GitExportPlugin.PROJECT_TAG_ACTION_ID, jobs, pathsToDelete, input)
-            if (!tagResult.success || (!result.id && input[P_PUSH] != 'true')) {
+            if (!tagResult.success) {
+                return tagResult
+            }
+            boolean nothingCommittedAndNoPushRequested = !result.id && input[P_PUSH] != 'true'
+            if (nothingCommittedAndNoPushRequested) {
                 return tagResult
             }
         }

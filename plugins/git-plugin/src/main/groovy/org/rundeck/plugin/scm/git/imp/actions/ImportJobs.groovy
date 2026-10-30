@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
-import org.eclipse.jgit.lib.Constants
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.BuilderUtil
@@ -97,18 +97,18 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 return
             }
             def objectId = walk.getObjectId(0)
-            def loader = plugin.repo.open(objectId, Constants.OBJ_BLOB)
-            def size = loader.getSize()
-            plugin.log.debug("import data: ${size} = ${path}")
-            if (size > GitUtil.MAX_BLOB_SIZE) {
-                //record and skip, rather than throw: an exception here would abort the whole
-                //walk, leaving jobsChanged incomplete and skipping refreshJobsStatus() below for
-                //every job already imported earlier in this same batch
+            plugin.log.debug("import data: ${path}")
+            byte[] bytes
+            try {
+                bytes = GitUtil.getBytes(plugin.repo, objectId)
+            } catch (ScmPluginException e) {
+                //record and skip, rather than let it propagate: an exception here would abort the
+                //whole walk, leaving jobsChanged incomplete and skipping refreshJobsStatus() below
+                //for every job already imported earlier in this same batch
                 success = false
-                sb << ("Failed importing: ${path}: too large to import (${size} bytes, max ${GitUtil.MAX_BLOB_SIZE})")
+                sb << ("Failed importing: ${path}: ${e.message}")
                 return
             }
-            def bytes = loader.getBytes(GitUtil.MAX_BLOB_SIZE as int)
 
             def commit = plugin.lastCommitForPath(path)
             def meta = GitUtil.metaForCommit(commit)
