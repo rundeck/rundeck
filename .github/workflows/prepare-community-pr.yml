@@ -210,11 +210,41 @@ jobs:
           set -euo pipefail
           prep_branch="bot/prep-community-pr-${PR_NUMBER}"
           origin_url="https://github.com/${REPO_FULL}/pull/${PR_NUMBER}"
-          title="Prepare CI for community PR #${PR_NUMBER}"
+
+          # Carry over the original title and description. Both are contributor-controlled
+          # text: they are only ever written to files / passed as quoted arguments, never
+          # interpolated into a shell command, and they are sanitized first. The sanitizer:
+          # - drops HTML comments (invisible when rendered, but visible to Copilot/LLMs, so a
+          #   common place to hide injected instructions),
+          # - drops control, bidi and zero-width characters,
+          # - defuses @mentions (user/team pings and @copilot) with a zero-width space,
+          # - caps the length.
+          sanitize() {
+            MAX="$1" perl -CSD -0777 -pe '
+              s/<!--.*?(?:-->|\z)//gs;
+              s/[^\P{C}\n\t]//g;
+              s/(?<!\w)@(?=[A-Za-z0-9])/@\x{200B}/g;
+              $_ = substr($_, 0, $ENV{MAX});
+            '
+          }
+
+          pr_json="$(gh pr view "${PR_NUMBER}" --repo "${REPO_FULL}" --json title,body,author)"
+          title="$(jq -r '.title // ""' <<<"${pr_json}" | tr '\n' ' ' | sanitize 200)"
+          if [[ -z "${title//[[:space:]]/}" ]]; then
+            title="Community PR #${PR_NUMBER}"
+          fi
+          author="$(jq -r '.author.login // "unknown"' <<<"${pr_json}")"
+          if [[ ! "${author}" =~ ^[A-Za-z0-9][A-Za-z0-9-]*(\[bot\])?$ ]]; then
+            author="unknown"
+          fi
+          orig_body="$(jq -r '.body // ""' <<<"${pr_json}" | sanitize 20000)"
+
           body_file="$(mktemp)"
           {
-            printf '%s\n\n' "This PR was opened automatically so full CI (including jobs that require repository secrets) can run on the merged result."
-            printf '%s\n' "Community PR (already merged into this branch): ${origin_url}"
+            printf '%s\n\n' "Integration PR opened automatically so full CI (including jobs that require repository secrets) can run on the merged result."
+            printf '%s\n\n' "Original community PR (already merged into this branch): ${origin_url} by \`${author}\`"
+            printf '%s\n\n' '---'
+            printf '%s\n' "${orig_body}"
           } >"${body_file}"
 
           existing="$(
@@ -234,11 +264,19 @@ jobs:
               --body-file "${body_file}"
             echo "Updated existing PR #${existing}."
           else
-            gh pr create \
-              --repo "${REPO_FULL}" \
-              --base "${BASE_REF}" \
-              --head "${prep_branch}" \
-              --title "${title}" \
-              --body-file "${body_file}"
+            new_pr_url="$(
+              gh pr create \
+                --repo "${REPO_FULL}" \
+                --base "${BASE_REF}" \
+                --head "${prep_branch}" \
+                --title "${title}" \
+                --body-file "${body_file}"
+            )"
+            echo "Created ${new_pr_url}."
+
+            # Ask Copilot to fill in the release notes. Static text only (no contributor
+            # content), and only on create so a re-run does not re-ping Copilot.
+            gh pr comment "${new_pr_url}" \
+              --body "@copilot Please fill in the \`Release Notes\` section of this PR description with a short, to-the-point note (one or two sentences) that tells Rundeck customers why this change matters or how it benefits them. Skip implementation details, and do not change any other part of the description."
           fi
           rm -f "${body_file}"
