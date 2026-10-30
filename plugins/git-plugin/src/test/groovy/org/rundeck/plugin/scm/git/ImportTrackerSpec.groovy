@@ -192,25 +192,38 @@ class ImportTrackerSpec extends Specification {
 
     def "first-time registration of many jobs does not scan every previously tracked job"() {
         given: "trackJobAtPath must not confuse an ordinary never-tracked-before job with an orphan." +
-                " Uses a lightweight map-coerced stub, not Mock(), so per-job object creation" +
-                " overhead doesn't mask an O(n²) regression in the tracker itself"
+                " untrackJobPaths() is the only caller of trackedJobIds.findAll() (the O(n) scan an" +
+                " orphan-cleanup-on-every-call regression would run on every registration), and" +
+                " findAll() is the only Map method here that reaches entrySet() - keySet()/values()/" +
+                "get()/remove(), used everywhere else on this map, have their own implementations that" +
+                " don't. Counting entrySet() calls is therefore a deterministic, CI-safe proxy for" +
+                " how many times that scan ran - no wall-clock timing, so no flaking on slow CI"
         def tracker = new ImportTracker()
-        int jobCount = 20000
+        //a 1-element array, not a field on the map itself: Groovy's property access on a Map
+        //subclass (countingMap.xyz) means countingMap.get('xyz'), not the declared field
+        int[] entrySetCalls = [0]
+        def countingMap = new LinkedHashMap<String, String>() {
+            @Override
+            Set<Map.Entry<String, String>> entrySet() {
+                entrySetCalls[0]++
+                super.entrySet()
+            }
+        }
+        tracker.trackedJobIds = countingMap
+        int jobCount = 2000
 
         when: "each job is registered for the first time at its own distinct path"
-        long start = System.currentTimeMillis()
         (1..jobCount).each { int i ->
-            JobScmReference job = [
-                    getId               : { "job${i}".toString() },
-                    getScmImportMetadata: { [commitId: "commit${i}".toString()] },
-            ] as JobScmReference
+            JobScmReference job = Stub(JobScmReference) {
+                getId() >> "job${i}".toString()
+                getScmImportMetadata() >> [commitId: "commit${i}".toString()]
+            }
             tracker.trackJobAtPath(job, "path${i}".toString())
         }
-        long elapsedMs = System.currentTimeMillis() - start
 
-        then: "linear-time registration, not the ~n²/2 entry visits an orphan-cleanup-on-every-call regression would cause"
+        then: "none of the first-time registrations triggered the orphan-cleanup scan"
         tracker.trackedPaths().size() == jobCount
-        elapsedMs < 5000
+        entrySetCalls[0] == 0
     }
 
     def "untrackJob removes every tracked path for the deleted job"() {
