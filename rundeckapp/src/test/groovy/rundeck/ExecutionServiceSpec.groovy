@@ -63,7 +63,9 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
+import com.dtolabs.rundeck.core.execution.component.ContextComponent
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowItemErrorHandlerContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageStore
 import com.dtolabs.rundeck.core.execution.StatusResult
@@ -3634,6 +3636,59 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val != null
         val.getNodeService() != null
 
+    }
+
+    def "createContext keeps the error handler marker so lifecycle components can read it when the job reference starts"() {
+        // The job reference context is what execution lifecycle components receive in
+        // beforeJobStarts, so the marker describing a job reference invoked as an error handler must survive it
+        given:
+        def jobProj = 'testproj'
+
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * filterAuthorizedNodes(*_)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, jobProj)
+            1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+        service.rundeckNodeService = Mock(NodeService) {}
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: jobProj,
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        def origContext = Mock(StepExecutionContext) {
+            getFrameworkProject() >> jobProj
+            getStepContext() >> []
+            getComponentList() >> [
+                    ContextComponent.with(
+                            "WorkflowItemErrorHandlerContext",
+                            WorkflowItemErrorHandlerContext.INSTANCE,
+                            WorkflowItemErrorHandlerContext
+                    )
+            ]
+        }
+
+        when:
+        def val = service.createContext(se, origContext, null, null, null, null, null,
+                                        null, null, null, null, null, null, null, false)
+
+        then:
+        val != null
+        val.componentForType(WorkflowItemErrorHandlerContext).present
     }
 
     def "parent job fails if the job ref goes timeout"(){

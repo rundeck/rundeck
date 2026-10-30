@@ -1,0 +1,225 @@
+/*
+ * Copyright 2026 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.dtolabs.rundeck.core.execution
+
+import com.dtolabs.rundeck.core.common.PluginControlService
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowItemErrorHandlerContext
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import spock.lang.Specification
+
+class WorkflowExecutionServiceThreadSpec extends Specification {
+
+    private static StepExecutionContext contextWithMarker() {
+        ExecutionContextImpl.builder()
+                .frameworkProject("prj")
+                .stepContext([1])
+                .stepNumber(1)
+                .addComponent(
+                        "WorkflowItemErrorHandlerContext",
+                        WorkflowItemErrorHandlerContext.INSTANCE,
+                        WorkflowItemErrorHandlerContext
+                )
+                .build()
+    }
+
+    private static boolean hasMarker(StepExecutionContext context) {
+        context.componentForType(WorkflowItemErrorHandlerContext).present
+    }
+
+    def "the error handler marker is visible to lifecycle callbacks but not to the job's own workflow"() {
+        // The marker describes how this job was invoked (as an error handler). Lifecycle components
+        // read it when the job starts, but the context their results are merged into keeps it, so it is
+        // removed centrally before the workflow runs and cannot reach the job's own steps and nested references.
+        given:
+        boolean markerSeenByCallback = false
+        StepExecutionContext executedWith = null
+        def lifecycleHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeJobStarts(_, _) >> { args ->
+                markerSeenByCallback = hasMarker(args[0])
+                Optional.empty()
+            }
+        }
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                contextWithMarker(),
+                null,
+                lifecycleHandler
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        markerSeenByCallback
+        executedWith != null
+        !hasMarker(executedWith)
+    }
+
+    def "marker removal from the context returned by the lifecycle handler keeps its other components and plugin control service"() {
+        // This covers what the thread does with the context the handler returns. The handler's own merge of
+        // component results (ExecutionLifecycleComponentService.mergeExecutionEventContext) is a separate step
+        // and is not exercised here.
+        given:
+        def customService = Mock(PluginControlService)
+        StepExecutionContext callbackContext = ExecutionContextImpl.builder(contextWithMarker())
+                .addComponent("OtherComponent", "kept", String)
+                .pluginControlService(customService)
+                .build()
+        StepExecutionContext executedWith = null
+        def lifecycleHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeJobStarts(_, _) >> Optional.of(Mock(ExecutionLifecycleStatus) {
+                getExecutionContext() >> callbackContext
+            })
+        }
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                contextWithMarker(),
+                null,
+                lifecycleHandler
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith != null
+        !hasMarker(executedWith)
+        executedWith.componentForType(String).get() == "kept"
+        executedWith.pluginControlService.is(customService)
+    }
+
+    def "removing the marker keeps the plugin control service the context was supplied with"() {
+        // rebuilding a context recreates a project-only plugin control service, which would drop a custom
+        // one supplied by the caller or by a lifecycle callback
+        given:
+        def customService = Mock(PluginControlService)
+        StepExecutionContext executedWith = null
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                ExecutionContextImpl.builder(contextWithMarker())
+                                    .pluginControlService(customService)
+                                    .build(),
+                null,
+                null
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith != null
+        !hasMarker(executedWith)
+        executedWith.pluginControlService.is(customService)
+    }
+
+    def "a context without the marker is handed to the workflow as it is"() {
+        given:
+        StepExecutionContext context = ExecutionContextImpl.builder().frameworkProject("prj").build()
+        StepExecutionContext executedWith = null
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                context,
+                null,
+                null
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith.is(context)
+    }
+
+    def "the error handler marker is removed before the workflow runs when there is no lifecycle handler"() {
+        given:
+        StepExecutionContext executedWith = null
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                contextWithMarker(),
+                null,
+                null
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith != null
+        !hasMarker(executedWith)
+    }
+}

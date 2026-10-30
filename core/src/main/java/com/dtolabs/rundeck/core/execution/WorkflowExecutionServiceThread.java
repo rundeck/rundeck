@@ -91,6 +91,18 @@ public class WorkflowExecutionServiceThread
                                                        .orElse(null);
                 executionContext = newExecutionContext != null? newExecutionContext: executionContext;
             }
+            //the error handler marker only describes how this job was invoked by its caller. Lifecycle
+            //components have read it by now, and it must not reach this job's own steps and nested job
+            //references. It is removed here because a component returning a marker-free context does not
+            //remove it: results are merged into the original context, which keeps unmatched components.
+            //Only a context carrying the marker is rebuilt, and its plugin control service is kept as
+            //supplied: a rebuilt context would otherwise get a project-only one.
+            if (executionContext.componentForType(WorkflowItemErrorHandlerContext.class).isPresent()) {
+                executionContext = ExecutionContextImpl.builder(executionContext)
+                                                       .pluginControlService(executionContext.getPluginControlService())
+                                                       .removeComponentsOfType(WorkflowItemErrorHandlerContext.class)
+                                                       .build();
+            }
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(executionContext, weitem));
             success = getResult().isSuccess();
