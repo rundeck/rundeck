@@ -47,7 +47,7 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
     }
 
     def "the error handler marker is visible to lifecycle callbacks but not to the job's own workflow"() {
-        // RUN-4837: the marker describes how this job was invoked (as an error handler). Lifecycle components
+        // The marker describes how this job was invoked (as an error handler). Lifecycle components
         // read it when the job starts, but the context their results are merged into keeps it, so it is
         // removed centrally before the workflow runs and cannot reach the job's own steps and nested references.
         given:
@@ -86,7 +86,10 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         !hasMarker(executedWith)
     }
 
-    def "marker removal from a context supplied by a lifecycle callback keeps its other components and plugin control service"() {
+    def "marker removal from the context returned by the lifecycle handler keeps its other components and plugin control service"() {
+        // This covers what the thread does with the context the handler returns. The handler's own merge of
+        // component results (ExecutionLifecycleComponentService.mergeExecutionEventContext) is a separate step
+        // and is not exercised here.
         given:
         def customService = Mock(PluginControlService)
         StepExecutionContext callbackContext = ExecutionContextImpl.builder(contextWithMarker())

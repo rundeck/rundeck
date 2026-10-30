@@ -3639,7 +3639,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     }
 
     def "createContext keeps the error handler marker so lifecycle components can read it when the job reference starts"() {
-        // RUN-4837: the job reference context is what execution lifecycle components receive in
+        // The job reference context is what execution lifecycle components receive in
         // beforeJobStarts, so the marker describing a job reference invoked as an error handler must survive it
         given:
         def jobProj = 'testproj'
