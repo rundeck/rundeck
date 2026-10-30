@@ -8,6 +8,7 @@ import org.openqa.selenium.NoSuchElementException
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedCondition
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
@@ -114,6 +115,15 @@ abstract class BasePage {
     WebElement waitForElementVisible(By locator) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.visibilityOfElementLocated(locator))
+    }
+
+    /**
+     * Waits until at least one of the given locators matches an element.
+     * Use before checking which of several mutually exclusive templates was rendered.
+     */
+    void waitForAnyElementPresent(By... locators) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.or(locators.collect { ExpectedConditions.presenceOfElementLocated(it) } as ExpectedCondition[]))
     }
 
     void waitForNumberOfElementsToBeOne(By locator) {

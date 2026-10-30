@@ -227,18 +227,23 @@ class JobListPage extends BasePage implements ActivityListTrait {
         context.driver.manage().deleteCookieNamed('nextUi')
     }
 
+    static By nextUiJobListTemplateBy = By.id('pageQueryParams')
+    static By currentUiJobListTemplateBy = By.id('nextScheduled')
+
     /**
      * @return true if the Next UI job list template (jobs.next.gsp) was rendered
      */
     boolean hasNextUiJobListTemplate() {
-        !els(By.id('pageQueryParams')).isEmpty()
+        waitForAnyElementPresent(nextUiJobListTemplateBy, currentUiJobListTemplateBy)
+        !els(nextUiJobListTemplateBy).isEmpty()
     }
 
     /**
      * @return true if the Current UI job list template (jobs.gsp) was rendered
      */
     boolean hasCurrentUiJobListTemplate() {
-        !els(By.id('nextScheduled')).isEmpty()
+        waitForAnyElementPresent(nextUiJobListTemplateBy, currentUiJobListTemplateBy)
+        !els(currentUiJobListTemplateBy).isEmpty()
     }
 
     def getCountJobList(){

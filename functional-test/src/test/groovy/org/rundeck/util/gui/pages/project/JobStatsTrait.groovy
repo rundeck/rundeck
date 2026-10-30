@@ -8,6 +8,7 @@ import org.openqa.selenium.WebElement
  */
 trait JobStatsTrait {
     abstract List<WebElement> els(By by)
+    abstract void waitForAnyElementPresent(By... locators)
 
     static By nextUiJobStatsBy = By.cssSelector('#_job_stats_main .vue-ui-socket')
     static By currentUiJobStatsBy = By.cssSelector('#_job_stats_main > .jobstats')
@@ -16,6 +17,7 @@ trait JobStatsTrait {
      * @return true if the Next UI socket placeholder is rendered in the job stats section
      */
     boolean hasNextUiJobStats() {
+        waitForAnyElementPresent(nextUiJobStatsBy, currentUiJobStatsBy)
         !els(nextUiJobStatsBy).isEmpty()
     }
 
@@ -23,6 +25,7 @@ trait JobStatsTrait {
      * @return true if the Current UI stats markup is rendered in the job stats section
      */
     boolean hasCurrentUiJobStats() {
+        waitForAnyElementPresent(nextUiJobStatsBy, currentUiJobStatsBy)
         !els(currentUiJobStatsBy).isEmpty()
     }
 }
