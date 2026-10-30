@@ -1086,20 +1086,24 @@ class BaseGitPlugin {
         String detail = redactUserInfo(error?.message)
         String line = "${actionText}: ${detail}"
         boolean redacted = actionText != action || detail != error?.message
+        //same reason as the logger split below: an unredacted cause survives on this exception
+        //even when its own message is clean - any caller logging it with log.error(msg, e) prints
+        //the cause's own message via the stack trace's "Caused by:" line, undoing the redaction
+        Exception cause = redacted ? null : error
         if (safe != null) {
             if (redacted) {
                 logger.warn(line)
             } else {
                 logger.warn(line, error)
             }
-            return new ScmPluginException(safe, error)
+            return new ScmPluginException(safe, cause)
         }
         if (redacted) {
             logger.debug(line)
         } else {
             logger.debug(line, error)
         }
-        return new ScmPluginException("${actionText}: ${detail}", error)
+        return new ScmPluginException("${actionText}: ${detail}", cause)
     }
 
     /**
@@ -1121,7 +1125,10 @@ class BaseGitPlugin {
         } else {
             logger.warn(line, error)
         }
-        return new ScmPluginException(line, error)
+        //same reason: an unredacted cause survives on this exception even when the message above
+        //is clean - any caller logging it with log.error(msg, e) prints the cause's own message
+        //via the stack trace's "Caused by:" line, undoing the redaction
+        return new ScmPluginException(line, redacted ? null : error)
     }
 
     /**

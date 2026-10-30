@@ -866,6 +866,52 @@ class BaseGitPluginSpec extends Specification {
         !failure.message.contains('secret-line')
     }
 
+    def "remoteAccessFailure drops the unredacted cause when a sensitive-transport error's message held credentials"() {
+        given: "the exception's own message is already safe (GitTransportErrors' generic message)," +
+                " but its cause must not leak the credential either - a caller logging this with" +
+                " log.error(msg, e) prints the cause's own message via the stack trace's 'Caused by:' line"
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new org.eclipse.jgit.errors.TransportException(
+                'fatal: repository https://user:secret@example.com/repo.git not found'
+        )
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository', leaked)
+
+        then:
+        failure.message == GitTransportErrors.GENERIC_ACCESS_MESSAGE
+        failure.cause == null
+    }
+
+    def "remoteAccessFailure drops the unredacted cause when a non-transport error's message held credentials"() {
+        given: "a failure GitTransportErrors doesn't replace (safe == null), so the exception's own" +
+                " message is the redacted one built here - the cause must match, not carry the raw text"
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new Exception('fatal: repository https://user:secret@example.com/repo.git not found')
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository', leaked)
+
+        then:
+        !failure.message.contains('secret')
+        failure.cause == null
+    }
+
+    def "localIoFailure drops the unredacted cause when the error message held credentials"() {
+        given:
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        def leaked = new java.io.IOException('fatal: repository https://user:secret@example.com/repo.git not found')
+
+        when:
+        def failure = plugin.localIoFailure('Failed configuring cloned repository', leaked)
+
+        then:
+        !failure.message.contains('secret')
+        failure.cause == null
+    }
+
     //Signed Jar classes cannot be directly mocked. Hence.....
     static abstract class RepositoryMock extends Repository {
         protected RepositoryMock(final BaseRepositoryBuilder options) {
