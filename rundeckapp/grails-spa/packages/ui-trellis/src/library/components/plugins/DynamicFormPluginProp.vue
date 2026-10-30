@@ -331,8 +331,9 @@ export default defineComponent({
       this.modalAddField = true;
     },
     addField() {
-      let field = {} as CustomField;
       this.duplicate = false;
+      // Nothing chosen from the options list: keep the modal open, add nothing.
+      if (this.useOptions && !this.selectedField?.value) return;
 
       const key =
         (this.useOptions ? this.selectedField?.value : this.newField) ?? "";
@@ -343,17 +344,10 @@ export default defineComponent({
           ? this.$t("message_fieldKeyOnlyDescription", [key])
           : this.$t("message_fieldKeyAppendedDescription", [typed, key]);
 
-      if (this.useOptions) {
-        field = { key, label: this.selectedField?.label, desc };
-      } else {
-        // Falls back to the key, per message_fieldLabelHelp.
-        field = {
-          key,
-          label: this.newLabelField.trim() || key,
-          value: "",
-          desc,
-        };
-      }
+      // Free-text label falls back to the key, per message_fieldLabelHelp.
+      const field: CustomField = this.useOptions
+        ? { key, label: this.selectedField?.label, desc }
+        : { key, label: this.newLabelField.trim() || key, value: "", desc };
       let exists = false;
       this.customFields.forEach((row: any) => {
         if (field.key === row.key) {

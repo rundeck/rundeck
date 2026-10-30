@@ -156,6 +156,28 @@ describe("DynamicFormPluginProp.vue", () => {
     const warningMessage = wrapper.find('[data-testid="duplicate-warning"]');
     expect(warningMessage.text()).toBe("Duplicate warning text");
   });
+  it.each([
+    ["cleared", null],
+    ["never chosen", { value: "", label: "" }],
+  ])("adds nothing when the options select is %s", async (_case, selection) => {
+    const wrapper = createWrapper();
+    await flushPromises();
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+    await wrapper
+      .findComponent(PtSelect)
+      .vm.$emit("update:modelValue", selection);
+    await flushPromises();
+
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    expect(wrapper.emitted("update:modelValue")).toBeFalsy();
+    expect(wrapper.findAll('[data-testid="field-item"]')).toHaveLength(1);
+  });
+
   it("updates field value on input change", async () => {
     const wrapper = createWrapper();
     await flushPromises();
