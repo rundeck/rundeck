@@ -866,10 +866,11 @@ class BaseGitPluginSpec extends Specification {
         !failure.message.contains('secret-line')
     }
 
-    def "remoteAccessFailure drops the unredacted cause when a sensitive-transport error's message held credentials"() {
+    def "remoteAccessFailure reconstructs a sensitive-transport error's cause with the credential redacted"() {
         given: "the exception's own message is already safe (GitTransportErrors' generic message)," +
-                " but its cause must not leak the credential either - a caller logging this with" +
-                " log.error(msg, e) prints the cause's own message via the stack trace's 'Caused by:' line"
+                " but its cause must not leak the credential either - while still being the same" +
+                " exception type, since clusterFixJobs()/keepClusterPullFailure() classify a pull" +
+                " failure by walking causedBy(e, JGitInternalException/GitAPIException) on this chain"
         def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
         plugin.branch = 'main'
         def leaked = new org.eclipse.jgit.errors.TransportException(
@@ -881,12 +882,16 @@ class BaseGitPluginSpec extends Specification {
 
         then:
         failure.message == GitTransportErrors.GENERIC_ACCESS_MESSAGE
-        failure.cause == null
+        failure.cause != null
+        failure.cause.class == leaked.class
+        !failure.cause.is(leaked)
+        !failure.cause.message.contains('secret')
     }
 
-    def "remoteAccessFailure drops the unredacted cause when a non-transport error's message held credentials"() {
+    def "remoteAccessFailure reconstructs a non-transport error's cause with the credential redacted"() {
         given: "a failure GitTransportErrors doesn't replace (safe == null), so the exception's own" +
-                " message is the redacted one built here - the cause must match, not carry the raw text"
+                " message is the redacted one built here - the cause must match it, and stay the" +
+                " same exception type, rather than carrying the raw text or being dropped entirely"
         def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
         plugin.branch = 'main'
         def leaked = new Exception('fatal: repository https://user:secret@example.com/repo.git not found')
@@ -896,10 +901,28 @@ class BaseGitPluginSpec extends Specification {
 
         then:
         !failure.message.contains('secret')
+        failure.cause != null
+        failure.cause.class == leaked.class
+        !failure.cause.is(leaked)
+        !failure.cause.message.contains('secret')
+    }
+
+    def "remoteAccessFailure drops the cause when its type has no (String) constructor to redact it with"() {
+        given: "an exception type that can't be rebuilt with a redacted message - dropping the" +
+                " cause entirely is still safer than keeping the credential-bearing original"
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new NoStringCtorException()
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository', leaked)
+
+        then:
+        !failure.message.contains('secret')
         failure.cause == null
     }
 
-    def "localIoFailure drops the unredacted cause when the error message held credentials"() {
+    def "localIoFailure reconstructs the cause with the credential redacted"() {
         given:
         def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
         def leaked = new java.io.IOException('fatal: repository https://user:secret@example.com/repo.git not found')
@@ -909,7 +932,16 @@ class BaseGitPluginSpec extends Specification {
 
         then:
         !failure.message.contains('secret')
-        failure.cause == null
+        failure.cause != null
+        failure.cause.class == leaked.class
+        !failure.cause.is(leaked)
+        !failure.cause.message.contains('secret')
+    }
+
+    static class NoStringCtorException extends RuntimeException {
+        NoStringCtorException() {
+            super('fatal: repository https://user:secret@example.com/repo.git not found')
+        }
     }
 
     //Signed Jar classes cannot be directly mocked. Hence.....

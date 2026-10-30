@@ -1071,6 +1071,27 @@ class BaseGitPlugin {
         return text.replaceAll('://[^/\\s@]*@', '://')
     }
 
+    /**
+     * Rebuilds {@code original} as a new instance of its exact runtime class, but with
+     * {@code redactedMessage} instead of its own (possibly credential-bearing) message - so
+     * {@link #causedBy} can still classify this cause's type (JGit's own exception classes - e.g.
+     * {@code TransportException}, {@code JGitInternalException} - all expose a {@code (String)}
+     * constructor for this), as {@code clusterFixJobs()}/{@code keepClusterPullFailure()} need to,
+     * without the original message (or its own further causes) surviving. Returns {@code null}
+     * when the type can't be safely reconstructed this way; a lost cause is still safer than a
+     * leaked credential.
+     */
+    private static Throwable redactedCauseOf(Throwable original, String redactedMessage) {
+        if (original == null) {
+            return null
+        }
+        try {
+            return original.class.getDeclaredConstructor(String).newInstance(redactedMessage)
+        } catch (Throwable ignored) {
+            return null
+        }
+    }
+
     ScmPluginException remoteAccessFailure(String action, Exception error, String branchName = branch) {
         String safe = GitTransportErrors.userFacing(error, branchName)
         String actionText = redactUserInfo(action)
@@ -1079,8 +1100,11 @@ class BaseGitPlugin {
         boolean redacted = actionText != action || detail != error?.message
         //same reason as the logger split below: an unredacted cause survives on this exception
         //even when its own message is clean - any caller logging it with log.error(msg, e) prints
-        //the cause's own message via the stack trace's "Caused by:" line, undoing the redaction
-        Exception cause = redacted ? null : error
+        //the cause's own message via the stack trace's "Caused by:" line, undoing the redaction.
+        //reconstruct the same type with the redacted message rather than dropping it outright, so
+        //clusterFixJobs()/keepClusterPullFailure()'s causedBy(e, JGitInternalException/
+        //GitAPIException/TransportException) checks still work on a redacted failure
+        Throwable cause = redacted ? redactedCauseOf(error, detail) : error
         if (safe != null) {
             if (redacted) {
                 logger.warn(line)
@@ -1116,10 +1140,8 @@ class BaseGitPlugin {
         } else {
             logger.warn(line, error)
         }
-        //same reason: an unredacted cause survives on this exception even when the message above
-        //is clean - any caller logging it with log.error(msg, e) prints the cause's own message
-        //via the stack trace's "Caused by:" line, undoing the redaction
-        return new ScmPluginException(line, redacted ? null : error)
+        //same reason, and same reconstruct-don't-drop approach, as remoteAccessFailure above
+        return new ScmPluginException(line, redacted ? redactedCauseOf(error, detail) : error)
     }
 
     /**

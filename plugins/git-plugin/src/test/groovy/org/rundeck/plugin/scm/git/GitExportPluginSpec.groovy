@@ -1948,6 +1948,52 @@ class GitExportPluginSpec extends Specification {
         status.error == failure
     }
 
+    def "cluster fix continues when the automatic pull fails with a credential-bearing transport error"() {
+        given: "remoteAccessFailure (what gitPull really calls) redacts a transport failure's" +
+                " message - this confirms its redacted cause still satisfies" +
+                " keepClusterPullFailure's causedBy(e, GitAPIException) check, so cluster" +
+                " alignment records the failure and continues instead of rethrowing it"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+        ScmOperationContext context = Mock(ScmOperationContext)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
+        git.close()
+        def plugin = new GitExportPlugin(config) {
+            @Override
+            PullResult gitPull(ScmOperationContext operationContext, Git git1 = null) {
+                throw remoteAccessFailure(
+                        'Failed pull from the repository',
+                        new TransportException(
+                                'fatal: repository https://user:secret@example.com/repo.git not found'
+                        )
+                )
+            }
+        }
+        plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'abc'
+            getScmImportMetadata() >> [:]
+        }
+
+        when:
+        def status = plugin.clusterFixJobs(context, [jobref])
+
+        then:
+        status.pull
+        status.error != null
+        !status.error.message.contains('secret')
+    }
+
     def "cluster fix still fails when the automatic pull fails for another reason"() {
         given:
         def gitdir = new File(tempdir, 'scm')
