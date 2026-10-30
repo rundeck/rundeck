@@ -221,8 +221,8 @@ jobs:
           # - caps the length.
           sanitize() {
             MAX="$1" perl -CSD -0777 -pe '
-              s/<!--.*?(?:-->|\z)//gs;
               s/[^\P{C}\n\t]//g;
+              1 while s/<!--.*?(?:-->|\z)//gs;
               s/(?<!\w)@(?=[A-Za-z0-9])/@\x{200B}/g;
               $_ = substr($_, 0, $ENV{MAX});
             '
