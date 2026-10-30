@@ -2,8 +2,6 @@ package org.rundeck.plugin.scriptnodestep
 
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
-import com.dtolabs.rundeck.core.dispatcher.ContextView
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -31,7 +29,7 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
     void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
-        
+
         // Default true: quoting enabled (secure). Set to false to disable (not recommended).
         String execQuotingEnabledProp = context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.enabled")
@@ -41,28 +39,20 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
 
         def arr = OptsUtil.burst(adhocRemoteString)
 
-        // Track which arguments contain property references BEFORE replacement
-        // Use the same pattern that replaceDataReferences uses for consistency
+        // Track which arguments contain property references BEFORE replacement.
+        // Actual substitution -- and, if quoting is enabled, per-reference quoting of each
+        // substituted value in place -- happens later, in ExecArgList.buildCommandForNode()
+        // (via ExecutionServiceImpl), once the target node's osFamily/commandInterpreter-specific
+        // quoting function is known. This only decides which arguments need it.
         def containsPropertyRef = arr.collect { arg ->
             arg.contains('${') && SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(arg).find()
         }
 
-        def result = SharedDataContextUtils.replaceDataReferencesInObject(
-                arr,
-                ContextView.node(entry.getNodename()),
-                ContextView::nodeStep,
-                null,
-                context.getExecutionContext().getSharedDataContext(),
-                false,
-                true
-        ) as String[]
-
-        // Build ExecArgList with proper quoting based on original property references
         def execArgListBuilder = ExecArgList.builder()
-        for (int i = 0; i < result.length; i++) {
+        for (int i = 0; i < arr.length; i++) {
             // Quote if: original contained property ref AND quoting enabled
             boolean shouldQuote = containsPropertyRef[i] && execQuotingEnabled
-            execArgListBuilder.arg(result[i], shouldQuote, featureQuotingBackwardCompatible)
+            execArgListBuilder.arg(arr[i], shouldQuote, featureQuotingBackwardCompatible)
         }
 
         NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(

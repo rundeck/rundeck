@@ -25,14 +25,24 @@ import com.dtolabs.rundeck.core.utils.Converter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A list of commandline arguments, with flags to indicate quoting.
  */
 public class ExecArgList {
+    // Matches SharedDataContextUtils's own (private) PROPERTY_VIEW_REF_PATTERN exactly -- compiled
+    // from its public regex string constant -- so that scanning a string for reference matches here
+    // (to detect their presence, and their flanking characters) stays in lockstep with the matches
+    // SharedDataContextUtils.replaceDataReferences() itself finds and substitutes.
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile(SharedDataContextUtils.PROPERTY_VIEW_REF_REGEX);
+
     List<ExecArg> args = new ArrayList<>();
 
     private ExecArgList() {
@@ -169,7 +179,9 @@ public class ExecArgList {
         );
 
         final ArrayList<String> commandList = new ArrayList<>();
-        CommandVisitor visiter = new CommandVisitor(commandList, quote, expand);
+        // legacy behavior: expand ignores the per-arg quoted flag; quoting (if any) is applied by
+        // convertAndQuote() to the whole expanded argument afterward, as it always has been here.
+        CommandVisitor visiter = new CommandVisitor(commandList, quote, (str, quoted) -> expand.convert(str), false);
         command.visitWith(visiter);
         return commandList;
     }
@@ -213,24 +225,106 @@ public class ExecArgList {
             String commandInterpreter
     )
     {
+        final Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter);
+        final boolean unixQuoting = "unix".equalsIgnoreCase(osFamily);
+        // When an argument is flagged for quoting, quote each substituted property/data reference's
+        // *value* in place as it's expanded, rather than quoting the whole expanded argument string
+        // afterward. This still protects against command injection via the reference's value -- the
+        // only untrusted part -- without corrupting job-authored quoting/text around the reference
+        // within a larger literal argument, e.g. sudo "sh script.sh ${option.name}" (see #10293,
+        // #10027, both regressions from whole-argument quoting introduced by RUN-4175 / PR #10003).
+        //
+        // Not every caller hands this method a raw, unsubstituted argument, though: some node step
+        // plugins (e.g. ScriptBasedRemoteScriptNodeStepPlugin, backing bundled script-type plugins)
+        // already resolve ${...} references themselves before building the ExecArgList. For those,
+        // there is no reference left here to quote in place, so an argument flagged "quoted" is
+        // treated as an already-materialized, opaque value and the *whole* string is quoted instead
+        // -- exactly the prior (pre-this-fix) behavior -- so injection protection isn't silently
+        // lost for callers that don't go through per-reference substitution here.
+        //
+        // One more wrinkle (Unix only -- see #10027, and the Copilot review on rundeck#10608): if the
+        // job author already wrapped the reference in their own matching quote characters, e.g.
+        // -TenantPath '${option.TenantPath}', wrapping the substituted value in a *second* pair of
+        // quotes doesn't nest -- it closes the author's quote early, so a value like "x; whoami"
+        // becomes ''x; whoami'' with the ';' sitting unquoted between two empty pairs, an actual
+        // injection. In that case the value must instead be escaped for insertion *inside* the
+        // author's existing quotes, not wrapped in a new pair. This is only implemented here for the
+        // Unix single-quote case (the one actually reported); the equivalent for Windows quoting is
+        // not covered by this fix and should be reviewed separately if it comes up in practice.
+        final Converter<String, String> quotePerReference =
+                value -> quote.convert(DataContextUtils.replaceMissingOptionsWithBlank.convert(value));
 
         final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(
                 commandList,
-                CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter),
-                str -> SharedDataContextUtils.replaceDataReferences(
-                        str,
-                        sharedContext,
-                        //add node name to qualifier to read node-data first
-                        ContextView.node(nodeName),
-                        ContextView::nodeStep,
-                        DataContextUtils.replaceMissingOptionsWithBlank,
-                        false,
-                        false
-                )
+                quote,
+                (str, quoted) -> {
+                    boolean hasReference = str.contains("${") && REFERENCE_PATTERN.matcher(str).find();
+                    if (quoted && quote != null && !hasReference) {
+                        // Already substituted (or never had a reference) upstream: nothing to
+                        // substitute here, so quote the whole value as received.
+                        return quote.convert(str);
+                    }
+                    Converter<String, String> valueConverter;
+                    if (quoted && quote != null && unixQuoting) {
+                        valueConverter = unixQuotePerReferenceRespectingAuthorQuotes(str, quote);
+                    } else {
+                        valueConverter = quoted && quote != null ? quotePerReference : DataContextUtils.replaceMissingOptionsWithBlank;
+                    }
+                    return SharedDataContextUtils.replaceDataReferences(
+                            str,
+                            sharedContext,
+                            //add node name to qualifier to read node-data first
+                            ContextView.node(nodeName),
+                            ContextView::nodeStep,
+                            valueConverter,
+                            false,
+                            false
+                    );
+                },
+                // quoting (when applicable) is already embedded above during expansion
+                true
         );
         command.visitWith(visiter);
         return commandList;
+    }
+
+    /**
+     * Builds a per-reference value converter for the Unix shell case that accounts for a reference
+     * already being directly flanked by a matching quote character the job author wrote themselves
+     * (e.g. {@code '${option.name}'}). For such a reference, the value is escaped for insertion
+     * *inside* that existing quote (only the quote character itself needs escaping, using the
+     * standard {@code '\''} technique -- everything else is already inert inside single quotes)
+     * rather than being wrapped in a second, conflicting pair of quotes. References not flanked this
+     * way fall back to the normal standalone-argument quoting.
+     * <br>
+     * Relies on {@code SharedDataContextUtils.replaceDataReferences(...)} invoking the returned
+     * converter once per reference match, in the same left-to-right order as the
+     * {@link Matcher#find()} scan performed here to precompute each match's flanking characters.
+     *
+     * @param str   the argument string as received, containing the reference(s) to be substituted
+     * @param quote the standalone-argument Unix quoting function, used as the fallback
+     * @return a converter to pass as the per-reference value converter to replaceDataReferences
+     */
+    private static Converter<String, String> unixQuotePerReferenceRespectingAuthorQuotes(String str, Converter<String, String> quote) {
+        List<Character> flankingQuotes = new ArrayList<>();
+        Matcher m = REFERENCE_PATTERN.matcher(str);
+        while (m.find()) {
+            char before = m.start() > 0 ? str.charAt(m.start() - 1) : '\0';
+            char after = m.end() < str.length() ? str.charAt(m.end()) : '\0';
+            flankingQuotes.add(before == after && before == '\'' ? Character.valueOf('\'') : null);
+        }
+        Iterator<Character> flanks = flankingQuotes.iterator();
+        return value -> {
+            String blanked = DataContextUtils.replaceMissingOptionsWithBlank.convert(value);
+            Character flank = flanks.hasNext() ? flanks.next() : null;
+            if (flank != null) {
+                // Already inside the author's own single quotes: escape only embedded single
+                // quotes (close, escaped literal quote, reopen); do not add another quote pair.
+                return blanked.replace("'", "'\\''");
+            }
+            return quote.convert(blanked);
+        };
     }
 
     /**
@@ -239,18 +333,33 @@ public class ExecArgList {
     private static class CommandVisitor implements ExecArg.Visitor {
         private final ArrayList<String> commandList;
         final Converter<String, String> quote;
-        final Converter<String, String> expand;
+        /** Expands an argument string; given the arg's "quoted" flag, since some callers embed
+         * per-reference quoting into expansion itself (see quoteAppliedDuringExpand). */
+        final BiFunction<String, Boolean, String> expand;
+        /** True if {@link #expand}, when called with quoted=true, already applies whatever quoting
+         * is needed internally, so {@link #convertAndQuote} must not quote that (already fully
+         * expanded) result again. Only applies when the arg is actually flagged quoted: when
+         * quoted=false, {@link #expand} performs no quoting either way, so the legacy
+         * featureQuotingBackwardCompatible fallback below still applies exactly as before. */
+        final boolean quoteAppliedDuringExpand;
 
-        private CommandVisitor(ArrayList<String> commandList, Converter<String, String> quote, Converter<String,
-                String> expand) {
+        private CommandVisitor(
+                ArrayList<String> commandList,
+                Converter<String, String> quote,
+                BiFunction<String, Boolean, String> expand,
+                boolean quoteAppliedDuringExpand
+        ) {
             this.commandList = commandList;
             this.quote = quote;
             this.expand = expand;
+            this.quoteAppliedDuringExpand = quoteAppliedDuringExpand;
         }
 
         public String convertAndQuote(String s, boolean quoted, boolean featureQuotingBackwardCompatible) {
-            String replaced = expand.convert(s);
-            if (quote != null && quoted || featureQuotingBackwardCompatible && !replaced.equals(s)) {
+            String replaced = expand.apply(s, quoted);
+            boolean alreadyQuotedByExpand = quoted && quoteAppliedDuringExpand;
+            if (!alreadyQuotedByExpand
+                && (quote != null && quoted || featureQuotingBackwardCompatible && !replaced.equals(s))) {
                 replaced = quote.convert(replaced);
             }
             return replaced;
@@ -259,7 +368,7 @@ public class ExecArgList {
         @Override
         public void visit(ExecArg arg) {
             if (arg.isList()) {
-                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<>(), quote, expand);
+                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<>(), quote, expand, quoteAppliedDuringExpand);
                 for (ExecArg execArg : arg.getList()) {
                     execArg.accept(commandVisitor);
                 }
