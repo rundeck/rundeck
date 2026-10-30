@@ -58,6 +58,33 @@ const createWrapper = (props = {}) => {
   });
 };
 
+// Each entry point mounts one Vue app per element, and useId() is only
+// unique within a single app, so the entry points give each app its own
+// app.config.idPrefix. Mount the component as two separate apps, like the
+// entry points do.
+const mountInOwnApp = async (idPrefix?: string) => {
+  const wrapper = mount(DynamicFormPluginProp, {
+    props: { fields: "{}", hasOptions: "false", name: "sameName" },
+    global: {
+      mocks: { $t: translate },
+      components: { Btn, Modal },
+      plugins: [
+        (app: any) => {
+          if (idPrefix) app.config.idPrefix = idPrefix;
+        },
+      ],
+      stubs: {
+        Modal: {
+          template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
+        },
+      },
+    },
+  });
+  await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+  await flushPromises();
+  return wrapper.find('[data-testid="field-key-input"]').attributes("id");
+};
+
 describe("DynamicFormPluginProp.vue", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -129,6 +156,28 @@ describe("DynamicFormPluginProp.vue", () => {
     const warningMessage = wrapper.find('[data-testid="duplicate-warning"]');
     expect(warningMessage.text()).toBe("Duplicate warning text");
   });
+  it.each([
+    ["cleared", null],
+    ["never chosen", { value: "", label: "" }],
+  ])("adds nothing when the options select is %s", async (_case, selection) => {
+    const wrapper = createWrapper();
+    await flushPromises();
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+    await wrapper
+      .findComponent(PtSelect)
+      .vm.$emit("update:modelValue", selection);
+    await flushPromises();
+
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    expect(wrapper.emitted("update:modelValue")).toBeFalsy();
+    expect(wrapper.findAll('[data-testid="field-item"]')).toHaveLength(1);
+  });
+
   it("updates field value on input change", async () => {
     const wrapper = createWrapper();
     await flushPromises();
@@ -138,6 +187,151 @@ describe("DynamicFormPluginProp.vue", () => {
     await flushPromises();
     const updatedFieldValue = (wrapper.vm as any).customFields[0].value;
     expect(updatedFieldValue).toBe("Updated Value");
+  });
+
+  it("shows help text for the Field Label and Field Key inputs on the free-text path", async () => {
+    // The "Add Field" modal previously gave no guidance on what these two
+    // inputs mean, which made it easy to not realize the label is optional
+    // and falls back to the key.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="field-label-help"]').text()).toContain(
+      "message_fieldLabelHelp",
+    );
+    expect(wrapper.find('[data-testid="field-key-help"]').text()).toContain(
+      "message_fieldKeyHelp",
+    );
+  });
+
+  it("associates the Field Key and Field Label inputs with their labels and help text", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    const keyInput = wrapper.find('[data-testid="field-key-input"]');
+    const keyHelp = wrapper.find('[data-testid="field-key-help"]');
+    expect(keyInput.attributes("id")).toBeTruthy();
+    expect(keyInput.attributes("aria-describedby")).toBe(
+      keyHelp.attributes("id"),
+    );
+
+    const labelInput = wrapper.find('[data-testid="field-label-input"]');
+    const labelHelp = wrapper.find('[data-testid="field-label-help"]');
+    expect(labelInput.attributes("id")).toBeTruthy();
+    expect(labelInput.attributes("aria-describedby")).toBe(
+      labelHelp.attributes("id"),
+    );
+
+    const descriptionInput = wrapper.find(
+      '[data-testid="field-description-input"]',
+    );
+    const descriptionHelp = wrapper.find(
+      '[data-testid="new-field-description-help"]',
+    );
+    expect(descriptionInput.attributes("id")).toBeTruthy();
+    expect(descriptionInput.attributes("aria-describedby")).toBe(
+      descriptionHelp.attributes("id"),
+    );
+
+    expect(
+      wrapper.find('[data-testid="field-key-label"]').attributes("for"),
+    ).toBe(keyInput.attributes("id"));
+    expect(
+      wrapper.find('[data-testid="field-label-label"]').attributes("for"),
+    ).toBe(labelInput.attributes("id"));
+    expect(
+      wrapper.find('[data-testid="field-description-label"]').attributes("for"),
+    ).toBe(descriptionInput.attributes("id"));
+  });
+
+  describe("ids across independent Vue apps", () => {
+    it("generates different ids when each app has a distinct idPrefix", async () => {
+      const idA = await mountInOwnApp("dynamic-form-0");
+      const idB = await mountInOwnApp("dynamic-form-1");
+
+      expect(idA).toContain("dynamic-form-0");
+      expect(idB).toContain("dynamic-form-1");
+      expect(idA).not.toBe(idB);
+    });
+
+    it("collides when two apps share the default idPrefix", async () => {
+      // Guards the premise: without the per-app prefix the ids are identical.
+      const idA = await mountInOwnApp();
+      const idB = await mountInOwnApp();
+
+      expect(idA).toBeTruthy();
+      expect(idA).toBe(idB);
+    });
+  });
+
+  it("shows help text for the Description input using its own key, not the reused message_empty", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(
+      wrapper.find('[data-testid="new-field-description-help"]').text(),
+    ).toBe("message_fieldDescriptionHelp");
+  });
+
+  it("falls back the stored label to the Key when the Field Label is left blank on the free-text path", async () => {
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("env_name");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    const emitted = wrapper.emitted("update:modelValue");
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields[1].label).toBe("env_name");
+  });
+
+  it("adds a field when both the Field Key and Field Label are left blank", async () => {
+    // Label-only consumers accept keyless rows, so the editor must not block them.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("");
+    await wrapper.find('[data-testid="field-label-input"]').setValue("");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    const emitted = wrapper.emitted("update:modelValue");
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields).toHaveLength(2);
+    expect(lastEmittedFields[1]).toMatchObject({ key: "", label: "" });
+  });
+
+  it("renders a stored field with a blank label as just its Key, without mutating it", async () => {
+    const wrapper = createWrapper({
+      fields: JSON.stringify({
+        legacy_field: {
+          key: "legacy_field",
+          label: "",
+          value: "",
+          desc: "Legacy description",
+        },
+      }),
+    });
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="field-item-label"]').text()).toBe(
+      "legacy_field",
+    );
+    expect(wrapper.emitted("update:modelValue")).toBeFalsy();
   });
 
   it("uses a component input when no host element is supplied", async () => {

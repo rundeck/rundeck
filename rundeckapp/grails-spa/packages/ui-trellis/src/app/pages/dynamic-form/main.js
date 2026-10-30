@@ -40,6 +40,9 @@ export const mountDynamicForms = () => {
     });
     app.use(VueCookies);
     app.use(i18n);
+    // useId() is only unique within one app; each .dynamic-form-vue element gets
+    // its own app instance, so give each a distinct prefix to avoid id collisions.
+    app.config.idPrefix = `dynamic-form-${i}`;
     app.mount(el);
   }
 };

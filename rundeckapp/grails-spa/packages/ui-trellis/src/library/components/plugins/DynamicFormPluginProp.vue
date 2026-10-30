@@ -7,7 +7,6 @@
       :name="name"
       data-testid="dynamic-form-value-input"
     />
-    <hr />
 
     <div v-if="customFields != null">
       <div
@@ -16,9 +15,11 @@
         :class="['form-group']"
         data-testid="field-item"
       >
-        <label class="col-sm-2 control-label input-sm">{{
-          field.label || field.key
-        }}</label>
+        <label
+          class="col-sm-2 control-label input-sm"
+          data-testid="field-item-label"
+          >{{ field.label?.trim() || field.key }}</label
+        >
         <div class="col-sm-9">
           <input
             v-model="field.value"
@@ -73,7 +74,8 @@
           type="warning"
           data-testid="duplicate-warning"
           ref="duplicateWarningRef"
-          ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
+          ><b>{{ $t("message_warning") }}</b>
+          {{ $t("message_duplicated") }}.</alert
         >
 
         <div class="col-md-10">
@@ -98,55 +100,86 @@
                 />
               </div>
             </div>
-
-            <div :class="['form-data']">
-              <label class="col-md-4">{{ $t("message_description") }}</label>
-              <div class="col-md-8">
-                <input
-                  v-model="newFieldDescription"
-                  type="text"
-                  :class="['form-control']"
-                  data-testid="field-description-input"
-                />
-                <div class="help-block">{{ $t("message_empty") }}</div>
-              </div>
-            </div>
           </div>
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
+              <label
+                class="col-md-4"
+                :for="`${uid}-key-input`"
+                data-testid="field-key-label"
+                >{{ $t("message_fieldKey") }}</label
+              >
               <div class="col-md-8">
                 <input
-                  v-model="newLabelField"
-                  type="text"
-                  :class="['form-control']"
-                  data-testid="field-label-input"
-                />
-              </div>
-            </div>
-            <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldKey") }}</label>
-              <div class="col-md-8">
-                <input
+                  :id="`${uid}-key-input`"
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
+                  :aria-describedby="`${uid}-key-help`"
                   data-testid="field-key-input"
                 />
+                <div
+                  :id="`${uid}-key-help`"
+                  class="help-block"
+                  data-testid="field-key-help"
+                >
+                  {{ $t("message_fieldKeyHelp") }}
+                </div>
               </div>
             </div>
-
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_description") }}</label>
+              <label
+                class="col-md-4"
+                :for="`${uid}-label-input`"
+                data-testid="field-label-label"
+                >{{ $t("message_fieldLabel") }}</label
+              >
               <div class="col-md-8">
                 <input
+                  :id="`${uid}-label-input`"
+                  v-model="newLabelField"
+                  type="text"
+                  :class="['form-control']"
+                  :aria-describedby="`${uid}-label-help`"
+                  data-testid="field-label-input"
+                />
+                <div
+                  :id="`${uid}-label-help`"
+                  class="help-block"
+                  data-testid="field-label-help"
+                >
+                  {{ $t("message_fieldLabelHelp") }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form">
+            <div :class="useOptions ? 'form-data' : 'form-group'">
+              <label
+                class="col-md-4"
+                :for="`${uid}-description-input`"
+                data-testid="field-description-label"
+              >
+                {{ $t("message_description") }}
+              </label>
+              <div class="col-md-8">
+                <input
+                  :id="`${uid}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
+                  :aria-describedby="`${uid}-description-help`"
                   data-testid="field-description-input"
                 />
-                <div class="help-block">{{ $t("message_empty") }}</div>
+                <div
+                  :id="`${uid}-description-help`"
+                  class="help-block"
+                  data-testid="new-field-description-help"
+                >
+                  {{ $t("message_fieldDescriptionHelp") }}
+                </div>
               </div>
             </div>
           </div>
@@ -179,7 +212,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, useId } from "vue";
 import { Btn, Alert, Modal } from "uiv";
 import PtSelect from "../primeVue/PtSelect/PtSelect.vue";
 
@@ -222,6 +255,9 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
+  setup() {
+    return { uid: useId() };
+  },
   data() {
     return {
       customFields: [] as CustomField[],
@@ -291,54 +327,27 @@ export default defineComponent({
       }
     },
     openNewField() {
+      this.duplicate = false;
       this.modalAddField = true;
     },
     addField() {
-      let field = {} as CustomField;
       this.duplicate = false;
+      // Nothing chosen from the options list: keep the modal open, add nothing.
+      if (this.useOptions && !this.selectedField?.value) return;
 
-      if (this.useOptions) {
-        if (this.selectedField !== null) {
-          const newField = this.selectedField;
+      const key =
+        (this.useOptions ? this.selectedField?.value : this.newField) ?? "";
 
-          let description = this.newFieldDescription;
-          if (description == "") {
-            description = this.$t("message_fieldKeyOnlyDescription", [
-              newField.value,
-            ]);
-          } else {
-            description = this.$t("message_fieldKeyAppendedDescription", [
-              description,
-              newField.value,
-            ]);
-          }
+      const typed = this.newFieldDescription;
+      const desc =
+        typed == ""
+          ? this.$t("message_fieldKeyOnlyDescription", [key])
+          : this.$t("message_fieldKeyAppendedDescription", [typed, key]);
 
-          field = {
-            key: newField.value,
-            label: newField.label,
-            desc: description,
-          };
-        }
-      } else {
-        let description = this.newFieldDescription;
-        if (description == "") {
-          description = this.$t("message_fieldKeyOnlyDescription", [
-            this.newField,
-          ]);
-        } else {
-          description = this.$t("message_fieldKeyAppendedDescription", [
-            description,
-            this.newField,
-          ]);
-        }
-
-        field = {
-          key: this.newField,
-          label: this.newLabelField,
-          value: "",
-          desc: description,
-        };
-      }
+      // Free-text label falls back to the key, per message_fieldLabelHelp.
+      const field: CustomField = this.useOptions
+        ? { key, label: this.selectedField?.label, desc }
+        : { key, label: this.newLabelField.trim() || key, value: "", desc };
       let exists = false;
       this.customFields.forEach((row: any) => {
         if (field.key === row.key) {
