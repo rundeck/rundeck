@@ -18,6 +18,7 @@
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
+            @input="changeField()"
             @change="changeField()"
             :data-testid="'field-input-' + index"
           />
@@ -113,7 +114,6 @@
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
-                  required
                   :aria-describedby="`${uid}-key-help`"
                   data-testid="field-key-input"
                 />
@@ -256,6 +256,9 @@ export default defineComponent({
       newLabelField: "",
       newFieldDescription: "",
       selectedField: { value: "", label: "" },
+      // Last JSON string handed to the parent (and the hidden input), or null
+      // when nothing has been emitted since the last sync from the prop.
+      lastEmitted: null as string | null,
     };
   },
   watch: {
@@ -263,10 +266,16 @@ export default defineComponent({
       // Keep local state in sync if the prop changes after mount (e.g. the
       // parent round-trips the value through its own v-model chain). Skip
       // when the incoming value already matches what we just emitted
-      // ourselves, to avoid fighting with in-flight edits.
-      if (newFields === JSON.stringify(this.customFields)) {
+      // ourselves, to avoid fighting with in-flight edits. Emits happen on
+      // every keystroke, so a late echo of an older emit must not overwrite
+      // newer typing either.
+      if (
+        newFields === this.lastEmitted ||
+        newFields === JSON.stringify(this.customFields)
+      ) {
         return;
       }
+      this.lastEmitted = null;
       this.syncFieldsFromProp(newFields);
     },
   },
@@ -379,8 +388,14 @@ export default defineComponent({
     changeField() {
       this.refreshPlugin();
     },
+    /**
+     * Publishes the current fields as JSON to the hidden form input and to the
+     * parent. Called on every input event (so a save that fires without a
+     * blur still sees the typed value), on change, and on add/remove.
+     */
     refreshPlugin() {
       const fieldsJson = JSON.stringify(this.customFields);
+      this.lastEmitted = fieldsJson;
       const hiddenFieldInput = this.$refs.hiddenFieldInput as HTMLInputElement;
       if (hiddenFieldInput) {
         hiddenFieldInput.value = fieldsJson;
