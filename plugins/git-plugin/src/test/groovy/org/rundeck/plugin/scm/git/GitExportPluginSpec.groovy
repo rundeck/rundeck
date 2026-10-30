@@ -1171,6 +1171,23 @@ class GitExportPluginSpec extends Specification {
         null     | 'a@b'     | 'committerName'
     }
 
+    def "cleanup closes the current repository"() {
+        given: "cleanup() used to call git.close(), a no-op once closeRepo=false (true for every" +
+                " repo reload except the very first clone) - it must close the Repository directly"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def plugin = new GitExportPlugin(config)
+        def repo = Mock(BaseGitPluginSpec.RepositoryMock)
+        plugin.git = new Git(repo)
+
+        when:
+        plugin.cleanup()
+
+        then:
+        1 * repo.close()
+    }
+
     def "job change delete removes file"() {
         given:
 

@@ -810,6 +810,49 @@ class GitImportPluginSpec extends Specification {
         status.jobRenamed.renamedPath == "job1-rename-123.xml"
     }
 
+    def "getFileDiff deletes its temp serialization file even on the not-found early return"() {
+        given: "a job whose path has no commit history, so getFileDiff hits the early" +
+                " not-found return before reaching its own temp.delete() in the finally block" +
+                " would otherwise be skipped if that early return bypassed it"
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [:]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getJobSerializer() >> Mock(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+
+        def tempPrefix = "${GitImportPlugin.class.name}-serializeTemp"
+        def tmpDir = new File(System.getProperty('java.io.tmpdir'))
+        def before = (tmpDir.listFiles() ?: ([] as File[])).findAll { it.name.startsWith(tempPrefix) }
+
+        when:
+        def status = plugin.getFileDiff(job, null)
+
+        then:
+        status != null
+        status.newNotFound
+        def after = (tmpDir.listFiles() ?: ([] as File[])).findAll { it.name.startsWith(tempPrefix) }
+        after.size() == before.size()
+    }
+
     def "get diff status renamed job"() {
         given:
         def projectName = 'GitImportPluginSpec'

@@ -434,6 +434,43 @@ class BaseGitPluginSpec extends Specification {
         'yaml' | _
     }
 
+    def "serialize and serializeTemp do not register a deleteOnExit hook for their temp files"() {
+        given: "deleteOnExit() permanently roots a file's name in the static, JVM-wide" +
+                " DeleteOnExitHook set, which is never pruned - both methods must delete their" +
+                " temp files directly (serialize() in a finally block, serializeTemp() on failure" +
+                " and via the caller once done with the file it returns) instead of relying on it"
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference) {
+            getVersion() >> 1L
+            getJobSerializer() >> Mock(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+        base.mapper.fileForJob(_) >> outfile
+
+        int deleteOnExitCalls = 0
+        def originalDeleteOnExit = File.metaClass.getMetaMethod('deleteOnExit')
+        File.metaClass.deleteOnExit = { ->
+            deleteOnExitCalls++
+            originalDeleteOnExit.invoke(delegate)
+        }
+
+        when:
+        base.serialize(job, 'xml', true, false)
+        def tempResult = base.serializeTemp(job, 'xml', true, false)
+
+        then:
+        deleteOnExitCalls == 0
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(File)
+        tempResult?.delete()
+    }
+
     def "fetch from remote clean"() {
         given:
         Common config = new Common()
