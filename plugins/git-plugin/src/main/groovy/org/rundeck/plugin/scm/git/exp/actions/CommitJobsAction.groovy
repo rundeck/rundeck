@@ -83,6 +83,11 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
     ) throws ScmPluginException {
         //determine action
         def internal = plugin.getStatusInternal(context, false)
+        if (internal.state == SynchState.LOADING) {
+            //gitStatus is only set on the non-LOADING path (the brief bulk-init window) - reading
+            //it here would NPE instead of giving the user something actionable
+            throw new ScmPluginException("Git status is still loading, please try again shortly")
+        }
         def localGitChanges = !internal.gitStatus.isClean()
 
         RevCommit commit

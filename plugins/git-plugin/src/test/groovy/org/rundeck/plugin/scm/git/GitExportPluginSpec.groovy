@@ -382,6 +382,95 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "job commit during the bulk-init LOADING window fails with an actionable message instead of NPE"() {
+        given: "item 32's bulkStatusLoading flag is set (the brief bulk-init window), so" +
+                " getStatusInternal returns LOADING with gitStatus == null"
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        git.close()
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobExportReference)
+        plugin.initJobsStatus([jobref])
+
+        when:
+        plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, [message: 'test'])
+
+        then:
+        ScmPluginException e = thrown()
+        e.message == "Git status is still loading, please try again shortly"
+    }
+
+    def "get input view for push action during the bulk-init LOADING window does not NPE"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        git.close()
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobExportReference)
+        plugin.initJobsStatus([jobref])
+
+        when:
+        def view = plugin.getInputViewForAction(ctxt, GitExportPlugin.PROJECT_PUSH_ACTION_ID)
+
+        then:
+        noExceptionThrown()
+        view.properties.find { it.name == 'status' }.defaultValue.contains('still loading')
+    }
+
+    def "get input view for synch action during the bulk-init LOADING window does not NPE"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        git.close()
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobExportReference)
+        plugin.initJobsStatus([jobref])
+
+        when:
+        def view = plugin.getInputViewForAction(ctxt, GitExportPlugin.PROJECT_SYNCH_ACTION_ID)
+
+        then:
+        noExceptionThrown()
+        view.properties.find { it.name == 'status' }.defaultValue.contains('still loading')
+    }
+
+    def "synch action perform during the bulk-init LOADING window fails with an actionable message instead of NPE"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        git.close()
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        def jobref = Stub(JobExportReference)
+        plugin.initJobsStatus([jobref])
+
+        when:
+        plugin.export(ctxt, GitExportPlugin.PROJECT_SYNCH_ACTION_ID, [jobref] as Set, [] as Set, [:])
+
+        then:
+        ScmPluginException e = thrown()
+        e.message == "Git status is still loading, please try again shortly"
+    }
+
     static Export createTestConfig(File gitdir, File origindir, Map<String, String> override = [:]) {
         Map<String, String> input = [
                 dir                  : gitdir.absolutePath,

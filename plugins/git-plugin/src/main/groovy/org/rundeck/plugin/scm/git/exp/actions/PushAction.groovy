@@ -40,6 +40,9 @@ class PushAction extends BaseAction implements GitExportAction {
     @Override
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
         def status = plugin.getStatusInternal(context, false)
+        //status.message is only set on the non-LOADING path (the brief bulk-init window) -
+        //null-safe default avoids NPEing on it
+        def statusMessage = status.message ?: "Git status is still loading, please try again shortly"
         BuilderUtil.inputViewBuilder(id) {
             title "Push remote Git changes"
             buttonTitle "Push"
@@ -49,7 +52,7 @@ class PushAction extends BaseAction implements GitExportAction {
                         title "Export Status"
                         renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
                         renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
-                        defaultValue status.message + """
+                        defaultValue statusMessage + """
 
 Pushing to remote branch: `${plugin.branch}`"""
                     },
