@@ -12,6 +12,7 @@ import rundeck.CommandExec
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.JobFromMapSerializer
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -368,6 +369,38 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             "xml"  | getJobXmlScriptfile(true)
             "yaml" | getJobYamlScriptfile(true)
     }
+
+    def "createJobSerializer excludes the job user from serialized output"() {
+        given:
+        def se = new ScheduledExecution([
+                jobName       : 'blue',
+                project       : 'AProject',
+                groupPath     : 'some/where',
+                description   : 'a job',
+                user          : 'alice',
+                workflow      : new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                ),
+                serverNodeUUID: null
+        ]).save()
+        def out = new ByteArrayOutputStream()
+
+        when:
+        def serializer = rundeckJobDefinitionManager.createJobSerializer(se)
+        serializer.serialize(format, out)
+        def output = out.toString('UTF-8')
+
+        then:
+        rundeckJobDefinitionManager.jobToMap(se).user == 'alice'
+        !((JobFromMapSerializer) serializer).data.containsKey('user')
+        output.contains('blue')
+        !output.contains('alice')
+
+        where:
+        format << ['yaml', 'xml']
+    }
+
     static final String XML_PREFIX = '''<joblist>
   <job>
     <description>a job</description>
