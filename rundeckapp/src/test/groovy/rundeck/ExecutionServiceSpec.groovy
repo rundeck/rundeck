@@ -8103,4 +8103,47 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * executionListener.log(0, { it.contains("Error executing runner workflow") })
     }
 
+    def "respondExecutionsJson includes summary for adhoc executions without executionSummary"() {
+        given:
+        def job = new ScheduledExecution(createJobParams())
+        Execution adhoc = new Execution(project: 'AProject', user: 'bob', dateStarted: new Date())
+        adhoc.setWorkflowData(new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hello')]))
+        Execution jobExec = new Execution(
+                project: 'AProject',
+                user: 'bob',
+                dateStarted: new Date(),
+                scheduledExecution: job,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test buddy')])
+        )
+        service.apiService = Mock(ApiService)
+
+        when:
+        service.respondExecutionsJson(null, null, [adhoc, jobExec], [:], new ExecutionQuery(executionSummary: summary))
+
+        then:
+        1 * service.apiService.respondExecutionsJson(_, _, _, _) >> { args ->
+            List<Map> execlist = args[2]
+            assert execlist[0].summary == 'echo hello'
+            assert execlist[1].summary == expectedJobSummary
+            null
+        }
+
+        where:
+        summary | expectedJobSummary
+        false   | null
+        true    | 'test buddy'
+    }
+
+    def "createExecutionLogMDCdata includes command for adhoc execution with workflow json"() {
+        given:
+        Execution adhoc = new Execution(project: 'AProject', user: 'bob', dateStarted: new Date())
+        adhoc.setWorkflowData(new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hello')]))
+
+        when:
+        def (Map mdcprops, String message) = service.createExecutionLogMDCdata(adhoc)
+
+        then:
+        mdcprops.command == 'echo hello'
+        message.contains(' command: echo hello')
+    }
 }
