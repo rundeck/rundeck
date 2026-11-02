@@ -15,9 +15,11 @@
  */
 package rundeckapp.init
 
+import grails.plugins.GrailsPluginManager
 import org.grails.spring.context.support.PluginAwareResourceBundleMessageSource
 import spock.lang.Specification
 import spock.lang.TempDir
+import spock.lang.Unroll
 
 import java.lang.reflect.Field
 
@@ -57,67 +59,60 @@ class RundeckExtendedMessageBundleTest extends Specification {
 
     }
 
-    def "configured source resolves administrator then public then original per key and locale"() {
+    /**
+     * The genuine production key existed before the POC with {@code Create}
+     * in messages.properties and {@code Crear} in messages_es_419.properties.
+     */
+    @Unroll
+    def "Core default resolves #scenario"() {
         given:
         File originalDirectory = new File(temporaryDirectory, "original")
         File publicDirectory = new File(temporaryDirectory, "public")
         File administratorDirectory = new File(temporaryDirectory, "administrator")
         [originalDirectory, publicDirectory, administratorDirectory]*.mkdirs()
-        new File(originalDirectory, "messages.properties").text = '''
-translation.poc.conflict=legacy-value
-translation.poc.legacy-only=legacy-only-value
-translation.poc.locale-fallback=legacy-default-value
-'''
-        new File(originalDirectory, "messages_fr.properties").text =
-                'translation.poc.locale-original-only=legacy-french-value\n'
-        new File(publicDirectory, "public-messages.properties").text = '''
-translation.poc.conflict=canonical-value
-translation.poc.canonical-only=canonical-only-value
-'''
-        new File(publicDirectory, "public-messages_fr.properties").text =
-                'translation.poc.locale-conflict=canonical-french-value\n'
-        new File(originalDirectory, "messages_fr.properties") <<
-                'translation.poc.locale-conflict=legacy-french-value\n'
-        new File(administratorDirectory, "messages.properties").text =
-                'translation.poc.conflict=administrator-value\n'
+        writeBundle(originalDirectory, "messages.properties", legacyDefault)
+        writeBundle(originalDirectory, "messages_es_419.properties", legacyLocalized)
+        writeBundle(publicDirectory, "public-messages.properties", canonicalDefault)
+        writeBundle(publicDirectory, "public-messages_es_419.properties", canonicalLocalized)
+        writeBundle(administratorDirectory, "messages.properties", administrator)
 
         PluginAwareResourceBundleMessageSource messageSource =
-                new PluginAwareResourceBundleMessageSource(null, null)
+                new PluginAwareResourceBundleMessageSource(
+                        null,
+                        Mock(GrailsPluginManager) {
+                            getAllPlugins() >> []
+                        }
+                )
         messageSource.setDefaultEncoding("UTF-8")
         messageSource.setBasenames("file:${originalDirectory.absolutePath}/messages")
 
         when:
         new RundeckExtendedMessageBundle(
                 messageSource,
-                "file:${publicDirectory.absolutePath}/public-messages"
-        )
-        new RundeckExtendedMessageBundle(
-                messageSource,
-                "file:${administratorDirectory.absolutePath}/messages"
+                "file:${administratorDirectory.absolutePath}/messages",
+                "file:${publicDirectory.absolutePath}/public-messages",
+                "file:${originalDirectory.absolutePath}/messages"
         )
 
-        then: "the identical key proves administrator precedence through getMessage"
-        messageSource.getMessage("translation.poc.conflict", null, Locale.US) ==
-                "administrator-value"
+        then:
+        messageSource.getMessage(
+                "default.button.create.label",
+                null,
+                Locale.forLanguageTag("es-419")
+        ) == expected
 
-        and: "removing the administrator fixture proves canonical precedence over legacy"
-        new File(administratorDirectory, "messages.properties").delete()
-        messageSource.clearCache()
-        messageSource.getMessage("translation.poc.conflict", null, Locale.US) ==
-                "canonical-value"
+        where:
+        scenario                                     | administrator | canonicalLocalized | legacyLocalized | canonicalDefault | legacyDefault || expected
+        "administrator override above every bundle" | "Admin Create" | "Canonical Crear"   | "Crear"         | "Create"         | "Create"      || "Admin Create"
+        "canonical localized before legacy localized"| null           | "Canonical Crear"   | "Crear"         | "Create"         | "Create"      || "Canonical Crear"
+        "legacy localized before canonical default" | null           | null                | "Crear"         | "Create"         | "Create"      || "Crear"
+        "canonical default before legacy default"   | null           | null                | null            | "Create"         | "Legacy Create" || "Create"
+        "legacy default as final fallback"           | null           | null                | null            | null             | "Create"      || "Create"
+    }
 
-        and: "sparse canonical and legacy-only keys both resolve"
-        messageSource.getMessage("translation.poc.canonical-only", null, Locale.US) ==
-                "canonical-only-value"
-        messageSource.getMessage("translation.poc.legacy-only", null, Locale.US) ==
-                "legacy-only-value"
-
-        and: "locale conflicts prefer canonical while absent locale keys fall back"
-        messageSource.getMessage("translation.poc.locale-conflict", null, Locale.FRENCH) ==
-                "canonical-french-value"
-        messageSource.getMessage("translation.poc.locale-original-only", null, Locale.FRENCH) ==
-                "legacy-french-value"
-        messageSource.getMessage("translation.poc.locale-fallback", null, Locale.FRENCH) ==
-                "legacy-default-value"
+    private static void writeBundle(File directory, String name, String value) {
+        if (value != null) {
+            new File(directory, name).text = "default.button.create.label=${value}\n"
+        }
     }
 }

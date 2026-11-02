@@ -194,6 +194,35 @@ class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPlu
         'legacy default when canonical default is absent'    | false            | false           | false              || 'legacy-default-marker'
     }
 
+    void "getMessagesFor prefers genuine localized Flow Control legacy value over canonical English"() {
+        given:
+        service.initCaches()
+        service.pluginService = Mock(PluginService)
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
+        Map<String, String> resources = [
+                'i18n/messages.properties'             : 'Flow Control',
+                'i18n/messages_es_419.properties'      : 'Control de Flujo',
+                'i18n/public-messages.properties'      : 'Flow Control'
+        ]
+
+        when:
+        Map<String, String> result = service.getMessagesFor(
+                'WorkflowStep',
+                'flow-control',
+                Locale.forLanguageTag('es-419')
+        )
+
+        then:
+        result['plugin.title'] == 'Control de Flujo'
+        2 * service.rundeckPluginRegistry.getPluginMetadata(_, _) >> Mock(PluginMetadata)
+        _ * service.rundeckPluginRegistry.getResourceLoader(_, _) >> Mock(PluginResourceLoader) {
+            listResources() >> resources.keySet().toList()
+            openResourceStreamFor(_) >> { String resource ->
+                new ByteArrayInputStream("plugin.title=${resources[resource]}\n".bytes)
+            }
+        }
+    }
+
     void "get plugin message"() {
         given:
             service.initCaches()

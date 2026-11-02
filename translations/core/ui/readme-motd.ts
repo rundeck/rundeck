@@ -6,19 +6,16 @@
  */
 export default {
   en_US: {
-    "translation.poc.core.precedence": "public",
-    "translation.poc.core.canonical-only": "canonical-only-value",
-    "translation.poc.core.flat.dotted": "canonical-flat-value",
     edit: {
       readme: {
-        label: "Canonical Edit Readme",
+        label: "Edit Readme",
       },
     },
   },
   de_DE: {
     edit: {
       readme: {
-        label: "Kanonische Readme bearbeiten",
+        label: "Readme bearbeiten",
       },
     },
   },

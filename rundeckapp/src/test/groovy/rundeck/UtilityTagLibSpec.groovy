@@ -41,26 +41,26 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         mockCodec(JavaScript2Codec)
         messageSource.addMessages(
                 [
-                        'translation.poc.js.conflict'   : 'canonical-js-value',
-                        'translation.poc.js.legacy-only': 'legacy-only-value'
+                        'default.button.create.label': 'Create',
+                        'default.button.delete.label': 'Delete'
                 ],
                 request.locale
         )
 
         when:
         String result = tagLib.jsMessages(
-                id: 'translation-poc-"messages',
+                id: 'core-"messages',
                 codes: [
-                        'translation.poc.js.conflict',
-                        'translation.poc.js.legacy-only'
+                        'default.button.create.label',
+                        'default.button.delete.label'
                 ]
         ).toString()
 
         then:
-        result.contains('"translation.poc.js.conflict":"canonical-js-value"')
-        result.contains('"translation.poc.js.legacy-only":"legacy-only-value"')
-        result.contains('id="translation-poc-&#34;messages"')
-        !result.contains('id="translation-poc-"messages"')
+        result.contains('"default.button.create.label":"Create"')
+        result.contains('"default.button.delete.label":"Delete"')
+        result.contains('id="core-&#34;messages"')
+        !result.contains('id="core-"messages"')
         result.contains('_loadMessages(')
     }
 

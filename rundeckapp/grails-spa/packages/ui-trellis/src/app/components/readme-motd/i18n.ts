@@ -6,9 +6,6 @@ import {
 
 const originalMessages = {
   en_US: {
-    "translation.poc.core.precedence": "original",
-    "translation.poc.core.legacy-only": "legacy-only-value",
-    "translation.poc.core.flat.dotted": "legacy-flat-value",
     edit: {
       readme: {
         label: "Edit Readme",

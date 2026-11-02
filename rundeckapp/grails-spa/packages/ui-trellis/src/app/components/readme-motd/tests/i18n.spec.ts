@@ -1,25 +1,21 @@
 import messages from "../i18n";
+import { mergeTranslationCatalogs } from "../../../../../../../../../translations/mergeCatalogs";
 
 describe("Readme/MOTD public translation overlay", () => {
-  it("uses the canonical value when the same flat key differs", () => {
-    expect(messages.en_US["translation.poc.core.precedence"]).toBe("public");
-    expect(messages.en_US["translation.poc.core.flat.dotted"]).toBe(
-      "canonical-flat-value",
+  it("prefers canonical values at a genuine production key", () => {
+    const merged = mergeTranslationCatalogs(
+      { en_US: { edit: { readme: { label: "legacy-test-marker" } } } },
+      { en_US: { edit: { readme: { label: "canonical-test-marker" } } } },
     );
+
+    expect(merged.en_US.edit).toMatchObject({
+      readme: { label: "canonical-test-marker" },
+    });
   });
 
-  it("resolves canonical-only and legacy-only keys", () => {
-    expect(messages.en_US["translation.poc.core.canonical-only"]).toBe(
-      "canonical-only-value",
-    );
-    expect(messages.en_US["translation.poc.core.legacy-only"]).toBe(
-      "legacy-only-value",
-    );
-  });
-
-  it("deep merges nested conflicts and legacy fallback keys", () => {
+  it("uses genuine canonical and retained legacy production values", () => {
     expect(messages.en_US.edit).toMatchObject({
-      readme: { label: "Canonical Edit Readme" },
+      readme: { label: "Edit Readme" },
     });
     expect(messages.en_US.edit).toMatchObject({
       motd: { label: "Edit Message of the Day" },
@@ -28,7 +24,7 @@ describe("Readme/MOTD public translation overlay", () => {
 
   it("overlays a locale while retaining locales absent from canonical", () => {
     expect(messages.de_DE.edit).toMatchObject({
-      readme: { label: "Kanonische Readme bearbeiten" },
+      readme: { label: "Readme bearbeiten" },
       motd: { label: "Meldung des Tages bearbeiten" },
     });
     expect(messages.nl_NL.edit).toMatchObject({
