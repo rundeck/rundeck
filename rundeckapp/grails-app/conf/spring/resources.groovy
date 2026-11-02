@@ -289,6 +289,13 @@ beans={
         return
     }
 
+    // POC: public translations are sparse and sit between administrator
+    // overrides and the original application bundle in lookup precedence.
+    rundeckPublicI18nEnhancer(
+            RundeckExtendedMessageBundle,
+            ref("messageSource"),
+            "classpath:public-messages"
+    )
     rundeckI18nEnhancer(RundeckExtendedMessageBundle, ref("messageSource"),"file:${rdeckBase}/i18n/messages".toString())
 
     if(application.config.getProperty("rundeck.gui.staticUserResources.enabled",Boolean.class,false)) {

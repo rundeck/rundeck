@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+/**
+ * Direct entry point for the translation catalog proof of concept.
+ */
+import("./i18n-lib/src/cli.mjs")
+  .then(({ run }) => {
+    process.exitCode = run(process.argv.slice(2));
+  })
+  .catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 2;
+  });

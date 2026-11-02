@@ -1,5 +1,12 @@
-export default {
+import publicMessages from "../../../../../../../../translations/core/ui/readme-motd";
+import {
+  mergeTranslationCatalogs,
+  type LocalizedTranslationCatalog,
+} from "../../../../../../../../translations/mergeCatalogs";
+
+const originalMessages = {
   en_US: {
+    "translation.poc.core.precedence": "original",
     edit: {
       readme: {
         label: "Edit Readme",
@@ -124,4 +131,6 @@ export default {
       },
     },
   },
-};
+} as LocalizedTranslationCatalog;
+
+export default mergeTranslationCatalogs(originalMessages, publicMessages);

@@ -167,6 +167,9 @@ sourceSets {
     main {
         resources {
             srcDir 'grails-app/migrations'
+            // POC: package sparse public catalogs without moving the existing
+            // grails-app/i18n bundles or introducing a synchronization step.
+            srcDir "${rootDir}/translations/core/rundeckapp"
         }
     }
 }

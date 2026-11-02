@@ -52,4 +52,24 @@ class RundeckExtendedMessageBundleTest extends Specification {
         baseNames.size() == 0
 
     }
+
+    def "public bundle is ordered after administrator overrides and before original catalogs"() {
+        given:
+        PluginAwareResourceBundleMessageSource messageSource =
+                new PluginAwareResourceBundleMessageSource(null, null)
+        messageSource.setBasenames("classpath:messages")
+        Field baseNameField = messageSource.getClass().getSuperclass().getDeclaredField("basenames")
+        baseNameField.setAccessible(true)
+
+        when:
+        new RundeckExtendedMessageBundle(messageSource, "classpath:public-messages")
+        new RundeckExtendedMessageBundle(messageSource, "file:/tmp/i18n/messages")
+
+        then:
+        baseNameField.get(messageSource).toList() == [
+                "file:/tmp/i18n/messages",
+                "classpath:public-messages",
+                "classpath:messages"
+        ]
+    }
 }
