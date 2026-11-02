@@ -141,6 +141,44 @@ class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPlu
                 'i18n/svc.plug.messages_fr.properties'
     }
 
+    /**
+     * Verifies that a sparse public plugin resource overlays the selected
+     * legacy resource without discarding legacy-only values.
+     */
+    void "getMessagesFor overlays public plugin messages per key"() {
+        given:
+        service.initCaches()
+        service.pluginService = Mock(PluginService)
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
+
+        when:
+        def result = service.getMessagesFor('svc', 'plug', Locale.FRENCH)
+
+        then:
+        result == [
+                'translation.poc.plugin.conflict'   : 'canonical-plugin-value',
+                'translation.poc.plugin.legacy-only': 'legacy-only-value',
+                'translation.poc.plugin.public-only': 'canonical-only-value'
+        ]
+        2 * service.rundeckPluginRegistry.getPluginMetadata('svc', 'plug') >> Mock(PluginMetadata)
+        _ * service.rundeckPluginRegistry.getResourceLoader('svc', 'plug') >> Mock(PluginResourceLoader) {
+            listResources() >> [
+                    'i18n/messages_fr.properties',
+                    'i18n/public-messages_fr.properties'
+            ]
+            openResourceStreamFor('i18n/messages_fr.properties') >> new ByteArrayInputStream(
+                    '''translation.poc.plugin.conflict=legacy-plugin-value
+translation.poc.plugin.legacy-only=legacy-only-value
+'''.bytes
+            )
+            openResourceStreamFor('i18n/public-messages_fr.properties') >> new ByteArrayInputStream(
+                    '''translation.poc.plugin.conflict=canonical-plugin-value
+translation.poc.plugin.public-only=canonical-only-value
+'''.bytes
+            )
+        }
+    }
+
     void "get plugin message"() {
         given:
             service.initCaches()

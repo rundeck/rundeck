@@ -28,6 +28,35 @@ import spock.lang.Unroll
  * Created by greg on 6/21/16.
  */
 class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityTagLib> {
+    /**
+     * Proves legacy JavaScript messages consume values already resolved by the
+     * application message source, so they need no separate translation adapter.
+     */
+    def "jsMessages emits canonical and legacy fallback values"() {
+        given:
+        messageSource.addMessages(
+                [
+                        'translation.poc.js.conflict'   : 'canonical-js-value',
+                        'translation.poc.js.legacy-only': 'legacy-only-value'
+                ],
+                request.locale
+        )
+
+        when:
+        String result = tagLib.jsMessages(
+                id: 'translation-poc-messages',
+                codes: [
+                        'translation.poc.js.conflict',
+                        'translation.poc.js.legacy-only'
+                ]
+        ).toString()
+
+        then:
+        result.contains('"translation.poc.js.conflict":"canonical-js-value"')
+        result.contains('"translation.poc.js.legacy-only":"legacy-only-value"')
+        result.contains("_loadMessages('translation-poc-messages')")
+    }
+
     @Unroll
     def "text after"() {
 
