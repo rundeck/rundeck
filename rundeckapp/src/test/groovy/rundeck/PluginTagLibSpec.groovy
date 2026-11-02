@@ -25,6 +25,8 @@ class PluginTagLibSpec extends Specification implements TagLibUnitTest<PluginTag
             'null'          | null
             'empty'         | ''
             'whitespace'    | '   '
+            'nbsp'          | '\u00A0'
+            'ideographic'   | '\u3000'
     }
 
     def "customFields shows a non-blank label rather than the key"() {
