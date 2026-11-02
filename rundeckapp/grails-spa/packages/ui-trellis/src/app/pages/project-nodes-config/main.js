@@ -60,6 +60,5 @@ for (let i = 0; i < els.length; i++) {
   app.provide("addUiMessages", async (messages) =>
     commonAddUiMessages(i18n, messages),
   );
-  app.config.idPrefix = `project-plugin-config-${i}`;
   app.mount(e);
 }

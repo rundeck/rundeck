@@ -58,21 +58,14 @@ const createWrapper = (props = {}) => {
   });
 };
 
-// Each entry point mounts one Vue app per element, and useId() is only
-// unique within a single app, so the entry points give each app its own
-// app.config.idPrefix. Mount the component as two separate apps, like the
-// entry points do.
-const mountInOwnApp = async (idPrefix?: string) => {
+// Pages mount this component from many separate Vue apps, none of which set
+// app.config.idPrefix. Mount it as two separate apps, the same way.
+const mountInOwnApp = async () => {
   const wrapper = mount(DynamicFormPluginProp, {
     props: { fields: "{}", hasOptions: "false", name: "sameName" },
     global: {
       mocks: { $t: translate },
       components: { Btn, Modal },
-      plugins: [
-        (app: any) => {
-          if (idPrefix) app.config.idPrefix = idPrefix;
-        },
-      ],
       stubs: {
         Modal: {
           template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
@@ -247,26 +240,16 @@ describe("DynamicFormPluginProp.vue", () => {
   });
 
   describe("ids across independent Vue apps", () => {
-    it("generates different ids when each app has a distinct idPrefix", async () => {
-      const idA = await mountInOwnApp("dynamic-form-0");
-      const idB = await mountInOwnApp("dynamic-form-1");
-
-      expect(idA).toContain("dynamic-form-0");
-      expect(idB).toContain("dynamic-form-1");
-      expect(idA).not.toBe(idB);
-    });
-
-    it("collides when two apps share the default idPrefix", async () => {
-      // Guards the premise: without the per-app prefix the ids are identical.
+    it("generates different ids in two apps with the default idPrefix", async () => {
       const idA = await mountInOwnApp();
       const idB = await mountInOwnApp();
 
       expect(idA).toBeTruthy();
-      expect(idA).toBe(idB);
+      expect(idA).not.toBe(idB);
     });
   });
 
-  it("shows help text for the Description input using its own key, not the reused message_empty", async () => {
+  it("shows help text for the Description input", async () => {
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();

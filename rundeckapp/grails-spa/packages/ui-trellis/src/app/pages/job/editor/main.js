@@ -97,7 +97,7 @@ const mountSection = (section) => {
     return;
   }
   try {
-    section.elements.forEach((element, index) => {
+    section.elements.forEach((element) => {
       const app = createApp({
         name: section.name,
         components: { ...section.component },
@@ -105,7 +105,6 @@ const mountSection = (section) => {
           return section.addEventBus ? { EventBus } : {};
         },
       });
-      app.config.idPrefix = `${section.name}-${index}`;
       app.use(uiv);
       app.use(i18n);
       if (section.addUiMessages) {

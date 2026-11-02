@@ -212,7 +212,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, useId } from "vue";
+import { defineComponent } from "vue";
 import { Btn, Alert, Modal } from "uiv";
 import PtSelect from "../primeVue/PtSelect/PtSelect.vue";
 
@@ -255,11 +255,11 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
-  setup() {
-    return { uid: useId() };
-  },
   data() {
     return {
+      // Random rather than useId(): useId() is only unique within one Vue app,
+      // and pages mount this component from many separate apps and bundles.
+      uid: `dynamic-form-${Math.random().toString(36).slice(2)}`,
       customFields: [] as CustomField[],
       customOptions: [] as any[],
       useOptions: false,
