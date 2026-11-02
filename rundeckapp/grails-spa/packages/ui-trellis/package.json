@@ -126,7 +126,7 @@
     "eslint-plugin-vuejs-accessibility": "2.6.0",
     "eslint-webpack-plugin": "4.2.0",
     "fetch-mock": "9.11.0",
-    "follow-redirects": "1.16.0",
+    "follow-redirects": "1.16.1",
     "globals": "13.24.0",
     "identity-obj-proxy": "3.0.0",
     "isomorphic-fetch": "3.0.0",
