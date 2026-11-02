@@ -134,7 +134,7 @@
     "jest-junit": "16.0.0",
     "jsdom": "22.1.0",
     "mobx-utils": "5.6.2",
-    "node-forge": "1.4.0",
+    "node-forge": "1.4.1",
     "postcss": "8.5.28",
     "prettier": "3.9.7",
     "prex": "0.4.9",
@@ -169,7 +169,7 @@
     "access": "public"
   },
   "overrides": {
-    "node-forge": "1.4.0",
+    "node-forge": "1.4.1",
     "axios": "$axios",
     "form-data": "4.0.6",
     "cross-spawn": "7.0.6",
