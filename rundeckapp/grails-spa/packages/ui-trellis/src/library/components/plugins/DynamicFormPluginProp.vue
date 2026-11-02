@@ -18,7 +18,7 @@
         <label
           class="col-sm-2 control-label input-sm"
           data-testid="field-item-label"
-          >{{ field.label?.trim() || field.key }}</label
+          >{{ String(field.label ?? "").trim() || field.key }}</label
         >
         <div class="col-sm-9">
           <input

@@ -37,6 +37,15 @@ class PluginTagLibSpec extends Specification implements TagLibUnitTest<PluginTag
             !result.contains('env: ')
     }
 
+    def "customFields shows a non-string label as text"() {
+        given:
+            def json = '[{"key":"env","label":42,"value":"prod"}]'
+        when:
+            def result = applyTemplate('<stepplugin:customFields json="${json}"/>', [json: json])
+        then:
+            result.contains('<span title="">42: </span>')
+    }
+
     def "customFields renders an empty label when both label and key are missing"() {
         given:
             def json = groovy.json.JsonOutput.toJson([[label: ' ', value: 'prod']])

@@ -317,6 +317,17 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(wrapper.emitted("update:modelValue")).toBeFalsy();
   });
 
+  it("renders a stored field's non-string label as text", async () => {
+    const wrapper = createWrapper({
+      fields: JSON.stringify({
+        legacy_field: { key: "legacy_field", label: 42, value: "" },
+      }),
+    });
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="field-item-label"]').text()).toBe("42");
+  });
+
   it("uses a component input when no host element is supplied", async () => {
     const wrapper = createWrapper();
     await flushPromises();
