@@ -173,6 +173,27 @@ sourceSets {
         }
     }
 }
+
+tasks.register('verifyCanonicalTranslationArchive') {
+    dependsOn tasks.named('bootWar')
+
+    doLast {
+        Set<String> expected = fileTree("${rootDir}/translations/core/rundeckapp") {
+            include 'public-messages*.properties'
+        }.files.collect { "WEB-INF/classes/${it.name}" } as Set<String>
+        Set<String> packaged = zipTree(tasks.named('bootWar').get().archiveFile.get().asFile)
+                .matching { include 'WEB-INF/classes/public-messages*.properties' }
+                .files.collect { file ->
+                    "WEB-INF/classes/${file.name}"
+                } as Set<String>
+        if (packaged != expected) {
+            throw new GradleException(
+                    "Core WAR canonical translation mismatch: expected ${expected}, found ${packaged}"
+            )
+        }
+    }
+}
+
 dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]

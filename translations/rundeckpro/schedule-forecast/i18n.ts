@@ -1,22 +1,61 @@
 /**
- * Sparse public overlay for the Pro Schedule Forecast Vue catalog.
+ * Canonical Schedule Forecast Vue catalog, migrated without translation changes.
  */
-export default {
+const messages = {
   en_US: {
-    "translation.poc.forecast.precedence": "canonical-forecast-value",
-    "translation.poc.forecast.canonical-only": "canonical-only-value",
-    "translation.poc.forecast.flat.dotted": "canonical-flat-value",
-    translationPoc: {
-      nested: {
-        conflict: "canonical-nested-value",
-      },
-    },
+    "plugin.forecast.main.title": "Schedule Forecast",
+    "job.filter.apply.button.title": "Search",
+    "Project.plural": "Projects",
+    "job.filter.project.none.selected": "None selected",
+    "job.filter.project.all.selected": "All selected ({n})",
+    "job.filter.project.some.selected": "{n} selected",
+    "select.all": "Select All",
+    "scheduled.timeline.scheduled.job.title": "Scheduled",
+    "scheduled.timeline.disabled.job.title": "Disabled",
+    "scheduled.timeline.nodata.job.title": "No Schedule Data",
+    "timeline.options": "Options",
+    "timeline.display.options": "Display Options",
+    "timeline.options.showDuration": "Show Duration",
+    "timeline.options.fixedRange": "Fixed Range",
+    "timeline.options.showFutureSchedule": "Show Future Schedule",
+    "timeline.options.maxNumberJobs": "Max Number Jobs",
+    "timeline.options.mergeInto": "Merge into",
+    "timeline.options.sections": "Sections",
+    "period.unit.hours": "hours",
+    "period.unit.days": "days",
+    "period.unit.weeks": "weeks",
+    "jobs.runningnow.title": "Running",
+    "jobs.queued.title": "Queued",
+    "jobs.adhocBy": "adhoc by",
+    "jobs.unknown": "Unknown",
   },
-  es_419: {
-    translationPoc: {
-      nested: {
-        conflict: "valor-canónico-anidado",
-      },
-    },
+  ja: {
+    "plugin.forecast.main.title": "スケジュール予測",
+    "job.filter.apply.button.title": "検索",
+    "Project.plural": "プロジェクト",
+    "job.filter.project.none.selected": "選択なし",
+    "job.filter.project.all.selected": "すべて選択済み ({n})",
+    "job.filter.project.some.selected": "{n}件選択済み",
+    "select.all": "すべて選択",
+    "scheduled.timeline.scheduled.job.title": "スケジュール済み",
+    "scheduled.timeline.disabled.job.title": "無効",
+    "scheduled.timeline.nodata.job.title": "スケジュールデータがありません",
+    "timeline.options": "オプション",
+    "timeline.display.options": "表示オプション",
+    "timeline.options.showDuration": "実行時間を表示",
+    "timeline.options.fixedRange": "固定範囲",
+    "timeline.options.showFutureSchedule": "今後のスケジュールを表示",
+    "timeline.options.maxNumberJobs": "最大ジョブ数",
+    "timeline.options.mergeInto": "マージ先",
+    "timeline.options.sections": "セクション",
+    "period.unit.hours": "時間",
+    "period.unit.days": "日",
+    "period.unit.weeks": "週間",
+    "jobs.runningnow.title": "実行中",
+    "jobs.queued.title": "キュー待ち",
+    "jobs.adhocBy": "アドホック実行者:",
+    "jobs.unknown": "不明",
   },
-} as Record<string, Record<string, unknown>>;
+} as Record<string, Record<string, string>>;
+
+export default messages;

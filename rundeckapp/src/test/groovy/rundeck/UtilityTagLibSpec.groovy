@@ -17,7 +17,9 @@
 package rundeck
 
 import grails.testing.web.taglib.TagLibUnitTest
+import org.grails.plugins.codecs.JSONCodec
 import rundeck.codecs.HTMLAttributeCodec
+import rundeck.codecs.JavaScript2Codec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
@@ -34,6 +36,9 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
      */
     def "jsMessages emits canonical and legacy fallback values"() {
         given:
+        mockCodec(HTMLAttributeCodec)
+        mockCodec(JSONCodec)
+        mockCodec(JavaScript2Codec)
         messageSource.addMessages(
                 [
                         'translation.poc.js.conflict'   : 'canonical-js-value',
@@ -44,7 +49,7 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
 
         when:
         String result = tagLib.jsMessages(
-                id: 'translation-poc-messages',
+                id: 'translation-poc-"messages',
                 codes: [
                         'translation.poc.js.conflict',
                         'translation.poc.js.legacy-only'
@@ -54,7 +59,9 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         then:
         result.contains('"translation.poc.js.conflict":"canonical-js-value"')
         result.contains('"translation.poc.js.legacy-only":"legacy-only-value"')
-        result.contains("_loadMessages('translation-poc-messages')")
+        result.contains('id="translation-poc-&#34;messages"')
+        !result.contains('id="translation-poc-"messages"')
+        result.contains('_loadMessages(')
     }
 
     @Unroll

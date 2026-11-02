@@ -136,15 +136,22 @@ export function escapeProperties(value, key = false) {
 }
 
 function readPropertiesCatalog(file) {
-  const source = fs.readFileSync(file, "latin1");
+  const source = fs.readFileSync(file, "utf8");
   const entries = parseProperties(source);
-  const match = path.basename(file).match(/^(.*?messages)(?:_([^.]+))?\.properties$/);
+  const filename = path.basename(file, ".properties");
+  const localeMatch = filename.match(/^(.*)_([a-z]{2}(?:_[A-Za-z0-9]+)?)$/);
+  const basename = localeMatch?.[1] ?? filename;
   return buildCatalog({
     path: file,
     format: "properties",
-    locale: match?.[2] ?? "en_US",
-    family: path.join(path.dirname(file), match?.[1] ?? path.basename(file, ".properties")),
-    entries,
+    locale: localeMatch?.[2] ?? "en_US",
+    family: path.join(path.dirname(file), basename),
+    basename,
+    entries: entries.map((entry) => ({
+      ...entry,
+      keyPath: [entry.key],
+      identity: JSON.stringify([entry.key]),
+    })),
   });
 }
 
@@ -427,7 +434,9 @@ function readVueCatalogs(file) {
   const source = fs.readFileSync(file, "utf8");
   const ast = parseModule(source, file);
   const exported = findExportedObject(ast);
-  if (!exported) return [];
+  if (!exported) {
+    throw new Error(`Unsupported Vue catalog shape: no static default-exported object in ${file}`);
+  }
   const topProperties = objectProperties(exported);
   const wrapped = topProperties.length > 0 && topProperties.every(
     ({ key, value }) => LOCALE_PATTERN.test(key) && value.type === "ObjectExpression",
@@ -436,7 +445,9 @@ function readVueCatalogs(file) {
     return topProperties.map(({ key, value }) => buildVueCatalog(file, source, key, file, value));
   }
   const locale = path.basename(file).replace(/\.[^.]+$/, "");
-  if (!LOCALE_PATTERN.test(locale)) return [];
+  if (!LOCALE_PATTERN.test(locale)) {
+    throw new Error(`Unsupported Vue catalog shape: locale wrapper required in ${file}`);
+  }
   return [buildVueCatalog(file, source, locale, path.join(path.dirname(file), "__locale_files__"), exported)];
 }
 
@@ -496,6 +507,8 @@ function flattenVueObject(node, prefix, entries) {
       const resolved = staticString(value);
       if (resolved !== null) entries.push({
         key: next.join("."),
+        keyPath: next,
+        identity: JSON.stringify(next),
         value: resolved,
         line: property.loc?.start.line ?? 1,
       });
@@ -517,22 +530,27 @@ function inferIndent(source, node) {
   const first = node.properties[0];
   if (!first) return { base, unit: "  " };
   const firstLineStart = source.lastIndexOf("\n", first.start) + 1;
-  const propertyIndent = source.slice(firstLineStart, first.start);
+  const beforeProperty = source.slice(firstLineStart, first.start);
+  const propertyIndent = /^\s*$/.test(beforeProperty) ? beforeProperty : `${base}  `;
   return { base, unit: propertyIndent.slice(base.length) || "  " };
 }
 
 function buildCatalog(catalog) {
   const seen = new Map();
   for (const entry of catalog.entries) {
-    const values = seen.get(entry.key) ?? [];
+    const values = seen.get(entry.identity) ?? [];
     values.push(entry);
-    seen.set(entry.key, values);
+    seen.set(entry.identity, values);
   }
   return {
     ...catalog,
     duplicates: [...seen.entries()]
       .filter(([, values]) => values.length > 1)
-      .map(([key, values]) => ({ key, lines: values.map(({ line }) => line) })),
+      .map(([_identity, values]) => ({
+        key: values[0].key,
+        keyPath: values[0].keyPath,
+        lines: values.map(({ line }) => line),
+      })),
   };
 }
 
@@ -570,8 +588,9 @@ function inferNamespace(file) {
     /\/plugins\/rundeckpro-spa-ui\/rundeckpro-ui-components\/src\/([^/]+)/,
   )?.[1];
   if (proUiFeature) return `rundeckpro/ui/${proUiFeature}`;
+  if (normalized.includes("/translations/rundeckpro/")) return "rundeckpro";
   const plugin = normalized.match(/\/plugins\/([^/]+)/)?.[1];
-  if (plugin) return `rundeckpro/${plugin}`;
+  if (plugin) return `plugin/${plugin}`;
   if (normalized.includes("/rundeckpro/")) return "rundeckpro";
   if (normalized.includes("/grails-app/i18n/")) return "core/rundeckapp";
   return "core/misc";
@@ -580,6 +599,7 @@ function inferNamespace(file) {
 function inferConsumer(file) {
   const namespace = inferNamespace(file);
   if (namespace.startsWith("rundeckpro/")) return "Rundeck Pro plugin build/runtime";
+  if (namespace.startsWith("plugin/")) return "Rundeck OSS plugin build/runtime";
   if (namespace === "core/ui") return "Rundeck Vue build";
   return "Rundeck Grails build/runtime";
 }
@@ -596,7 +616,8 @@ function summarizeIndicators(entries) {
   let markupEntries = 0;
   for (const { key, value } of entries) {
     for (const placeholder of extractPlaceholders(value)) placeholders.add(placeholder);
-    if (/(?:^|[._-])(one|other|many|few|zero|plural)(?:$|[._-])/.test(key) || /\|\|/.test(value)) {
+    if (/(?:^|[._-])(one|other|many|few|zero|plural)(?:$|[._-])/.test(key) ||
+      pipePluralForms(value) > 1) {
       pluralEntries += 1;
     }
     if (/<\/?[A-Za-z][^>]*>/.test(value)) markupEntries += 1;
@@ -620,7 +641,10 @@ export function catalogKey(catalog) {
 
 export function targetPath(sourceCatalog, targetLocale) {
   if (sourceCatalog.format === "properties") {
-    return path.join(path.dirname(sourceCatalog.path), `messages_${targetLocale}.properties`);
+    return path.join(
+      path.dirname(sourceCatalog.path),
+      `${sourceCatalog.basename}_${targetLocale}.properties`,
+    );
   }
   if (path.basename(sourceCatalog.family) === "__locale_files__") {
     return path.join(path.dirname(sourceCatalog.path), `${targetLocale}${path.extname(sourceCatalog.path)}`);
@@ -647,7 +671,7 @@ export function insertVueEntries(source, file, locale, entries) {
         output,
         exported,
         locale,
-        renderNested(entry.key.split("."), entry.value),
+        renderNested(entry.keyPath ?? [entry.key], entry.value),
       );
       continue;
     }
@@ -657,8 +681,10 @@ export function insertVueEntries(source, file, locale, entries) {
       }
       continue;
     }
-    if (catalog.entries.some(({ key }) => key === entry.key)) continue;
-    output = insertVuePath(output, file, locale, entry.key.split("."), entry.value);
+    const keyPath = entry.keyPath ?? [entry.key];
+    const identity = JSON.stringify(keyPath);
+    if (catalog.entries.some((candidate) => candidate.identity === identity)) continue;
+    output = insertVuePath(output, file, locale, keyPath, entry.value);
   }
   return output;
 }
@@ -730,4 +756,22 @@ function readVueCatalogsFromSource(source, file) {
   return LOCALE_PATTERN.test(locale)
     ? [buildVueCatalog(file, source, locale, path.join(path.dirname(file), "__locale_files__"), exported)]
     : [];
+}
+
+/**
+ * Counts unescaped Vue-i18n pipe plural forms without treating escaped pipes
+ * as separators.
+ */
+export function pipePluralForms(value) {
+  let forms = 1;
+  let escaped = false;
+  for (const char of String(value)) {
+    if (!escaped && char === "|") forms += 1;
+    if (char === "\\" && !escaped) {
+      escaped = true;
+    } else {
+      escaped = false;
+    }
+  }
+  return forms;
 }

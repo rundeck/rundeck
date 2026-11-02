@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "provenanceCommit": "c7262c406",
+  "families": [
+    {
+      "family": "schedule-forecast-backend",
+      "legacySource": "plugins/schedule-forecast/grails-app/i18n/forecast-messages*.properties",
+      "canonicalSource": "translations/rundeckpro/schedule-forecast/forecast-public-messages*.properties",
+      "locales": ["default", "es_419", "ja"],
+      "productionEvidenceKeys": [
+        "plugin.forecast.menu.head",
+        "plugin.forecast.main.title"
+      ],
+      "legacyOnlyKeys": [],
+      "canonicalOnlyKeys": [],
+      "localeGaps": [],
+      "valueConflicts": [],
+      "placeholderMismatches": [],
+      "pluralMismatches": [],
+      "markupMismatches": [],
+      "nestedShapeMismatches": [],
+      "parity": true,
+      "canonicalOnlyProof": "ForecastPublicTranslationsSpec real consumer test",
+      "deletionEligible": false,
+      "deletionBlocker": "Legacy fallback remains enabled during the POC rollout"
+    },
+    {
+      "family": "forecast-vue",
+      "legacySource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n-legacy.ts",
+      "canonicalSource": "translations/rundeckpro/schedule-forecast/i18n.ts",
+      "locales": ["en_US", "ja"],
+      "productionEvidenceKeys": [
+        "plugin.forecast.main.title",
+        "job.filter.project.all.selected",
+        "scheduled.timeline.nodata.job.title"
+      ],
+      "legacyOnlyKeys": [],
+      "canonicalOnlyKeys": [],
+      "localeGaps": [],
+      "valueConflicts": [],
+      "placeholderMismatches": [],
+      "pluralMismatches": [],
+      "markupMismatches": [],
+      "nestedShapeMismatches": [],
+      "parity": true,
+      "canonicalOnlyProof": "Forecast production i18n.ts imports only canonical i18n.ts",
+      "deletionEligible": false,
+      "deletionBlocker": "Retained legacy archive is required for parity evidence until POC acceptance"
+    }
+  ]
+}

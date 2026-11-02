@@ -1,0 +1,47 @@
+/**
+ * Packages a standalone plugin's canonical public translation bundles from
+ * the repository-level translations tree into resources/i18n in its archive.
+ *
+ * Consumers set canonicalTranslationNamespace before applying this script.
+ */
+if (!project.hasProperty('canonicalTranslationNamespace')) {
+    throw new GradleException(
+            "Set canonicalTranslationNamespace before applying canonical-plugin-translations.gradle"
+    )
+}
+
+File canonicalTranslationDirectory = rootProject.file(
+        "translations/${project.canonicalTranslationNamespace}"
+)
+
+tasks.named('processResources') {
+    from(canonicalTranslationDirectory) {
+        include 'public-messages*.properties'
+        into 'resources/i18n'
+    }
+}
+
+tasks.register('verifyCanonicalTranslationArchive') {
+    dependsOn tasks.named('jar')
+    inputs.dir(canonicalTranslationDirectory)
+    inputs.file(tasks.named('jar').flatMap { it.archiveFile })
+
+    doLast {
+        Set<String> expected = fileTree(canonicalTranslationDirectory) {
+            include 'public-messages*.properties'
+        }.files.collect { "resources/i18n/${it.name}" } as Set<String>
+        Set<String> packaged = zipTree(tasks.named('jar').get().archiveFile.get().asFile)
+                .matching { include 'resources/i18n/public-messages*.properties' }
+                .files.collect { it.path.replace('\\', '/').split('/resources/i18n/').last() }
+                .collect { "resources/i18n/${it}" } as Set<String>
+        if (packaged != expected) {
+            throw new GradleException(
+                    "Canonical translation archive mismatch: expected ${expected}, found ${packaged}"
+            )
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyCanonicalTranslationArchive')
+}

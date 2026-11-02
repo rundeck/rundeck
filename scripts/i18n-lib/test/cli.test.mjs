@@ -4,7 +4,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { inventoryRoots } from "../src/catalogs.mjs";
+import {
+  inventoryRoots,
+  inventoryRootsDetailed,
+  publicCatalog,
+  targetPath,
+} from "../src/catalogs.mjs";
 import { run } from "../src/cli.mjs";
 
 function fixture() {
@@ -47,7 +52,11 @@ test("inventory reports properties duplicates and parses Vue without execution",
   const catalogs = inventoryRoots([root]);
   const properties = catalogs.find(({ format }) => format === "properties");
   const vue = catalogs.find(({ format }) => format === "vue");
-  assert.deepEqual(properties.duplicates, [{ key: "escaped key", lines: [2, 3] }]);
+  assert.deepEqual(properties.duplicates, [{
+    key: "escaped key",
+    keyPath: ["escaped key"],
+    lines: [2, 3],
+  }]);
   assert.equal(properties.entries.find(({ key }) => key === "continued").value, "firstsecond");
   assert.equal(properties.entries.find(({ key }) => key === "unicode").value, "Español");
   assert.deepEqual(vue.entries.map(({ key }) => key), ["safe", "nested.label"]);
@@ -116,9 +125,27 @@ test("Vue apply patches the AST object without overwriting or duplicating keys",
     sourceLocale: "en_US",
     targetLocale: "es_419",
     entries: [
-      { catalog: { format: "vue", path: target }, key: "existing", translation: "overwrite" },
-      { catalog: { format: "vue", path: target }, key: "nested.label", translation: "Etiqueta" },
-      { catalog: { format: "vue", path: target }, key: "nested.label", translation: "duplicate" },
+      {
+        catalog: { format: "vue", path: target },
+        key: "existing",
+        keyPath: ["existing"],
+        identity: '["existing"]',
+        translation: "overwrite",
+      },
+      {
+        catalog: { format: "vue", path: target },
+        key: "nested.label",
+        keyPath: ["nested", "label"],
+        identity: '["nested","label"]',
+        translation: "Etiqueta",
+      },
+      {
+        catalog: { format: "vue", path: target },
+        key: "nested.label",
+        keyPath: ["nested", "label"],
+        identity: '["nested","label"]',
+        translation: "duplicate",
+      },
     ],
   })));
   const { io } = capture();
@@ -173,7 +200,7 @@ test("apply skips an existing key added after preparation", () => {
   assert.equal(fs.readFileSync(target, "utf8"), "raced=Translator won\n");
 });
 
-test("validate and apply reject stale source catalogs", () => {
+test("per-key integrity ignores unrelated edits and rejects changed prepared keys", () => {
   const root = fixture();
   const source = path.join(root, "messages.properties");
   const target = path.join(root, "messages_de_DE.properties");
@@ -187,6 +214,8 @@ test("validate and apply reject stale source catalogs", () => {
   ], io);
   fs.appendFileSync(source, "new=New\n");
 
+  assert.equal(run(["validate", "--input", batch], io), 0);
+  fs.writeFileSync(source, "key=Changed\nnew=New\n");
   assert.equal(run(["validate", "--input", batch], io), 1);
   assert.equal(JSON.parse(lines.at(-1)).issues[0].type, "stale-workspace");
   assert.throws(() => run(["apply", "--input", batch], io), /changed after preparation/);
@@ -259,4 +288,152 @@ test("prepare and apply become a no-op until the source gains a key", () => {
   assert.deepEqual(JSON.parse(fs.readFileSync(second, "utf8")).entries, []);
   run(["apply", "--input", first], io);
   assert.equal(fs.readFileSync(target, "utf8"), once);
+});
+
+test("inventory defaults to the bounded all scope and includes separate repository roots", () => {
+  const root = fixture();
+  fs.mkdirSync(path.join(root, "rundeckapp", "grails-app", "i18n"), { recursive: true });
+  fs.mkdirSync(path.join(root, "plugins", "sample", "src", "main", "resources", "i18n"), {
+    recursive: true,
+  });
+  fs.writeFileSync(path.join(root, "rundeckapp", "grails-app", "i18n", "messages.properties"), "a=A\n");
+  fs.writeFileSync(
+    path.join(root, "plugins", "sample", "src", "main", "resources", "i18n", "messages.properties"),
+    "b=B\n",
+  );
+  const previous = process.cwd();
+  const { lines, io } = capture();
+  try {
+    process.chdir(root);
+    assert.equal(run(["inventory"], io), 0);
+  } finally {
+    process.chdir(previous);
+  }
+  assert.equal(JSON.parse(lines[0]).summary.catalogs, 2);
+});
+
+test("unsupported Vue candidates are reported instead of disappearing", () => {
+  const root = fixture();
+  fs.writeFileSync(path.join(root, "i18n.ts"), "export default createMessages();\n");
+  const detailed = inventoryRootsDetailed([root]);
+  assert.equal(detailed.catalogs.length, 0);
+  assert.equal(detailed.parseFailures.length, 1);
+  assert.match(detailed.parseFailures[0].error, /Unsupported Vue catalog shape/);
+});
+
+test("flat dotted keys and nested paths retain distinct identities through apply", () => {
+  const root = fixture();
+  const source = path.join(root, "i18n.ts");
+  const batch = path.join(root, "batch.json");
+  fs.writeFileSync(
+    source,
+    'export default { en_US: { "same.path": "flat", same: { path: "nested" } } };\n',
+  );
+  const { io } = capture();
+
+  run([
+    "prepare", "--source-locale", "en_US", "--target-locale", "es_419",
+    "--output", batch, source,
+  ], io);
+  const prepared = JSON.parse(fs.readFileSync(batch, "utf8"));
+  assert.deepEqual(prepared.entries.map(({ keyPath }) => keyPath), [
+    ["same.path"],
+    ["same", "path"],
+  ]);
+  prepared.entries.forEach((entry) => {
+    entry.translation = `${entry.source}-translated`;
+  });
+  fs.writeFileSync(batch, JSON.stringify(prepared));
+  run(["apply", "--input", batch], io);
+  const spanish = inventoryRoots([source]).find(({ locale }) => locale === "es_419");
+  assert.deepEqual(spanish.entries.map(({ keyPath }) => keyPath), [
+    ["same.path"],
+    ["same", "path"],
+  ]);
+});
+
+test("properties targets preserve the source catalog basename", () => {
+  const root = fixture();
+  const source = path.join(root, "forecast-messages.properties");
+  fs.writeFileSync(source, "key=Value\n");
+  const catalog = inventoryRoots([source])[0];
+  assert.equal(targetPath(catalog, "es_419"), path.join(root, "forecast-messages_es_419.properties"));
+});
+
+test("OSS plugin catalogs are not classified as Rundeck Pro", () => {
+  const root = fixture();
+  const file = path.join(root, "plugins", "sample", "src", "main", "resources", "i18n", "messages.properties");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, "key=Value\n");
+  const catalog = publicCatalog(inventoryRoots([file])[0], root);
+  assert.equal(catalog.namespace, "plugin/sample");
+  assert.equal(catalog.intendedConsumer, "Rundeck OSS plugin build/runtime");
+});
+
+test("single unescaped pipes are Vue plural separators and escaped pipes are literal", () => {
+  const root = fixture();
+  fs.writeFileSync(path.join(root, "messages.properties"), "items=one | many\nliteral=a \\\\| b\n");
+  fs.writeFileSync(path.join(root, "messages_fr.properties"), "items=plusieurs\nliteral=a \\\\| b\n");
+  const { lines, io } = capture();
+  assert.equal(run([
+    "validate", "--source-locale", "en_US", "--target-locale", "fr", root,
+  ], io), 1);
+  const issues = JSON.parse(lines[0]).issues;
+  assert.ok(issues.some(({ type, key }) => type === "plural-mismatch" && key === "items"));
+  assert.ok(!issues.some(({ type, key }) => type === "plural-mismatch" && key === "literal"));
+});
+
+test("multi-file apply validates every operation before changing any target", () => {
+  const root = fixture();
+  const target = path.join(root, "messages_fr.properties");
+  const batch = path.join(root, "batch.json");
+  fs.writeFileSync(target, "existing=keep\n");
+  fs.writeFileSync(batch, JSON.stringify(protect({
+    version: 1,
+    sourceLocale: "en_US",
+    targetLocale: "fr",
+    entries: [
+      {
+        catalog: { format: "properties", path: target },
+        key: "added",
+        keyPath: ["added"],
+        identity: '["added"]',
+        translation: "Ajouté",
+      },
+      {
+        catalog: { format: "unsupported", path: path.join(root, "later.bad") },
+        key: "bad",
+        keyPath: ["bad"],
+        identity: '["bad"]',
+        translation: "Bad",
+      },
+    ],
+  })));
+  const { io } = capture();
+  assert.throws(() => run(["apply", "--input", batch], io), /Unsupported catalog format/);
+  assert.equal(fs.readFileSync(target, "utf8"), "existing=keep\n");
+});
+
+test("migrate emits bounded preparation parity and unsupported evidence", () => {
+  const root = fixture();
+  fs.mkdirSync(path.join(root, "translations"));
+  fs.writeFileSync(path.join(root, "translations", "messages.properties"), "missing=Missing\n");
+  fs.writeFileSync(path.join(root, "translations", "i18n.ts"), "export default factory();\n");
+  const output = path.join(root, "migration.json");
+  const previous = process.cwd();
+  const { io } = capture();
+  try {
+    process.chdir(root);
+    assert.equal(run([
+      "migrate", "--scope", "canonical", "--source-locale", "en_US",
+      "--target-locale", "es_419", "--output", output,
+    ], io), 1);
+  } finally {
+    process.chdir(previous);
+  }
+  const report = JSON.parse(fs.readFileSync(output, "utf8"));
+  assert.equal(report.scope, "canonical");
+  assert.equal(report.unsupported.length, 1);
+  assert.equal(report.preparation.entries[0].key, "missing");
+  assert.equal(report.parity[0].sourceOnly[0].key, "missing");
 });

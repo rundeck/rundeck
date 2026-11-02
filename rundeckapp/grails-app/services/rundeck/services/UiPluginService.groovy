@@ -281,12 +281,26 @@ class UiPluginService implements InitializingBean {
         def reslist = resourcesForPlugin(service, name)
         def meta = fileMetadataForPlugin(service, name)
         if (reslist) {
-            String legacyResource = messageResourceCandidates(service, name, locale, 'messages').
+            String legacyDefault = messageResourceCandidates(
+                    service, name, locale, 'messages', false
+            ).
                     find { reslist.contains('i18n/' + it) }
-            String publicResource = messageResourceCandidates(service, name, locale, 'public-messages').
+            String publicDefault = messageResourceCandidates(
+                    service, name, locale, 'public-messages', false
+            ).
                     find { reslist.contains('i18n/' + it) }
-            loadMessageResource(messages, service, name, legacyResource)
-            loadMessageResource(messages, service, name, publicResource)
+            String legacyLocalized = messageResourceCandidates(
+                    service, name, locale, 'messages', true
+            ).
+                    find { reslist.contains('i18n/' + it) }
+            String publicLocalized = messageResourceCandidates(
+                    service, name, locale, 'public-messages', true
+            ).
+                    find { reslist.contains('i18n/' + it) }
+            loadMessageResource(messages, service, name, legacyDefault)
+            loadMessageResource(messages, service, name, publicDefault)
+            loadMessageResource(messages, service, name, legacyLocalized)
+            loadMessageResource(messages, service, name, publicLocalized)
         }
         return new CachedMessages(messages: messages, date: meta?.dateLoaded)
     }
@@ -299,12 +313,14 @@ class UiPluginService implements InitializingBean {
             String service,
             String name,
             Locale locale,
-            String basename
+            String basename,
+            boolean localized
     ) {
-        List<String> localeSuffixes = [locale.toLanguageTag(), locale.language].collect {
-            '_' + it.replaceAll('-', '_')
-        }
-        localeSuffixes << ''
+        List<String> localeSuffixes = localized ?
+                [locale.toLanguageTag(), locale.language].collect {
+                    '_' + it.replaceAll('-', '_')
+                } :
+                ['']
         localeSuffixes.unique().collectMany { String localeSuffix ->
             String suffix = basename + localeSuffix + '.properties'
             [

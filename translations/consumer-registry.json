@@ -15,10 +15,12 @@
     "publicNamespace": "rundeckpro/schedule-forecast",
     "originalSource": "plugins/schedule-forecast/grails-app/i18n/forecast-messages*.properties",
     "basename": "forecast-messages",
-    "localeVariants": ["default", "es_419"],
+    "canonicalBasename": "forecast-public-messages",
+    "legacyBasename": "forecast-messages",
+    "localeVariants": ["default", "es_419", "ja"],
     "archiveDestination": "forecast-public-messages*.properties",
     "runtimeLoader": "TranslationMessageSourceRegistrar and application messageSource",
-    "precedence": "forecast-public-messages > forecast-messages",
+    "precedence": "canonical locale > legacy locale > canonical default > legacy default",
     "developmentWatch": false
   },
   {
@@ -37,7 +39,7 @@
     "publicNamespace": "rundeckpro/schedule-forecast",
     "originalSource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
     "basename": "rundeckpro-forecast",
-    "localeVariants": ["en_US", "es_419", "ja"],
+    "localeVariants": ["en_US", "ja"],
     "archiveDestination": "rundeckpro-ui-components compiled asset",
     "runtimeLoader": "mergeTranslationCatalogs via Rundeck submodule import",
     "precedence": "public object > original object per key",
@@ -45,13 +47,15 @@
   },
   {
     "family": "standalone-plugin-resources",
-    "publicNamespace": "plugin/resources/i18n",
+    "publicNamespace": "plugins/flow-control",
     "originalSource": "plugins/*/src/main/resources/resources/i18n/messages*.properties",
     "basename": "messages",
-    "localeVariants": ["default", "fr"],
+    "canonicalBasename": "public-messages",
+    "legacyBasename": "messages",
+    "localeVariants": ["default", "es_419"],
     "archiveDestination": "resources/i18n/public-messages*.properties",
     "runtimeLoader": "UiPluginService",
-    "precedence": "public-messages > messages per key",
+    "precedence": "canonical locale > legacy locale > canonical default > legacy default",
     "developmentWatch": false
   },
   {

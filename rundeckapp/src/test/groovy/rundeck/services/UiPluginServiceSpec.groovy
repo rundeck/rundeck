@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPluginService> {
 
@@ -142,41 +143,55 @@ class UiPluginServiceSpec extends Specification implements ServiceUnitTest<UiPlu
     }
 
     /**
-     * Verifies that a sparse public plugin resource overlays the selected
-     * legacy resource without discarding legacy-only values.
+     * Verifies locale-aware migration order using the real Flow Control
+     * production key {@code plugin.title}; marker values are test-scoped.
      */
-    void "getMessagesFor overlays public plugin messages per key"() {
+    @Unroll
+    void "getMessagesFor resolves #scenario"() {
         given:
         service.initCaches()
         service.pluginService = Mock(PluginService)
         service.rundeckPluginRegistry = Mock(PluginRegistry)
+        Map<String, String> resources = [
+                'i18n/messages.properties': 'legacy-default-marker'
+        ]
+        if (canonicalDefault) {
+            resources['i18n/public-messages.properties'] = 'canonical-default-marker'
+        }
+        if (legacyLocalized) {
+            resources['i18n/messages_es_419.properties'] = 'legacy-localized-marker'
+        }
+        if (canonicalLocalized) {
+            resources['i18n/public-messages_es_419.properties'] =
+                    'canonical-localized-marker'
+        }
 
         when:
-        def result = service.getMessagesFor('svc', 'plug', Locale.FRENCH)
+        def result = service.getMessagesFor(
+                'svc',
+                'plug',
+                Locale.forLanguageTag('es-419')
+        )
 
         then:
-        result == [
-                'translation.poc.plugin.conflict'   : 'canonical-plugin-value',
-                'translation.poc.plugin.legacy-only': 'legacy-only-value',
-                'translation.poc.plugin.public-only': 'canonical-only-value'
-        ]
+        result['plugin.title'] == expected
         2 * service.rundeckPluginRegistry.getPluginMetadata('svc', 'plug') >> Mock(PluginMetadata)
         _ * service.rundeckPluginRegistry.getResourceLoader('svc', 'plug') >> Mock(PluginResourceLoader) {
-            listResources() >> [
-                    'i18n/messages_fr.properties',
-                    'i18n/public-messages_fr.properties'
-            ]
-            openResourceStreamFor('i18n/messages_fr.properties') >> new ByteArrayInputStream(
-                    '''translation.poc.plugin.conflict=legacy-plugin-value
-translation.poc.plugin.legacy-only=legacy-only-value
-'''.bytes
-            )
-            openResourceStreamFor('i18n/public-messages_fr.properties') >> new ByteArrayInputStream(
-                    '''translation.poc.plugin.conflict=canonical-plugin-value
-translation.poc.plugin.public-only=canonical-only-value
-'''.bytes
-            )
+            listResources() >> resources.keySet().toList()
+            openResourceStreamFor(_) >> { String resource ->
+                resources[resource] == null ? null : new ByteArrayInputStream(
+                        "plugin.title=${resources[resource]}\n".bytes
+                )
+            }
         }
+
+        where:
+        scenario                                             | canonicalDefault | legacyLocalized | canonicalLocalized || expected
+        'canonical locale before legacy locale'              | true             | true            | true               || 'canonical-localized-marker'
+        'legacy locale when canonical locale is missing'     | true             | true            | false              || 'legacy-localized-marker'
+        'canonical default when localized values are absent' | true             | false           | false              || 'canonical-default-marker'
+        'legacy locale before canonical default'             | true             | true            | false              || 'legacy-localized-marker'
+        'legacy default when canonical default is absent'    | false            | false           | false              || 'legacy-default-marker'
     }
 
     void "get plugin message"() {

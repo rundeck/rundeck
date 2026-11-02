@@ -11,21 +11,31 @@ import {
   insertVueEntries,
   inventoryRoots,
   inventoryRootsDetailed,
+  pipePluralForms,
   publicCatalog,
   targetPath,
 } from "./catalogs.mjs";
 
+const SCOPE_ROOTS = {
+  all: ["."],
+  canonical: ["translations"],
+  core: ["rundeckapp", "grails-webhooks", "grails-repository", "grails-execution-mode-timer"],
+  plugins: ["plugins", "examples"],
+};
+
 const HELP = `Usage: ./scripts/i18n <command> [options] <root...>
 
 Commands:
-  inventory [--output FILE] <root...>
+  inventory [--scope SCOPE] [--output FILE] [<root...>]
       Report Java properties and Vue i18n catalogs, mappings, and parse failures.
-  prepare --source-locale LOCALE --target-locale LOCALE --output FILE <root...>
+  prepare [--scope SCOPE] --source-locale LOCALE --target-locale LOCALE --output FILE [<root...>]
       Write an insert-only translation batch containing missing target keys.
   apply --input FILE
       Insert completed translations; existing keys are never changed.
-  validate [--input FILE] [--source-locale LOCALE --target-locale LOCALE] <root...>
+  validate [--scope SCOPE] [--input FILE] [--source-locale LOCALE --target-locale LOCALE] [<root...>]
       Report integrity/staleness, duplicates, missing keys, and value-shape mismatches.
+  migrate --scope SCOPE --source-locale LOCALE --target-locale LOCALE --output FILE
+      Inventory a bounded scope and emit preparation, parity, and unsupported-catalog evidence.
 
 Translation batches use a null "translation" until a translator supplies text.
 `;
@@ -58,19 +68,25 @@ export function run(argv, io = console) {
     io.log(HELP);
     return 0;
   }
-  if (command === "inventory") return runInventory(roots, options, io);
-  if (command === "prepare") return runPrepare(roots, options, io);
+  if (command === "inventory") return runInventory(resolveRoots(roots, options), options, io);
+  if (command === "prepare") return runPrepare(resolveRoots(roots, options), options, io);
   if (command === "apply") return runApply(options, io);
-  if (command === "validate") return runValidate(roots, options, io);
+  if (command === "validate") return runValidate(resolveRoots(roots, options, true), options, io);
+  if (command === "migrate") return runMigrate(roots, options, io);
   throw new Error(`Unknown command: ${command}\n\n${HELP}`);
 }
 
-function requireRoots(roots) {
-  if (roots.length === 0) throw new Error("Specify one or more catalog roots");
+function resolveRoots(roots, options, allowInputOnly = false) {
+  if (roots.length > 0) return roots;
+  if (allowInputOnly && options.input && !options.scope) return [];
+  const scope = options.scope ?? "all";
+  if (!SCOPE_ROOTS[scope]) {
+    throw new Error(`Unsupported scope '${scope}'; expected one of ${Object.keys(SCOPE_ROOTS).join(", ")}`);
+  }
+  return SCOPE_ROOTS[scope].filter((root) => fs.existsSync(path.resolve(root)));
 }
 
 function runInventory(roots, options, io) {
-  requireRoots(roots);
   const { catalogs, parseFailures } = inventoryRootsDetailed(roots);
   const report = {
     version: 1,
@@ -99,11 +115,79 @@ function runInventory(roots, options, io) {
 }
 
 function runPrepare(roots, options, io) {
-  requireRoots(roots);
   const sourceLocale = requiredOption(options, "source-locale");
   const targetLocale = requiredOption(options, "target-locale");
   const output = requiredOption(options, "output");
   const catalogs = inventoryRoots(roots);
+  const batch = prepareBatch(catalogs, sourceLocale, targetLocale);
+  fs.mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
+  fs.writeFileSync(output, `${JSON.stringify(batch, null, 2)}\n`);
+  io.log(`Prepared ${batch.entries.length} missing keys in ${output}`);
+  return 0;
+}
+
+function runMigrate(positionalRoots, options, io) {
+  if (positionalRoots.length > 0) {
+    throw new Error("migrate is bounded by --scope and does not accept positional roots");
+  }
+  const scope = requiredOption(options, "scope");
+  const sourceLocale = requiredOption(options, "source-locale");
+  const targetLocale = requiredOption(options, "target-locale");
+  const output = requiredOption(options, "output");
+  const roots = resolveRoots([], { scope });
+  const { catalogs, parseFailures } = inventoryRootsDetailed(roots);
+  const batch = prepareBatch(catalogs, sourceLocale, targetLocale);
+  const byFamily = new Map();
+  for (const catalog of catalogs) {
+    const family = catalogKey(catalog);
+    const value = byFamily.get(family) ?? {};
+    value[catalog.locale] = catalog;
+    byFamily.set(family, value);
+  }
+  const parity = [...byFamily.entries()].map(([family, locales]) => {
+    const source = locales[sourceLocale];
+    const target = locales[targetLocale];
+    const sourceEntries = new Map(source?.entries.map((entry) => [entry.identity, entry]) ?? []);
+    const targetEntries = new Map(target?.entries.map((entry) => [entry.identity, entry]) ?? []);
+    const sourceOnly = [...sourceEntries.values()]
+      .filter(({ identity }) => !targetEntries.has(identity))
+      .map(({ key, keyPath }) => ({ key, keyPath }));
+    const targetOnly = [...targetEntries.values()]
+      .filter(({ identity }) => !sourceEntries.has(identity))
+      .map(({ key, keyPath }) => ({ key, keyPath }));
+    const valueConflicts = [...sourceEntries.values()]
+      .filter(({ identity, value }) => targetEntries.has(identity) &&
+        targetEntries.get(identity).value !== value)
+      .map(({ key, keyPath }) => ({ key, keyPath }));
+    return {
+      family,
+      sourcePresent: Boolean(source),
+      targetPresent: Boolean(target),
+      sourceOnly,
+      targetOnly,
+      valueConflicts,
+    };
+  });
+  const report = {
+    version: 1,
+    scope,
+    roots: roots.map((root) => path.resolve(root)),
+    sourceLocale,
+    targetLocale,
+    unsupported: parseFailures.map((failure) => ({
+      path: path.relative(process.cwd(), failure.path),
+      error: failure.error,
+    })),
+    preparation: batch,
+    parity,
+  };
+  fs.mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
+  fs.writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
+  io.log(`Prepared bounded migration evidence in ${output}`);
+  return parseFailures.length === 0 ? 0 : 1;
+}
+
+function prepareBatch(catalogs, sourceLocale, targetLocale) {
   const byKeyAndLocale = new Map(
     catalogs.map((catalog) => [`${catalogKey(catalog)}:${catalog.locale}`, catalog]),
   );
@@ -111,9 +195,9 @@ function runPrepare(roots, options, io) {
 
   for (const source of catalogs.filter(({ locale }) => locale === sourceLocale)) {
     const target = byKeyAndLocale.get(`${catalogKey(source)}:${targetLocale}`);
-    const targetKeys = new Set(target?.entries.map(({ key }) => key) ?? []);
+    const targetKeys = new Set(target?.entries.map(({ identity }) => identity) ?? []);
     for (const entry of source.entries) {
-      if (targetKeys.has(entry.key)) continue;
+      if (targetKeys.has(entry.identity)) continue;
       entries.push({
         catalog: {
           format: source.format,
@@ -121,10 +205,12 @@ function runPrepare(roots, options, io) {
         },
         sourceCatalog: {
           path: path.relative(process.cwd(), source.path),
-          sha256: hashFile(source.path),
         },
         key: entry.key,
+        keyPath: entry.keyPath,
+        identity: entry.identity,
         source: entry.value,
+        sourceIntegrity: sourceEntryIntegrity(entry),
         translation: null,
       });
     }
@@ -132,10 +218,7 @@ function runPrepare(roots, options, io) {
 
   const batch = { version: 1, sourceLocale, targetLocale, entries };
   batch.integrity = batchIntegrity(batch);
-  fs.mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
-  fs.writeFileSync(output, `${JSON.stringify(batch, null, 2)}\n`);
-  io.log(`Prepared ${entries.length} missing keys in ${output}`);
-  return 0;
+  return batch;
 }
 
 function runApply(options, io) {
@@ -156,50 +239,52 @@ function runApply(options, io) {
     const key = `${item.catalog.format}:${item.catalog.path}`;
     grouped.set(key, [...(grouped.get(key) ?? []), item]);
   }
-  let inserted = 0;
-
+  const writes = [];
   for (const items of grouped.values()) {
     const { catalog } = items[0];
     const file = path.resolve(catalog.path);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
     if (catalog.format === "properties") {
-      inserted += applyProperties(file, items);
+      writes.push(planProperties(file, items));
     } else if (catalog.format === "vue") {
-      inserted += applyVue(file, batch.targetLocale, items);
+      writes.push(planVue(file, batch.targetLocale, items));
     } else {
       throw new Error(`Unsupported catalog format: ${catalog.format}`);
     }
   }
+  for (const write of writes) {
+    fs.mkdirSync(path.dirname(write.file), { recursive: true });
+    fs.writeFileSync(write.file, write.output, write.encoding);
+  }
+  const inserted = writes.reduce((sum, write) => sum + write.inserted, 0);
   io.log(`Inserted ${inserted} translations`);
   return 0;
 }
 
-function applyProperties(file, items) {
-  let source = fs.existsSync(file) ? fs.readFileSync(file, "latin1") : "";
+function planProperties(file, items) {
+  let source = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
   const existing = new Set(
-    inventorySingleProperties(file, source).map(({ key }) => key),
+    inventorySingleProperties(file, source).map(({ identity }) => identity),
   );
   const additions = uniqueApplicable(items, existing);
-  if (additions.length === 0) return 0;
+  if (additions.length === 0) {
+    return { file, output: source, encoding: "utf8", inserted: 0 };
+  }
   const newline = source.includes("\r\n") ? "\r\n" : "\n";
   if (source && !/[\r\n]$/.test(source)) source += newline;
   source += additions
     .map(({ key, translation }) => `${escapeProperties(key, true)}=${escapeProperties(translation)}`)
     .join(newline);
   source += newline;
-  fs.writeFileSync(file, source, "latin1");
-  return additions.length;
+  return { file, output: source, encoding: "utf8", inserted: additions.length };
 }
 
 function inventorySingleProperties(file, source) {
-  if (!fs.existsSync(file)) {
-    fs.writeFileSync(file, source, "latin1");
-  }
+  if (!fs.existsSync(file)) return [];
   const catalog = inventoryRoots([file])[0];
   return catalog?.entries ?? [];
 }
 
-function applyVue(file, locale, items) {
+function planVue(file, locale, items) {
   const existed = fs.existsSync(file);
   const source = existed
     ? fs.readFileSync(file, "utf8")
@@ -207,27 +292,31 @@ function applyVue(file, locale, items) {
   const existing = new Set(
     existed
       ? (inventoryRoots([file]).find((catalog) => catalog.locale === locale)?.entries ?? [])
-        .map(({ key }) => key)
+        .map(({ identity }) => identity)
       : [],
   );
   const unique = uniqueApplicable(items, existing);
-  if (unique.length === 0) return 0;
+  if (unique.length === 0) {
+    return { file, output: source, encoding: "utf8", inserted: 0 };
+  }
   const output = insertVueEntries(
     source,
     file,
     locale,
-    unique.map(({ key, translation }) => ({ key, value: translation })),
+    unique.map(({ key, keyPath, translation }) => ({ key, keyPath, value: translation })),
   );
-  if (output === source) return 0;
-  fs.writeFileSync(file, output);
-  return unique.length;
+  if (output === source) {
+    throw new Error(`Unable to insert translations into Vue catalog: ${file}`);
+  }
+  return { file, output, encoding: "utf8", inserted: unique.length };
 }
 
 function uniqueApplicable(items, existing) {
   const seen = new Set(existing);
-  return items.filter(({ key }) => {
-    if (seen.has(key)) return false;
-    seen.add(key);
+  return items.filter((item) => {
+    const identity = item.identity ?? JSON.stringify(item.keyPath ?? [item.key]);
+    if (seen.has(identity)) return false;
+    seen.add(identity);
     return true;
   });
 }
@@ -239,7 +328,6 @@ function runValidate(roots, options, io) {
     issues.push(...validateBatch(batch));
   }
   if (roots.length === 0) {
-    if (!options.input) requireRoots(roots);
     io.log(JSON.stringify({ valid: issues.length === 0, issues }, null, 2));
     return issues.length === 0 ? 0 : 1;
   }
@@ -271,9 +359,9 @@ function runValidate(roots, options, io) {
     );
     for (const source of catalogs.filter(({ locale }) => locale === sourceLocale)) {
       const target = byKeyAndLocale.get(`${catalogKey(source)}:${targetLocale}`);
-      const targetEntries = new Map(target?.entries.map((entry) => [entry.key, entry]) ?? []);
+      const targetEntries = new Map(target?.entries.map((entry) => [entry.identity, entry]) ?? []);
       for (const sourceEntry of source.entries) {
-        const targetEntry = targetEntries.get(sourceEntry.key);
+        const targetEntry = targetEntries.get(sourceEntry.identity);
         if (!targetEntry) {
           issues.push({
             type: "missing",
@@ -329,7 +417,7 @@ function markupShape(value) {
 
 function pluralShape(key, value) {
   const keyIndicator = /(?:^|[._-])(one|other|many|few|zero|plural)(?:$|[._-])/.test(key);
-  const valueForms = String(value).split("||").length;
+  const valueForms = pipePluralForms(value);
   return `${keyIndicator ? "plural-key" : "plain-key"}:${valueForms}`;
 }
 
@@ -342,19 +430,23 @@ function validateBatch(batch) {
     });
     return issues;
   }
-  const sources = new Map();
   for (const entry of batch.entries ?? []) {
-    if (entry.sourceCatalog?.path && entry.sourceCatalog?.sha256) {
-      sources.set(entry.sourceCatalog.path, entry.sourceCatalog.sha256);
+    const sourcePath = entry.sourceCatalog?.path;
+    if (!sourcePath || !entry.sourceIntegrity) continue;
+    const file = sourcePath ? path.resolve(sourcePath) : null;
+    let current;
+    if (file && fs.existsSync(file)) {
+      const catalogs = inventoryRoots([file]);
+      current = catalogs
+        .flatMap((catalog) => catalog.entries)
+        .find(({ identity }) => identity === entry.identity);
     }
-  }
-  for (const [sourcePath, expected] of sources) {
-    const file = path.resolve(sourcePath);
-    if (!fs.existsSync(file) || hashFile(file) !== expected) {
+    if (!current || sourceEntryIntegrity(current) !== entry.sourceIntegrity) {
       issues.push({
         type: "stale-workspace",
         path: sourcePath,
-        message: `Source catalog changed after preparation: ${sourcePath}`,
+        key: entry.key,
+        message: `Source key changed after preparation: ${sourcePath}#${entry.key}`,
       });
     }
   }
@@ -371,8 +463,12 @@ function batchIntegrity(batch) {
   return hash(JSON.stringify(protectedBatch));
 }
 
-function hashFile(file) {
-  return hash(fs.readFileSync(file));
+function sourceEntryIntegrity(entry) {
+  return hash(JSON.stringify({
+    identity: entry.identity,
+    keyPath: entry.keyPath,
+    value: entry.value,
+  }));
 }
 
 function hash(value) {
