@@ -74,6 +74,31 @@ class TypedStorageTreeImplSpec extends Specification {
         false    | true        | 'wrong-type'
     }
 
+    def "hasResourceWithType is false when storage returns null resource"() {
+        given:
+        def tree = Mock(Tree)
+        def test = new TypedStorageTreeImpl(tree)
+        tree.hasResource(_) >> true
+        tree.getResource(_) >> null
+
+        expect:
+        !test.hasResourceWithType(PathUtil.asPath('a/path'), "correct-type")
+    }
+
+    def "getResourceWithType throws StorageException when storage returns null resource"() {
+        given:
+        def tree = Mock(Tree)
+        def test = new TypedStorageTreeImpl(tree)
+        tree.getResource(_) >> null
+
+        when:
+        test.getResourceWithType(PathUtil.asPath('a/path'), "correct-type")
+
+        then:
+        def e = thrown(StorageException)
+        e.message.contains('a/path')
+    }
+
     def "readResourceWithType reads content"() {
         given:
         def tree = Mock(Tree)
