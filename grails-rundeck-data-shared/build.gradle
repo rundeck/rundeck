@@ -1,7 +1,5 @@
 buildscript {
     repositories {
-        mavenCentral()
-        gradlePluginPortal()
         maven { url "https://repo.grails.org/grails/core" }
     }
     configurations.all {
@@ -38,8 +36,8 @@ apply plugin:"org.apache.grails.gradle.grails-gsp"
 
 repositories {
     mavenLocal()
-    mavenCentral()
     maven { url "https://repo.grails.org/grails/core" }
+    mavenCentral()
 }
 
 configurations {
