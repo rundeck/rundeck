@@ -1611,6 +1611,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 )
             }
             return false;
+        } catch (Exception e) {
+            // Storage plugins (e.g. CyberArk) may throw unchecked errors such as NPE
+            log.error("Error checking key storage path ${storagePath}", e)
+            if (failIfMissing) {
+                throw new ExecutionServiceException(
+                        "Could not read password, storage path ${storagePath}: Key Storage plugin error " +
+                        "(${e.class.simpleName}): ${e.message ?: 'no message'}",
+                        e
+                )
+            }
+            return false
         }
     }
 
@@ -1695,6 +1706,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 } catch (StorageException e) {
                     failMessage = e.message
+                } catch (Exception e) {
+                    // Storage plugins (e.g. CyberArk) may throw unchecked errors such as NPE
+                    failMessage = "Key Storage plugin error (${e.class.simpleName}): ${e.message ?: 'no message'}"
+                    log.error("Error reading key storage path ${defStoragePath} for option '${it.name}'", e)
                 }
 
                 if(!exists){
