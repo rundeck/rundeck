@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        maven { url "https://repo.grails.org/grails/core" }
         gradlePluginPortal()
     }
     dependencies {
