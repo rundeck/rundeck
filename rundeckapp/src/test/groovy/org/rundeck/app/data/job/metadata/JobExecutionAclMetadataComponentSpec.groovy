@@ -2,6 +2,8 @@ package org.rundeck.app.data.job.metadata
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import grails.testing.gorm.DataTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.model.v1.job.JobDataSummary
@@ -28,9 +30,13 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
      */
     private JobExecutionAclMetadataComponent newComponent(
         Map<String, String> projectProps = [:],
-        boolean projectDisabled = false
+        boolean projectDisabled = false,
+        boolean enforced = false
     ) {
         def sut = new JobExecutionAclMetadataComponent()
+        sut.featureService = Mock(FeatureService) {
+            _ * featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> enforced
+        }
         sut.frameworkService = Mock(FrameworkService) {
             _ * isFrameworkProjectDisabled(_) >> projectDisabled
             _ * getProjectConfigReloaded(_) >> Mock(IRundeckProjectConfig) {
@@ -181,8 +187,8 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
         when:
             def result = sut.getMetadataForJobIds(['job-a', 'job-b'], 'AProject', ['*'].toSet(), authContext)
         then:
-            result['job-a'][0].data == [valid: false, user: 'someuser']
-            result['job-b'][0].data == [valid: true, user: 'someuser']
+            result['job-a'][0].data == [valid: false, user: 'someuser', enforced: false]
+            result['job-b'][0].data == [valid: true, user: 'someuser', enforced: false]
     }
 
     @Unroll
@@ -259,7 +265,42 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             result.size() == 1
             result['job-1'].size() == 1
             result['job-1'][0].name == 'executionAclValid'
-            result['job-1'][0].data == [valid: false, user: 'someuser']
+            result['job-1'][0].data == [valid: false, user: 'someuser', enforced: false]
+    }
+
+    @Unroll
+    def "isExecutionAclEnforced reflects the scheduled-run authorization feature (#enforced)"() {
+        given:
+            def sut = newComponent([:], false, enforced)
+        expect:
+            sut.isExecutionAclEnforced() == enforced
+        where:
+            enforced << [true, false]
+    }
+
+    def "getMetadataForJobIds reports enforced when the feature skips the unauthorized run"() {
+        given:
+            def sut = newComponent([:], false, true)
+            def authContext = Mock(UserAndRolesAuthContext)
+            def se = new ScheduledExecution(
+                uuid: 'job-1',
+                project: 'AProject',
+                user: 'someuser',
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true,
+            )
+            sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
+                1 * findAllByUuidInList(['job-1']) >> [se]
+            }
+            sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForUserAndRolesAndProject('someuser', se.userRoles, 'AProject') >> authContext
+                1 * authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], 'AProject') >> false
+            }
+        when:
+            def result = sut.getMetadataForJobIds(['job-1'], 'AProject', ['*'].toSet(), authContext)
+        then:
+            result['job-1'][0].data == [valid: false, user: 'someuser', enforced: true]
     }
 
     def "getMetadataForJobIds returns empty when executionAclValid was not requested"() {
@@ -296,7 +337,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
         then:
             result.isPresent()
             result.get()[0].name == 'executionAclValid'
-            result.get()[0].data == [valid: false, user: 'someuser']
+            result.get()[0].data == [valid: false, user: 'someuser', enforced: false]
     }
 
     def "getMetadataForJobs returns meta keyed by job id (path used by the jobs browse endpoint)"() {
@@ -319,7 +360,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             def result = sut.getMetadataForJobs([summary], ['*'].toSet(), authContext)
         then:
             result['job-1'][0].name == 'executionAclValid'
-            result['job-1'][0].data == [valid: false, user: 'someuser']
+            result['job-1'][0].data == [valid: false, user: 'someuser', enforced: false]
     }
 
     def "getMetadataForJobs returns empty for an empty job collection"() {
@@ -366,7 +407,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
         then:
             result.isPresent()
             result.get()[0].name == 'executionAclValid'
-            result.get()[0].data == [valid: true, user: 'someuser']
+            result.get()[0].data == [valid: true, user: 'someuser', enforced: false]
     }
 
     @Unroll

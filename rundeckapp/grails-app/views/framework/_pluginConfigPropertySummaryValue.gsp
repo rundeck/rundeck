@@ -89,6 +89,35 @@
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.DYNAMIC_FORM, 'DYNAMIC_FORM']}">
     <stepplugin:customFields json="${values[prop.name]}"/>
 </g:elseif>
+<g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT'] && prop.type.toString() != 'AutogenInstanceId'}">
+    %{--STATIC_TEXT uses descriptor defaults; AutogenInstanceId keeps its persisted value.--}%
+    <g:set var="staticTextValue" value="${
+                stepplugin.messageText(
+                        service: service,
+                        name: provider,
+                        code: (messagePrefix?:'')+'property.' + prop.name + '.defaultValue',
+                        default: prop.defaultValue
+                )
+    }"/>
+    <span class="configpair">
+        <span title="${enc(attr: propdesc)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix?:''}property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/>:</span>
+        <span class="text-success">
+            <g:if test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/html']}">
+                <g:enc sanitize="${staticTextValue}"/>
+            </g:if>
+            <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/x-markdown']}">
+                <g:markdown>${staticTextValue}</g:markdown>
+            </g:elseif>
+            <g:else>
+                <g:enc html="${staticTextValue}"/>
+            </g:else>
+        </span>
+    </span>
+</g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
         <span title="${enc(attr: propdesc)}"><stepplugin:message

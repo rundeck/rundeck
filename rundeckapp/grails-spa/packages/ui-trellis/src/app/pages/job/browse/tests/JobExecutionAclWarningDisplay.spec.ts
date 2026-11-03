@@ -48,6 +48,28 @@ describe("JobExecutionAclWarningDisplay", () => {
     );
   });
 
+  it("says the schedule is being skipped once the feature enforces the check", () => {
+    const wrapper = mountWidget({
+      job: { id: "job-1" },
+      meta: { valid: false, user: "devread", enforced: true },
+    });
+
+    expect(wrapper.find(WARNING).attributes("title")).toBe(
+      'job.execution.acl.invalid.blocked.warning.title:{"user":"devread"}',
+    );
+  });
+
+  it("uses the blocked missing-owner message when enforced and no user is saved", () => {
+    const wrapper = mountWidget({
+      job: { id: "job-1" },
+      meta: { valid: false, enforced: true },
+    });
+
+    expect(wrapper.find(WARNING).attributes("title")).toBe(
+      "job.execution.acl.missing.owner.blocked.warning.title",
+    );
+  });
+
   it("renders nothing when the stored owner is still authorized", () => {
     const wrapper = mountWidget({
       job: { id: "job-1" },

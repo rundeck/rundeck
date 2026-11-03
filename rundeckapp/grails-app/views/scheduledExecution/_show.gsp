@@ -136,14 +136,20 @@
             </g:if>
             <b class="glyphicon glyphicon-warning-sign"></b>
             %{-- no saved user means there is nobody to grant access to; re-saving is the only way out --}%
+            %{-- enforced means the trigger already skips the run, so the wording says so
+                 rather than warning about something a later release might do --}%
             <g:if test="${scheduledExecution.user}">
                 %{-- taglib output is not encoded (grails.views.gsp.codecs.taglib: none) and a
                      username has no format constraint, so encode this one explicitly --}%
-                <g:message code="job.execution.acl.invalid.warning.title"
+                <g:message code="${executionAclEnforced
+                                          ? 'job.execution.acl.invalid.blocked.warning.title'
+                                          : 'job.execution.acl.invalid.warning.title'}"
                            args="${[scheduledExecution.user]}" encodeAs="HTML"/>
             </g:if>
             <g:else>
-                <g:message code="job.execution.acl.missing.owner.warning.title"/>
+                <g:message code="${executionAclEnforced
+                                          ? 'job.execution.acl.missing.owner.blocked.warning.title'
+                                          : 'job.execution.acl.missing.owner.warning.title'}"/>
             </g:else>
         </section>
     </g:if>

@@ -2336,6 +2336,8 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         // overrides the permissive stub from setup()
         controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
             1 * validateExecutionAcl([job1]) >> [(testUUID): false]
+            // the list badge picks its wording from this, so the model has to carry it
+            1 * isExecutionAclEnforced() >> true
         }
 
         when:
@@ -2357,6 +2359,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         model.nextExecutions!=null
         model.nextExecutions[job1.id]!=null
         model.executionAclValid == [(testUUID): false]
+        model.executionAclEnforced
     }
 
 
