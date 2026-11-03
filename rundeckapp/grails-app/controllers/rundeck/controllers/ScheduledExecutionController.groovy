@@ -564,6 +564,9 @@ Since: v53''',
         }
 
         def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution)
+        // whether the trigger now skips the run, rather than only warning about it: the
+        // wording differs, so the view needs it alongside the validity flag
+        def executionAclEnforced = jobExecutionAclMetadataComponent.isExecutionAclEnforced()
         // Offer the pre-filled ACL editor only to someone who could actually save it
         def executionAclFixPolicy = null
         // with no saved user there is nobody to grant access to: re-saving the job is the
@@ -580,6 +583,7 @@ Since: v53''',
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
                 executionAclValid: executionAclValid,
+                executionAclEnforced: executionAclEnforced,
                 executionAclFixPolicy: executionAclFixPolicy,
                 isReferenced: isReferenced,
                 parentList: parentList,

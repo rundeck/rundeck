@@ -1,5 +1,6 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import JobBulkEditControls from "../JobBulkEditControls.vue";
+import UiSocket from "../../../../../library/components/utils/UiSocket.vue";
 import { JobPageStoreInjectionKey } from "../../../../../library/stores/JobPageStore";
 import { JobBrowserStoreInjectionKey } from "../../../../../library/stores/JobBrowser";
 
@@ -83,6 +84,17 @@ describe("JobBulkEditControls", () => {
     expect(selectNoneButton.classes()).toContain("btn-simple");
     expect(selectNoneButton.classes()).toContain("btn-xs");
     expect(selectNoneButton.classes()).toContain("btn-hover");
+  });
+
+  it("renders a ui socket in the bulk action menu for extension actions", async () => {
+    const wrapper = await createWrapper();
+
+    const locations = wrapper
+      .findAllComponents(UiSocket)
+      .filter((socket) => socket.props("section") === "job-list-page")
+      .map((socket) => socket.props("location"));
+
+    expect(locations).toContain("bulk-actions-menu");
   });
 
   it("does not render the select all/none buttons when bulk edit mode is off", async () => {

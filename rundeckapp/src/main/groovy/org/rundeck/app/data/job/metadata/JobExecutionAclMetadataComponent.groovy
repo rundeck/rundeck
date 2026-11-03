@@ -12,16 +12,21 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import rundeck.ScheduledExecution
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import rundeck.services.FrameworkService
 import rundeck.services.data.IScheduledExecutionDataService
 
 
 /**
- * Provides a non-blocking "executionAclValid" job metadata flag: whether a scheduled job's
- * stored owner (user/userRoles) is still authorized (ACTION_RUN) to execute it.
+ * Provides the "executionAclValid" job metadata flag: whether a scheduled job's stored
+ * owner (user/userRoles) is still authorized (ACTION_RUN) to execute it.
  *
- * This is a detection-only warning, not an enforcement mechanism: it does not affect
- * whether a scheduled job's Quartz trigger actually creates an execution.
+ * This component only reports; it never decides. Whether an unauthorized owner actually
+ * stops the run is {@link Features#SCHEDULED_RUN_AUTHORIZATION}, which the Quartz path
+ * (ExecutionJob, via ExecutionService) evaluates for itself. The same flag is reported
+ * here as {@code enforced} so a renderer can say whether the schedule is being skipped
+ * or only warned about, without repeating the feature lookup.
  */
 @CompileStatic
 class JobExecutionAclMetadataComponent implements JobMetadataComponent {
@@ -37,6 +42,18 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
 
     @Autowired
     FrameworkService frameworkService
+
+    @Autowired
+    FeatureService featureService
+
+    /**
+     * @return true when the trigger will actually skip an unauthorized run, rather than
+     * only warn about it. Decided here so every renderer can pick its wording without
+     * repeating the feature lookup.
+     */
+    boolean isExecutionAclEnforced() {
+        return featureService.featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION)
+    }
 
     /**
      * Per-call caches. Jobs in a listing commonly share both a saved owner and a
@@ -214,6 +231,7 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         // one cache for the whole batch: the browse page asks for many jobs at once and
         // they commonly share an owner
         EvaluationCache cache = new EvaluationCache()
+        boolean enforced = isExecutionAclEnforced()
         // batched rather than one lookup per job: the browse endpoint can ask for every
         // job in a project, which is both an N+1 and, as a single IN, past the parameter
         // limit some databases impose. Same partition size as bulkNextExecutionTime.
@@ -226,7 +244,11 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
                 [
                     ComponentMeta.with(
                         NAME,
-                        [valid: evaluateExecutionAcl(se, cache), user: se.user] as Map<String, Object>
+                        [
+                            valid   : evaluateExecutionAcl(se, cache),
+                            user    : se.user,
+                            enforced: enforced,
+                        ] as Map<String, Object>
                     )
                 ]
             )

@@ -1,6 +1,12 @@
 <template>
   <div id="fieldcustomeditor" class="col-sm-12">
-    <input ref="hiddenFieldInput" type="hidden" :name="name" />
+    <input
+      v-if="!element"
+      ref="hiddenFieldInput"
+      type="hidden"
+      :name="name"
+      data-testid="dynamic-form-value-input"
+    />
     <hr />
 
     <div v-if="customFields != null">
@@ -205,6 +211,11 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    element: {
+      type: String,
+      required: false,
+      default: "",
+    },
     name: {
       type: String,
       required: true,
@@ -359,11 +370,16 @@ export default defineComponent({
     changeField() {
       this.refreshPlugin();
     },
-    refreshPlugin() {
+    /**
+     * Synchronizes generated JSON with the component-owned submitted input.
+     * Legacy GSP callers receive the value through the parent event handler.
+     */
+    refreshPlugin(): void {
       const fieldsJson = JSON.stringify(this.customFields);
-      const hiddenFieldInput = this.$refs.hiddenFieldInput as HTMLInputElement;
-      if (hiddenFieldInput) {
-        hiddenFieldInput.value = fieldsJson;
+      const inputElement = this.$refs.hiddenFieldInput as
+        HTMLInputElement | undefined;
+      if (inputElement) {
+        inputElement.value = fieldsJson;
       }
       this.$emit("update:modelValue", fieldsJson);
     },

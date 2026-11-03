@@ -650,6 +650,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
         executionAclValid: executionAclValid,
+        executionAclEnforced: includeExecutionAclValid ? jobExecutionAclMetadataComponent.isExecutionAclEnforced() : false,
         scheduledJobs: allScheduled,
         nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,
