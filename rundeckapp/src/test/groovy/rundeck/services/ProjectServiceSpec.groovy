@@ -562,6 +562,58 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * component2.projectDeleted('myproject')
     }
 
+    def "component cleanup failure releases the claim for retry"() {
+        given:
+        def row = new Project(
+            name: 'myproject',
+            state: org.rundeck.app.data.model.v1.project.RdProject.State.DISABLED
+        ).save(flush: true, failOnError: true)
+        def componentCalls = 0
+        ProjectComponent component = Mock(ProjectComponent) {
+            getName() >> 'component'
+            isComponentEnabled() >> true
+            projectDeleted('myproject') >> {
+                if (componentCalls++ == 0) {
+                    throw new RuntimeException('forced component failure')
+                }
+            }
+        }
+        service.componentBeanProvider = new ProjectService.BeanProvider<ProjectComponent>() {
+            Map<String, ProjectComponent> beans = [component: component]
+        }
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        def manager = Mock(ProjectManager) {
+            2 * isFrameworkProjectDisabled('myproject') >> true
+            1 * removeFrameworkProject('myproject', row.id) >> {
+                Project.get(row.id)?.delete(flush: true)
+            }
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> manager
+        }
+
+        when:
+        def failed = service.deleteProject(project, framework, null, 'system', Boolean.FALSE, true)
+        def retried = service.deleteProject(project, framework, null, 'system', Boolean.FALSE, true)
+
+        then:
+        !failed.success
+        failed.error.contains('forced component failure')
+        retried.success
+        componentCalls == 2
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        2 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+    }
+
     def "delete project without deferral wont disable project"() {
         given:
         new Project(name: 'myproject').save(flush: true, failOnError: true)
@@ -1059,6 +1111,45 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         GroovySystem.metaClassRegistry.removeMetaClass(Execution)
     }
 
+    def "deferred task scheduling failure releases the claim for retry"() {
+        given:
+        Promises.promiseFactory = new FailingPromiseFactory()
+        def row = new Project(
+            name: 'myproject',
+            state: org.rundeck.app.data.model.v1.project.RdProject.State.DISABLED
+        ).save(flush: true, failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.targetEventBus = Mock(EventBus)
+        def manager = Mock(ProjectManager) {
+            2 * isFrameworkProjectDisabled('myproject') >> true
+            1 * removeFrameworkProject('myproject', row.id) >> {
+                Project.get(row.id)?.delete(flush: true)
+            }
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> manager
+        }
+
+        when:
+        def failed = service.deleteProject(project, framework, null, 'system', Boolean.TRUE, true)
+        Promises.promiseFactory = new SynchronousPromiseFactory()
+        def retried = service.deleteProject(project, framework, null, 'system', Boolean.FALSE, true)
+
+        then:
+        !failed.success
+        failed.error.contains('Failed to schedule deletion')
+        retried.success
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+    }
+
     def "project removal waits until execution cleanup succeeds"() {
         given:
         new Project(
@@ -1128,12 +1219,13 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         order == ['cleanup', 'resume']
     }
 
-    def "project delete recovery stops when startup execution cleanup times out"() {
+    def "project delete recovery reschedules when startup execution cleanup times out"() {
         given:
         def factory = new CapturingPromiseFactory()
         Promises.promiseFactory = factory
         def pending = Mock(java.util.concurrent.Future)
         service.executionService = Mock(ExecutionService)
+        service.taskService = Mock(TaskService)
         def manager = Mock(ProjectManager)
         def framework = Mock(Framework) {
             getFrameworkProjectMgr() >> manager
@@ -1149,6 +1241,12 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * pending.get(5, java.util.concurrent.TimeUnit.MINUTES) >> {
             throw new java.util.concurrent.TimeoutException('forced timeout')
         }
+        1 * service.taskService.schedule(
+            30L,
+            'project-delete-recovery',
+            java.util.concurrent.TimeUnit.SECONDS,
+            _ as Closure
+        )
         0 * manager.listDisabledFrameworkProjectNames()
     }
 

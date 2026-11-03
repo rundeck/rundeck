@@ -116,12 +116,15 @@ import retrofit2.Response
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
+    private static final String PROJECT_DELETE_RECOVERY_TASK = 'project-delete-recovery'
+    private static final long PROJECT_DELETE_RECOVERY_RETRY_SECONDS = 30L
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
     AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
+    TaskService taskService
     FileUploadService fileUploadService
     def loggingService
     def logFileStorageService
@@ -2053,18 +2056,26 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         log.info("Deferring deletion of project ${project.name} to background task.")
 
-        def promise = Promises.task {
-            runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
+        try {
+            def promise = Promises.task {
+                runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
+            }
+            promise.onComplete { DeleteResponse it ->
+                log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
+                return it
+            }
+            promise.onError { Throwable t ->
+                log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
+                return null as DeleteResponse
+            }
+        } catch (Throwable t) {
+            deferredDeletesInFlight.remove(project.name, claimedId)
+            log.error("Failed to schedule deletion of project [${project.name}]: ${t.message}", t)
+            return new DeleteResponse(
+                success: false,
+                error: "Failed to schedule deletion of project ${project.name}: ${t.message}"
+            )
         }
-        promise.onComplete { DeleteResponse it ->
-            log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
-            return it
-        }
-        promise.onError { Throwable t ->
-            log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
-            return null as DeleteResponse
-        }
-
         return new DeleteResponse(success: true)
     }
 
@@ -2083,6 +2094,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             pending.get(5, TimeUnit.MINUTES)
                         } catch (TimeoutException e) {
                             log.error("Startup execution cleanup timed out before project delete recovery")
+                            scheduleProjectDeleteRecoveryRetry()
                             return
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt()
@@ -2104,6 +2116,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         } catch (Throwable t) {
             log.error("Failed to schedule project deletion recovery after startup: ${t.message}", t)
+        }
+    }
+
+    private void scheduleProjectDeleteRecoveryRetry() {
+        try {
+            taskService.schedule(
+                PROJECT_DELETE_RECOVERY_RETRY_SECONDS,
+                PROJECT_DELETE_RECOVERY_TASK,
+                TimeUnit.SECONDS
+            ) {
+                resumeDisabledProjectsFromBootstrap()
+            }
+        } catch (Throwable t) {
+            log.error("Failed to reschedule project deletion recovery: ${t.message}", t)
         }
     }
 
