@@ -102,6 +102,8 @@ import java.util.jar.Manifest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
@@ -1947,13 +1949,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean success
         String error
     }
-    private static boolean runningExecutionBlockedDelete(String error) {
-        return error != null && (
-            error.contains('currently being executed') ||
-                error.contains('The execution is currently running')
-        )
-    }
-
     /**
      * Claim this JVM's deferred delete for a project row that was actually read.
      * @return the id stored in the claim, or null when that same row is already claimed
@@ -1981,25 +1976,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @CompileStatic(TypeCheckingMode.SKIP)
     private DeleteResponse runDeferredProjectDelete(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup, Long claimedId) {
-        Project.withNewSession {
-            if (!projectRowMatches(project.name, claimedId)) {
-                deferredDeletesInFlight.remove(project.name, claimedId)
-                return new DeleteResponse(success: false, error: "Project changed before cleanup")
-            }
-            DeleteResponse result = deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
-            if (result != null && result.success) {
-                deferredDeletesInFlight.remove(project.name, claimedId)
-            } else if (runningExecutionBlockedDelete(result?.error) ||
-                result?.error?.contains('Project is not disabled')) {
-                deferredDeletesInFlight.remove(project.name, claimedId)
-            }
-            return result
+        try {
+            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
+        } finally {
+            deferredDeletesInFlight.remove(project.name, claimedId)
         }
-    }
-
-    private boolean projectRowMatches(String name, Long claimedId) {
-        Long current = currentProjectId(name)
-        return current != null && current == claimedId
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
@@ -2088,9 +2069,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     /**
-     * Resume deferred deletes left DISABLED after a restart. A failed attempt stays in
-     * {@link #deferredDeletesInFlight} until this JVM is replaced, unless the project row
-     * was recreated with a new id or the failure was an execution that was still running.
+     * Resume deferred deletes left DISABLED after a restart.
      */
     @Subscriber('rundeck.bootstrap')
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -2101,7 +2080,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     def pending = executionService?.startupCleanupFuture
                     if (pending != null) {
                         try {
-                            pending.get()
+                            pending.get(5, TimeUnit.MINUTES)
+                        } catch (TimeoutException e) {
+                            log.error("Startup execution cleanup timed out before project delete recovery")
+                            return
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt()
+                            log.warn("Project delete recovery was interrupted while waiting for startup execution cleanup")
+                            return
                         } catch (Throwable t) {
                             log.error("Startup execution cleanup did not finish before project delete recovery: ${t.message}", t)
                         }
@@ -2154,19 +2140,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     @CompileStatic(TypeCheckingMode.SKIP)
     protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup = false, Long claimedProjectId = null) {
-        if (claimedProjectId != null && !projectRowMatches(project.name, claimedProjectId)) {
-            notify('projectDeleteFailed', project.name)
-            return new DeleteResponse(success: false, error: "Project changed before cleanup")
-        }
         log.info("Starting deletion of project ${project.name} by username $username")
-        notify('projectWillBeDeleted', project.name)
         def result = new DeleteResponse(success: false)
 
-        ScheduledExecution.withTransaction { TransactionStatus status ->
+        Project.withNewTransaction { TransactionStatus status ->
 
             try {
                 if (claimedProjectId != null) {
-                    Project lockedProject = Project.lock(claimedProjectId)
+                    Project lockedProject = Project.lockWithTimeout(claimedProjectId)
                     if (lockedProject == null || lockedProject.name != project.name) {
                         throw new IllegalStateException("Project changed before cleanup")
                     }
@@ -2179,9 +2160,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         lockedProject.save(flush: true, failOnError: true)
                     }
                 }
+                notify('projectWillBeDeleted', project.name)
 
-                //disable scm only after the claimed row is locked
-                scmService.removeAllPluginConfiguration(project.name)
+                //Stop active SCM work without deleting its persisted configuration.
+                //Project resource removal deletes that configuration after this transaction commits.
+                scmService.unregisterAllPlugins(project.name)
 
                 //delete all reports
                 execReportDataProvider.deleteWithTransaction(project.name)

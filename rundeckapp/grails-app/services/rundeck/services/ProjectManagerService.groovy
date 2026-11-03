@@ -714,7 +714,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     protected Object lockProject(Long projectId) {
-        rundeck.Project.lock(projectId)
+        rundeck.Project.lockWithTimeout(projectId)
     }
 
     @Override

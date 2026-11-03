@@ -1413,7 +1413,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             rundeckJobDefinitionManager.beforeDelete(scheduledExecution, authContext)
             try {
                 scheduledExecution.delete(flush: true)
-                deleteJobAfterCommit(jobname, groupname)
+                deleteJobAfterCommit(jobname, groupname, scheduledExecution.id as Long)
                 success = true
             } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 scheduledExecution.discard()
@@ -1444,8 +1444,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return new DeleteJobResult(id:scheduledExecution.id,success:success,error:errmsg)
     }
 
-    protected void deleteJobAfterCommit(String jobname, String groupname) {
+    protected void deleteJobAfterCommit(String jobname, String groupname, Long deletedJobId = null) {
         afterCommit {
+            ScheduledExecution replacement = ScheduledExecution.withNewSession {
+                ScheduledExecution.withNewTransaction {
+                    ScheduledExecution.findByUuid(jobname)
+                }
+            }
+            if (replacement?.project == groupname && replacement.shouldScheduleExecution() &&
+                (deletedJobId == null || replacement.id != deletedJobId)) {
+                log.info("Skipping stale Quartz cleanup for recreated job ${jobname}")
+                return
+            }
             deleteJob(jobname, groupname)
         }
     }

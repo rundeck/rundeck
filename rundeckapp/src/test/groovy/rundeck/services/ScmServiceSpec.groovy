@@ -245,6 +245,19 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
 
     }
 
+    def "unregisterAllPlugins keeps persisted configuration"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        when:
+        service.unregisterAllPlugins('test1')
+
+        then:
+        2 * service.jobEventsService.removeListener(null)
+        0 * service.pluginConfigService.removePluginConfiguration(_, _)
+    }
+
     def "validatePluginSetup"() {
         given:
         def config = [:]

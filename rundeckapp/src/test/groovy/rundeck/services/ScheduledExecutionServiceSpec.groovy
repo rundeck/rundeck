@@ -5302,6 +5302,49 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             1 * service.rundeckJobDefinitionManager.afterDelete(job, authContext)
     }
 
+    def "post-commit schedule cleanup does not remove a same-uuid replacement"() {
+        given:
+            def original = new ScheduledExecution(createJobParams()).save(flush: true, failOnError: true)
+            def jobName = original.generateJobScheduledName()
+            def groupName = original.generateJobGroupName()
+            service.jobSchedulerService = Mock(JobSchedulerService)
+            org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization()
+            service.deleteJobAfterCommit(jobName, groupName)
+            def synchronizations =
+                org.springframework.transaction.support.TransactionSynchronizationManager.synchronizations
+            org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization()
+            original.delete(flush: true)
+            new ScheduledExecution(createJobParams(uuid: jobName)).save(flush: true, failOnError: true)
+
+        when:
+            synchronizations*.afterCommit()
+
+        then:
+            0 * service.jobSchedulerService.deleteJobSchedule(_, _)
+    }
+
+    def "post-commit schedule cleanup removes the old trigger for an unscheduled same-uuid replacement"() {
+        given:
+            def original = new ScheduledExecution(createJobParams()).save(flush: true, failOnError: true)
+            def jobName = original.generateJobScheduledName()
+            def groupName = original.generateJobGroupName()
+            service.jobSchedulerService = Mock(JobSchedulerService)
+            org.springframework.transaction.support.TransactionSynchronizationManager.initSynchronization()
+            service.deleteJobAfterCommit(jobName, groupName)
+            def synchronizations =
+                org.springframework.transaction.support.TransactionSynchronizationManager.synchronizations
+            org.springframework.transaction.support.TransactionSynchronizationManager.clearSynchronization()
+            original.delete(flush: true)
+            new ScheduledExecution(createJobParams(uuid: jobName, scheduled: false))
+                .save(flush: true, failOnError: true)
+
+        when:
+            synchronizations*.afterCommit()
+
+        then:
+            1 * service.jobSchedulerService.deleteJobSchedule(jobName, groupName)
+    }
+
     @Unroll
     def "delete scheduled execution running"() {
         given:

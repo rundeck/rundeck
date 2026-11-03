@@ -12,9 +12,9 @@ import spock.lang.Specification
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
 @Integration
@@ -45,25 +45,19 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
         }
     }
 
-    def "overlapping cleanup waits for row deletion and skips name-based work"() {
+    def "overlapping cleanup fails within the bounded project lock timeout"() {
         given:
-        def projectRow = Project.withNewTransaction {
-            new Project(
-                name: 'lock-test-project',
-                state: RdProject.State.DISABLED
-            ).save(flush: true, failOnError: true)
+        def projectRow = Project.withNewSession {
+            Project.withNewTransaction {
+                new Project(
+                    name: 'lock-test-project',
+                    state: RdProject.State.DISABLED
+                ).save(flush: true, failOnError: true)
+            }
         }
-        def firstCleanupEntered = new CountDownLatch(1)
-        def releaseFirstCleanup = new CountDownLatch(1)
-        def cleanupCalls = new AtomicInteger()
+        def blockingScmService = new BlockingScmService()
         def service = new ProjectService(
-            scmService: Mock(ScmService) {
-                removeAllPluginConfiguration('lock-test-project') >> {
-                    cleanupCalls.incrementAndGet()
-                    firstCleanupEntered.countDown()
-                    releaseFirstCleanup.await(30, TimeUnit.SECONDS)
-                }
-            },
+            scmService: blockingScmService,
             execReportDataProvider: Mock(ExecReportDataProvider),
             scheduledExecutionService: Mock(ScheduledExecutionService),
             executionService: Mock(ExecutionService) {
@@ -90,35 +84,24 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
 
         when:
         def first = executor.submit({
-            Project.withNewSession {
-                service.deleteProjectInternal(project, framework, null, 'system', true, projectRow.id)
-            }
+            service.deleteProjectInternal(project, framework, null, 'system', true, projectRow.id)
         } as Callable<ProjectService.DeleteResponse>)
-        assert firstCleanupEntered.await(30, TimeUnit.SECONDS)
+        assert blockingScmService.firstCleanupEntered.await(30, TimeUnit.SECONDS)
         def second = executor.submit({
-            Project.withNewSession {
-                service.deleteProjectInternal(project, framework, null, 'system', true, projectRow.id)
-            }
+            service.deleteProjectInternal(project, framework, null, 'system', true, projectRow.id)
         } as Callable<ProjectService.DeleteResponse>)
-        boolean secondWaited = false
-        try {
-            second.get(500, TimeUnit.MILLISECONDS)
-        } catch (TimeoutException ignored) {
-            secondWaited = true
-        }
-        releaseFirstCleanup.countDown()
+        def secondResult = second.get(10, TimeUnit.SECONDS)
+        blockingScmService.releaseFirstCleanup.countDown()
         def firstResult = first.get(30, TimeUnit.SECONDS)
-        def secondResult = second.get(30, TimeUnit.SECONDS)
 
         then:
-        secondWaited
         firstResult.success
         !secondResult.success
-        cleanupCalls.get() == 1
+        blockingScmService.cleanupCalls.get() == 1
         Project.withNewTransaction { Project.findByName('lock-test-project') } == null
 
         cleanup:
-        releaseFirstCleanup.countDown()
+        blockingScmService.releaseFirstCleanup.countDown()
         executor.shutdownNow()
         Project.withNewTransaction {
             Project.findByName('lock-test-project')?.delete(flush: true)
@@ -127,9 +110,11 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
 
     def "overlapping finalizers cannot remove a same-name replacement"() {
         given:
-        def original = Project.withNewTransaction {
-            new Project(name: 'finalize-lock-project', state: RdProject.State.DISABLED)
-                .save(flush: true, failOnError: true)
+        def original = Project.withNewSession {
+            Project.withNewTransaction {
+                new Project(name: 'finalize-lock-project', state: RdProject.State.DISABLED)
+                    .save(flush: true, failOnError: true)
+            }
         }
         def manager = new BlockingProjectManagerService()
         def executor = Executors.newFixedThreadPool(2)
@@ -146,11 +131,11 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
                 manager.finishProjectRemoval('finalize-lock-project', original.id)
             }
         } as Callable)
-        boolean secondWaited = false
+        ExecutionException secondFailure
         try {
-            second.get(500, TimeUnit.MILLISECONDS)
-        } catch (TimeoutException ignored) {
-            secondWaited = true
+            second.get(10, TimeUnit.SECONDS)
+        } catch (ExecutionException e) {
+            secondFailure = e
         }
         manager.releaseFirstCleanup.countDown()
         first.get(30, TimeUnit.SECONDS)
@@ -158,13 +143,12 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
             new Project(name: 'finalize-lock-project', state: RdProject.State.ENABLED)
                 .save(flush: true, failOnError: true)
         }
-        second.get(30, TimeUnit.SECONDS)
         Project.withNewSession {
             manager.finishProjectRemoval('finalize-lock-project', original.id)
         }
 
         then:
-        secondWaited
+        secondFailure
         manager.cleanupCalls.get() == 1
         Project.withNewTransaction { Project.findByName('finalize-lock-project')?.id } == replacement.id
 
@@ -183,6 +167,19 @@ class ProjectDeleteLockIntegrationSpec extends Specification {
 
         @Override
         protected void deleteProjectResources(String projectName) {
+            cleanupCalls.incrementAndGet()
+            firstCleanupEntered.countDown()
+            releaseFirstCleanup.await(30, TimeUnit.SECONDS)
+        }
+    }
+
+    private static class BlockingScmService extends ScmService {
+        final CountDownLatch firstCleanupEntered = new CountDownLatch(1)
+        final CountDownLatch releaseFirstCleanup = new CountDownLatch(1)
+        final AtomicInteger cleanupCalls = new AtomicInteger()
+
+        @Override
+        void unregisterAllPlugins(String project) {
             cleanupCalls.incrementAndGet()
             firstCleanupEntered.countDown()
             releaseFirstCleanup.await(30, TimeUnit.SECONDS)

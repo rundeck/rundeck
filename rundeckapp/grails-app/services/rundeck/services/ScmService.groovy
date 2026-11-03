@@ -793,6 +793,15 @@ class ScmService {
 
 
     /**
+     * Stop all loaded SCM plugins for a project without deleting their persisted configuration.
+     * @param project project
+     */
+    void unregisterAllPlugins(String project) {
+        unregisterPlugin(IMPORT, project)
+        unregisterPlugin(EXPORT, project)
+    }
+
+    /**
      * Disable and remove all plugins for a project
      * @param project project
      * @return

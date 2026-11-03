@@ -153,7 +153,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
 
     void setup() {
-        Project.metaClass.static.lock = { Serializable id -> Project.get(id) }
+        Project.metaClass.static.lockWithTimeout = { Serializable id -> Project.get(id) }
         def configService = Stub(ConfigurationService) {
             getString('projectService.projectExgitportCache.spec', _) >> 'refreshAfterWrite=2m'
         }
@@ -454,7 +454,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
 
         then:
-        1 * service.scmService.removeAllPluginConfiguration('myproject')
+        1 * service.scmService.unregisterAllPlugins('myproject')
         1 * service.executionService.deleteBulkExecutionIds(*_)
         3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject', _ as Long)
@@ -515,6 +515,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
             1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
             1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+            0 * service.scmService.removeAllPluginConfiguration(_)
             1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * isFrameworkProjectDisabled('myproject') >> false
                 0 * disableFrameworkProject('myproject', _ as Long)
@@ -846,7 +847,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName() >> 'myproject'
         }
         service.scmService = Mock(ScmService) {
-            0 * removeAllPluginConfiguration(_)
+            0 * unregisterAllPlugins(_)
         }
         service.executionService = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
@@ -862,7 +863,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def fwk = Mock(Framework) {
             getFrameworkProjectMgr() >> mgr
         }
-        Project.metaClass.static.lock = { Serializable id ->
+        Project.metaClass.static.lockWithTimeout = { Serializable id ->
             Project.get(original.id)?.delete(flush: true)
             replacement[0] = new Project(name: 'myproject').save(flush: true, failOnError: true)
             Project.get(id)
@@ -875,11 +876,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         !result.success
         result.error.contains('Project changed before cleanup')
         Project.get(replacement[0].id)
-        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        0 * service.eventBus.notify('projectWillBeDeleted', _)
         1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
 
         cleanup:
-        Project.metaClass.static.lock = { Serializable id -> Project.get(id) }
+        Project.metaClass.static.lockWithTimeout = { Serializable id -> Project.get(id) }
     }
 
     def "post-commit cleanup failure keeps the delete tombstone retryable"() {
@@ -925,7 +926,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName() >> 'myproject'
         }
         service.scmService = Mock(ScmService) {
-            0 * removeAllPluginConfiguration(_)
+            0 * unregisterAllPlugins(_)
         }
         service.executionService = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
@@ -953,7 +954,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         result.success
         Project.get(replacement.id)
         !service.deferredDeletesInFlight.containsKey('myproject')
-        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        0 * service.eventBus.notify('projectWillBeDeleted', _)
         1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
     }
 
@@ -1123,8 +1124,32 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then:
         1 * service.executionService.getStartupCleanupFuture() >> pending
-        1 * pending.get() >> { order << 'cleanup'; null }
+        1 * pending.get(5, java.util.concurrent.TimeUnit.MINUTES) >> { order << 'cleanup'; null }
         order == ['cleanup', 'resume']
+    }
+
+    def "project delete recovery stops when startup execution cleanup times out"() {
+        given:
+        def factory = new CapturingPromiseFactory()
+        Promises.promiseFactory = factory
+        def pending = Mock(java.util.concurrent.Future)
+        service.executionService = Mock(ExecutionService)
+        def manager = Mock(ProjectManager)
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> manager
+        }
+        service.frameworkService = new Expando(rundeckFramework: framework)
+
+        when:
+        service.resumeDisabledProjectsFromBootstrap()
+        factory.captured.call()
+
+        then:
+        1 * service.executionService.getStartupCleanupFuture() >> pending
+        1 * pending.get(5, java.util.concurrent.TimeUnit.MINUTES) >> {
+            throw new java.util.concurrent.TimeoutException('forced timeout')
+        }
+        0 * manager.listDisabledFrameworkProjectNames()
     }
 
     def "project delete recovery contains failures outside the bootstrap subscriber"() {
@@ -1185,7 +1210,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         noExceptionThrown()
     }
 
-    def "failed deferred delete stays disabled and is resumed on the next bootstrap"() {
+    def "completed failed delete releases its claim for a synchronous retry"() {
         given:
         def disabled = false
         def project = Mock(IRundeckProject) {
@@ -1216,29 +1241,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         when:
         def first = service.deleteProject(project, fwk, null, null)
-        def second = service.deleteProject(project, fwk, null, null)
+        def second = service.deleteProject(project, fwk, null, null, Boolean.FALSE)
 
         then:
         first.success
         !second.success
-        second.error == 'Cannot delete an already disabled project.'
-        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
-        service.deferredDeletesInFlight.containsKey('myproject')
-
-        when:
-        service.deferredDeletesInFlight.clear()
-        def resumeAuth = Mock(AuthContext)
-        service.rundeckAuthContextProcessor = new Expando()
-        service.rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject = { String user, roles, String projectName ->
-            resumeAuth
-        }
-        mgr.listDisabledFrameworkProjectNames() >> ['myproject']
-        mgr.getFrameworkProject('myproject') >> project
-        service.resumeDisabledProjects(fwk)
-
-        then:
-        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
-        1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+        second.error.contains('db')
+        !service.deferredDeletesInFlight.containsKey('myproject')
+        2 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+        2 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
         0 * mgr.enableFrameworkProject('myproject')
     }
 
@@ -1259,7 +1270,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             Mock(AuthContext)
         }
         if (!Project.findByName('kept')) {
-            new Project(name: 'kept').save(flush: true, failOnError: true)
+            new Project(
+                name: 'kept',
+                state: org.rundeck.app.data.model.v1.project.RdProject.State.DISABLED
+            ).save(flush: true, failOnError: true)
         }
         def mgr = Mock(ProjectManager) {
             listDisabledFrameworkProjectNames() >> ['gone', 'kept']
@@ -1398,7 +1412,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         queued.success
         claimed == original.id
         !taskResult.success
-        taskResult.error == 'Project changed before cleanup'
+        taskResult.error.contains('Project changed before cleanup')
         Project.get(replacement.id)
         !service.deferredDeletesInFlight.containsKey('myproject')
         0 * service.scheduledExecutionService.deleteScheduledExecution(*_)
@@ -1413,7 +1427,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             getName() >> 'myproject'
         }
         service.scmService = Mock(ScmService) {
-            0 * removeAllPluginConfiguration(_)
+            0 * unregisterAllPlugins(_)
         }
         service.executionService = Mock(ExecutionService)
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
@@ -1425,6 +1439,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def fwk = Mock(Framework) {
             getFrameworkProjectMgr() >> mgr
+        }
+        Project.metaClass.static.lockWithTimeout = { Serializable id ->
+            original.delete(flush: true)
+            replacement = new Project(name: 'myproject').save(flush: true, failOnError: true)
+            Project.get(id)
         }
 
         when:
@@ -1438,16 +1457,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         )
 
         then:
-        1 * service.eventBus.notify('projectWillBeDeleted', ['myproject']) >> {
-            original.delete(flush: true)
-            replacement = new Project(name: 'myproject').save(flush: true, failOnError: true)
-            null
-        }
+        0 * service.eventBus.notify('projectWillBeDeleted', _)
         1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
         !result.success
         result.error.contains('Project changed before cleanup')
         Project.get(replacement.id)
         0 * service.scheduledExecutionService.deleteScheduledExecution(*_)
+
+        cleanup:
+        Project.metaClass.static.lockWithTimeout = { Serializable id -> Project.get(id) }
     }
 
     def "resume does not delete a name recreated as an enabled project"() {

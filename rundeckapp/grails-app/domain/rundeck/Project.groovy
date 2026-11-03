@@ -17,12 +17,15 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.hibernate.LockMode
 import org.rundeck.app.data.model.v1.project.RdProject
 
 /**
  * Created by greg on 2/19/15.
  */
 class Project implements RdProject {
+    private static final int LOCK_WAIT_TIMEOUT_SECONDS = 5
+
     String name
     String description
     Date dateCreated
@@ -39,6 +42,19 @@ class Project implements RdProject {
         cache: true
         DomainIndexHelper.generate(delegate) {
             index 'PROJECT_IDX_NAME', ['name']
+        }
+    }
+
+    /**
+     * Acquire a pessimistic write lock with a bounded JDBC query timeout.
+     */
+    static Project lockWithTimeout(Serializable id) {
+        withSession { session ->
+            session.createQuery('from Project project where project.id = :id', Project)
+                .setParameter('id', id)
+                .setLockMode('project', LockMode.PESSIMISTIC_WRITE)
+                .setTimeout(LOCK_WAIT_TIMEOUT_SECONDS)
+                .uniqueResult()
         }
     }
 }
