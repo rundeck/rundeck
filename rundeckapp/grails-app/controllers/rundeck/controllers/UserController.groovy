@@ -371,6 +371,36 @@ Since: v21''',
     )
     protected def apiUserData_docs(){}
 
+    /**
+     * Public profile validation text. Leaves out the domain class and the rejected value.
+     * @param errors validation errors from the profile save
+     * @return a client-safe message
+     */
+    private static String profileValidationMessage(def errors) {
+        List<String> fields = errors?.fieldErrors?.collect { it.field }?.unique()?.findAll { it }
+        if (!fields) {
+            return ClientErrorMessages.VALIDATION_FAILED
+        }
+        return fields.collect { profileFieldMessage(it as String) }.join(';')
+    }
+
+    /**
+     * @param field profile property that failed validation
+     * @return a client-safe message for that field
+     */
+    private static String profileFieldMessage(String field) {
+        switch (field) {
+            case 'firstName':
+                return 'First name must be 255 characters or fewer.'
+            case 'lastName':
+                return 'Last name must be 255 characters or fewer.'
+            case 'email':
+                return 'Email is invalid.'
+            default:
+                return ClientErrorMessages.VALIDATION_FAILED
+        }
+    }
+
     @Get(uris=['/user/info/{username}'])
     @Operation(
         method='GET',
@@ -445,10 +475,9 @@ Since: v21''',
             String email = (config.containsKey("email")) ? config.email : u.email
             def updateResponse = userDataProvider.updateUserProfile(username, lastName, firstName, email)
             if(!updateResponse.isSaved){
-                def errorMsg= updateResponse.errors.allErrors.collect { g.message(error:it) }.join(";")
                 return apiService.renderErrorFormat(response,[
                         status: HttpServletResponse.SC_BAD_REQUEST,
-                        message:errorMsg,
+                        message: profileValidationMessage(updateResponse.errors),
                         format:respFormat
                 ])
             }

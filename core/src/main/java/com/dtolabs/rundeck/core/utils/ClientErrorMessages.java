@@ -39,6 +39,9 @@ public final class ClientErrorMessages {
     private ClientErrorMessages() {
     }
 
+    /** How many causes to inspect before stopping, including a cause cycle. */
+    private static final int CAUSE_LIMIT = 8;
+
     /**
      * Maps an internal failure to a stable message.
      *
@@ -49,12 +52,10 @@ public final class ClientErrorMessages {
         if (error == null) {
             return REQUEST_FAILED;
         }
-        String name = error.getClass().getName().toLowerCase(Locale.ROOT);
-        String message = error.getMessage() == null ? "" : error.getMessage().toLowerCase(Locale.ROOT);
-        if (name.endsWith("validationexception") || name.endsWith("constraintviolationexception")) {
+        if (matchesValidation(error)) {
             return VALIDATION_FAILED;
         }
-        if (isPersistenceFailure(name, message)) {
+        if (matchesPersistence(error)) {
             return SAVE_FAILED;
         }
         return REQUEST_FAILED;
@@ -62,7 +63,8 @@ public final class ClientErrorMessages {
 
     /**
      * Returns {@code error}'s own message when it is a short, non-internal explanation.
-     * Validation, JDBC, Hibernate, and stack-like messages are replaced.
+     * Validation, JDBC, Hibernate, filesystem paths, package names, and stack-like messages are replaced.
+     * Short intentional text, such as "Schedule not found", is kept.
      *
      * @param error failure whose message may be shown; may be null
      * @return a message safe to return to a client
@@ -72,7 +74,7 @@ public final class ClientErrorMessages {
             return REQUEST_FAILED;
         }
         String message = error.getMessage();
-        if (isInternalType(error.getClass().getName()) || looksInternal(message)) {
+        if (isInternalType(error) || looksInternal(message)) {
             return forFailure(error);
         }
         if (message == null || message.isBlank()) {
@@ -81,32 +83,71 @@ public final class ClientErrorMessages {
         return message;
     }
 
-    private static boolean isPersistenceFailure(String className, String message) {
-        return className.contains("hibernate")
-                || className.contains("jdbc")
-                || className.contains("sqlexception")
-                || className.startsWith("org.springframework.dao.")
-                || message.contains("sql");
+    private static boolean matchesValidation(Throwable error) {
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < CAUSE_LIMIT; depth++) {
+            if (isValidationClass(current.getClass().getName().toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
-    private static boolean isInternalType(String className) {
-        String name = className.toLowerCase(Locale.ROOT);
-        return name.endsWith("validationexception")
-                || name.endsWith("constraintviolationexception")
-                || isPersistenceFailure(name, "");
+    private static boolean isValidationClass(String className) {
+        return className.endsWith("validationexception") || className.endsWith("constraintviolationexception");
+    }
+
+    private static boolean matchesPersistence(Throwable error) {
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < CAUSE_LIMIT; depth++) {
+            String name = current.getClass().getName().toLowerCase(Locale.ROOT);
+            String message = current.getMessage() == null ? "" : current.getMessage().toLowerCase(Locale.ROOT);
+            if (isPersistenceClass(current.getClass(), name) || message.contains("sql")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isPersistenceClass(Class<?> type, String className) {
+        return className.contains("hibernate")
+                || className.contains("jdbc")
+                || className.startsWith("org.springframework.dao.")
+                || java.sql.SQLException.class.isAssignableFrom(type);
+    }
+
+    private static boolean isInternalType(Throwable error) {
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < CAUSE_LIMIT; depth++) {
+            String name = current.getClass().getName().toLowerCase(Locale.ROOT);
+            if (isValidationClass(name) || isPersistenceClass(current.getClass(), name)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private static boolean looksInternal(String message) {
         if (message == null) {
             return false;
         }
-        String lower = message.toLowerCase(Locale.ROOT);
-        return message.length() > 400
+        if (message.length() > 400
                 || message.indexOf('\n') >= 0
-                || lower.contains("sql")
+                || message.indexOf('/') >= 0
+                || message.indexOf('\\') >= 0) {
+            return true;
+        }
+        String lower = message.toLowerCase(Locale.ROOT);
+        return lower.contains("sql")
                 || message.contains("org.")
                 || message.contains("java.")
                 || message.contains("javax.")
+                || message.contains("jakarta.")
+                || message.contains("com.")
+                || message.contains("groovy.")
                 || message.contains("Caused by")
                 || message.contains("\tat ");
     }

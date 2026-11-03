@@ -694,6 +694,7 @@ Since: v49''',
                 tmpFile << inputStream
             }
         } catch(Exception ex) {
+            log.error("Failed to fetch plugin from URL", ex)
             def err  = [err: "Failed to fetch plugin from URL. Error: ${ClientErrorMessages.publicMessage(ex)}"]
             render err as JSON
             return

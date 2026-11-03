@@ -2,6 +2,8 @@ package com.dtolabs.rundeck.core.utils
 
 import spock.lang.Specification
 
+import java.sql.SQLSyntaxErrorException
+
 class ClientErrorMessagesSpec extends Specification {
 
     def "sql and hibernate failures become a save message"() {
@@ -26,6 +28,28 @@ class ClientErrorMessagesSpec extends Specification {
     def "short intentional messages are kept"() {
         expect:
         ClientErrorMessages.publicMessage(new IllegalArgumentException("Schedule not found")) == "Schedule not found"
+    }
+
+    def "filesystem paths are not returned"() {
+        expect:
+        ClientErrorMessages.publicMessage(
+                new FileNotFoundException("/var/lib/rundeck/pluginUpload/plugin.jar (Permission denied)")
+        ) == ClientErrorMessages.REQUEST_FAILED
+    }
+
+    def "sql exception subclasses are a save failure"() {
+        expect:
+        ClientErrorMessages.publicMessage(new SQLSyntaxErrorException('syntax error at or near "users"')) ==
+                ClientErrorMessages.SAVE_FAILED
+        ClientErrorMessages.publicMessage(new RuntimeException("failed", new SQLSyntaxErrorException("bad statement"))) ==
+                ClientErrorMessages.SAVE_FAILED
+    }
+
+    def "framework package names are not returned"() {
+        expect:
+        ClientErrorMessages.publicMessage(
+                new IllegalArgumentException("com.google.gson.stream.MalformedJsonException: Expected ':' at line 1 column 5")
+        ) == ClientErrorMessages.REQUEST_FAILED
     }
 
     def "null and blank failures stay generic"() {

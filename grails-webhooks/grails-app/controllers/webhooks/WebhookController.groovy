@@ -550,6 +550,7 @@ Since: v33
             def responder = webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext, request)
             responder.respond(response)
         } catch(WebhookEventException wee) {
+            log.error("Webhook processing failed for ${hook?.uuid}", wee)
             sendJsonError(ClientErrorMessages.publicMessage(wee))
         }
     }
