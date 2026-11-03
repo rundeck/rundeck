@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -31,6 +32,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.core.resources.FileResourceModelPathPolicy
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -229,6 +231,29 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     }
 
     /**
+     * Creates the core file-source path policy from Rundeck application configuration.
+     *
+     * @param framework Rundeck framework
+     * @param project project name
+     * @return file resource-model path policy
+     */
+    private FileResourceModelPathPolicy createFileResourceModelPathPolicy(
+            final Framework framework,
+            final String project
+    ) {
+        String allowedBasePaths = configurationService.getString(
+                'resourceModelSource.file.allowedBasePaths',
+                null
+        )
+        File projectsDirectory = framework.getFrameworkProjectsBaseDir()
+        new FileResourceModelPathPolicy(
+                projectsDirectory,
+                project,
+                allowedBasePaths
+        )
+    }
+
+    /**
      * Create the project nodes object for a project.
      * @param project project name
      * @param oldValue old value if present, null if this is the first load
@@ -247,14 +272,17 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
             rdprojectconfig,
             framework.getResourceFormatGeneratorService(),
             resourceModelSourceService,
-            nodeSourceLoaderService
+            nodeSourceLoaderService,
+            createFileResourceModelPathPolicy(framework, project)
         )
 
         def preloadedNodes = null
+        boolean canPreloadNodeCache = !nodeSupport.hasInvalidFileResourceModelPaths()
 
-        if(enabled){
+        if(enabled && canPreloadNodeCache){
             /**
-             * Use a loading cache to preload data if it is cached on disk
+             * Use a loading cache only after file paths pass current policy.
+             * This prevents stale cached nodes from bypassing new containment rules.
              */
             def loadingCache = nodeSupport.createCachingSource(
                     SourceFactory.staticSource(null),

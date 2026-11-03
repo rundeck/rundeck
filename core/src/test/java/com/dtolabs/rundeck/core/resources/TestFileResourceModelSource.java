@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -715,6 +716,34 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
 
         // Should not throw - canonical path is within project
         source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+    }
+
+    public void testValidateWriteableSource_SymlinkTraversal() throws Exception {
+        File outsideFile = File.createTempFile("test-symlink-outside", ".xml");
+        File projectLink = new File(frameworkProject.getBaseDir(), "etc/symlink-resources.xml");
+        projectLink.getParentFile().mkdirs();
+        Files.deleteIfExists(projectLink.toPath());
+        Files.createSymbolicLink(projectLink.toPath(), outsideFile.toPath());
+
+        try {
+            Properties props = new Properties();
+            props.setProperty("project", PROJ_NAME);
+            props.setProperty("file", projectLink.getAbsolutePath());
+
+            FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+            source.configure(props);
+
+            try {
+                source.validateWriteableSource(new HashMap<>(), getFrameworkInstance(), PROJ_NAME);
+                fail("Expected ConfigurationException for symlink traversal");
+            } catch (ConfigurationException e) {
+                assertTrue(e.getMessage().contains("must be within the project directory"));
+                assertFalse(e.getMessage().contains(outsideFile.getAbsolutePath()));
+            }
+        } finally {
+            Files.deleteIfExists(projectLink.toPath());
+            Files.deleteIfExists(outsideFile.toPath());
+        }
     }
 
     public void testValidateWriteableSource_ErrorMessageDoesNotLeakPath() throws Exception {
