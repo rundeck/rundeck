@@ -3666,6 +3666,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Long stepNodeCount = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nodeCount.sum() ?: 0L) as Long
             micrometerExecutionMetricsService?.recordStepNodeSeconds(execution, stepNodeSeconds)
             micrometerExecutionMetricsService?.recordStepNodeCount(execution, stepNodeCount)
+            // Per-step emission, in addition to the two summed totals above: the breakdown is
+            // the only place plugin type and per-step node count survive, and both are flattened
+            // away by the sums.
+            micrometerExecutionMetricsService?.recordStepUsage(execution, stepNodeUsageBreakdown)
 
             //summarize node success
             String node=null

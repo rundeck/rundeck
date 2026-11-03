@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.core.GrailsApplication
 import grails.events.annotation.Subscriber
@@ -142,6 +143,74 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
         stepNodeCountSummary(tags).record(stepNodeCount)
     }
 
+    /**
+     * Records one {@code rundeck.execution.step.nodes} and one
+     * {@code rundeck.execution.step.duration} sample per step in the breakdown, tagged with the
+     * step's plugin type and a bucketed node-dispatch count. This is the per-step counterpart to
+     * {@link #recordStepNodeCount}/{@link #recordStepNodeSeconds}, which only see the already
+     * summed per-execution totals and so cannot answer "which plugin types ran, against how many
+     * nodes".
+     * <p>
+     * <b>Deliberately carries no {@code project} tag</b> (and no job_id/job_name), unlike every
+     * other meter in this service. These are emitted per step, so the series count is already
+     * multiplied by the plugin catalogue and the bucket set; adding project would multiply it
+     * again by a per-tenant project count that nothing bounds. The question these answer is asked
+     * per tenant, and the tenant is already identifiable from the scrape target, so a project
+     * dimension would cost cardinality without earning an answer. For the same reason they are
+     * absent from {@code onJobChanged}'s cleanup list -- carrying no job_id, they create no
+     * per-job series to go stale.
+     * <p>
+     * No-op when the registry is unavailable, the execution is null, or no breakdown was recorded
+     * for it (e.g. it crashed before finishing).
+     */
+    void recordStepUsage(Execution execution, Map<String, StepNodeUsageEntry> breakdown) {
+        if (!meterRegistry || !execution || breakdown == null) {
+            return
+        }
+        String status = execution.getExecutionState()
+        for (StepNodeUsageEntry entry : breakdown.values()) {
+            Boolean nodeStep = entry.getIsNodeStep()
+            List<Tag> tags = [
+                Tag.of('plugin_type', entry.getPluginType() ?: 'unknown'),
+                Tag.of('node_step', nodeStep == null ? 'unknown' : nodeStep.toString()),
+                Tag.of('node_bucket', nodeBucket(entry.getNodeCount())),
+                Tag.of('status', status)
+            ]
+            stepNodesSummary(tags).record(entry.getNodeCount() as double)
+            // Recorded at nanosecond precision rather than pre-rounded to whole seconds: a single
+            // step's duration is routinely sub-second, and rounding each sample before recording
+            // would floor most of them to zero. The Timer accumulates at full precision and the
+            // scrape still exposes seconds.
+            stepDurationTimer(tags).record(entry.getNanos(), TimeUnit.NANOSECONDS)
+        }
+    }
+
+    /**
+     * Buckets a step's node-dispatch count into a fixed five-value set, so {@code node_bucket}
+     * contributes a constant factor to cardinality no matter how wide a step fans out.
+     * <p>
+     * {@code 0} is not reachable from today's {@code StepNodeUsageWorkflowListener}: every path
+     * that adds elapsed time also increments the node count, so a step that dispatched to no
+     * nodes still reports 1 (it contributes its own duration once). Non-dispatching steps are
+     * therefore told apart by the {@code node_step} tag, not by this bucket. The zero case is
+     * kept so that a future listener change cannot silently produce an unlabelled bucket.
+     */
+    private static String nodeBucket(long nodeCount) {
+        if (nodeCount <= 0L) {
+            return '0'
+        }
+        if (nodeCount == 1L) {
+            return '1'
+        }
+        if (nodeCount <= 10L) {
+            return '2-10'
+        }
+        if (nodeCount <= 100L) {
+            return '11-100'
+        }
+        return '100+'
+    }
+
     private List<Tag> jobTags(Execution execution) {
         ScheduledExecution job = execution.scheduledExecution
         if (!jobDimensionEnabled() || !job?.uuid) {
@@ -194,6 +263,18 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
         DistributionSummary.builder('rundeck.execution.step_node_count')
                             .tags(tags)
                             .register(meterRegistry)
+    }
+
+    private DistributionSummary stepNodesSummary(List<Tag> tags) {
+        DistributionSummary.builder('rundeck.execution.step.nodes')
+                            .tags(tags)
+                            .register(meterRegistry)
+    }
+
+    private Timer stepDurationTimer(List<Tag> tags) {
+        Timer.builder('rundeck.execution.step.duration')
+             .tags(tags)
+             .register(meterRegistry)
     }
 
     private boolean jobDimensionEnabled() {

@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import io.micrometer.core.instrument.MeterRegistry
@@ -7,6 +8,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 class MicrometerExecutionMetricsServiceSpec extends Specification {
 
@@ -367,5 +370,147 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             infoGauge.value() == 1.0d
 
             meterRegistry.get('rundeck.execution.mode.active').gauge().value() == 1.0d
+    }
+
+    void "recordStepUsage buckets node counts into the fixed node_bucket set"() {
+        given:
+            def exec = execution([:])
+            def breakdown = ['1': new StepNodeUsageEntry(5_000L, 'exec-command', true, nodeCount)]
+
+        when:
+            service.recordStepUsage(exec, breakdown)
+
+        then:
+            meterRegistry.get('rundeck.execution.step.nodes')
+                .tag('plugin_type', 'exec-command')
+                .tag('node_bucket', bucket)
+                .summary().count() == 1L
+
+        where:
+            nodeCount || bucket
+            0L        || '0'
+            1L        || '1'
+            2L        || '2-10'
+            10L       || '2-10'
+            11L       || '11-100'
+            100L      || '11-100'
+            101L      || '100+'
+            5000L     || '100+'
+    }
+
+    void "recordStepUsage maps a null pluginType and null isNodeStep to unknown"() {
+        given:
+            def exec = execution([:])
+            def breakdown = ['1': new StepNodeUsageEntry(1_000L, null, null, 3L)]
+
+        when:
+            service.recordStepUsage(exec, breakdown)
+
+        then:
+            meterRegistry.get('rundeck.execution.step.nodes')
+                .tag('plugin_type', 'unknown')
+                .tag('node_step', 'unknown')
+                .tag('node_bucket', '2-10')
+                .summary().count() == 1L
+    }
+
+    void "recordStepUsage tags node_step from isNodeStep"() {
+        given:
+            def exec = execution([:])
+            def breakdown = ['1': new StepNodeUsageEntry(1_000L, 'script', isNodeStep, 1L)]
+
+        when:
+            service.recordStepUsage(exec, breakdown)
+
+        then:
+            meterRegistry.get('rundeck.execution.step.nodes')
+                .tag('node_step', expected)
+                .summary().count() == 1L
+
+        where:
+            isNodeStep || expected
+            true       || 'true'
+            false      || 'false'
+    }
+
+    void "recordStepUsage aggregates steps sharing a plugin type and bucket into one series"() {
+        given:
+            def exec = execution([:])
+            def breakdown = [
+                '1': new StepNodeUsageEntry(1_000L, 'exec-command', true, 4L),
+                '2': new StepNodeUsageEntry(2_000L, 'exec-command', true, 6L),
+                '3': new StepNodeUsageEntry(4_000L, 'script', true, 4L),
+            ]
+
+        when:
+            service.recordStepUsage(exec, breakdown)
+
+        then: "the two exec-command steps land on one series, summing their node counts"
+            def summary = meterRegistry.get('rundeck.execution.step.nodes')
+                .tag('plugin_type', 'exec-command')
+                .tag('node_bucket', '2-10')
+                .summary()
+            summary.count() == 2L
+            summary.totalAmount() == 10.0d
+
+        and: "script keeps its own series"
+            meterRegistry.get('rundeck.execution.step.nodes')
+                .tag('plugin_type', 'script')
+                .summary().count() == 1L
+
+        and: "durations accumulate at nanosecond precision rather than rounding each to zero"
+            meterRegistry.get('rundeck.execution.step.duration')
+                .tag('plugin_type', 'exec-command')
+                .timer().totalTime(TimeUnit.NANOSECONDS) == 3_000.0d
+    }
+
+    void "recordStepUsage carries no project or job_id dimension"() {
+        given:
+            def exec = execution(project: 'p1')
+            def breakdown = ['1': new StepNodeUsageEntry(1_000L, 'script', true, 1L)]
+
+        when:
+            service.recordStepUsage(exec, breakdown)
+
+        then: "the cardinality argument for these meters is that project is absent"
+            meterRegistry.find('rundeck.execution.step.nodes').tag('project', 'p1').summary() == null
+            meterRegistry.find('rundeck.execution.step.duration').tag('project', 'p1').timer() == null
+            meterRegistry.get('rundeck.execution.step.nodes').summary().count() == 1L
+    }
+
+    void "recordStepUsage is a no-op for a null or empty breakdown and a null execution"() {
+        when:
+            service.recordStepUsage(execution([:]), null)
+            service.recordStepUsage(execution([:]), [:])
+            service.recordStepUsage(null, ['1': new StepNodeUsageEntry(1L, 'script', true, 1L)])
+
+        then:
+            noExceptionThrown()
+            meterRegistry.find('rundeck.execution.step.nodes').summary() == null
+    }
+
+    void "recordStepUsage leaves the pre-existing summed step_node meters untouched"() {
+        given:
+            def exec = execution([:])
+            def breakdown = [
+                '1': new StepNodeUsageEntry(1_000L, 'exec-command', true, 4L),
+                '2': new StepNodeUsageEntry(2_000L, 'script', true, 6L),
+            ]
+
+        when: "both the old summed path and the new per-step path run, as ExecutionService does"
+            service.recordStepNodeSeconds(exec, 7L)
+            service.recordStepNodeCount(exec, 10L)
+            service.recordStepUsage(exec, breakdown)
+
+        then: "the summed meters keep their project tag, their names and a single sample each"
+            meterRegistry.get('rundeck.execution.step_node_count')
+                .tag('project', 'p1').tag('status', 'succeeded')
+                .summary().with { it.count() == 1L && it.totalAmount() == 10.0d }
+            meterRegistry.get('rundeck.execution.step_node_duration')
+                .tag('project', 'p1').tag('status', 'succeeded')
+                .timer().count() == 1L
+
+        and: "and the new per-step meters are separate series"
+            meterRegistry.get('rundeck.execution.step.nodes').summary() != null
     }
 }
