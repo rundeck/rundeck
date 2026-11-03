@@ -85,6 +85,55 @@ class TypedStorageTreeImplSpec extends Specification {
         !test.hasResourceWithType(PathUtil.asPath('a/path'), "correct-type")
     }
 
+    def "hasResourceWithType is false when the resource has null contents or a null content type"() {
+        given:
+        def tree = Mock(Tree)
+        def test = new TypedStorageTreeImpl(tree)
+        tree.hasResource(_) >> true
+        tree.getResource(_) >> Mock(Resource) {
+            getContents() >> contents
+        }
+
+        expect:
+        !test.hasResourceWithType(PathUtil.asPath('a/path'), "correct-type")
+
+        where:
+        contents << [null, Mock(ResourceMeta) { getContentType() >> null }]
+    }
+
+    def "getResourceWithType throws StorageException when the resource has null contents"() {
+        given:
+        def tree = Mock(Tree)
+        def test = new TypedStorageTreeImpl(tree)
+        tree.getResource(_) >> Mock(Resource) {
+            getContents() >> null
+        }
+
+        when:
+        test.getResourceWithType(PathUtil.asPath('a/path'), "correct-type")
+
+        then:
+        def e = thrown(StorageException)
+        e.message.contains('a/path')
+    }
+
+    def "getResourceWithType throws WrongContentType when the content type is null"() {
+        given:
+        def tree = Mock(Tree)
+        def test = new TypedStorageTreeImpl(tree)
+        tree.getResource(_) >> Mock(Resource) {
+            getContents() >> Mock(ResourceMeta) {
+                getContentType() >> null
+            }
+        }
+
+        when:
+        test.getResourceWithType(PathUtil.asPath('a/path'), "correct-type")
+
+        then:
+        thrown(WrongContentType)
+    }
+
     def "getResourceWithType throws StorageException when storage returns null resource"() {
         given:
         def tree = Mock(Tree)
