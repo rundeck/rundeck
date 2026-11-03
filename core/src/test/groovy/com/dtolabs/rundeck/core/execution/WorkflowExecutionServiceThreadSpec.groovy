@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution
 
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
@@ -25,8 +26,11 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowItemErrorHandlerContext
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import spock.lang.Specification
 
+@CompileStatic
 class WorkflowExecutionServiceThreadSpec extends Specification {
 
     private static StepExecutionContext contextWithMarker() {
@@ -46,6 +50,7 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         context.componentForType(WorkflowItemErrorHandlerContext).present
     }
 
+    @CompileDynamic
     def "the error handler marker is visible to lifecycle callbacks but not to the job's own workflow"() {
         // The marker describes how this job was invoked (as an error handler). Lifecycle components
         // read it when the job starts, but the context their results are merged into keeps it, so it is
@@ -86,6 +91,7 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         !hasMarker(executedWith)
     }
 
+    @CompileDynamic
     def "marker removal from the context returned by the lifecycle handler keeps its other components and plugin control service"() {
         // This covers what the thread does with the context the handler returns. The handler's own merge of
         // component results (ExecutionLifecycleComponentService.mergeExecutionEventContext) is a separate step
@@ -130,6 +136,7 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         executedWith.pluginControlService.is(customService)
     }
 
+    @CompileDynamic
     def "removing the marker keeps the plugin control service the context was supplied with"() {
         // rebuilding a context recreates a project-only plugin control service, which would drop a custom
         // one supplied by the caller or by a lifecycle callback
@@ -165,6 +172,40 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         executedWith.pluginControlService.is(customService)
     }
 
+    @CompileDynamic
+    def "removing the marker keeps an IFramework that is not a Framework"() {
+        given:
+        IFramework customFramework = Mock(IFramework)
+        StepExecutionContext executedWith = null
+        def executor = Mock(WorkflowExecutor) {
+            executeWorkflow(_, _) >> { args ->
+                executedWith = args[0]
+                Mock(WorkflowExecutionResult) {
+                    isSuccess() >> true
+                }
+            }
+        }
+        def thread = new WorkflowExecutionServiceThread(
+                Mock(WorkflowExecutionService) {
+                    getExecutorForItem(_) >> executor
+                },
+                Mock(WorkflowExecutionItem),
+                ExecutionContextImpl.builder(contextWithMarker())
+                                    .framework(customFramework)
+                                    .build(),
+                null,
+                null
+        )
+
+        when:
+        thread.runWorkflow()
+
+        then:
+        executedWith != null
+        ((ExecutionContext) executedWith).getIFramework().is(customFramework)
+    }
+
+    @CompileDynamic
     def "a context without the marker is handed to the workflow as it is"() {
         given:
         StepExecutionContext context = ExecutionContextImpl.builder().frameworkProject("prj").build()
@@ -194,6 +235,7 @@ class WorkflowExecutionServiceThreadSpec extends Specification {
         executedWith.is(context)
     }
 
+    @CompileDynamic
     def "the error handler marker is removed before the workflow runs when there is no lifecycle handler"() {
         given:
         StepExecutionContext executedWith = null

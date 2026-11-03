@@ -99,6 +99,7 @@ public class WorkflowExecutionServiceThread
             //supplied: a rebuilt context would otherwise get a project-only one.
             if (executionContext.componentForType(WorkflowItemErrorHandlerContext.class).isPresent()) {
                 executionContext = ExecutionContextImpl.builder(executionContext)
+                                                       .framework(executionContext.getIFramework())
                                                        .pluginControlService(executionContext.getPluginControlService())
                                                        .removeComponentsOfType(WorkflowItemErrorHandlerContext.class)
                                                        .build();
