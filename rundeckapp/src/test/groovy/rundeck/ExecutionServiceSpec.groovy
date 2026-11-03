@@ -2764,6 +2764,101 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
+    def "can read storage password with unchecked plugin error"() {
+        given:
+        AuthContext context = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+        def tree = Mock(KeyStorageTree)
+        service.storageService.storageTreeWithContext(context) >> tree
+        tree.hasPassword(path) >> { throw plugError }
+
+        when: "failIfMissing is false"
+        def result = service.canReadStoragePassword(context, path, false)
+
+        then: "the error is treated as not readable"
+        !result
+
+        when: "failIfMissing is true"
+        service.canReadStoragePassword(context, path, true)
+
+        then: "the exception names the path and the plugin error, and keeps the cause"
+        ExecutionServiceException e = thrown()
+        e.message.contains(path)
+        e.message.contains('Key Storage plugin error (NullPointerException)')
+        e.message.contains(expectedDetail)
+        e.cause.is(plugError)
+
+        where:
+        path                 | plugError                              | expectedDetail
+        'keys/test/password' | new NullPointerException('plugin boom') | 'plugin boom'
+        'keys/test/password' | new NullPointerException()              | 'no message'
+    }
+
+    def "loadSecureOptionStorageDefaults unchecked plugin error from #failingCall"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocRemoteString: 'test buddy')]
+                ),
+                options: [
+                        new Option(
+                                name: 'opt1',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/opt1',
+                                required: true
+                        ),
+                        new Option(
+                                name: 'opt2',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/opt2',
+                                required: false
+                        )
+                ]
+        )
+        def authContext = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+        def tree = Mock(KeyStorageTree)
+        service.storageService.storageTreeWithContext(authContext) >> tree
+        tree.hasPassword('keys/opt2') >> true
+        tree.readPassword('keys/opt2') >> 'value2'.bytes
+        if (failingCall == 'hasPassword') {
+            tree.hasPassword('keys/opt1') >> { throw plugError }
+        } else {
+            tree.hasPassword('keys/opt1') >> true
+            tree.readPassword('keys/opt1') >> { throw plugError }
+        }
+
+        when: "failIfMissingRequired is false"
+        Map secureOpts = [:]
+        service.loadSecureOptionStorageDefaults(job, [:], secureOpts, authContext, false)
+
+        then: "the failing option is left unset and the other default still loads"
+        noExceptionThrown()
+        !secureOpts.containsKey('opt1')
+        secureOpts['opt2'] == 'value2'
+
+        when: "failIfMissingRequired is true"
+        service.loadSecureOptionStorageDefaults(job, [:], [:], authContext, true)
+
+        then: "the required option fails with its name, the path and the plugin error"
+        ExecutionServiceException e = thrown()
+        e.message.contains("Required option 'opt1'")
+        e.message.contains('keys/opt1')
+        e.message.contains('Key Storage plugin error (NullPointerException)')
+        e.message.contains(expectedDetail)
+
+        where:
+        failingCall   | plugError                               | expectedDetail
+        'hasPassword' | new NullPointerException('plugin boom') | 'plugin boom'
+        'hasPassword' | new NullPointerException()              | 'no message'
+        'readPassword' | new NullPointerException('plugin boom') | 'plugin boom'
+        'readPassword' | new NullPointerException()              | 'no message'
+    }
+
     def "list now running project"() {
         given:
         def query = new QueueQuery()
