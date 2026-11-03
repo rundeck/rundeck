@@ -3850,6 +3850,7 @@ Since: v56''',
                             )
                             fileresults[optname] = ref
                         } catch (FileUploadServiceException e) {
+                            log.error("Failed to receive uploaded job option file", e)
                             def msg = g.message(code: 'api.error.job-upload.error', args: [ClientErrorMessages.publicMessage(e)])
                             return [success: false, failed: true, error: 'input', message: msg]
                         }

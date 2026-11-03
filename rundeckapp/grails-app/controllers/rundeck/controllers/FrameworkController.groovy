@@ -4154,11 +4154,13 @@ Since: v52''',
         try {
             generator.generateDocument(nodes, baos)
         } catch (ResourceFormatGeneratorException e) {
+            log.error("Failed to generate resource document", e)
             return apiService.renderErrorFormat(
                 response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                            code  : 'api.error.resource.format.generator', args: [ClientErrorMessages.publicMessage(e)]]
             )
         } catch (IOException e) {
+            log.error("Failed to generate resource document", e)
             return apiService.renderErrorFormat(
                 response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                            code  : 'api.error.resource.format.generator', args: [ClientErrorMessages.publicMessage(e)]]

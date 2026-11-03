@@ -963,6 +963,7 @@ For APIv53+, the results will also include:
             }
             renderTokenGenerateResult([result: true, apitoken: token.token, tokenid: token.uuid], authContext.username)
         } catch (Exception e) {
+            log.error("Failed to render user token", e)
             renderTokenGenerateResult([result: false, error: ClientErrorMessages.publicMessage(e)], authContext.username)
         }
     }

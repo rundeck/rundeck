@@ -629,6 +629,7 @@ class ScmService {
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
+            log.error("Failed to set up SCM plugin ${type} for project ${project}", e)
             return [error: true, message: ClientErrorMessages.publicMessage(e)]
         }
     }
@@ -860,6 +861,7 @@ class ScmService {
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
+            log.error("Failed to enable SCM plugin ${type} for project ${project}", e)
             return [error: true, message: ClientErrorMessages.publicMessage(e)]
         }
     }
