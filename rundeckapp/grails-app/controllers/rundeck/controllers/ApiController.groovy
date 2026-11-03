@@ -955,7 +955,7 @@ Since: v11
 
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
-        String appVersion= grailsApplication.metadata['info.app.version']
+        String appVersion= grailsApplication.metadata.getProperty('info.app.version', String, null)
         String sUUID= frameworkService.getServerUUID()
         double load= ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class).getSystemCpuLoad()
         int processorsCount= ManagementFactory.getOperatingSystemMXBean().availableProcessors
@@ -984,8 +984,8 @@ Since: v11
         Map systemInfoMap = [
             system:[
                 rundeck: [ version: appVersion,
-                           build: grailsApplication.metadata['build.ident'],
-                           buildGit:grailsApplication.metadata['build.core.git.description'],
+                           build: grailsApplication.metadata.getProperty('build.ident', String, null),
+                           buildGit:grailsApplication.metadata.getProperty('build.core.git.description', String, null),
                            node: nodeName, base: servletContext.getAttribute("RDECK_BASE"),
                            apiversion: ApiVersions.API_CURRENT_VERSION,
                            serverUUID:sUUID ]
@@ -1033,8 +1033,8 @@ Since: v11
                             }
                             rundeck{
                                 version(appVersion)
-                                build(grailsApplication.metadata['build.ident'])
-                                buildGit(grailsApplication.metadata['build.core.git.description'])
+                                build(grailsApplication.metadata.getProperty('build.ident', String, null))
+                                buildGit(grailsApplication.metadata.getProperty('build.core.git.description', String, null))
                                 node(nodeName)
                                 base(servletContext.getAttribute("RDECK_BASE"))
                                 apiversion(ApiVersions.API_CURRENT_VERSION)

@@ -64,7 +64,7 @@
                         <button type="button" class="btn btn-default" data-dismiss="modal">
                             <g:message code="no"/>
                         </button>
-                        <g:actionSubmit action="disable" value="${message(code: 'yes')}" formmethod="POST"
+                        <g:formActionSubmit action="disable" value="${message(code: 'yes')}" formmethod="POST"
                                         class="btn btn-danger"/>
                     </div>
                 </div><!-- /.modal-content -->
@@ -117,7 +117,7 @@
                         <button type="button" class="btn btn-default" data-dismiss="modal">
                             <g:message code="no"/>
                         </button>
-                        <g:actionSubmit action="enable" value="${message(code: 'yes')}" formmethod="POST"
+                        <g:formActionSubmit action="enable" value="${message(code: 'yes')}" formmethod="POST"
                                         class="btn btn-cta"/>
                     </div>
                 </div><!-- /.modal-content -->
@@ -168,7 +168,7 @@
                     <button type="button" class="btn btn-default" data-dismiss="modal">
                         <g:message code="no"/>
                     </button>
-                    <g:actionSubmit action="clean" value="${message(code: 'yes')}" formmethod="POST"
+                    <g:formActionSubmit action="clean" value="${message(code: 'yes')}" formmethod="POST"
                                     class="btn btn-danger"/>
                 </div>
             </div><!-- /.modal-content -->
@@ -218,7 +218,7 @@
                         <button type="button" class="btn btn-default" data-dismiss="modal">
                             <g:message code="no"/>
                         </button>
-                        <g:actionSubmit action="deletePluginConfig" value="${message(code: 'yes')}" formmethod="POST"
+                        <g:formActionSubmit action="deletePluginConfig" value="${message(code: 'yes')}" formmethod="POST"
                                         class="btn btn-danger"/>
                     </div>
                 </div><!-- /.modal-content -->

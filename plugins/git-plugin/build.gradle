@@ -63,10 +63,18 @@ dependencies {
     // RUN-4336: Override sshj's transitive bcpkix with fixed version for CVE-2026-5588
     implementation ("org.bouncycastle:bcpkix-jdk18on:${bouncyCastleVersion}")
     pluginLibs ("org.bouncycastle:bcpkix-jdk18on:${bouncyCastleVersion}")
-    testImplementation "junit:junit:${junitVersion}",
-                'org.mockito:mockito-all:1.10.19'
+    // mockito-all 1.10.19 was declared here but never referenced by any test in this module.
+    // Spock 2.4 registers a MockitoMockMaker whenever org.mockito.Mockito is on the classpath and
+    // it needs Mockito >= 4.11; against 1.x it fails to instantiate and takes down every mock in
+    // the module. Dropping the unused dependency removes the provider entirely.
+    testImplementation "junit:junit:${junitVersion}"
 
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
+    // Spock needs a class mock maker for Mock(SomeClass); cglib is not supported on Java 21+.
+    // byte-buddy also needs objenesis to instantiate mocks without calling a constructor,
+    // which the specs here rely on. Same pairing as core/build.gradle.
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 

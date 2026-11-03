@@ -25,6 +25,12 @@ class RdJobQueryInput extends RdPageable implements JobQueryInput, JobQueryInput
     Boolean runJobLaterFilter
     Boolean paginatedRequired
 
+    // Explicit override: JobQueryInput and JobQueryInputData both declare a default
+    // getPaginatedRequired() returning false; Groovy 5 rejects the diamond without this,
+    // even though the field's auto-generated getter would otherwise satisfy it.
+    @Override
+    Boolean getPaginatedRequired() { return paginatedRequired }
+
     static constraints = {
         jobFilter(nullable: true)
         jobExactFilter(nullable: true)
