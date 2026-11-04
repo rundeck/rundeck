@@ -52,6 +52,9 @@ class ApiProjectSelectInterceptor {
                 return false
             }
             if (frameworkService.isFrameworkProjectDisabled(project)) {
+                if (actionName == 'apiProjectDelete') {
+                    return true
+                }
                 apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_NOT_FOUND,
                         code  : 'api.error.project.disabled',

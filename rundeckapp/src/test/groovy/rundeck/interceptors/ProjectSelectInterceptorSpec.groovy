@@ -329,6 +329,140 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 
     }
 
+    def "project delete is allowed when the project is disabled"() {
+        given:
+        def frameworkMock = Mock(FrameworkService) {
+            existsFrameworkProject(_) >> true
+            isFrameworkProjectDisabled(_) >> true
+            userAuthContext(_) >> null
+            loadSessionProjectLabel(_, _) >> null
+        }
+        defineBeans {
+            frameworkService(InstanceFactoryBean, frameworkMock)
+            rundeckAuthContextEvaluator(InstanceFactoryBean, Mock(AppAuthContextEvaluator) {
+                authorizeApplicationResourceAny(*_) >> true
+            })
+            featureService(InstanceFactoryBean, Mock(FeatureService) {
+                featurePresent(_) >> false
+            })
+        }
+        interceptor.frameworkService = frameworkMock
+        interceptor.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+            authorizeApplicationResourceAny(*_) >> true
+        }
+        interceptor.featureService = Mock(FeatureService) {
+            featurePresent(_) >> false
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.metaClass.render = { Map args -> null }
+        request[AA_TimerInterceptor._TIMER] = System.currentTimeMillis()
+        request[AA_TimerInterceptor._METRICS_TIMER] = new com.codahale.metrics.Timer().time()
+        request[AA_TimerInterceptor._REQ_URI] = '/project/testProject/delete'
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = 'testProject'
+
+        when:
+        webRequest.controllerName = 'project'
+        webRequest.actionName = 'delete'
+        def allowed = interceptor.before()
+
+        then:
+        allowed
+        request.errorCode != 'project.disabled'
+    }
+
+    def "project delete confirmation is allowed when the project is disabled"() {
+        given:
+        def frameworkMock = Mock(FrameworkService) {
+            existsFrameworkProject(_) >> true
+            isFrameworkProjectDisabled(_) >> true
+            userAuthContext(_) >> null
+            loadSessionProjectLabel(_, _) >> null
+        }
+        defineBeans {
+            frameworkService(InstanceFactoryBean, frameworkMock)
+            rundeckAuthContextEvaluator(InstanceFactoryBean, Mock(AppAuthContextEvaluator) {
+                authorizeApplicationResourceAny(*_) >> true
+            })
+            featureService(InstanceFactoryBean, Mock(FeatureService) {
+                featurePresent(_) >> false
+            })
+        }
+        interceptor.frameworkService = frameworkMock
+        interceptor.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator) {
+            authorizeApplicationResourceAny(*_) >> true
+        }
+        interceptor.featureService = Mock(FeatureService) {
+            featurePresent(_) >> false
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.metaClass.render = { Map args -> null }
+        request[AA_TimerInterceptor._TIMER] = System.currentTimeMillis()
+        request[AA_TimerInterceptor._METRICS_TIMER] = new com.codahale.metrics.Timer().time()
+        request[AA_TimerInterceptor._REQ_URI] = '/project/testProject/admin/delete'
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = 'testProject'
+
+        when:
+        webRequest.controllerName = 'menu'
+        webRequest.actionName = 'projectDelete'
+        def allowed = interceptor.before()
+
+        then:
+        allowed
+        request.errorCode != 'project.disabled'
+    }
+
+    def "non-delete request is rejected when the project is disabled"() {
+        given:
+        def frameworkMock = Mock(FrameworkService) {
+            existsFrameworkProject(_) >> true
+            isFrameworkProjectDisabled(_) >> true
+        }
+        defineBeans {
+            frameworkService(InstanceFactoryBean, frameworkMock)
+        }
+        interceptor.frameworkService = frameworkMock
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.metaClass.render = { Map args -> null }
+        request[AA_TimerInterceptor._TIMER] = System.currentTimeMillis()
+        request[AA_TimerInterceptor._METRICS_TIMER] = new com.codahale.metrics.Timer().time()
+        request[AA_TimerInterceptor._REQ_URI] = '/project/testProject/index'
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = 'testProject'
+
+        when:
+        webRequest.controllerName = 'project'
+        webRequest.actionName = 'index'
+        def allowed = interceptor.before()
+
+        then:
+        !allowed
+        response.status == 409
+        request.errorCode == 'project.disabled'
+    }
+
     def "Skip Interceptor if requesting fiveHundred action on error page"() {
         given:
             withRequest(controller: 'error', action: 'fiveHundred')

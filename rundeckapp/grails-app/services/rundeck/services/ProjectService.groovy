@@ -42,6 +42,7 @@ import com.google.common.cache.RemovalNotification
 import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -61,6 +62,7 @@ import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.data.report.SaveReportRequestImpl
@@ -74,10 +76,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.annotation.Propagation
 
 import retrofit2.Converter
 import rundeck.Execution
 import rundeck.JobFileRecord
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.data.util.ExecReportUtil
@@ -97,6 +101,10 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -108,12 +116,15 @@ import retrofit2.Response
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
+    private static final String PROJECT_DELETE_RECOVERY_TASK = 'project-delete-recovery'
+    private static final long PROJECT_DELETE_RECOVERY_RETRY_SECONDS = 30L
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
     AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
+    TaskService taskService
     FileUploadService fileUploadService
     def loggingService
     def logFileStorageService
@@ -122,10 +133,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ScmService scmService
     def executionUtilService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
+    def rundeckAuthContextProcessor
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
+    def frameworkService
+    /**
+     * Name of a deferred delete mapped to the project row id claimed for it.
+     * A claim is stored only when that id was read. A later delete replaces it
+     * only when the row id is different.
+     */
+    final Map<String, Long> deferredDeletesInFlight = new ConcurrentHashMap<>()
 
     static transactional = false
 
@@ -1934,50 +1953,208 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         String error
     }
     /**
+     * Claim this JVM's deferred delete for a project row that was actually read.
+     * @return the id stored in the claim, or null when that same row is already claimed
+     */
+    private Long claimDeferredDelete(String name, Long projectId) {
+        if (projectId == null) {
+            return null
+        }
+        AtomicBoolean claimed = new AtomicBoolean(false)
+        deferredDeletesInFlight.compute(name) { String ignored, Long existing ->
+            //Resolve identity while holding this map key. A delayed request for an
+            //older row must not displace the active claim of a recreated project.
+            Long currentId = currentProjectId(name)
+            if (currentId != projectId) {
+                return existing
+            }
+            if (existing == null || existing != projectId) {
+                claimed.set(true)
+                return projectId
+            }
+            existing
+        }
+        claimed.get() ? projectId : null
+    }
+
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private DeleteResponse runDeferredProjectDelete(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup, Long claimedId) {
+        try {
+            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup, claimedId)
+        } finally {
+            deferredDeletesInFlight.remove(project.name, claimedId)
+        }
+    }
+
+    @CompileStatic(TypeCheckingMode.SKIP)
+    private Long currentProjectId(String name) {
+        try {
+            return Project.withNewTransaction {
+                Project.findByName(name)?.id as Long
+            }
+        } catch (Throwable ignored) {
+            return null
+        }
+    }
+
+    /**
      * Delete a project completely
      * @param project framework project
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @GrailsCompileStatic
-    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username, Boolean deferred = null) {
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username, Boolean deferred = null, boolean trustedCleanup = false) {
         log.info("Requested deletion of project ${project.name}")
 
-        if(framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)) {
+        boolean alreadyDisabled = framework.getFrameworkProjectMgr().isFrameworkProjectDisabled(project.name)
+        if (trustedCleanup && Boolean.TRUE == deferred && !alreadyDisabled) {
+            log.info("Skipping resumed deletion of project ${project.name}: it is no longer disabled")
+            return new DeleteResponse(success: false, error: "Project is not disabled.")
+        }
+        Long claimId = null
+
+        def deferDelete = Optional.ofNullable(deferred)
+            .orElse(configurationService.getBoolean("projectService.deferredProjectDelete", true))
+
+        Long projectId = currentProjectId(project.name)
+        if (projectId == null) {
+            return new DeleteResponse(
+                success: false,
+                error: "Cannot delete project ${project.name}: project id is not available.")
+        }
+
+        if (!alreadyDisabled && !deferDelete) {
+            return deleteProjectInternal(project, framework, authContext, username, trustedCleanup, projectId)
+        }
+
+        if (!alreadyDisabled) {
+            try {
+                if (!framework.getFrameworkProjectMgr().disableFrameworkProject(project.name, projectId)) {
+                    return new DeleteResponse(
+                        success: false,
+                        error: "Project changed before disabling."
+                    )
+                }
+            } catch (UnsupportedOperationException e) {
+                log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
+                throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
+            }
+        }
+        claimId = claimDeferredDelete(project.name, projectId)
+        if (claimId == null) {
             return new DeleteResponse(
             success: false,
             error: "Cannot delete an already disabled project.")
         }
 
-        def deferDelete = Optional.ofNullable(deferred)
-            .orElse(configurationService.getBoolean("projectService.deferredProjectDelete", true))
-
-        if(!deferDelete) {
-            return deleteProjectInternal(project, framework, authContext, username)
-        }
-
-        try {
-            framework.getFrameworkProjectMgr().disableFrameworkProject(project.name)
-        } catch (UnsupportedOperationException e) {
-            log.warn("Could not disable project. Aborting project delete operation: ${e.getMessage()}", e)
-            throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
+        Long claimedId = claimId
+        if (!deferDelete) {
+            return runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
         }
 
         log.info("Deferring deletion of project ${project.name} to background task.")
 
-        def promise = Promises.task {
-                return deleteProjectInternal(project, framework, authContext, username)
+        try {
+            def promise = Promises.task {
+                runDeferredProjectDelete(project, framework, authContext, username, trustedCleanup, claimedId)
+            }
+            promise.onComplete { DeleteResponse it ->
+                log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
+                return it
+            }
+            promise.onError { Throwable t ->
+                log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
+                return null as DeleteResponse
+            }
+        } catch (Throwable t) {
+            deferredDeletesInFlight.remove(project.name, claimedId)
+            log.error("Failed to schedule deletion of project [${project.name}]: ${t.message}", t)
+            return new DeleteResponse(
+                success: false,
+                error: "Failed to schedule deletion of project ${project.name}: ${t.message}"
+            )
         }
-        promise.onComplete { DeleteResponse it ->
-            log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
-            return it
-        }
-        promise.onError { Throwable t ->
-            log.error("Error deleting project [${project.name}]: ${t.getMessage()}", t)
-            return null as DeleteResponse
-        }
-
         return new DeleteResponse(success: true)
+    }
+
+    /**
+     * Resume deferred deletes left DISABLED after a restart.
+     */
+    @Subscriber('rundeck.bootstrap')
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void resumeDisabledProjectsFromBootstrap() {
+        try {
+            Promises.task {
+                try {
+                    def pending = executionService?.startupCleanupFuture
+                    if (pending != null) {
+                        try {
+                            pending.get(5, TimeUnit.MINUTES)
+                        } catch (TimeoutException e) {
+                            log.error("Startup execution cleanup timed out before project delete recovery")
+                            scheduleProjectDeleteRecoveryRetry()
+                            return
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt()
+                            log.warn("Project delete recovery was interrupted while waiting for startup execution cleanup")
+                            return
+                        } catch (Throwable t) {
+                            log.error("Startup execution cleanup did not finish before project delete recovery: ${t.message}", t)
+                        }
+                    }
+                    Project.withNewTransaction {
+                        def framework = frameworkService?.rundeckFramework
+                        if (framework) {
+                            resumeDisabledProjects((IFramework) framework)
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("Failed to resume project deletion after startup: ${t.message}", t)
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Failed to schedule project deletion recovery after startup: ${t.message}", t)
+        }
+    }
+
+    private void scheduleProjectDeleteRecoveryRetry() {
+        try {
+            taskService.schedule(
+                PROJECT_DELETE_RECOVERY_RETRY_SECONDS,
+                PROJECT_DELETE_RECOVERY_TASK,
+                TimeUnit.SECONDS
+            ) {
+                resumeDisabledProjectsFromBootstrap()
+            }
+        } catch (Throwable t) {
+            log.error("Failed to reschedule project deletion recovery: ${t.message}", t)
+        }
+    }
+
+    void resumeDisabledProjects(IFramework framework) {
+        Collection<String> names = framework.frameworkProjectMgr.listDisabledFrameworkProjectNames()
+        if (!names) {
+            return
+        }
+        for (String name : names) {
+            try {
+                if (!framework.frameworkProjectMgr.isFrameworkProjectDisabled(name)) {
+                    log.info("Skipping resume of project ${name}: it is no longer disabled")
+                    continue
+                }
+                IRundeckProject disabledProject = framework.frameworkProjectMgr.getFrameworkProject(name)
+                AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
+                    'system',
+                    ['admin'],
+                    name
+                )
+                deleteProject(disabledProject, framework, authContext, 'system', Boolean.TRUE, true)
+            } catch (Throwable t) {
+                log.error("Failed to resume deletion of disabled project ${name}: ${t.message}", t)
+            }
+        }
     }
 
 
@@ -1988,17 +2165,33 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @CompileStatic(TypeCheckingMode.SKIP)
-    protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
+    protected DeleteResponse deleteProjectInternal(IRundeckProject project, IFramework framework, AuthContext authContext, String username, boolean trustedCleanup = false, Long claimedProjectId = null) {
         log.info("Starting deletion of project ${project.name} by username $username")
-        notify('projectWillBeDeleted', project.name)
         def result = new DeleteResponse(success: false)
 
-        //disable scm
-        scmService.removeAllPluginConfiguration(project.name)
-
-        ScheduledExecution.withTransaction { TransactionStatus status ->
+        Project.withNewTransaction { TransactionStatus status ->
 
             try {
+                if (claimedProjectId != null) {
+                    Project lockedProject = Project.lockWithTimeout(claimedProjectId)
+                    if (lockedProject == null || lockedProject.name != project.name) {
+                        throw new IllegalStateException("Project changed before cleanup")
+                    }
+                    RdProject.State lockedState = lockedProject.state ?: RdProject.State.ENABLED
+                    if (trustedCleanup && lockedState != RdProject.State.DISABLED) {
+                        throw new IllegalStateException("Project is not disabled")
+                    }
+                    if (lockedState != RdProject.State.DISABLED) {
+                        lockedProject.state = RdProject.State.DISABLED
+                        lockedProject.save(flush: true, failOnError: true)
+                    }
+                }
+                notify('projectWillBeDeleted', project.name)
+
+                //Stop active SCM work without deleting its persisted configuration.
+                //Project resource removal deletes that configuration after this transaction commits.
+                scmService.unregisterAllPlugins(project.name)
+
                 //delete all reports
                 execReportDataProvider.deleteWithTransaction(project.name)
 
@@ -2006,7 +2199,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                 List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(project.name)
                 for (ScheduledExecution se : jobs) {
-                    ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(se, true, authContext, username)
+                    ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(se, true, authContext, username, trustedCleanup)
                     if (!sedresult.success) {
                         throw new Exception(sedresult.error)
                     }
@@ -2014,7 +2207,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 //delete all remaining executions
                 List<Execution> allexecs = Execution.findAllByProject(project.name)
                 def other = allexecs.size()
-                executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
+                def bulk = executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username, trustedCleanup)
+                if (bulk != null && !bulk.success) {
+                    def detail = bulk.failures?.collect { it?.message ?: it?.error ?: it?.id }?.findAll { it }?.join('; ')
+                    throw new Exception(detail ?: 'Failed to delete executions')
+                }
                 log.debug("${other} other executions deleted")
 
 
@@ -2033,6 +2230,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     throw new Exception("Some components had an error: " + compErrors.join("; "))
                 }
 
+                //The claimed row lock prevents another node from deleting and recreating
+                //this name between the cleanup queries and final removal.
+                framework.getFrameworkProjectMgr().removeFrameworkProject(project.name, claimedProjectId)
                 result.success = true
             } catch (Exception e) {
                 status.setRollbackOnly()
@@ -2041,9 +2241,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 result.success = false
             }
         }
-        //if success, delete framework dir
+
+        if (result.success && claimedProjectId != null &&
+            framework.frameworkProjectMgr.isFrameworkProjectRemovalPending(project.name, claimedProjectId)) {
+            result.success = false
+            result.error = "Failed to finish deleting project ${project.name}"
+        }
+
         if (result.success) {
-            framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
             notify('projectWasDeleted', project.name)
         } else {
             notify('projectDeleteFailed', project.name)
