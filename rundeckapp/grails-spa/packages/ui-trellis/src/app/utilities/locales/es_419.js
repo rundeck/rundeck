@@ -39,7 +39,6 @@ const messages = {
   message_fieldLabel: "Label",
   message_fieldKey: "Key",
   message_fieldFilter: "Filtrar campos",
-  message_empty: "Puede dejarse vacio",
   message_cancel: "Cancelar",
   message_add: "Agregar",
   message_addField: "Agregar Nuevo Campo",
