@@ -65,6 +65,8 @@
               :show-description="false"
               :validation="plugin.validation"
               :validation-warning-text="$t('Validation errors')"
+              :use-runner-selector="plugin.entry.type === 'Datadog'"
+              :event-bus="eventBus"
               @input="configUpdated"
             >
               <template v-if="mode === 'edit'" #extra>
@@ -276,6 +278,9 @@ export default defineComponent({
     },
   },
   computed: {
+    eventBus(): RundeckContext["eventBus"] {
+      return getRundeckContext().eventBus;
+    },
     exportedData(): any[] {
       const data = [] as any;
       const inputData = this.pluginConfigs;

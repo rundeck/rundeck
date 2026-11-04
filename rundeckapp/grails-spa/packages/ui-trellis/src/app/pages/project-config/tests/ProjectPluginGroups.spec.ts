@@ -42,6 +42,8 @@ jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
     "config",
     "validation",
     "validationWarningText",
+    "useRunnerSelector",
+    "eventBus",
   ],
   template: '<div><slot name="extra"></slot></div>',
 }));
@@ -141,6 +143,31 @@ describe("ProjectPluginGroups editing-state event", () => {
       "project-plugin-group-editing",
       false,
     );
+  });
+
+  it("enables the runner key selector only for the Datadog plugin group", async () => {
+    const wrapper = await mountWidget();
+
+    wrapper.vm.addPlugin("Datadog");
+    wrapper.vm.addPlugin("test-plugin");
+    await wrapper.vm.$nextTick();
+
+    const configs = wrapper.findAllComponents({ name: "PluginConfig" });
+    const datadog = configs.filter(
+      (component) => component.props("provider") === "Datadog",
+    );
+    const other = configs.filter(
+      (component) => component.props("provider") === "test-plugin",
+    );
+
+    expect(
+      datadog.some(
+        (component) => component.props("useRunnerSelector") === true,
+      ),
+    ).toBe(true);
+    expect(
+      other.every((component) => component.props("useRunnerSelector") !== true),
+    ).toBe(true);
   });
 
   it("emits editing=false on unmount as a safety net against a stuck-hidden Save button", async () => {
