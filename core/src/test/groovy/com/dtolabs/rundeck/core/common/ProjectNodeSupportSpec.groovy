@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceErrors
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceType
 import com.dtolabs.rundeck.core.resources.WriteableModelSource
@@ -1056,5 +1057,49 @@ class ProjectNodeSupportSpec extends Specification {
             it ==~ /WARN \[.+\] Loading nodes from \Q${label}\E failed after \d+ ms, using 1 cached nodes: not authorized/
         }
         !lines.any { it.contains("Loaded 1 nodes from ${label}") }
+    }
+
+    /**
+     * Source that returns nodes and also reports errors, like the EC2 plugin when some regions fail
+     */
+    static class PartialErrorsSource implements ResourceModelSource, ResourceModelSourceErrors {
+        List<String> modelSourceErrors
+
+        @Override
+        INodeSet getNodes() throws ResourceModelSourceException {
+            ProjectNodeSupportSpec.nodes('a', '1')
+        }
+    }
+
+    def "source errors are reported one per line"() {
+        given:
+        def props = new Properties()
+        props['resources.source.1.type'] = 'file'
+        props['resources.source.1.config.file'] = '/tmp/file0'
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> loadProject
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def source = new PartialErrorsSource(modelSourceErrors: ['region 1 failed', 'region 2 failed'])
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(source)
+        }
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
+        def support = new ProjectNodeSupport(
+                File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"),
+                config,
+                generatorService,
+                sourceService
+        )
+
+        when:
+        def result = support.getNodeSet()
+
+        then: "nodes are still loaded and the errors are joined with newlines"
+        result.nodeNames as List == ['a']
+        support.getResourceModelSourceExceptionsMap()['1.source'].message == 'region 1 failed\nregion 2 failed'
     }
 }

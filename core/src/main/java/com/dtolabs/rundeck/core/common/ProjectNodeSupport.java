@@ -425,7 +425,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                                  "]: " +
                                  modelSourceErrors);
                     error = new ResourceModelSourceException(
-                            TextUtils.join(modelSourceErrors.toArray(new String[0]), ';')
+                            //one error per line, so the node sources page shows each error on its own line
+                            TextUtils.join(modelSourceErrors.toArray(new String[0]), '\n')
                     );
                 }
             }
