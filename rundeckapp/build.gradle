@@ -5,6 +5,7 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        gradlePluginPortal()
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://repo.grails.org/grails/restricted" }
     }
@@ -146,20 +147,44 @@ configurations {
 
 repositories {
     mavenLocal()
-    maven { url "https://repo.grails.org/grails/core" }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    // Parent builds can already route this group with exclusiveContent. Keep the
+    // standalone repository non-exclusive so overlapping filters cannot hide it.
+    maven {
+        name = 'corePackagecloudRundeckPlugins'
+        url = 'https://packagecloud.io/pagerduty/rundeck-plugins/maven2'
+        content {
+            includeGroup('org.rundeck.plugins')
+        }
+    }
+    mavenCentral {
+        content {
+            excludeGroup('org.rundeck.plugins')
+        }
+    }
+    maven {
+        url "https://repo.grails.org/grails/core"
+        content {
+            excludeGroup('org.rundeck.plugins')
+        }
+    }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+        content {
+            excludeGroup('org.rundeck.plugins')
+        }
+    }
     
     // PackageCloud plugin repositories
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
+        content {
+            excludeGroup('org.rundeck.plugins')
+        }
     }
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
-    }
-    maven {
-        url "https://packagecloud.io/pagerduty/rundeck-plugins/maven2"
         content {
-            includeGroup('org.rundeck.plugins')
+            excludeGroup('org.rundeck.plugins')
         }
     }
 }
