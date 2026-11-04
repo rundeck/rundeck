@@ -80,6 +80,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      */
     private static final ThreadLocal<Boolean> IN_SOURCE_QUERY = ThreadLocal.withInitial(() -> false);
 
+    /**
+     * Set by querySource on the thread that queries a source. StoreExceptionHandler records a failure caught by a
+     * caching source here, so the query can tell it returned cached nodes. Per thread and per query, so concurrent
+     * loads do not see each other's failures.
+     */
+    private static final ThreadLocal<Throwable[]> CACHE_FAILURE = new ThreadLocal<>();
+
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
     private long                                                                   nodesSourcesLastReload = -1L;
@@ -369,7 +376,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private SourceResult querySourceWithLoader(final LoadedResourceModelSource nodesSource, final ClassLoader loader) {
+    private static SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
@@ -389,9 +396,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private SourceResult querySource(final LoadedResourceModelSource nodesSource) {
+    private static SourceResult querySource(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
+        //keep an enclosing query's slot, for a source that loads another project's nodes on this thread
+        final Throwable[] enclosingCacheFailure = CACHE_FAILURE.get();
+        final Throwable[] cacheFailure = new Throwable[1];
+        CACHE_FAILURE.set(cacheFailure);
         try {
             logger.info("Loading nodes from {}", nodesSource);
             long start = System.nanoTime();
@@ -400,19 +411,19 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
             }
             //a caching source catches the failure, records it with StoreExceptionHandler and returns cached nodes
-            final Throwable cacheFallback = nodesSourceExceptions.get(nodesSource.getIndex() + ".source");
+            final Throwable cacheFallback = cacheFailure[0];
             if (null != cacheFallback) {
                 logger.warn(
                         "Loading nodes from {} failed after {} ms, using {} cached nodes: {}",
                         nodesSource,
                         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start),
-                        null == nodes ? 0 : nodes.getNodes().size(),
+                        nodeCount(nodes),
                         cacheFallback.getMessage()
                 );
             } else if (logger.isInfoEnabled()) {
                 logger.info(
                         "Loaded {} nodes from {} in {} ms",
-                        null == nodes ? 0 : nodes.getNodes().size(),
+                        nodeCount(nodes),
                         nodesSource,
                         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
                 );
@@ -438,8 +449,33 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
             logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage());
+        } finally {
+            if (null == enclosingCacheFailure) {
+                CACHE_FAILURE.remove();
+            } else {
+                CACHE_FAILURE.set(enclosingCacheFailure);
+            }
         }
         return new SourceResult(nodes, error);
+    }
+
+    /**
+     * Node count for log messages. Never fails the load: a node set that cannot report its size is logged as
+     * "unknown", and the merge reports the problem.
+     *
+     * @param nodes nodes, may be null
+     *
+     * @return node count, or "unknown"
+     */
+    private static String nodeCount(final INodeSet nodes) {
+        if (null == nodes) {
+            return "0";
+        }
+        try {
+            return String.valueOf(nodes.getNodes().size());
+        } catch (RuntimeException e) {
+            return "unknown";
+        }
     }
 
     /**
@@ -584,6 +620,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         @Override
         public void handleException(final Throwable t, final ResourceModelSource origin) {
             nodesSourceExceptions.put(sourceIdent, t);
+            final Throwable[] cacheFailure = CACHE_FAILURE.get();
+            if (null != cacheFailure) {
+                cacheFailure[0] = t;
+            }
         }
     }
 

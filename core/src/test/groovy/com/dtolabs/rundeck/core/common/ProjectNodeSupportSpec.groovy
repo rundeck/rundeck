@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.resources.ExceptionCatchingResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceErrors
@@ -885,15 +886,22 @@ class ProjectNodeSupportSpec extends Specification {
                 { -> nodes('c', '3') } as Closure<INodeSet>
         ]
         def support = supportWithSources([(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): '3'], loaders)
+        def label2 = "project=${loadProject} source #2 (file)".toString()
+        def result = null
 
         when:
-        def result = support.getNodeSet()
+        def lines = captureLogs { result = support.getNodeSet() }
         def errors = support.getResourceModelSourceExceptionsMap()
 
         then:
         result.nodeNames as List == ['a', 'c']
         errors.keySet() == ['2.source'] as Set
         errors['2.source'].message == 'bad node data'
+
+        and: "counting nodes for the log does not fail the load, and the merge error names the source"
+        lines.any { it.contains("Loaded unknown nodes from ${label2} in ") }
+        !lines.any { it.contains("Cannot get nodes from [${label2}]") }
+        lines.any { it.startsWith('ERROR [') && it.endsWith("Cannot merge nodes from [${label2}]: bad node data") }
     }
 
     def "a source failure after a source that failed to initialize is reported by its configured index"() {
@@ -939,7 +947,15 @@ class ProjectNodeSupportSpec extends Specification {
      * @return captured lines, formatted as "LEVEL [thread] message"
      */
     private static List<String> captureLogs(Closure action) {
-        def name = ProjectNodeSupport.name
+        captureLogs([ProjectNodeSupport.name], action)
+    }
+
+    /**
+     * Capture log output of the named loggers at INFO and above while the closure runs
+     *
+     * @return captured lines, formatted as "LEVEL [thread] message"
+     */
+    private static List<String> captureLogs(List<String> names, Closure action) {
         def writer = new StringWriter()
         def ctx = (LoggerContext) LogManager.getContext(false)
         def config = ctx.getConfiguration()
@@ -949,19 +965,21 @@ class ProjectNodeSupportSpec extends Specification {
                 .setLayout(PatternLayout.newBuilder().withPattern('%level [%t] %m%n').build())
                 .build()
         appender.start()
-        def loggerConfig = LoggerConfig.newBuilder()
-                .withLoggerName(name)
-                .withLevel(Level.INFO)
-                .withAdditivity(false)
-                .withConfig(config)
-                .build()
-        loggerConfig.addAppender(appender, Level.INFO, null)
-        config.addLogger(name, loggerConfig)
+        names.each { name ->
+            def loggerConfig = LoggerConfig.newBuilder()
+                    .withLoggerName(name)
+                    .withLevel(Level.INFO)
+                    .withAdditivity(false)
+                    .withConfig(config)
+                    .build()
+            loggerConfig.addAppender(appender, Level.INFO, null)
+            config.addLogger(name, loggerConfig)
+        }
         ctx.updateLoggers()
         try {
             action.call()
         } finally {
-            config.removeLogger(name)
+            names.each { config.removeLogger(it) }
             ctx.updateLoggers()
             appender.stop()
         }
@@ -1007,8 +1025,10 @@ class ProjectNodeSupportSpec extends Specification {
         '2'         | true
     }
 
-    def "a cached source that fails logs a cache fallback warning instead of a load line"() {
-        given: "a source type that uses the file cache, whose plugin throws, with cached nodes available"
+    /**
+     * Create a support with one source of a type that uses the file cache, whose cached nodes are node "cached"
+     */
+    private ProjectNodeSupport supportWithCachedSource(ResourceModelSource plugin) {
         def props = new Properties()
         props['resources.source.1.type'] = 'cachedtype'
         def config = Mock(IRundeckProjectConfig) {
@@ -1018,12 +1038,6 @@ class ProjectNodeSupportSpec extends Specification {
             getProperty(_) >> { String k -> props.getProperty(k) }
             getConfigLastModifiedTime() >> new Date()
         }
-        def failing = new ResourceModelSource() {
-            @Override
-            INodeSet getNodes() throws ResourceModelSourceException {
-                throw new ResourceModelSourceException('not authorized')
-            }
-        }
         def cacheFile = new ResourceModelSource() {
             @Override
             INodeSet getNodes() throws ResourceModelSourceException {
@@ -1031,21 +1045,32 @@ class ProjectNodeSupportSpec extends Specification {
             }
         }
         def sourceService = Mock(ResourceModelSourceService) {
-            getCloseableSourceForConfiguration('cachedtype', _) >> Closeables.closeableProvider(failing)
+            getCloseableSourceForConfiguration('cachedtype', _) >> Closeables.closeableProvider(plugin)
             getSourceForConfiguration('file', _) >> cacheFile
         }
         def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
-        def support = new ProjectNodeSupport(
-                File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"),
-                config,
-                generatorService,
-                sourceService
-        )
+        def varDir = File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp")
+        varDir.delete()
+        varDir.mkdirs()
+        new ProjectNodeSupport(varDir, config, generatorService, sourceService)
+    }
+
+    def "a cached source that fails logs a cache fallback warning instead of a load line"() {
+        given: "a source type that uses the file cache, whose plugin throws, with cached nodes available"
+        def failing = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                throw new ResourceModelSourceException('not authorized')
+            }
+        }
+        def support = supportWithCachedSource(failing)
         def label = "project=${loadProject} source #1 (cachedtype)".toString()
         def result = null
 
         when:
-        def lines = captureLogs { result = support.getNodeSet() }
+        def lines = captureLogs([ProjectNodeSupport.name, ExceptionCatchingResourceModelSource.name]) {
+            result = support.getNodeSet()
+        }
 
         then: "cached nodes are served and the failure is recorded"
         result.nodeNames as List == ['cached']
@@ -1057,6 +1082,12 @@ class ProjectNodeSupportSpec extends Specification {
             it ==~ /WARN \[.+\] Loading nodes from \Q${label}\E failed after \d+ ms, using 1 cached nodes: not authorized/
         }
         !lines.any { it.contains("Loaded 1 nodes from ${label}") }
+
+        and: "the caching source's own error line includes the exception message"
+        lines.any {
+            it.startsWith('ERROR [') &&
+            it.endsWith("[ResourceModelSource: 1.source (cachedtype), project: ${loadProject}] not authorized")
+        }
     }
 
     /**
@@ -1101,5 +1132,41 @@ class ProjectNodeSupportSpec extends Specification {
         then: "nodes are still loaded and the errors are joined with newlines"
         result.nodeNames as List == ['a']
         support.getResourceModelSourceExceptionsMap()['1.source'].message == 'region 1 failed\nregion 2 failed'
+    }
+
+    def "a failure recorded by an overlapping load of the same source does not cause a cache fallback warning"() {
+        given: "a cached source that succeeds, while another load of the same project records a failure for it"
+        ProjectNodeSupport support = null
+        def plugin = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                support.nodesSourceExceptions.put('1.source', new ResourceModelSourceException('other load failed'))
+                ProjectNodeSupportSpec.nodes('fresh', 'v')
+            }
+        }
+        support = supportWithCachedSource(plugin)
+        def label = "project=${loadProject} source #1 (cachedtype)".toString()
+        def result = null
+
+        when:
+        def lines = captureLogs { result = support.getNodeSet() }
+
+        then:
+        result.nodeNames as List == ['fresh']
+        lines.any { it.contains("Loaded 1 nodes from ${label} in ") }
+        !lines.any { it.contains('cached nodes') }
+    }
+
+    def "an empty result is logged with the source label"() {
+        given:
+        def support = supportWithSources([:], [{ -> null } as Closure<INodeSet>])
+        def label = "project=${loadProject} source #1 (file)".toString()
+
+        when:
+        def lines = captureLogs { support.getNodeSet() }
+
+        then:
+        lines.any { it.startsWith('WARN [') && it.endsWith("Empty nodes result from [${label}]") }
+        lines.any { it.contains("Loaded 0 nodes from ${label} in ") }
     }
 }
