@@ -170,7 +170,7 @@ sourceSets {
             srcDir 'grails-app/migrations'
             // POC: package sparse public catalogs without moving the existing
             // grails-app/i18n bundles or introducing a synchronization step.
-            srcDir "${rootDir}/translations/core/rundeckapp"
+            srcDir "${rootDir}/translations/core/rundeckapp/grails-app/i18n/grails-app/i18n"
         }
     }
 }
@@ -179,7 +179,7 @@ tasks.register('verifyCanonicalTranslationArchive') {
     dependsOn tasks.named('bootWar')
 
     doLast {
-        Map<String, File> expected = fileTree("${rootDir}/translations/core/rundeckapp") {
+        Map<String, File> expected = fileTree("${rootDir}/translations/core/rundeckapp/grails-app/i18n/grails-app/i18n") {
             include 'public-messages*.properties'
         }.files.collectEntries { [("WEB-INF/classes/${it.name}".toString()): it] }
         ZipFile archive = new ZipFile(tasks.named('bootWar').get().archiveFile.get().asFile)

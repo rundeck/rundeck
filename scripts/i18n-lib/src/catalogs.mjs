@@ -583,6 +583,8 @@ function localeAlias(locale) {
 
 function inferNamespace(file) {
   const normalized = file.replaceAll(path.sep, "/");
+  const canonicalPath = canonicalRelativePath(normalized);
+  if (canonicalPath) return path.posix.dirname(canonicalPath);
   if (normalized.includes("/grails-spa/")) return "core/ui";
   const proUiFeature = normalized.match(
     /\/plugins\/rundeckpro-spa-ui\/rundeckpro-ui-components\/src\/([^/]+)/,
@@ -605,9 +607,20 @@ function inferConsumer(file) {
 }
 
 function inferArchiveDestination(file, format) {
+  const canonicalPath = canonicalRelativePath(file.replaceAll(path.sep, "/"));
+  if (canonicalPath) return `translations/${canonicalPath}`;
   const namespace = inferNamespace(file);
   if (format === "vue") return `translations/${namespace}/i18n.ts`;
   return `translations/${namespace}/messages_<locale>.properties`;
+}
+
+/**
+ * Return a canonical catalog's mirrored path beneath translations.
+ */
+function canonicalRelativePath(normalizedFile) {
+  const marker = "/translations/";
+  const index = normalizedFile.lastIndexOf(marker);
+  return index === -1 ? null : normalizedFile.slice(index + marker.length);
 }
 
 function summarizeIndicators(entries) {

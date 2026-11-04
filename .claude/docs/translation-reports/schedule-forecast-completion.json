@@ -5,7 +5,7 @@
     {
       "family": "schedule-forecast-backend",
       "legacySource": "plugins/schedule-forecast/grails-app/i18n/forecast-messages*.properties",
-      "canonicalSource": "translations/rundeckpro/schedule-forecast/forecast-public-messages*.properties",
+      "canonicalSource": "translations/rundeckpro/plugins/schedule-forecast/grails-app/i18n/forecast-public-messages*.properties",
       "locales": ["default", "es_419", "ja"],
       "productionEvidenceKeys": [
         "plugin.forecast.menu.head",
@@ -27,7 +27,7 @@
     {
       "family": "forecast-vue",
       "legacySource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n-legacy.ts",
-      "canonicalSource": "translations/rundeckpro/schedule-forecast/i18n.ts",
+      "canonicalSource": "translations/rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
       "locales": ["en_US", "ja"],
       "productionEvidenceKeys": [
         "plugin.forecast.main.title",

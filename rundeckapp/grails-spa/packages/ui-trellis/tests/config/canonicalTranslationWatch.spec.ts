@@ -8,7 +8,7 @@ describe("canonical translation development watch", () => {
   it("configures and observes a mutation under the canonical source path", async () => {
     const canonicalPath = path.resolve(
       __dirname,
-      "../../../../../../translations/core/ui/readme-motd.ts",
+      "../../../../../../translations/core/rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd/i18n.ts",
     );
     const configuredGlobs = appConfig.configureWebpack.devServer.watchFiles;
     expect(configuredGlobs).toContain(

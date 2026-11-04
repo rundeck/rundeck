@@ -1,8 +1,8 @@
-import publicMessages from "../../../../../../../../translations/core/ui/readme-motd";
+import publicMessages from "../../../../../../../../translations/core/rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd/i18n";
 import {
   mergeTranslationCatalogs,
   type LocalizedTranslationCatalog,
-} from "../../../../../../../../translations/mergeCatalogs";
+} from "../../../../../../../../tools/i18n/mergeCatalogs";
 
 const originalMessages = {
   en_US: {

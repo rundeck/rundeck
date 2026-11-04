@@ -23,10 +23,11 @@ archive destination.
 
 The proposed public layout is:
 
-- `translations/core/rundeckapp/` for Grails message bundles.
-- `translations/core/ui/` for core Vue feature catalogs.
-- `translations/rundeckpro/<plugin>/` for Pro plugin bundles.
-- `translations/rundeckpro/ui/<feature>/` for Pro Vue catalogs.
+- `translations/core/rundeckapp/grails-app/i18n/` for Grails message bundles.
+- `translations/core/rundeckapp/grails-spa/packages/ui-trellis/src/app/`
+  for Core Vue feature catalogs.
+- `translations/rundeckpro/plugins/<plugin>/` for Pro plugin bundles.
+- `translations/rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/<feature>/` for Pro Vue catalogs.
 
 Observed locale names include `de`, `de_DE`, `en_US`, `es`, `es_419`, `fr_FR`,
 `ja`, `ja_JP`, `nl`, `nl_NL`, `pt_BR`, `zh_CN`, and `zh_cn`. The report flags
@@ -41,17 +42,21 @@ of being executed.
 
 ## POC 2: representative consumers
 
-Core Vue imports `translations/core/ui/readme-motd.ts` and deep-merges it over
-the original component catalog. Core backend resources package
-`translations/core/rundeckapp/public-messages.properties` and register it
-between administrator overrides and the original `messages` bundle.
+Core Vue imports
+`translations/core/rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd/i18n.ts`
+and deep-merges it over the original component catalog. Core backend resources
+package
+`translations/core/rundeckapp/grails-app/i18n/public-messages.properties`
+and register it between administrator overrides and the original `messages`
+bundle.
 
-The Pro Schedule Forecast Vue and backend consumers read
-`rundeck/translations/rundeckpro/schedule-forecast/` directly through the
-existing Rundeck source/submodule relationship. The public key wins, original
-keys and locales remain per-key fallbacks, and the plugin resource archive
-still receives a normal message bundle. No npm package or synchronization copy
-is introduced.
+The Pro Schedule Forecast backend reads its mirrored
+`rundeckpro/plugins/schedule-forecast/grails-app/i18n` path, while its Vue
+consumer reads the mirrored `rundeckpro/plugins/rundeckpro-spa-ui` path. Both
+are consumed directly through the existing Rundeck submodule relationship.
+The public key wins, original keys and locales remain per-key fallbacks, and
+the plugin resource archive still receives a normal message bundle. No npm
+package or synchronization copy is introduced.
 
 ## POC 3: lossless/idempotent CLI
 

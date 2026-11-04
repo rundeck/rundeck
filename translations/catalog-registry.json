@@ -1,7 +1,7 @@
 [
   {
     "family": "core-spring",
-    "publicNamespace": "core/rundeckapp",
+    "publicNamespace": "core/rundeckapp/grails-app/i18n",
     "originalSource": "rundeckapp/grails-app/i18n/messages*.properties",
     "basename": "messages",
     "localeVariants": ["default", "fr"],
@@ -12,7 +12,7 @@
   },
   {
     "family": "named-grails-plugin",
-    "publicNamespace": "rundeckpro/schedule-forecast",
+    "publicNamespace": "rundeckpro/plugins/schedule-forecast/grails-app/i18n",
     "originalSource": "plugins/schedule-forecast/grails-app/i18n/forecast-messages*.properties",
     "basename": "forecast-messages",
     "canonicalBasename": "forecast-public-messages",
@@ -25,7 +25,7 @@
   },
   {
     "family": "core-vue",
-    "publicNamespace": "core/ui/readme-motd",
+    "publicNamespace": "core/rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd",
     "originalSource": "rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd/i18n.ts",
     "basename": "readme-motd",
     "localeVariants": ["en_US", "de_DE", "nl_NL"],
@@ -36,7 +36,7 @@
   },
   {
     "family": "pro-vue",
-    "publicNamespace": "rundeckpro/schedule-forecast",
+    "publicNamespace": "rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast",
     "originalSource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
     "basename": "rundeckpro-forecast",
     "localeVariants": ["en_US", "ja"],
@@ -47,7 +47,7 @@
   },
   {
     "family": "standalone-plugin-resources",
-    "publicNamespace": "plugins/flow-control",
+    "publicNamespace": "core/plugins/flow-control-plugin/src/main/resources/resources/i18n",
     "originalSource": "plugins/*/src/main/resources/resources/i18n/messages*.properties",
     "basename": "messages",
     "canonicalBasename": "public-messages",
@@ -60,7 +60,7 @@
   },
   {
     "family": "legacy-javascript-gsp",
-    "publicNamespace": "core/rundeckapp",
+    "publicNamespace": "core/rundeckapp/grails-app/i18n",
     "originalSource": "UtilityTagLib.jsMessages",
     "basename": "messages",
     "localeVariants": ["request locale"],
@@ -71,7 +71,7 @@
   },
   {
     "family": "pro-war-overlay",
-    "publicNamespace": "rundeckpro/war",
+    "publicNamespace": "rundeckpro/templates/war/src/WEB-INF/classes",
     "originalSource": "templates/war/src/WEB-INF/classes/messages*.properties",
     "basename": "messages",
     "localeVariants": ["default", "es_419", "zh_CN"],

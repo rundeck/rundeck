@@ -370,6 +370,30 @@ test("OSS plugin catalogs are not classified as Rundeck Pro", () => {
   assert.equal(catalog.intendedConsumer, "Rundeck OSS plugin build/runtime");
 });
 
+test("canonical catalogs retain their mirrored namespace and destination", () => {
+  const root = fixture();
+  const relative = path.join(
+    "translations",
+    "core",
+    "plugins",
+    "sample-plugin",
+    "src",
+    "main",
+    "resources",
+    "i18n",
+    "public-messages.properties",
+  );
+  const file = path.join(root, relative);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, "key=Value\n");
+  const catalog = publicCatalog(inventoryRoots([file])[0], root);
+  assert.equal(
+    catalog.namespace,
+    "core/plugins/sample-plugin/src/main/resources/i18n",
+  );
+  assert.equal(catalog.archiveDestination, relative);
+});
+
 test("single unescaped pipes are Vue plural separators and escaped pipes are literal", () => {
   const root = fixture();
   fs.writeFileSync(path.join(root, "messages.properties"), "items=one | many\nliteral=a \\\\| b\n");

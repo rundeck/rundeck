@@ -1,5 +1,5 @@
 import messages from "../i18n";
-import { mergeTranslationCatalogs } from "../../../../../../../../../translations/mergeCatalogs";
+import { mergeTranslationCatalogs } from "../../../../../../../../../tools/i18n/mergeCatalogs";
 
 describe("Readme/MOTD public translation overlay", () => {
   it("prefers canonical values at a genuine production key", () => {
