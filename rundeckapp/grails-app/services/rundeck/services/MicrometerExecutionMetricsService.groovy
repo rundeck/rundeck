@@ -49,6 +49,29 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
     // (e.g. rundeck.metrics.execution.job.dimension.enabled=true) -- only the lookup key here omits it.
     static final String JOB_DIMENSION_ENABLED_PROPERTY = 'metrics.execution.job.dimension.enabled'
 
+    /**
+     * Ascending, comma-separated upper bounds for the {@code node_bucket} tag. Same lookup-key
+     * convention as {@link #JOB_DIMENSION_ENABLED_PROPERTY} above -- no 'rundeck.' prefix here,
+     * but the property in rundeck-config.properties does need it
+     * (rundeck.metrics.execution.step.nodeBuckets).
+     * <p>
+     * Configurable rather than hardcoded because the default edges mirror the example bands in
+     * the consumption pricing model, where linear vs banded vs capped is still an open question.
+     * Freezing an example in code would mean a release -- and for On-Prem, an upgrade cycle --
+     * to change a number that is expected to move.
+     */
+    static final String NODE_BUCKETS_PROPERTY = 'metrics.execution.step.nodeBuckets'
+
+    /** Reproduces the previously hardcoded bands exactly: 1, 2-10, 11-100, 100+. */
+    static final String NODE_BUCKETS_DEFAULT = '1,10,100'
+
+    /**
+     * Upper limit on configured bands. Each one multiplies series count across
+     * plugin_type x node_step x status x tenant, and nothing else stops a typo from asking for
+     * hundreds.
+     */
+    static final int NODE_BUCKETS_MAX = 20
+
     @Autowired
     MeterRegistry meterRegistry
     ConfigurationService configurationService
@@ -186,7 +209,7 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
     }
 
     /**
-     * Buckets a step's node-dispatch count into a fixed five-value set, so {@code node_bucket}
+     * Buckets a step's node-dispatch count into the configured band set, so {@code node_bucket}
      * contributes a constant factor to cardinality no matter how wide a step fans out.
      * <p>
      * {@code 0} is not reachable from today's {@code StepNodeUsageWorkflowListener}: every path
@@ -195,20 +218,145 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
      * therefore told apart by the {@code node_step} tag, not by this bucket. The zero case is
      * kept so that a future listener change cannot silently produce an unlabelled bucket.
      */
-    private static String nodeBucket(long nodeCount) {
+    private String nodeBucket(long nodeCount) {
         if (nodeCount <= 0L) {
             return '0'
         }
-        if (nodeCount == 1L) {
-            return '1'
+        NodeBucketScheme scheme = nodeBucketScheme()
+        List<Long> bounds = scheme.bounds
+        for (int i = 0; i < bounds.size(); i++) {
+            if (nodeCount <= bounds.get(i)) {
+                return scheme.labels.get(i)
+            }
         }
-        if (nodeCount <= 10L) {
-            return '2-10'
+        scheme.labels.get(bounds.size())
+    }
+
+    /**
+     * The resolved band edges and the labels derived from them, built once and cached.
+     * {@link #nodeBucket} runs once per step of every execution, so the property string is
+     * parsed on startup rather than on that path.
+     */
+    @CompileStatic
+    private static final class NodeBucketScheme {
+        final List<Long> bounds
+        final List<String> labels
+
+        NodeBucketScheme(final List<Long> bounds, final List<String> labels) {
+            this.bounds = Collections.unmodifiableList(new ArrayList<Long>(bounds))
+            this.labels = Collections.unmodifiableList(new ArrayList<String>(labels))
         }
-        if (nodeCount <= 100L) {
-            return '11-100'
+    }
+
+    private volatile NodeBucketScheme resolvedNodeBucketScheme
+
+    /**
+     * Resolves {@link #NODE_BUCKETS_PROPERTY} once and caches it. Double-checked on a volatile
+     * field: this is read on a per-step hot path, and the alternative of resolving in
+     * {@link #initialize} would leave the bands unset for any execution that completed before
+     * the bootstrap event fired.
+     * <p>
+     * Bad configuration never propagates: anything unparseable, non-ascending, non-positive or
+     * over {@link #NODE_BUCKETS_MAX} falls back to the default and logs. A metrics path must
+     * not be the thing that breaks an execution, the same line
+     * {@code StepNodeUsageWorkflowListener} holds.
+     */
+    private NodeBucketScheme nodeBucketScheme() {
+        NodeBucketScheme cached = resolvedNodeBucketScheme
+        if (cached != null) {
+            return cached
         }
-        return '100+'
+        synchronized (this) {
+            if (resolvedNodeBucketScheme != null) {
+                return resolvedNodeBucketScheme
+            }
+            String raw = configurationService != null ?
+                configurationService.getString(NODE_BUCKETS_PROPERTY, NODE_BUCKETS_DEFAULT) :
+                NODE_BUCKETS_DEFAULT
+            List<Long> bounds = null
+            // A null means "not configured" (no ConfigurationService, or a stub that returns
+            // nothing) and quietly takes the default. An explicitly-set but unusable value is a
+            // different thing and is worth warning about.
+            if (raw != null) {
+                bounds = parseNodeBucketBounds(raw)
+                if (bounds == null) {
+                    log.warn(
+                        "Ignoring rundeck.{}={} -- expected ascending, comma-separated integers >= 1. Using default '{}'.",
+                        NODE_BUCKETS_PROPERTY, raw, NODE_BUCKETS_DEFAULT
+                    )
+                } else if (bounds.size() > NODE_BUCKETS_MAX) {
+                    log.warn(
+                        "Ignoring rundeck.{}={} -- {} bands exceeds the maximum of {}. Each band multiplies series count " +
+                        "across plugin_type/node_step/status. Using default '{}'.",
+                        NODE_BUCKETS_PROPERTY, raw, bounds.size(), NODE_BUCKETS_MAX, NODE_BUCKETS_DEFAULT
+                    )
+                    bounds = null
+                }
+            }
+            if (bounds == null) {
+                bounds = parseNodeBucketBounds(NODE_BUCKETS_DEFAULT)
+            }
+            NodeBucketScheme scheme = buildNodeBucketScheme(bounds)
+            resolvedNodeBucketScheme = scheme
+            // Logged once, so an operator meeting unfamiliar node_bucket values can tell which
+            // configuration produced them.
+            log.info("Step node_bucket bands: {} (from bounds {})", scheme.labels, scheme.bounds)
+            return scheme
+        }
+    }
+
+    /**
+     * Parses ascending, comma-separated upper bounds. Returns null -- never throws, and never
+     * a partial list -- for anything unusable, so the caller can fall back wholesale rather
+     * than silently metering against half a configuration.
+     */
+    private static List<Long> parseNodeBucketBounds(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return null
+        }
+        List<Long> parsed = new ArrayList<Long>()
+        for (String part : raw.split(',')) {
+            String trimmed = part.trim()
+            if (trimmed.isEmpty()) {
+                return null
+            }
+            long value
+            try {
+                value = Long.parseLong(trimmed)
+            } catch (NumberFormatException ignored) {
+                return null
+            }
+            if (value < 1L) {
+                return null
+            }
+            // Strictly ascending: equal or descending edges would make a band unreachable.
+            if (!parsed.isEmpty() && value <= parsed.get(parsed.size() - 1)) {
+                return null
+            }
+            parsed.add(value)
+        }
+        parsed.isEmpty() ? null : parsed
+    }
+
+    /**
+     * Derives band labels from the edges, rather than carrying hardcoded strings that could
+     * drift from the numbers. For bounds [b0..bn] the first band is {@code 1} when b0 is 1 and
+     * {@code 1-b0} otherwise, each subsequent band is {@code <prev+1>-<bN>}, and the open-ended
+     * final band is {@code <bn>+}. So '1,10,100' yields 1 / 2-10 / 11-100 / 100+, and '1,5,10'
+     * yields 1 / 2-5 / 6-10 / 10+.
+     */
+    private static NodeBucketScheme buildNodeBucketScheme(List<Long> bounds) {
+        List<String> labels = new ArrayList<String>(bounds.size() + 1)
+        for (int i = 0; i < bounds.size(); i++) {
+            long upper = bounds.get(i)
+            if (i == 0) {
+                labels.add(upper == 1L ? '1' : ('1-' + String.valueOf(upper)))
+            } else {
+                labels.add(String.valueOf(bounds.get(i - 1) + 1L) + '-' + String.valueOf(upper))
+            }
+        }
+        labels.add(String.valueOf(bounds.get(bounds.size() - 1)) + '+')
+        new NodeBucketScheme(bounds, labels)
     }
 
     private List<Tag> jobTags(Execution execution) {
@@ -303,6 +451,25 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
                 required false
                 restart false
                 datatype "Boolean"
+                visibility 'Advanced'
+                category 'Execution'
+                authRequired "app_admin"
+                build()
+            },
+            SystemConfig.builder().with {
+                key "rundeck.metrics.execution.step.nodeBuckets"
+                label "Execution Metrics: step node_bucket bands"
+                description "Ascending, comma-separated upper bounds for the node_bucket tag on " +
+                    "rundeck_execution_step_nodes/rundeck_execution_step_duration. The default " +
+                    "'1,10,100' produces the bands 1, 2-10, 11-100, 100+. Labels are derived from " +
+                    "these numbers, so '1,5,10' gives 1, 2-5, 6-10, 10+. Takes effect on restart. " +
+                    "Changing it starts new series rather than re-bucketing history, and each extra " +
+                    "band multiplies series count, so keep the list short (max 20). Anything " +
+                    "unparseable, non-ascending or below 1 is ignored in favour of the default."
+                defaultValue NODE_BUCKETS_DEFAULT
+                required false
+                restart true
+                datatype "String"
                 visibility 'Advanced'
                 category 'Execution'
                 authRequired "app_admin"

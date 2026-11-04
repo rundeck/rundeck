@@ -513,4 +513,106 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
         and: "and the new per-step meters are separate series"
             meterRegistry.get('rundeck.execution.step.nodes').summary() != null
     }
+
+    /** Records one step at the given node count and returns the node_bucket tag it landed on. */
+    private String bucketFor(long nodeCount) {
+        service.recordStepUsage(execution([:]), ['1': new StepNodeUsageEntry(1_000L, 'script', true, nodeCount)])
+        meterRegistry.get('rundeck.execution.step.nodes').summary().getId().getTag('node_bucket')
+    }
+
+    void "node_bucket labels are derived from the configured bounds"() {
+        given:
+            configurationService.getString(MicrometerExecutionMetricsService.NODE_BUCKETS_PROPERTY, _) >> config
+
+        expect:
+            bucketFor(nodeCount) == bucket
+
+        where:
+            config     | nodeCount || bucket
+            // default, reproducing the previously hardcoded bands exactly
+            '1,10,100' | 1L        || '1'
+            '1,10,100' | 2L        || '2-10'
+            '1,10,100' | 10L       || '2-10'
+            '1,10,100' | 11L       || '11-100'
+            '1,10,100' | 100L      || '11-100'
+            '1,10,100' | 101L      || '100+'
+            // a first bound above 1 opens with a range rather than a bare '1'
+            '10,100'   | 1L        || '1-10'
+            '10,100'   | 10L       || '1-10'
+            '10,100'   | 11L       || '11-100'
+            '10,100'   | 500L      || '100+'
+            // arbitrary edges
+            '1,5,10'   | 1L        || '1'
+            '1,5,10'   | 5L        || '2-5'
+            '1,5,10'   | 6L        || '6-10'
+            '1,5,10'   | 11L       || '10+'
+            // a single bound degenerates to two bands
+            '50'       | 50L       || '1-50'
+            '50'       | 51L       || '50+'
+    }
+
+    void "an unconfigured property silently uses the default bands"() {
+        given: "configurationService returns null, as it does when nothing is set"
+            configurationService.getString(_, _) >> null
+
+        expect:
+            bucketFor(5L) == '2-10'
+    }
+
+    void "unusable node_bucket configuration falls back to the default without throwing"() {
+        given:
+            configurationService.getString(MicrometerExecutionMetricsService.NODE_BUCKETS_PROPERTY, _) >> config
+
+        when: "a count that only the default bands would label '2-10'"
+            def bucket = bucketFor(5L)
+
+        then:
+            noExceptionThrown()
+            bucket == '2-10'
+
+        where:
+            config << [
+                '1,abc,10',   // not a number
+                '100,10,1',   // descending
+                '1,10,10',    // not strictly ascending
+                '1,-5,10',    // below 1
+                '0,10',       // below 1
+                '',           // explicitly blank
+                '   ',        // whitespace only
+                '1,,10',      // empty element
+                'nonsense',
+            ]
+    }
+
+    void "more bands than the maximum are rejected in favour of the default"() {
+        given: "21 ascending bounds, one over the cap"
+            configurationService.getString(MicrometerExecutionMetricsService.NODE_BUCKETS_PROPERTY, _) >> (1..21).join(',')
+
+        expect:
+            bucketFor(5L) == '2-10'
+    }
+
+    void "exactly the maximum number of bands is accepted"() {
+        given:
+            configurationService.getString(MicrometerExecutionMetricsService.NODE_BUCKETS_PROPERTY, _) >> (1..20).join(',')
+
+        expect: "the open-ended final band comes from the 20th bound, not the default"
+            bucketFor(25L) == '20+'
+    }
+
+    void "the resolved bands are parsed once and cached across calls"() {
+        given:
+            def exec = execution([:])
+
+        when: "three steps are recorded"
+            3.times {
+                service.recordStepUsage(exec, ['1': new StepNodeUsageEntry(1_000L, 'script', true, 5L)])
+            }
+
+        then: "the property is read once, not once per step"
+            1 * configurationService.getString(MicrometerExecutionMetricsService.NODE_BUCKETS_PROPERTY, _) >> '1,10,100'
+
+        and:
+            meterRegistry.get('rundeck.execution.step.nodes').tag('node_bucket', '2-10').summary().count() == 3L
+    }
 }
