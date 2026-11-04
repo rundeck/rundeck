@@ -55,6 +55,7 @@ import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeFilter
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
@@ -5636,8 +5637,74 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         val != null
         val.nodeSelector != null
-        val.nodeSelector.excludes.name == "nodea"
+        val.nodeSelector.acceptNode(new NodeEntryImpl(nodename: 'nodeb', tags: ['running'] as Set))
+        !val.nodeSelector.acceptNode(new NodeEntryImpl(nodename: 'nodea', tags: ['running'] as Set))
         val.frameworkProject == "testproj"
+    }
+
+    /**
+     * Issue #9895: the exclude filter must remove nodes independently of the exclusions in the node filter,
+     * as scheduled executions rely on the filters alone to select nodes.
+     */
+    def "Create execution context applies exclude filter independently of node filter exclusions"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                executionType: 'scheduled',
+                filter: 'tags: qa+businessunit+system !tags: db,lab2',
+                filterExclude: 'hostname: testhost1.domain.com,testhost2.domain.com'
+        )
+        def nodes = new NodeSetImpl()
+        nodes.putNode(new NodeEntryImpl(nodename: 'app1', hostname: 'app1.domain.com', tags: ['qa', 'businessunit', 'system'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'db1', hostname: 'db1.domain.com', tags: ['qa', 'businessunit', 'system', 'db'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'test1', hostname: 'testhost1.domain.com', tags: ['qa', 'businessunit', 'system'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'other1', hostname: 'other1.domain.com', tags: ['prod'] as Set))
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+
+        then:
+        NodeFilter.filterNodes(val.nodeSelector, nodes).nodeNames as Set == ['app1'] as Set
+    }
+
+    /**
+     * Issue #9895: exclusions in the node filter and the exclude filter are both applied
+     */
+    def "filtersAsNodeSet applies exclude filter independently of node filter exclusions"() {
+        given:
+        def nodes = new NodeSetImpl()
+        nodes.putNode(new NodeEntryImpl(nodename: 'app1', hostname: 'app1.domain.com', tags: ['web'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'db1', hostname: 'db1.domain.com', tags: ['web', 'db'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'test1', hostname: 'testhost1.domain.com', tags: ['web'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'legacy1', hostname: 'legacy1.domain.com', tags: ['web', 'legacy'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'other1', hostname: 'other1.domain.com', tags: ['prod'] as Set))
+
+        when:
+        def nodeset = ExecutionService.filtersAsNodeSet(
+                [filter: filter, filterExclude: filterExclude, nodeExcludePrecedence: true]
+        )
+
+        then:
+        NodeFilter.filterNodes(nodeset, nodes).nodeNames as Set == expected as Set
+
+        where:
+        filter                 | filterExclude                       | expected
+        'tags: web'            | null                                | ['app1', 'db1', 'test1', 'legacy1']
+        'tags: web !tags: db'  | null                                | ['app1', 'test1', 'legacy1']
+        'tags: web'            | 'hostname: testhost1.domain.com'    | ['app1', 'db1', 'legacy1']
+        'tags: web !tags: db'  | 'hostname: testhost1.domain.com'    | ['app1', 'legacy1']
+        'tags: web !tags: db'  | 'tags: legacy'                      | ['app1', 'test1']
+        'tags: web'            | 'tags: web !name: app1'             | ['app1']
+        null                   | 'tags: web'                         | ['other1']
     }
 
     def "get Global Plugin Configurations"() {
@@ -7014,6 +7081,73 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             service.metaClass = null
     }
 
+    def "isSqlServerDatasource returns true when databaseProductName is Microsoft SQL Server"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'Microsoft SQL Server' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isSqlServerDatasource()
+    }
+
+    def "isSqlServerDatasource returns false when databaseProductName is not Microsoft SQL Server"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isSqlServerDatasource()
+    }
+
+    def "getCriteriaScenarios uses DATEDIFF_BIG durations when datasource is SQL Server"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> false }
+            service.metaClass.isSqlServerDatasource = { -> true }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBeansOfType(JobQuery) >> [:]
+            }
+            def recorder = new SqlProjectionRecorder()
+        when:
+            def scenarios = service.getCriteriaScenarios(new ExecutionQuery())
+            recorder.run(scenarios[0])
+            def durations = recorder.sqlProjections.findAll { it.contains('duration') }
+        then:
+            scenarios.size() == 1
+            durations.size() == 3
+            durations.every { it.contains('DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000') }
+            !durations.any { it.contains('date_completed - date_started') }
+        cleanup:
+            service.metaClass = null
+    }
+
+    def "isSqlCompatible uses a DATEDIFF_BIG duration when datasource is SQL Server"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> false }
+            service.metaClass.isSqlServerDatasource = { -> true }
+            def recorder = new SqlProjectionRecorder()
+            Execution.metaClass.static.createCriteria = { ->
+                new Expando(list: { Map args, Closure criteria -> recorder.run(criteria); [] })
+            }
+        when:
+            def result = service.isSqlCompatible()
+        then:
+            result
+            recorder.sqlProjections == ['DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000 as durationSum']
+        cleanup:
+            GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+            service.metaClass = null
+    }
+
     def "isSqlCompatible returns false without propagating exception when criteria throws"() {
         given:
             service.metaClass.isH2Datasource = { -> false }
@@ -7044,6 +7178,41 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.duration.average == 1000L
         result.duration.min == 2000L
         result.duration.max == 1000L
+    }
+
+    @Unroll
+    def "metrics data from criteria result with durations in seconds does not depend on time zone #tz"() {
+        given:
+            def originalTz = TimeZone.getDefault()
+            TimeZone.setDefault(TimeZone.getTimeZone(tz))
+            def critresult = [count: 2L, durationMax: 90000L, durationMin: 1L, durationSum: 90001L]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then: "a 25 hour max duration is not wrapped at 24 hours or shifted by the time zone offset"
+            result.duration.max == 90000L * 1000L
+            result.duration.min == 1000L
+            result.duration.average == 90001L * 1000L / 2
+        cleanup:
+            TimeZone.setDefault(originalTz)
+        where:
+            tz << ['UTC', 'America/Denver', 'Asia/Kolkata']
+    }
+
+    @Unroll
+    def "metrics data from criteria result with #description durations returns zero durations"() {
+        given:
+            def critresult = [count: count, durationMax: duration, durationMin: duration, durationSum: duration]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then:
+            result.total == count
+            result.duration.average == 0
+            result.duration.max == 0
+            result.duration.min == 0
+        where:
+            description                          | count | duration
+            'zero (all executions under 1s)'     | 1L    | 0L
+            'null (no completed executions yet)' | 2L    | null
     }
 
     def "metrics data from projection result"(){
@@ -8158,4 +8327,30 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * executionListener.log(0, { it.contains("Error executing runner workflow") })
     }
 
+}
+
+/**
+ * Criteria delegate for tests: records sqlProjection SQL and ignores other criteria calls
+ */
+class SqlProjectionRecorder {
+    List<String> sqlProjections = []
+
+    void run(Closure criteria) {
+        Closure c = (Closure) criteria.clone()
+        c.delegate = this
+        c.resolveStrategy = Closure.DELEGATE_FIRST
+        c.call()
+    }
+
+    void projections(Closure c) {
+        run(c)
+    }
+
+    void sqlProjection(String sql, String alias, Object type) {
+        sqlProjections << sql
+    }
+
+    def methodMissing(String name, Object args) {
+        null
+    }
 }
