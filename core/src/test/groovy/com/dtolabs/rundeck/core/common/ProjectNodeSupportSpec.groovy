@@ -29,6 +29,12 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.LoggerContext
+import org.apache.logging.log4j.core.appender.WriterAppender
+import org.apache.logging.log4j.core.config.LoggerConfig
+import org.apache.logging.log4j.core.layout.PatternLayout
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
@@ -924,5 +930,79 @@ class ProjectNodeSupportSpec extends Specification {
         result.nodeNames as List == ['a', 'c']
         errors.keySet() == ['2.source'] as Set
         errors['2.source'].message == 'boom'
+    }
+
+    /**
+     * Capture ProjectNodeSupport log output at INFO and above while the closure runs
+     *
+     * @return captured lines, formatted as "LEVEL [thread] message"
+     */
+    private static List<String> captureLogs(Closure action) {
+        def name = ProjectNodeSupport.name
+        def writer = new StringWriter()
+        def ctx = (LoggerContext) LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = WriterAppender.newBuilder()
+                .setName('ProjectNodeSupportSpecCapture')
+                .setTarget(writer)
+                .setLayout(PatternLayout.newBuilder().withPattern('%level [%t] %m%n').build())
+                .build()
+        appender.start()
+        def loggerConfig = LoggerConfig.newBuilder()
+                .withLoggerName(name)
+                .withLevel(Level.INFO)
+                .withAdditivity(false)
+                .withConfig(config)
+                .build()
+        loggerConfig.addAppender(appender, Level.INFO, null)
+        config.addLogger(name, loggerConfig)
+        ctx.updateLoggers()
+        try {
+            action.call()
+        } finally {
+            config.removeLogger(name)
+            ctx.updateLoggers()
+            appender.stop()
+        }
+        writer.toString().readLines()
+    }
+
+    def "source load is logged with the source label, node count and duration when loadThreads is #loadThreads"() {
+        given:
+        def support = supportWithSources(
+                loadThreads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): loadThreads],
+                [
+                        { -> nodes('a', '1') } as Closure<INodeSet>,
+                        { -> throw new ResourceModelSourceException('boom') } as Closure<INodeSet>
+                ]
+        )
+        def label1 = "project=${loadProject} source #1 (file)".toString()
+        def label2 = "project=${loadProject} source #2 (file)".toString()
+        def expectedThread = parallel ? "ProjectNodeSupport-load-${loadProject}-".toString() : Thread.currentThread().name
+
+        when:
+        def lines = captureLogs { support.getNodeSet() }
+
+        then: "the successful source logs start and finish lines"
+        def start1 = lines.find { it.endsWith("Loading nodes from ${label1}") }
+        start1.startsWith('INFO [')
+        def done1 = lines.find { it.contains("Loaded 1 nodes from ${label1} in ") }
+        done1 ==~ /INFO \[.+\] Loaded 1 nodes from \Q${label1}\E in \d+ ms/
+
+        and: "the throwing source logs a start line and an error, but no finish line"
+        def start2 = lines.find { it.endsWith("Loading nodes from ${label2}") }
+        start2.startsWith('INFO [')
+        def error2 = lines.find { it.contains("Cannot get nodes from [${label2}]: boom") }
+        error2.startsWith('ERROR [')
+        !lines.any { it.contains("nodes from ${label2} in ") }
+
+        and: "lines for a source are logged on the thread that loads it"
+        [start1, done1, start2, error2].every { it.startsWith("INFO [${expectedThread}") || it.startsWith("ERROR [${expectedThread}") }
+        !lines.any { it.contains('LoadedSource@') }
+
+        where:
+        loadThreads | parallel
+        null        | false
+        '2'         | true
     }
 }
