@@ -12,8 +12,10 @@ if (!project.hasProperty('canonicalTranslationNamespace')) {
     )
 }
 
-File canonicalTranslationDirectory = rootProject.file(
-        "translations/${project.canonicalTranslationNamespace}"
+// Resolve from the standalone plugin project so this remains stable when
+// Rundeck projects are included in the Rundeck Pro root build.
+File canonicalTranslationDirectory = project.file(
+        "../../translations/${project.canonicalTranslationNamespace}"
 )
 
 tasks.named('processResources') {
