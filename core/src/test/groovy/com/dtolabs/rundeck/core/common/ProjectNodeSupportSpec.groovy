@@ -600,6 +600,11 @@ class ProjectNodeSupportSpec extends Specification {
         when:
         def loads = supports.collect { support -> Thread.start { results << support.getNodeSet() } }
         started.await(10, TimeUnit.SECONDS)
+        //the first load's workers alone release the latch, so also wait for the second load to queue on the same pool
+        def pool = ProjectNodeSupport.LOAD_POOLS[loadProject]
+        new PollingConditions(timeout: 10).eventually {
+            assert pool.queue.size() == 20
+        }
         ProjectNodeSupport.removeLoadPool(loadProject)
         loads.each { it.join(10000) }
 
