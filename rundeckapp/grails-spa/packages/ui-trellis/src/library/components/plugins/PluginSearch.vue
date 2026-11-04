@@ -1,5 +1,5 @@
 <template>
-  <div class="col-sm-12">
+  <div :class="{ 'col-sm-12': !ea }">
     <div class="form-group">
       <label
         v-if="!ea"
