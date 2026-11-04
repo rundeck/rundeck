@@ -157,6 +157,7 @@ public class NodeSet  implements NodesSelector {
     private Include includes;
 
     private Exclude excludes;
+    private NodeSet excludeFilter;
     private int threadCount=1;
     private boolean keepgoing=false;
     private File failedNodesfile;
@@ -166,7 +167,8 @@ public class NodeSet  implements NodesSelector {
      * @return true if all filters are blank or empty
      */
     public boolean isBlank() {
-        return (null == getInclude() || getInclude().isBlank()) && (null == getExclude() || getExclude().isBlank()) && null==getSingleNodeName();
+        return (null == getInclude() || getInclude().isBlank()) && (null == getExclude() || getExclude().isBlank()) && null==getSingleNodeName()
+               && !hasExcludeFilter();
     }
     public Include createInclude() {
         if (null != includes) {
@@ -193,6 +195,26 @@ public class NodeSet  implements NodesSelector {
     }
 
     /**
+     * @return secondary node set whose accepted nodes are excluded from this node set, or null
+     */
+    public NodeSet getExcludeFilter() {
+        return excludeFilter;
+    }
+
+    /**
+     * Set a secondary node set used as an exclude filter: any node it accepts is excluded from this node set,
+     * independently of the include/exclude filters and their dominance.
+     * @param excludeFilter node set, or null
+     */
+    public void setExcludeFilter(final NodeSet excludeFilter) {
+        this.excludeFilter = excludeFilter;
+    }
+
+    private boolean hasExcludeFilter() {
+        return null != excludeFilter && !excludeFilter.isBlank();
+    }
+
+    /**
      * Return true if the node entry should be excluded based on the includes and excludes parameters.
      * When both include and exclude patterns match the node, it will be excluded based on which filterset is dominant.
      * @param entry node descriptor entry
@@ -201,6 +223,14 @@ public class NodeSet  implements NodesSelector {
     public boolean shouldExclude(final INodeEntry entry) {
         if(null!=getSingleNodeName()) {
             return !getSingleNodeName().equals(entry.getNodename());
+        }
+        if (hasExcludeFilter()) {
+            if (excludeFilter.acceptNode(entry)) {
+                return true;
+            }
+            if ((null == includes || includes.isBlank()) && (null == excludes || excludes.isBlank())) {
+                return false;
+            }
         }
 
         boolean includesMatch = includes != null && includes.matches(entry);
@@ -548,6 +578,9 @@ public class NodeSet  implements NodesSelector {
         if (includes != null ? !includes.equals(nodeSet.includes) : nodeSet.includes != null) {
             return false;
         }
+        if (excludeFilter != null ? !excludeFilter.equals(nodeSet.excludeFilter) : nodeSet.excludeFilter != null) {
+            return false;
+        }
         if (singleNodeName != null ? !singleNodeName.equals(nodeSet.singleNodeName) : nodeSet.singleNodeName != null) {
             return false;
         }
@@ -560,6 +593,7 @@ public class NodeSet  implements NodesSelector {
         int result = singleNodeName != null ? singleNodeName.hashCode() : 0;
         result = 31 * result + (includes != null ? includes.hashCode() : 0);
         result = 31 * result + (excludes != null ? excludes.hashCode() : 0);
+        result = 31 * result + (excludeFilter != null ? excludeFilter.hashCode() : 0);
         result = 31 * result + threadCount;
         result = 31 * result + (keepgoing ? 1 : 0);
         return result;
@@ -573,6 +607,9 @@ public class NodeSet  implements NodesSelector {
         }
         if (null != includes && !includes.isBlank()) {
             builder.append("includes=").append(includes);
+        }
+        if (hasExcludeFilter()) {
+            builder.append(", excludeFilter=").append(excludeFilter);
         }
         if (null != singleNodeName ) {
             builder.append("singleNode=").append(singleNodeName);

@@ -119,21 +119,16 @@ export default defineComponent({
   watch: {
     entries(newEntries: ExecutionOutputEntry[] | undefined) {
       if (!this.follow || !newEntries || newEntries.length === 0) return;
-      this.$nextTick(() => {
-        if (this.follow) {
-          (this.$refs.scroller as any)?.scrollToBottom?.();
-        }
-      });
+      this.pinToBottom();
     },
     follow(newVal: boolean) {
-      // Scroll to bottom immediately when follow is re-enabled, even if no
-      // new entries have arrived since the last update.
+      // Scroll to bottom when follow is re-enabled, even if no new entries
+      // have arrived since the last update. Turning it off cancels a pin
+      // that is still waiting on row measurement.
       if (newVal) {
-        this.$nextTick(() => {
-          if (this.follow) {
-            (this.$refs.scroller as any)?.scrollToBottom?.();
-          }
-        });
+        this.pinToBottom();
+      } else {
+        this.stopPinning();
       }
     },
   },
@@ -183,6 +178,7 @@ export default defineComponent({
     this._tryAttachScrollListener();
   },
   beforeUnmount() {
+    this.stopPinning();
     const scrollerEl = (this.$refs.scroller as any)?.$el as
       HTMLElement | undefined;
     if (scrollerEl) {
@@ -266,8 +262,8 @@ export default defineComponent({
       const atBottom =
         currentScrollTop + el.clientHeight >= el.scrollHeight - 10;
 
-      // Disable follow when the user scrolls UP (not from programmatic
-      // scrollToBottom, which increases scrollTop).
+      // Disable follow when the user scrolls UP (not from pinToBottom,
+      // which increases scrollTop).
       if (scrollingUp && this.follow) {
         this.$emit("follow-change", false);
         return;
@@ -292,10 +288,88 @@ export default defineComponent({
       const lastEntry = entries[entries.length - 1];
       return !!scroller?.getItemSize?.(lastEntry);
     },
-    scrollToLine() {
-      if (this.follow) {
-        this.$refs.scroller.scrollToBottom();
+    /**
+     * Pin the viewport to the tail while Follow is on.
+     * Rows start at min-item-size, so the reported scrollHeight is too
+     * small for one assignment to leave the top of the log. Repeat after
+     * layout until every visible row has a real size. A pin already in
+     * flight stops as soon as Follow is turned off.
+     */
+    pinToBottom() {
+      if (!this.follow) {
+        this.stopPinning();
+        return;
       }
+      this.cancelPinFrame();
+      const token = ((this as any)._pinToken || 0) + 1;
+      (this as any)._pinToken = token;
+      this.$nextTick(() => {
+        this.pinAfterLayout(token);
+      });
+    },
+    /**
+     * Drop a pin scheduled by pinToBottom. Later frames see the token change
+     * and leave scrollTop alone.
+     */
+    stopPinning() {
+      (this as any)._pinToken = ((this as any)._pinToken || 0) + 1;
+      this.cancelPinFrame();
+    },
+    cancelPinFrame() {
+      const frame = (this as any)._pinFrame as number | undefined;
+      if (!frame) {
+        return;
+      }
+      cancelAnimationFrame(frame);
+      (this as any)._pinFrame = 0;
+    },
+    pinAfterLayout(token: number) {
+      if (!this.isPinCurrent(token)) {
+        return;
+      }
+      // Overshoot: the height is still the unmeasured estimate on this frame.
+      this.scrollToTail();
+      const step = () => {
+        if (!this.isPinCurrent(token)) {
+          return;
+        }
+        this.scrollToTail();
+        (this as any)._pinFrame = requestAnimationFrame(() => {
+          if (!this.isPinCurrent(token)) {
+            return;
+          }
+          this.scrollToTail();
+          if (this._tailMeasured()) {
+            return;
+          }
+          (this as any)._pinFrame = requestAnimationFrame(step);
+        });
+      };
+      (this as any)._pinFrame = requestAnimationFrame(step);
+    },
+    isPinCurrent(token: number) {
+      return !!this.follow && (this as any)._pinToken === token;
+    },
+    /**
+     * True once DynamicScroller has a real size for every visible row.
+     * Until then scrollHeight is only the min-item-size estimate.
+     */
+    _tailMeasured(): boolean {
+      const scroller = this.$refs.scroller as any;
+      if (!scroller || typeof scroller.$_undefinedSizes !== "number") {
+        return this._isLastEntryMeasured();
+      }
+      return scroller.$_undefinedSizes === 0;
+    },
+    scrollToTail() {
+      const el = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+      if (!el) {
+        return;
+      }
+      el.scrollTop = el.scrollHeight + 5000;
+    },
+    scrollToLine() {
+      this.pinToBottom();
     },
   },
 });

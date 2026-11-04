@@ -2882,6 +2882,78 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         "test"                 | false          | "grouped"
     }
 
+    /**
+     * NextUiInterceptor sets params.nextUi to boolean true, URL sets string 'true';
+     * both must render the next UI jobs view, anything else the legacy view.
+     */
+    @Unroll
+    def "jobs view for params.nextUi=#nextUi"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.scmService = Mock(ScmService)
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            authorizeApplicationResourceAny(_, _, _) >> true
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listWorkflows(_, _) >> [schedlist: []]
+            finishquery(_, _, _) >> [:]
+        }
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry)
+        controller.userService = Mock(UserService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.executionService = Mock(ExecutionService)
+        params.project = "prj"
+        if (nextUi != null) params.nextUi = nextUi
+
+        when:
+        controller.jobs(new ScheduledExecutionQuery())
+
+        then:
+        (view == '/menu/jobs.next') == expectNext
+
+        where:
+        nextUi  | expectNext
+        true    | true
+        'true'  | true
+        false   | false
+        'false' | false
+        null    | false
+    }
+
+    /**
+     * Home must honor the boolean params.nextUi set by NextUiInterceptor.
+     */
+    @Unroll
+    def "home view for params.nextUi=#nextUi"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(IFramework)
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.featureService = Mock(FeatureService)
+        if (nextUi != null) params.nextUi = nextUi
+
+        when:
+        controller.home()
+
+        then:
+        (view == '/menu/home.next') == expectNext
+
+        where:
+        nextUi  | expectNext
+        true    | true
+        'true'  | true
+        false   | false
+        'false' | false
+        null    | false
+    }
+
     @Unroll
     def "test api executions running list all projects with a valid project"() {
         given:
