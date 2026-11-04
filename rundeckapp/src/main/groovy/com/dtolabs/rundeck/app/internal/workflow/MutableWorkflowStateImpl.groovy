@@ -175,10 +175,13 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                         stepStateChange)
             }
 
-            if (!currentStep.nodeStep && nodeSet) {
-                // change to a nodeStep since we have seen a node state for it
+            if (!currentStep.nodeStep) {
+                // change to a nodeStep since we have seen a node state for it.
+                // The node set can be empty, e.g. for the parameterized copy of a pre-built job reference
+                // workflow whose node filter could not be resolved up front (#10243); target the seen node
+                // so the step is still finalized when its nodes finish instead of being left RUNNING
                 if (null == currentStep.nodeStepTargets || currentStep.nodeStepTargets.size() < 1) {
-                    currentStep.setNodeStepTargets(nodeSet)
+                    currentStep.setNodeStepTargets(nodeSet ?: [nodeName])
                 }
             }
         } else if (!currentStep.nodeStep) {
