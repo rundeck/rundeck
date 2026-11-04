@@ -176,14 +176,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final List<LoadedResourceModelSource> sources = new ArrayList<>(getResourceModelSourcesInternal());
         querySources(sources, (i, result) -> {
             //configured source index: sources that failed to initialize are not in the list
-            final int index = sources.get(i).getIndex();
+            final LoadedResourceModelSource source = sources.get(i);
+            final int index = source.getIndex();
             ResourceModelSourceException error = result.error();
             if (result.nodes() != null) {
                 try {
                     list.addNodeSet(result.nodes());
                 } catch (RuntimeException e) {
-                    logger.error("Cannot merge nodes from [" + sources.get(i) + "]: " + e.getMessage());
-                    logger.debug("Cannot merge nodes from [" + sources.get(i) + "]: " + e.getMessage(), e);
+                    logger.error("Cannot merge nodes from [{}]: {}", source, e.getMessage());
+                    logger.debug("Cannot merge nodes from [{}]: {}", source, e.getMessage(), e);
                     error = new ResourceModelSourceException(e.getMessage(), e);
                 }
             }
@@ -392,16 +393,20 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         try {
-            logger.info("Loading nodes from " + nodesSource);
-            long start = System.currentTimeMillis();
+            logger.info("Loading nodes from {}", nodesSource);
+            long start = System.nanoTime();
             nodes = nodesSource.getNodes();
             if (null == nodes) {
                 logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
             }
-            logger.info(
-                    "Loaded " + (null == nodes ? 0 : nodes.getNodes().size()) + " nodes from " + nodesSource
-                    + " in " + (System.currentTimeMillis() - start) + " ms"
-            );
+            if (logger.isInfoEnabled()) {
+                logger.info(
+                        "Loaded {} nodes from {} in {} ms",
+                        null == nodes ? 0 : nodes.getNodes().size(),
+                        nodesSource,
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+                );
+            }
             if (nodesSource instanceof ResourceModelSourceErrors errs) {
                 List<String> modelSourceErrors = errs.getModelSourceErrors();
                 if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
@@ -683,6 +688,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         @Getter final int index;
         @Getter final String type;
 
+        /**
+         * @param project  project name
+         * @param index    configured source index, from resources.source.N
+         * @param type     source provider type
+         * @param delegate source to delegate to
+         */
         LoadedSource(
                 final String project,
                 final int index,
