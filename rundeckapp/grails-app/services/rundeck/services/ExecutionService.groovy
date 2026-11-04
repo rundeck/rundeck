@@ -2343,6 +2343,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         return nodeset
     }
 
@@ -2370,6 +2371,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         nodeset.createInclude(
                 DataContextUtils.replaceDataReferences(BaseNodeFilters.asIncludeMap(econtext),datacontext)
         ).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet([
+                filterExclude       : DataContextUtils.replaceDataReferencesInString(econtext.filterExclude, datacontext),
+                excludeFilterUncheck: econtext.excludeFilterUncheck
+        ]))
         nodeset.setKeepgoing(econtext.nodeKeepgoing ? true : false)
         nodeset.setThreadCount(econtext.nodeThreadcount ? econtext.nodeThreadcount : 1)
         return nodeset
@@ -2381,6 +2386,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -2393,6 +2399,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
