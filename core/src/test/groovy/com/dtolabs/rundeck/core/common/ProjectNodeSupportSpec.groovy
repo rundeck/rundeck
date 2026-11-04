@@ -1005,4 +1005,56 @@ class ProjectNodeSupportSpec extends Specification {
         null        | false
         '2'         | true
     }
+
+    def "a cached source that fails logs a cache fallback warning instead of a load line"() {
+        given: "a source type that uses the file cache, whose plugin throws, with cached nodes available"
+        def props = new Properties()
+        props['resources.source.1.type'] = 'cachedtype'
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> loadProject
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def failing = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                throw new ResourceModelSourceException('not authorized')
+            }
+        }
+        def cacheFile = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                ProjectNodeSupportSpec.nodes('cached', 'v')
+            }
+        }
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('cachedtype', _) >> Closeables.closeableProvider(failing)
+            getSourceForConfiguration('file', _) >> cacheFile
+        }
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
+        def support = new ProjectNodeSupport(
+                File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"),
+                config,
+                generatorService,
+                sourceService
+        )
+        def label = "project=${loadProject} source #1 (cachedtype)".toString()
+        def result = null
+
+        when:
+        def lines = captureLogs { result = support.getNodeSet() }
+
+        then: "cached nodes are served and the failure is recorded"
+        result.nodeNames as List == ['cached']
+        support.getResourceModelSourceExceptionsMap().keySet() == ['1.source'] as Set
+
+        and: "the log says the load failed and cached nodes are used, not that nodes were loaded"
+        lines.any { it.startsWith('INFO [') && it.endsWith("Loading nodes from ${label}") }
+        lines.any {
+            it ==~ /WARN \[.+\] Loading nodes from \Q${label}\E failed after \d+ ms, using 1 cached nodes: not authorized/
+        }
+        !lines.any { it.contains("Loaded 1 nodes from ${label}") }
+    }
 }

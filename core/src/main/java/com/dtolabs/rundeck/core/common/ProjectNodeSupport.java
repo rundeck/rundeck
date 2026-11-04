@@ -369,7 +369,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private static SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
+    private SourceResult querySourceWithLoader(final LoadedResourceModelSource nodesSource, final ClassLoader loader) {
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
@@ -389,7 +389,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private static SourceResult querySource(final ResourceModelSource nodesSource) {
+    private SourceResult querySource(final LoadedResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         try {
@@ -399,7 +399,17 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             if (null == nodes) {
                 logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
             }
-            if (logger.isInfoEnabled()) {
+            //a caching source catches the failure, records it with StoreExceptionHandler and returns cached nodes
+            final Throwable cacheFallback = nodesSourceExceptions.get(nodesSource.getIndex() + ".source");
+            if (null != cacheFallback) {
+                logger.warn(
+                        "Loading nodes from {} failed after {} ms, using {} cached nodes: {}",
+                        nodesSource,
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start),
+                        null == nodes ? 0 : nodes.getNodes().size(),
+                        cacheFallback.getMessage()
+                );
+            } else if (logger.isInfoEnabled()) {
                 logger.info(
                         "Loaded {} nodes from {} in {} ms",
                         null == nodes ? 0 : nodes.getNodes().size(),
