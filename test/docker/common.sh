@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-export CLI_VERS=${CLI_VERS:-2.0.10-1}
+export CLI_VERS=${CLI_VERS:-2.2.1-1}
 
 # Builds the rdtest:latest image which is required as a base image by many test images.
 # In CI the image is pre-built by a dedicated step; this is a no-op when the image exists.

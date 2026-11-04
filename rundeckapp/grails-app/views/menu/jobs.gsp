@@ -528,6 +528,7 @@ search
                             clusterMap        : clusterMap,
                             nextExecutions    : nextExecutions,
                             executionAclValid : executionAclValid,
+                            executionAclEnforced : executionAclEnforced,
                             jobauthorizations : jobauthorizations,
                             authMap           : authMap,
                             nowrunningtotal   : nowrunningtotal,

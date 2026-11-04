@@ -4,14 +4,14 @@ parameters:
   disable-wizcli-scan:
     type: boolean
     default: true
-  trigger-enterprise:
+  run-jre17-tests:
+    description: Run the JRE 17 Docker-image test workflow from a schedule trigger.
     type: boolean
-    default: true
+    default: false
 
 orbs:
   aws-cli: circleci/aws-cli@5.4.2
   node: circleci/node@7.2.1
-  trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@6.1.3
   snyk: snyk/snyk@2.3.0 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
@@ -499,22 +499,6 @@ jobs:
           path: snyk-summary.csv
           destination: snyk-summary.csv
 
-  # Trigger pipeline in the enterprise repo
-  trigger-enterprise:
-    executor:
-      name: docker-builder
-    steps:
-      - run: echo "Trigger enterprise pipeline is << pipeline.parameters.trigger-enterprise >>"
-      - when:
-          condition: << pipeline.parameters.trigger-enterprise >>
-          steps:
-            - trigger/trigger:
-                debug: true
-                branch: ${CIRCLE_BRANCH}
-                token: '${CIRCLECI_API_TOKEN}'
-                project-slug: 'gh/rundeckpro/rundeckpro'
-                pipeline-number: '<<pipeline.number>>'
-
   # Publish Docker Images
   docker-publish:
     <<: *job-defaults
@@ -825,7 +809,7 @@ require-api-integration: &require-api-integration
     - T Functional Plugin Blocklist
     - T Feature NodeExecutorSecureInput
 
-# Stage 4: All Selenium must pass before packaging/security/validation/enterprise trigger
+# Stage 4: All Selenium must pass before packaging/security/validation
 require-selenium: &require-selenium
   requires:
     - T Selenium - Auth & Login
@@ -895,6 +879,7 @@ workflows:
     when:
       and:
         - << pipeline.git.branch >>
+        - not: << pipeline.parameters.run-jre17-tests >>
         - not:
             matches:
               pattern: /^pull\/[0-9]+$/
@@ -993,7 +978,7 @@ workflows:
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           parallelism: 2
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec}.groovy"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec,NextUiParamSpec}.groovy"
           <<: *require-api-integration
           <<: *slack-defaults
       - test-gradle-functional:
@@ -1017,10 +1002,15 @@ workflows:
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium Next UI Mode
+          gradle-task: nextUiModeSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/nextUiMode/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
 
-      # Row 4: Packaging, security scans, validation, and enterprise trigger
-      # Nothing here matters if build and tests don't pass. Enterprise Snapshot only
-      # triggers Pro CI after all OSS tests are green — broken OSS means broken Pro.
+      # Row 4: Packaging, security scans, and validation
+      # Nothing here matters if build and tests don't pass.
       - packaging-test:
           name: T Packaging
           <<: *require-selenium
@@ -1053,26 +1043,12 @@ workflows:
           name: OpenAPI Spec Validation
           <<: *require-selenium
           <<: *slack-defaults
-      - trigger-enterprise:
-          name: Enterprise Snapshot
-          <<: *require-selenium
-          filters:
-            branches: { only: main }
 
   # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
   build_and_test_with_jre_17:
-    triggers:
-      - schedule:
-          cron: "0 23 * * *"
-          filters:
-            branches:
-              only:
-                - main
     when:
-      or:
-        - matches:
-            pattern: release/6\..*
-            value: << pipeline.git.branch >>
+      and:
+        - << pipeline.parameters.run-jre17-tests >>
         - equal: [ main, << pipeline.git.branch >> ]
     jobs:
       - build-rundeck:
@@ -1132,7 +1108,7 @@ workflows:
           name: T Selenium - Jobs Core (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec}.groovy"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec,NextUiParamSpec}.groovy"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:

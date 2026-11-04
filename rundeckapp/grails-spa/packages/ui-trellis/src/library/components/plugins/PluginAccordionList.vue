@@ -36,8 +36,8 @@
         v-if="Object.keys(groupedProviders.highlighted).length > 0"
         :value="[]"
         multiple
-        expandIcon="pi pi-chevron-right"
-        collapseIcon="pi pi-chevron-right"
+        expand-icon="pi pi-chevron-right"
+        collapse-icon="pi pi-chevron-right"
       >
         <AccordionPanel
           v-for="(group, key) in groupedProviders.highlighted"
@@ -89,8 +89,8 @@
         v-if="Object.keys(groupedProviders.nonHighlighted).length > 0"
         :value="[]"
         multiple
-        expandIcon="pi pi-chevron-right"
-        collapseIcon="pi pi-chevron-right"
+        expand-icon="pi pi-chevron-right"
+        collapse-icon="pi pi-chevron-right"
       >
         <AccordionPanel
           v-for="(group, key) in groupedProviders.nonHighlighted"
@@ -225,14 +225,16 @@ export default defineComponent({
   }
 }
 
-// Spacing from the Figma "Workflow modal": 12px between a section title and
-// its list, 36px between the end of one list and the next section title.
 .subsection-heading {
   margin: 0 0 12px;
 }
 
 .divider-title {
   margin-top: 36px;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .provider-count {

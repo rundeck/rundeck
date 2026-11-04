@@ -121,6 +121,9 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # Explicit --ref: without it gh looks up the default branch via GraphQL
+          # (repository.defaultBranchRef), which the App token can't read.
           gh workflow run sync-renovate-dependency.yml \
             --repo rundeckpro/rundeckpro \
+            --ref main \
             -f pr_number="$PR_NUMBER"
