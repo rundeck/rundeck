@@ -201,7 +201,9 @@ class PluginTagLib {
                 out << '<div class="customattributes"></div>'
                 fields.each{field->
                     out << '<span class="configpair">'
-                    out << '<span title="">'+field.label.encodeAsSanitizedHTML()+': </span>'
+                    // Unicode-aware trim (covers \u00A0, \u3000) to match JavaScript trim() in the Vue editor.
+                    def fieldLabel = field.label?.toString()?.replaceAll(/(?U)^\s+|\s+$/, '') ?: field.key ?: ''
+                    out << '<span title="">'+fieldLabel.encodeAsSanitizedHTML()+': </span>'
                     out << '<span class="text-success">'+field.value.encodeAsSanitizedHTML()+'</span>'
                     out << '</span>'
                 }
