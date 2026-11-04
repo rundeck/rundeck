@@ -166,25 +166,32 @@ commands:
       - store_artifacts:
           path: ~/test-results/junit
 
-  # Restore npm's content-addressed download cache only. Gradle's cache is
-  # intentionally disabled until the dependency-resolution issue is resolved.
+  # Restore npm's content-addressed cache and the Gradle distribution only.
+  # Dependency metadata and downloaded JARs remain intentionally uncached.
   restore-build-cache:
-    description: Restore npm cache
+    description: Restore npm and Gradle wrapper caches
     steps:
       - restore_cache:
           keys:
             - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
             - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-
             - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-
+      - restore_cache:
+          keys:
+            - cache-v1-{{ .Environment.BUILD_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
 
-  # Save npm's content-addressed download cache only.
+  # Save npm's content-addressed cache and the Gradle distribution only.
   save-build-cache:
-    description: Save npm cache
+    description: Save npm and Gradle wrapper caches
     steps:
       - save_cache:
           paths:
             - ~/.npm/_cacache
           key: cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: cache-v1-{{ .Environment.BUILD_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
 
   ## Deps Installers quick references.
   # Install node
