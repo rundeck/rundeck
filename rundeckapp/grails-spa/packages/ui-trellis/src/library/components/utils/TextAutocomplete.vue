@@ -26,22 +26,27 @@
 <script lang="ts">
 import { Dropdown } from "uiv";
 
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
+
+type AutocompleteItem = string | Record<string, unknown>;
+type AutocompleteTarget = string | Element | { $el: Element };
 
 export default defineComponent({
   name: "TextAutocomplete",
   extends: Dropdown,
   props: {
     modelValue: {
+      type: String,
       required: true,
     },
-    data: Array,
+    data: Array as PropType<AutocompleteItem[]>,
     itemKey: String,
     limit: {
       type: Number,
       default: 10,
     },
     target: {
+      type: [String, Object] as PropType<AutocompleteTarget>,
       required: true,
     },
     autocompleteKey: {
@@ -51,8 +56,8 @@ export default defineComponent({
   emits: ["update:modelValue"],
   data() {
     return {
-      inputEl: {} as any,
-      items: [] as any,
+      inputEl: null as HTMLInputElement | null,
+      items: [] as AutocompleteItem[],
       open: false,
       selectionStart: 0,
       currentSelection: 0,
@@ -64,7 +69,7 @@ export default defineComponent({
       get() {
         return this.modelValue;
       },
-      set(val: any) {
+      set(val: string) {
         this.$emit("update:modelValue", val);
       },
     },
@@ -74,7 +79,7 @@ export default defineComponent({
     this.initListeners();
   },
   methods: {
-    selectItem(item: any) {
+    selectItem(item: AutocompleteItem) {
       const value = this.inputEl.value.toString();
       const preItem = value.substr(0, this.selectionStart);
       const postItem = value.substr(this.currentSelection + 1, value.length);
@@ -88,8 +93,11 @@ export default defineComponent({
       this.currentSelection = 0;
       this.selectedValue = "";
     },
-    highlight(item: any) {
-      const _value = this.itemKey ? item[this.itemKey] : item;
+    highlight(item: AutocompleteItem) {
+      const _value =
+        this.itemKey && typeof item === "object"
+          ? String(item[this.itemKey])
+          : String(item);
       const inputValue =
         "\\" +
         this.autocompleteKey +
@@ -97,12 +105,13 @@ export default defineComponent({
       const regex = new RegExp(`${inputValue}`);
       return _value.replace(regex, "<b>$&</b>");
     },
-    getItems(data: any) {
+    getItems(data: AutocompleteItem[]) {
       this.items = [];
       for (let i = 0, l = data.length; i < l; i++) {
         const item = data[i];
-        let key = this.itemKey ? item[this.itemKey] : item;
-        key = key.toString();
+        const key = String(
+          this.itemKey && typeof item === "object" ? item[this.itemKey] : item,
+        );
         if (key.startsWith(this.selectedValue)) {
           this.items.push(item);
         }
@@ -115,13 +124,14 @@ export default defineComponent({
         this.inputEl.addEventListener("paste", this.inputPaste);
       }
     },
-    inputPaste(event: any) {
+    inputPaste(event: ClipboardEvent) {
       this.cleanItem();
-      const clipboardData = event.clipboardData;
+      const clipboardData = event.clipboardData!;
       const pastedData = clipboardData.getData("Text");
       this.selectedValue = pastedData;
 
-      this.selectionStart = event.target.selectionStart;
+      const target = event.target as HTMLInputElement;
+      this.selectionStart = target.selectionStart || 0;
       this.currentSelection = this.selectionStart + pastedData.length;
 
       this.getItems(this.data);
@@ -133,7 +143,7 @@ export default defineComponent({
         this.cleanItem();
       }
     },
-    inputKeyPressed(event: any) {
+    inputKeyPressed(event: KeyboardEvent) {
       event.stopPropagation();
       const key = event.key;
       const keyCode = event.keyCode;
@@ -145,10 +155,12 @@ export default defineComponent({
         if (this.selectionStart != 0) {
           this.cleanItem();
         }
-        this.selectionStart = event.target.selectionStart;
+        this.selectionStart =
+          (event.target as HTMLInputElement).selectionStart || 0;
         this.open = true;
       }
-      this.currentSelection = event.target.selectionStart;
+      this.currentSelection =
+        (event.target as HTMLInputElement).selectionStart || 0;
 
       if (this.open) {
         const originalInputEl = this.inputEl.value.toString();
@@ -167,26 +179,26 @@ export default defineComponent({
         this.getItems(this.data);
       }
     },
-    initInputElByTarget(target: any) {
+    initInputElByTarget(target: AutocompleteTarget) {
       if (!target) {
         return;
       }
       if (this.isString(target)) {
         // is selector
-        this.inputEl = document.querySelector(target);
+        this.inputEl = document.querySelector<HTMLInputElement>(target);
       } else if (this.isElement(target)) {
         // is element
-        this.inputEl = target;
+        this.inputEl = target as HTMLInputElement;
       } else if (this.isElement(target.$el)) {
         // is component
-        this.inputEl = target.$el;
+        this.inputEl = target.$el as HTMLInputElement;
       }
     },
-    isString(obj: any) {
+    isString(obj: unknown): obj is string {
       return typeof obj === "string";
     },
-    isElement(el: any) {
-      return el && el.nodeType === Node.ELEMENT_NODE;
+    isElement(el: unknown): el is Element {
+      return el instanceof Element;
     },
   },
 });

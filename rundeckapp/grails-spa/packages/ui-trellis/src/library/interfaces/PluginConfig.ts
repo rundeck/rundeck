@@ -1,4 +1,6 @@
-export interface PluginConfig {
+export interface PluginConfig<
+  TConfig extends object = Record<string, unknown>,
+> {
   type: string;
-  config: Record<string, any>;
+  config: TConfig;
 }

@@ -104,8 +104,9 @@ export default defineComponent({
     },
   },
   methods: {
-    itemClicked(item: any) {
-      (<HTMLElement>this.$refs[item[this.idField]]).blur();
+    itemClicked(item: Webhook) {
+      const refKey = item[this.idField as keyof Webhook];
+      (<HTMLElement>this.$refs[String(refKey)]).blur();
       this.$emit("item:selected", item);
     },
   },

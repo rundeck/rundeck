@@ -10,9 +10,20 @@ module.exports = {
   ignorePatterns: ["build", "test", ".storybook"],
   overrides: [
     {
-      // ui-trellis keeps test helpers and mocks under tests/ directories
-      files: ["**/tests/**"],
+      files: ["src/app/**", "src/library/**"],
       rules: {
+        "@typescript-eslint/no-explicit-any": "error",
+      },
+    },
+    {
+      files: [
+        "**/*.spec.ts",
+        "**/*.spec.js",
+        "**/tests/**",
+        "**/__tests__/**",
+      ],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
         complexity: "off",
       },
     },

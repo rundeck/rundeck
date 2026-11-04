@@ -35,39 +35,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
+import type { PluginConfig } from "../../../interfaces/PluginConfig";
 import BaseStepCard from "./BaseStepCard.vue";
 import StepCardContent from "./StepCardContent.vue";
+import type { StepCardConfig, StepCardHandler } from "./StepCardTypes";
 
-//todo: move the types out
-interface JobRefDefinition {
-  group: string;
-  name: string;
-  project?: string;
-  uuid?: string;
-  args?: string;
-  failOnDisable?: boolean;
-  childNodes?: boolean;
-  importOptions?: boolean;
-  ignoreNotifications?: boolean;
-  nodeStep?: boolean;
-  nodefilters?: {
-    filter: string;
-    dispatch?: {
-      threadcount?: number;
-      keepgoing?: boolean;
-      rankAttribute?: string;
-      rankOrder?: string;
-      nodeIntersect?: boolean;
-    };
-  };
-}
-interface ErrorHandlerDefinition {
-  config: any;
+interface ErrorHandlerDefinition extends StepCardHandler {
   keepgoingOnSuccess?: boolean;
   nodeStep: boolean;
-  jobref?: JobRefDefinition;
-  type: string;
   id: string;
 }
 
@@ -83,7 +59,7 @@ export default defineComponent({
       required: true,
     },
     config: {
-      type: Object,
+      type: Object as PropType<StepCardConfig>,
       required: true,
     },
     serviceName: {
@@ -91,11 +67,11 @@ export default defineComponent({
       default: "WorkflowStep",
     },
     logFilters: {
-      type: Array,
+      type: Array as PropType<PluginConfig[]>,
       default: () => [],
     },
     errorHandler: {
-      type: Array,
+      type: Array as PropType<ErrorHandlerDefinition[]>,
       default: () => [],
     },
     showToggle: {
@@ -167,7 +143,7 @@ export default defineComponent({
     handleEdit() {
       this.$emit("edit");
     },
-    handleEditLogFilter(data: { filter: any; index: number }) {
+    handleEditLogFilter(data: { filter: PluginConfig; index: number }) {
       this.$emit("edit-log-filter", data);
     },
     handleEditErrorHandler(elementId: string) {

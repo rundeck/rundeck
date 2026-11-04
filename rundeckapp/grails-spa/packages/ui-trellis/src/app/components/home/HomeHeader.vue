@@ -113,8 +113,8 @@ export default defineComponent({
   },
   data() {
     return {
-      recentUsers: [],
-      recentProjects: [],
+      recentUsers: [] as string[],
+      recentProjects: [] as string[],
       loaded: false,
       execCount: 0,
       totalFailedCount: 0,

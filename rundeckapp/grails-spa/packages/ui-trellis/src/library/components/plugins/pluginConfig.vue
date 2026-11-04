@@ -224,6 +224,7 @@ import { ContextVariable } from "../../../library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 import { defineComponent, type PropType } from "vue";
 import type { PluginConfig } from "../../../library/interfaces/PluginConfig";
+import type PluginValidation from "../../interfaces/PluginValidation";
 
 import PluginInfo from "./PluginInfo.vue";
 import PluginPropView from "./pluginPropView.vue";
@@ -232,12 +233,58 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import { getPluginProvidersForService } from "../../modules/pluginService";
+import {
+  getPluginProvidersForService,
+  type PluginProviderDescription,
+} from "../../modules/pluginService";
+
+interface PluginPropertyOptions {
+  [key: string]: unknown;
+  displayType?: string;
+  groupName?: string;
+  grouping?: boolean;
+  requiredProperty?: string;
+  requiredValue?: unknown;
+  selectionAccessor?: string;
+  selectionAdditional?: string;
+}
+
+interface PluginProperty {
+  name: string;
+  type: string;
+  defaultValue?: unknown;
+  allowed?: unknown;
+  selectLabels?: Record<string, unknown> | null;
+  descriptorSelectLabels?: Record<string, unknown> | null;
+  options?: PluginPropertyOptions | null;
+  scope?: string;
+  staticTextDefaultValue?: unknown;
+}
+
+interface PluginDetail {
+  props: PluginProperty[];
+  dynamicProps?: Record<string, unknown>;
+  dynamicDefaults?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const isPluginProperty = (value: unknown): value is PluginProperty =>
+  isRecord(value) &&
+  typeof value["name"] === "string" &&
+  typeof value["type"] === "string";
+
+const isPluginDetail = (value: unknown): value is PluginDetail =>
+  isRecord(value) &&
+  Array.isArray(value["props"]) &&
+  value["props"].every(isPluginProperty);
 
 interface PropGroup {
   name?: string;
   secondary: boolean;
-  props: any[];
+  props: PluginProperty[];
 }
 
 export default defineComponent({
@@ -248,25 +295,45 @@ export default defineComponent({
     PluginPropEdit,
   },
   props: {
-    serviceName: { required: false },
-    provider: { required: false },
-    config: { required: false },
-    mode: { required: false },
-    showTitle: { required: false },
-    showIcon: { required: false },
-    showDescription: { required: false },
-    modelValue: { type: Object as PropType<PluginConfig>, required: false },
+    serviceName: { type: String, required: false },
+    provider: { type: String, required: false },
+    config: {
+      type: Object as PropType<Record<string, unknown>>,
+      required: false,
+    },
+    mode: { type: String, required: false },
+    showTitle: { type: Boolean, default: undefined },
+    showIcon: { type: Boolean, default: undefined },
+    showDescription: { type: Boolean, default: undefined },
+    modelValue: {
+      type: Object as PropType<PluginConfig<object>>,
+      required: false,
+    },
     savedProps: { type: Array as PropType<string[]>, required: false },
-    pluginConfig: { required: false },
-    validation: { required: false },
-    readOnly: { required: false },
-    validationWarningText: { required: false },
-    scope: { required: false },
-    defaultScope: { required: false },
-    contextAutocomplete: { required: false },
-    autocompleteCallback: { required: false },
-    useRunnerSelector: { required: false },
-    eventBus: { required: false },
+    pluginConfig: {
+      type: Object as PropType<PluginDetail>,
+      required: false,
+    },
+    validation: {
+      type: Object as PropType<PluginValidation>,
+      required: false,
+    },
+    readOnly: { type: Boolean, default: undefined },
+    validationWarningText: { type: String, required: false },
+    scope: { type: String, required: false },
+    defaultScope: { type: String, required: false },
+    contextAutocomplete: { type: Boolean, default: undefined },
+    autocompleteCallback: {
+      type: Function as PropType<
+        (key: string) => Array<{
+          value: string;
+          data: { title: string; category: string };
+        }>
+      >,
+      required: false,
+    },
+    useRunnerSelector: { type: Boolean, default: undefined },
+    eventBus: { type: Object, required: false },
     groupCss: {
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
@@ -286,17 +353,19 @@ export default defineComponent({
   ],
   data() {
     return {
-      props: [] as any[],
-      detail: {},
-      error: null as any | null,
-      isReadOnly: this.readOnly !== null ? this.readOnly : false,
-      propsComputedSelectorData: {} as any,
-      inputShowTitle: this.showTitle !== null ? this.showTitle : true,
-      inputShowIcon: this.showIcon !== null ? this.showIcon : true,
-      inputShowDescription:
-        this.showDescription !== null ? this.showDescription : true,
-      inputValues: {} as any,
-      inputSaved: {} as any,
+      props: [] as PluginProperty[],
+      detail: {} as Partial<PluginDetail>,
+      error: null as string | null,
+      isReadOnly: this.readOnly ?? false,
+      propsComputedSelectorData: {} as Record<
+        string,
+        Array<{ key: string; value: string; description?: string }>
+      >,
+      inputShowTitle: this.showTitle ?? true,
+      inputShowIcon: this.showIcon ?? true,
+      inputShowDescription: this.showDescription ?? true,
+      inputValues: {} as Record<string, unknown>,
+      inputSaved: {} as Record<string, unknown>,
       inputSavedProps: (typeof this.savedProps !== "undefined"
         ? this.savedProps
         : ["type"]) as string[] | null,
@@ -304,8 +373,7 @@ export default defineComponent({
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
       inputLoaded: false,
-      inputContextAutocomplete:
-        this.contextAutocomplete !== null ? this.contextAutocomplete : false,
+      inputContextAutocomplete: this.contextAutocomplete ?? false,
     };
   },
   computed: {
@@ -326,7 +394,7 @@ export default defineComponent({
     },
     visibility(): { [name: string]: boolean } {
       const visibility: { [name: string]: boolean } = {};
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         visibility[prop.name] =
           this.isPropVisible(prop) && this.isPropInScope(prop);
         if (!visibility[prop.name]) {
@@ -335,18 +403,14 @@ export default defineComponent({
       });
       return visibility;
     },
-    visibleProps(): any[] {
+    visibleProps(): PluginProperty[] {
       const visibility = this.visibility;
       return this.props.filter((prop) => {
         return visibility[prop.name];
       });
     },
     hasGroups(): boolean {
-      return this.props.find((prop) => {
-        return this.isGroupedProp(prop);
-      })
-        ? true
-        : false;
+      return this.props.some((prop) => this.isGroupedProp(prop));
     },
     groupedProperties(): PropGroup[] {
       const unnamed: PropGroup = { props: [], secondary: false };
@@ -354,8 +418,8 @@ export default defineComponent({
       const named: { [name: string]: PropGroup } = {};
 
       this.props.forEach((prop) => {
-        const name = prop.options && prop.options["groupName"];
-        const secondary = prop.options && prop.options["grouping"];
+        const name = prop.options?.groupName;
+        const secondary = prop.options?.grouping ?? false;
         const inScope = this.isPropInScope(prop);
         if (!inScope) {
           return;
@@ -375,12 +439,14 @@ export default defineComponent({
       });
       return groups;
     },
-    exportedValues(): any {
+    exportedValues(): Record<string, unknown> {
       return convertArrayInput(cleanConfigInput(this.exportInputs()));
     },
-    computedConfig(): any {
+    computedConfig(): Record<string, unknown> | null {
       if (this.modelValue) {
-        return Object.assign({}, this.modelValue.config || {});
+        return isRecord(this.modelValue.config)
+          ? Object.assign({}, this.modelValue.config)
+          : {};
       } else {
         return null;
       }
@@ -425,13 +491,11 @@ export default defineComponent({
     this.loadForMode();
   },
   methods: {
-    setVal(target: any, prop: any, val: any) {
+    setVal(target: Record<string, unknown>, prop: string, val: unknown) {
       target[prop] = val;
     },
-    isStorageProperty(prop: any) {
-      return (
-        prop.options && prop.options["selectionAccessor"] === "STORAGE_PATH"
-      );
+    isStorageProperty(prop: PluginProperty): boolean {
+      return prop.options?.selectionAccessor === "STORAGE_PATH";
     },
     prepareInputs() {
       if (!this.isShowConfigForm) {
@@ -446,17 +510,21 @@ export default defineComponent({
       ) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === "undefined") {
-            this.inputSaved[i] = (this.modelValue as any)[i];
+            this.inputSaved[i] = Object.entries(this.modelValue || {}).find(
+              ([key]) => key === i,
+            )?.[1];
           }
         }
       }
 
-      const config = this.modelValue?.config || {};
+      const config = isRecord(this.modelValue?.config)
+        ? this.modelValue.config
+        : {};
 
       const modeCreate = this.isCreateMode;
 
       // set up defaults and convert Options to array
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (config[prop.name]) {
           this.inputValues[prop.name] = config[prop.name];
         }
@@ -468,13 +536,10 @@ export default defineComponent({
         ) {
           this.inputValues[prop.name] = prop.defaultValue;
         }
-        if (
-          prop.type === "Options" &&
-          typeof this.inputValues[prop.name] === "string"
-        ) {
+        const inputValue = this.inputValues[prop.name];
+        if (prop.type === "Options" && typeof inputValue === "string") {
           // convert to array
-          this.inputValues[prop.name] =
-            this.inputValues[prop.name].split(/, */);
+          this.inputValues[prop.name] = inputValue.split(/, */);
         } else if (
           prop.type === "Options" &&
           typeof this.inputValues[prop.name] === "undefined"
@@ -511,9 +576,9 @@ export default defineComponent({
       this.inputLoaded = true;
     },
     exportInputs() {
-      const values: { [index: string]: any } = {};
+      const values: Record<string, unknown> = {};
       //convert true boolean to 'true'
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (this.isStaticTextProp(prop)) {
           // STATIC_TEXT properties are display-only help text (e.g. workflow strategy
           // "info" panels) and must never be persisted as real config data.
@@ -538,12 +603,16 @@ export default defineComponent({
       });
       return values;
     },
-    computeSelectionAccessor(prop: any) {
+    computeSelectionAccessor(prop: PluginProperty) {
       if (prop.options && prop.options["selectionAccessor"] === "PLUGIN_TYPE") {
         const serviceName = prop.options["selectionAdditional"];
-        getPluginProvidersForService(serviceName).then((data: any) => {
+        if (typeof serviceName !== "string") {
+          return;
+        }
+        getPluginProvidersForService(serviceName).then((data) => {
+          if (!data) return;
           this.propsComputedSelectorData[prop.name] = data.descriptions.map(
-            (provider: any) => {
+            (provider: PluginProviderDescription) => {
               return {
                 key: provider.title,
                 value: provider.name,
@@ -554,14 +623,13 @@ export default defineComponent({
         });
       }
     },
-    loadPluginData(data: any) {
+    loadPluginData(data: PluginDetail) {
       this.props = data.props;
 
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (data.dynamicProps && data.dynamicProps[prop.name]) {
           const dynamic = data.dynamicProps[prop.name];
-          const isValueLabelMap =
-            typeof dynamic === "object" && !Array.isArray(dynamic);
+          const isValueLabelMap = isRecord(dynamic);
 
           // Remember the labels the descriptor itself supplied. loadPluginData
           // can run more than once over the same prop object, so labels
@@ -602,14 +670,14 @@ export default defineComponent({
         this.notifyHasKeyStorageAccess();
       }
     },
-    async loadProvider(provider: any) {
+    async loadProvider(provider: string) {
       try {
         const data =
           await getRundeckContext().rootStore.plugins.getPluginDetail(
             this.serviceName as string,
             provider,
           );
-        if (data.props) {
+        if (isPluginDetail(data)) {
           this.loadPluginData(data);
         }
       } catch (e) {
@@ -618,7 +686,7 @@ export default defineComponent({
         this.error = message;
       }
     },
-    isPropVisible(testProp: any): boolean {
+    isPropVisible(testProp: PluginProperty): boolean {
       // determine if property is visible based on required prop value
       const requiredProp =
         testProp.options && testProp.options["requiredProperty"];
@@ -636,10 +704,10 @@ export default defineComponent({
       }
       return true;
     },
-    isPropHidden(testProp: any): boolean {
-      return testProp.options && testProp.options["displayType"] === "HIDDEN";
+    isPropHidden(testProp: PluginProperty): boolean {
+      return testProp.options?.displayType === "HIDDEN";
     },
-    isStaticTextProp(testProp: any): boolean {
+    isStaticTextProp(testProp: PluginProperty): boolean {
       // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
       // rendered from prop.staticTextDefaultValue and are never user-editable, so
       // they must not be seeded with a default value or exported as config data.
@@ -649,11 +717,10 @@ export default defineComponent({
       // "wizard-id"), so they are excluded here.
       return (
         testProp.type !== "AutogenInstanceId" &&
-        testProp.options &&
-        testProp.options["displayType"] === "STATIC_TEXT"
+        testProp.options?.displayType === "STATIC_TEXT"
       );
     },
-    isPropInScope(testProp: any): boolean {
+    isPropInScope(testProp: PluginProperty): boolean {
       // determine if property is visible in scope
       const testScope = testProp.scope || this.defaultScope;
       const allowedScope = this.scope;
@@ -679,16 +746,16 @@ export default defineComponent({
 
       return false;
     },
-    isGroupedProp(testProp: any): boolean {
+    isGroupedProp(testProp: PluginProperty): boolean {
       // determine if property is visible based on required prop value
-      const grouping = testProp.options && testProp.options["grouping"];
-      const groupName = testProp.options && testProp.options["groupName"];
+      const grouping = testProp.options?.grouping;
+      const groupName = testProp.options?.groupName;
 
-      return grouping || groupName;
+      return Boolean(grouping || groupName);
     },
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;
-      this.props.forEach((prop: any) => {
+      this.props.forEach((prop: PluginProperty) => {
         if (prop.options != null && prop.options["selectionAccessor"]) {
           storageAccess = true;
         }

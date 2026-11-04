@@ -245,6 +245,7 @@ import {
 } from "../../../../library/stores/NodeFilterLocalstore";
 import { defineComponent, ref } from "vue";
 import NodeFilterLink from "./NodeFilterLink.vue";
+import type { NodeFilterSelection } from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeFilterInput",
@@ -364,7 +365,7 @@ export default defineComponent({
     matchedFilter() {
       if (this.outputValue && this.nodeSummary.filters) {
         const found = this.nodeSummary.filters.find(
-          (a: any) => a.filter === this.outputValue,
+          (a) => a.filter === this.outputValue,
         );
         if (found) {
           return found.filterName;
@@ -378,7 +379,7 @@ export default defineComponent({
     selectedSavedFilter() {
       if (this.selectedFilterName && this.nodeSummary.filters) {
         const found = this.nodeSummary.filters.find(
-          (a: any) => a.filterName === this.selectedFilterName,
+          (a) => a.filterName === this.selectedFilterName,
         );
         if (found) {
           return found;
@@ -473,7 +474,7 @@ export default defineComponent({
       }
       this.$emit("update:value", this.outputValue);
     },
-    handleNodefilter(val: any) {
+    handleNodefilter(val: NodeFilterSelection) {
       if (val.filterName) {
         this.selectedFilterName = val.filterName;
       } else {

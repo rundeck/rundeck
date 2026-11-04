@@ -107,7 +107,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import Menu from "primevue/menu";
+import Menu, { type MenuMethods } from "primevue/menu";
 import PluginInfo from "../../plugins/PluginInfo.vue";
 import PtButton from "../PtButton/PtButton.vue";
 import Tag from "primevue/tag";
@@ -209,7 +209,7 @@ export default defineComponent({
   },
   methods: {
     handleMoreActions(event: Event) {
-      (this.$refs.menu as any).toggle(event);
+      (this.$refs.menu as MenuMethods).toggle(event);
     },
     handleDelete() {
       this.$emit("delete");

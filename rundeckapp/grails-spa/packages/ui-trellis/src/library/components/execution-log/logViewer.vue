@@ -239,6 +239,7 @@ import { Btn, BtnGroup, ProgressBar } from "uiv";
 import { PropType } from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
 import { getRundeckContext } from "../../rundeckService";
+import type { ExecutionOutputEntry } from "../../stores/ExecutionOutput";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
 const context = getRundeckContext();
@@ -370,7 +371,7 @@ export default defineComponent({
       entries: [],
       entriesFromViewer: [],
       viewerEntriesByNodeCtx: null,
-      viewerFilteredEntries: [] as any[],
+      viewerFilteredEntries: [] as ExecutionOutputEntry[],
       autorunDisposer: null as IReactionDisposer | null,
       hideIncompleteNodes: false,
       hideIncompleteApplies: false,

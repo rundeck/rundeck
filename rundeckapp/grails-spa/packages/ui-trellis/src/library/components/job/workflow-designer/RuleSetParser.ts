@@ -92,7 +92,7 @@ export class RuleSetParser {
 
   /** Collect a run of tokens matching the type */
   collect(type: TokenType): Array<Token> {
-    const tokens: any = [];
+    const tokens: Token[] = [];
     let t = this.next();
     while (t != null && t.type == type) {
       tokens.push(t);
@@ -153,7 +153,7 @@ export class RuleSetParser {
     const expression = tExpr.string;
 
     this.builder.addRule({
-      type: type as any as ConditionType,
+      type: type as ConditionType,
       expression,
     });
 
@@ -241,7 +241,7 @@ export class RuleBuilder {
   }
 
   stepRules(): Array<StepRule> {
-    const stepRules: any = [];
+    const stepRules: StepRule[] = [];
     for (const identifier of this.identifiers) {
       for (const rule of this.rules) {
         stepRules.push({

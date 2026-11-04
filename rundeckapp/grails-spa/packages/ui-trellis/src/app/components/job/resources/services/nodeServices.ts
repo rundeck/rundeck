@@ -3,7 +3,26 @@ import { _genUrl } from "../../../../../library/utilities/genUrl";
 import { getAppLinks, getRundeckContext } from "../../../../../library";
 import { ConfigMeta } from "../../../home/types/projectTypes";
 import { api } from "../../../../../library/services/api";
-import { NodeTags, Nodes } from "../types/nodeTypes";
+import {
+  NodeQueryResponse,
+  NodeSummary,
+  NodeTags,
+  Nodes,
+} from "../types/nodeTypes";
+
+interface RequestError {
+  message: string;
+  response?: unknown;
+}
+
+function isRequestError(error: unknown): error is RequestError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  );
+}
 
 export async function getConfigMetaForExecutionMode(
   project: string,
@@ -29,7 +48,7 @@ export async function getConfigMetaForExecutionMode(
     };
   }
 }
-export async function getNodeSummary(): Promise<any> {
+export async function getNodeSummary(): Promise<NodeSummary> {
   try {
     const response = await axios.get(
       _genUrl(getAppLinks().frameworkNodeSummaryAjax, {}),
@@ -43,14 +62,18 @@ export async function getNodeSummary(): Promise<any> {
       throw { message: "Error: " + response.status, response: response };
     }
     return response.data;
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const error = isRequestError(e) ? e : { message: String(e) };
     // e.message in this case is the error message from the server response
-    throw { message: "Error: " + e.message, response: e.response };
+    throw { message: "Error: " + error.message, response: error.response };
   }
 }
-export async function getNodes(params: any, url: string): Promise<any> {
+export async function getNodes(
+  params: Record<string, unknown>,
+  url: string,
+): Promise<NodeQueryResponse> {
   try {
-    const response: AxiosResponse = await axios.request({
+    const response: AxiosResponse<NodeQueryResponse> = await axios.request({
       method: "GET",
       headers: {
         "x-rundeck-ajax": "true",
@@ -74,11 +97,14 @@ export async function getNodes(params: any, url: string): Promise<any> {
     }
 
     return response.data;
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const error = isRequestError(e) ? e : { message: String(e) };
     // e.message in this case is the error message from the server response
     throw {
-      message: e.message.includes("Error:") ? e.message : "Error: " + e.message,
-      response: e.response,
+      message: error.message.includes("Error:")
+        ? error.message
+        : "Error: " + error.message,
+      response: error.response,
     };
   }
 }
@@ -88,7 +114,7 @@ export async function getNodes(params: any, url: string): Promise<any> {
  * as getNodes was originally planned to be used with the ajax endpoint
  */
 export async function getNodeResources(
-  params: any = {},
+  params: Record<string, unknown> = {},
   project: string = getRundeckContext().projectName,
 ): Promise<Nodes> {
   const resp = await api.get(`project/${project}/resources`, {

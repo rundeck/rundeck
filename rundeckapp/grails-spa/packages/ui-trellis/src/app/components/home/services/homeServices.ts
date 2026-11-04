@@ -1,7 +1,27 @@
 import axios from "axios";
 import { getAppLinks, getRundeckContext } from "../../../../library";
+import type { Project } from "../types/projectTypes";
 
-export async function getSummary(): Promise<any> {
+interface HomeSummary {
+  execCount: number;
+  totalFailedCount: number;
+  recentProjects: string[];
+  recentUsers: string[];
+}
+
+const serviceError = (error: unknown) => {
+  const message =
+    typeof error === "object" && error !== null && "message" in error
+      ? error.message
+      : undefined;
+  const response =
+    typeof error === "object" && error !== null && "response" in error
+      ? error.response
+      : undefined;
+  return { message: "Error: " + String(message), response };
+};
+
+export async function getSummary(): Promise<HomeSummary> {
   const ctx = getRundeckContext();
   try {
     const response = await axios.get(
@@ -23,13 +43,13 @@ export async function getSummary(): Promise<any> {
       // intentionally throw an error to be caught locally
       throw { message: response.status, response: response };
     }
-  } catch (e: any) {
+  } catch (e) {
     // e.message in this case is the error message from the server response
-    throw { message: "Error: " + e.message, response: e.response };
+    throw serviceError(e);
   }
 }
 
-export async function getProjectNames(): Promise<any> {
+export async function getProjectNames(): Promise<string[]> {
   const appLinks = getAppLinks();
   try {
     const response = await axios.get(appLinks.menuProjectNamesAjax, {
@@ -51,13 +71,13 @@ export async function getProjectNames(): Promise<any> {
       // intentionally throw an error to be caught locally
       throw { message: response.status, response: response };
     }
-  } catch (e: any) {
+  } catch (e) {
     // e.message in this case is the error message from the server response
-    throw { message: "Error: " + e.message, response: e.response };
+    throw serviceError(e);
   }
 }
 
-export async function getProjects(): Promise<any> {
+export async function getProjects(): Promise<Project[]> {
   const ctx = getRundeckContext();
   try {
     const response = await axios.get(
@@ -79,8 +99,8 @@ export async function getProjects(): Promise<any> {
       // intentionally throw an error to be caught locally
       throw { message: `Error: ${response.status}`, response: response };
     }
-  } catch (e: any) {
+  } catch (e) {
     // e.message in this case is the error message from the server response
-    throw { message: "Error: " + e.message, response: e.response };
+    throw serviceError(e);
   }
 }

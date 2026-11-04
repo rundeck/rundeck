@@ -93,22 +93,35 @@
 import { getRundeckContext } from "../../../../library";
 import { cloneDeep } from "lodash";
 import {
-  JobOption,
   JobOptionEdit,
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
-import { Operation, ChangeEvent } from "./model/ChangeEvents";
+import {
+  Operation,
+  ChangeEvent,
+  createUndoRedoEventBus,
+} from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
 import pluginService from "../../../../library/modules/pluginService";
+import type {
+  PluginProviderDescription,
+  PluginProvidersResponse,
+} from "../../../../library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
-import mitt, { Emitter, EventType } from "mitt";
 import draggable from "vuedraggable";
 
-const emitter = mitt();
-const localEB: Emitter<Record<EventType, any>> = emitter;
+interface OperationData {
+  index: number;
+  dest?: number;
+  value?: JobOptionEdit;
+}
+
+type OptionChangeEvent = ChangeEvent<JobOptionEdit>;
+
+const localEB = createUndoRedoEventBus();
 const eventBus = getRundeckContext().eventBus;
 
 export default defineComponent({
@@ -125,7 +138,7 @@ export default defineComponent({
       required: true,
     },
     features: {
-      type: Object as PropType<any>,
+      type: Object as PropType<Record<string, boolean>>,
       required: false,
       default: () => ({}),
     },
@@ -145,8 +158,8 @@ export default defineComponent({
       intOptions: [] as JobOptionEdit[],
       createOption: null as JobOptionEdit | null,
       fileUploadPluginType: "" as string | undefined,
-      providers: [],
-      providerLabels: {},
+      providers: [] as PluginProviderDescription[],
+      providerLabels: {} as Record<string, string>,
     };
   },
   async mounted() {
@@ -156,10 +169,10 @@ export default defineComponent({
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
     pluginService
       .getPluginProvidersForService("OptionValues")
-      .then((data: { service?: string; descriptions?: any; labels?: any }) => {
-        if (data.service) {
+      .then((data: PluginProvidersResponse | undefined) => {
+        if (data?.service) {
           this.providers = data.descriptions;
-          this.providerLabels = data.labels;
+          this.providerLabels = data.labels ?? {};
         }
       });
     this.localEB.on("undo", this.doUndo);
@@ -194,7 +207,7 @@ export default defineComponent({
       this.changeEvent({
         index,
         dest: -1,
-        orig: orig as JobOption,
+        orig,
         operation: Operation.Remove,
         undo: Operation.Insert,
       });
@@ -230,13 +243,13 @@ export default defineComponent({
         undo: Operation.Move,
       });
     },
-    updateOption(index: number, data: any) {
+    updateOption(index: number, data: JobOptionEdit) {
       const value = cloneDeep(data);
       const orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
         index: index,
         dest: -1,
-        orig: orig as JobOption,
+        orig,
         value,
         operation: Operation.Modify,
         undo: Operation.Modify,
@@ -244,7 +257,7 @@ export default defineComponent({
       this.editIndex = -1;
       this.createOption = null;
     },
-    saveNewOption(data: any) {
+    saveNewOption(data: JobOptionEdit) {
       this.createMode = false;
       const index = this.intOptions.length;
       const value = cloneDeep(data);
@@ -277,16 +290,19 @@ export default defineComponent({
     operationInsert(index: number, value: JobOptionEdit): void {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
-    operation(op: Operation, data: any): JobOptionEdit | undefined {
+    operation(
+      operation: Operation,
+      data: OperationData,
+    ): JobOptionEdit | undefined {
       let result: JobOptionEdit | undefined;
-      if (op === Operation.Insert) {
-        this.operationInsert(data.index, data.value);
-      } else if (op === Operation.Remove) {
+      if (operation === Operation.Insert) {
+        this.operationInsert(data.index, data.value!);
+      } else if (operation === Operation.Remove) {
         result = this.operationRemove(data.index);
-      } else if (op === Operation.Modify) {
-        result = this.operationModify(data.index, data.value);
-      } else if (op === Operation.Move) {
-        this.operationMove(data.index, data.dest);
+      } else if (operation === Operation.Modify) {
+        result = this.operationModify(data.index, data.value!);
+      } else if (operation === Operation.Move) {
+        this.operationMove(data.index, data.dest!);
       }
       this.updateIndexes();
       return result;
@@ -296,18 +312,18 @@ export default defineComponent({
       this.editIndex = -1;
       this.createOption = null;
     },
-    doUndo(change: ChangeEvent) {
+    doUndo(change: OptionChangeEvent) {
       this.operation(change.undo, {
+        value: change.orig || change.value,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         index:
           change.dest !== undefined && change.dest >= 0
             ? change.dest
             : change.index,
-        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
-        value: change.orig || change.value,
       });
       this.wasChanged();
     },
-    doRedo(change: ChangeEvent) {
+    doRedo(change: OptionChangeEvent) {
       this.operation(change.operation, change);
       this.wasChanged();
     },
@@ -316,11 +332,11 @@ export default defineComponent({
       this.wasChanged();
     },
     updateIndexes() {
-      this.intOptions.forEach((opt: JobOption, i: number) => {
+      this.intOptions.forEach((opt: JobOptionEdit, i: number) => {
         opt.sortIndex = i + 1;
       });
     },
-    changeEvent(event: ChangeEvent) {
+    changeEvent(event: OptionChangeEvent) {
       this.localEB.emit("change", event);
       this.wasChanged();
     },

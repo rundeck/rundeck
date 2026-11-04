@@ -52,6 +52,7 @@
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import PluginDetails from "../../../../library/components/plugins/PluginDetails.vue";
 import { getPluginProvidersForService } from "../../../../library/modules/pluginService";
+import type { PluginProviderDescription } from "../../../../library/modules/pluginService";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -72,8 +73,8 @@ export default defineComponent({
     return {
       model: {} as PluginConfig,
       mode: "create",
-      pluginProviders: [],
-      pluginLabels: [],
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
       loaded: false,
       editStrategyPlugin: { type: "", config: {} } as PluginConfig,
       editValidation: null,
@@ -84,7 +85,7 @@ export default defineComponent({
       if (!this.model.type) {
         return null;
       }
-      return this.pluginProviders.find((p: any) => p.name === this.model.type);
+      return this.pluginProviders.find((p) => p.name === this.model.type);
     },
   },
   watch: {
@@ -131,9 +132,9 @@ export default defineComponent({
     },
     async getStrategyPlugins() {
       const response = await getPluginProvidersForService("WorkflowStrategy");
-      if (response.service) {
+      if (response?.service) {
         this.pluginProviders = response.descriptions;
-        this.pluginLabels = response.labels;
+        this.pluginLabels = response.labels ?? {};
       }
     },
   },

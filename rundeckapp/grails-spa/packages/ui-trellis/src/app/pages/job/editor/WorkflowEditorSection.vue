@@ -31,7 +31,7 @@ export default defineComponent({
   },
   async mounted() {
     const rundeck = getRundeckContext();
-    if (rundeck && rundeck.data) {
+    if (rundeck?.data.workflowData) {
       this.workflowData = cloneDeep(rundeck.data.workflowData);
       this.updatedData = cloneDeep(this.workflowData);
     }

@@ -54,7 +54,7 @@ function initUiComponentsOnEvent(evt: Event) {
   }
 }
 
-function initUiComponents(elmElement: any) {
+function initUiComponents(elmElement: Element) {
   const i18n = initI18n();
   const vue = createApp({
     components: { UiSocket },

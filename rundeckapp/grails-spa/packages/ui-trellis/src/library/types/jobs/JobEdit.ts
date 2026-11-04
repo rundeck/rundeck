@@ -1,6 +1,17 @@
+export interface JobOptionConfigRemoteUrl {
+  authenticationType?: string;
+  username?: string;
+  passwordStoragePath?: string;
+  keyName?: string;
+  tokenStoragePath?: string;
+  apiTokenReporter?: string;
+  jsonFilter?: string;
+  [key: string]: unknown;
+}
+
 export interface JobOption {
-  configMap?: any;
-  configRemoteUrl?: any;
+  configMap?: Record<string, unknown>;
+  configRemoteUrl?: JobOptionConfigRemoteUrl;
   value?: string;
   delimiter?: string;
   description?: string;
@@ -26,7 +37,7 @@ export interface JobOption {
   dateFormat?: string;
   storagePath?: string;
   sortIndex?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface JobOptionEdit extends JobOption {
@@ -78,6 +89,7 @@ export interface JobSaveInfo {
   name: string;
   group: string;
   project: string;
+  description?: string;
   permalink?: string;
   error?: string;
 }

@@ -7,11 +7,11 @@ export function Serial(
   prop: PropertyDescriptor,
 ) {
   const context = {
-    prom: undefined as Promise<any> | undefined,
+    prom: undefined as Promise<void> | undefined,
   };
-  const original = prop.value;
+  const original = prop.value as (...args: unknown[]) => unknown;
 
-  prop.value = function (...args: any) {
+  prop.value = function (this: unknown, ...args: unknown[]) {
     if (context.prom) return context.prom;
 
     const serialFunc = async () => {

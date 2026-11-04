@@ -8,7 +8,7 @@ import { RootStore } from "../../../stores/RootStore";
 
 import News from "./NewsWidget.vue";
 
-(window as any)._rundeck.rundeckClient = new Rundeck(
+window._rundeck.rundeckClient = new Rundeck(
   new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN),
   {
     baseUri: process.env.STORYBOOK_RUNDECK_URL,
@@ -32,11 +32,11 @@ export const pickerButtonNoLabel: StoryFn<typeof News> = () => {
       projectLabel: "",
     }),
     mounted() {
-      const el = this.$el as any;
-      el.parentNode.style.height = "100vh";
-      el.parentNode.style.overflow = "hidden";
-      el.parentNode.style.position = "relative";
-      el.parentNode.style.padding = "20px";
+      const el = this.$el as HTMLElement;
+      el.parentElement!.style.height = "100vh";
+      el.parentElement!.style.overflow = "hidden";
+      el.parentElement!.style.position = "relative";
+      el.parentElement!.style.padding = "20px";
       document.body.style.overflow = "hidden";
     },
   };

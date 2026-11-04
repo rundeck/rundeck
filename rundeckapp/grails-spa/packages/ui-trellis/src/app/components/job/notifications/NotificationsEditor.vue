@@ -311,10 +311,12 @@ import { defineComponent } from "vue";
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../../library/modules/pluginService";
+import type { PluginProviderDescription } from "../../../../library/modules/pluginService";
 import UndoRedo from "../../util/UndoRedo.vue";
 import MarkdownView from "../../../../library/components/utils/MarkdownView.vue";
-import mitt from "mitt";
-const localEB = mitt();
+import { createUndoRedoEventBus } from "../options/model/ChangeEvents";
+
+const localEB = createUndoRedoEventBus();
 export default defineComponent({
   name: "NotificationsEditor",
   components: {
@@ -328,8 +330,8 @@ export default defineComponent({
   data() {
     return {
       notifyAvgDurationThreshold: null,
-      pluginProviders: [],
-      pluginLabels: {},
+      pluginProviders: [] as PluginProviderDescription[],
+      pluginLabels: {} as Record<string, string>,
       notifyTypes: [
         "onstart",
         "onsuccess",
@@ -393,9 +395,9 @@ export default defineComponent({
     this.eventBus.on("undo", this.doUndo);
     this.eventBus.on("redo", this.doRedo);
     pluginService.getPluginProvidersForService("Notification").then((data) => {
-      if (data.service) {
+      if (data?.service) {
         this.pluginProviders = data.descriptions;
-        this.pluginLabels = data.labels;
+        this.pluginLabels = data.labels ?? {};
       }
     });
   },

@@ -1,6 +1,11 @@
 import { Execution } from "../types/executions/Execution";
 import { api } from "./api";
 
+type ExecutionApiItem = Execution & {
+  "date-started"?: Execution["dateStarted"];
+  "date-ended"?: Execution["dateEnded"];
+};
+
 export interface PagedResult<T> {
   results: Array<T>;
   paging: PagingParams;
@@ -30,7 +35,7 @@ export async function queryRunning(
     throw { message: resp.data.message, response: resp };
   }
 
-  const results = resp.data.executions.map((e: any) => {
+  const results = resp.data.executions.map((e: ExecutionApiItem) => {
     const { "date-started": dateStarted, "date-ended": dateEnded } = e;
     return Object.assign({ dateStarted, dateEnded }, e) as Execution;
   });
@@ -39,7 +44,7 @@ export async function queryRunning(
 
 export async function getExecutions(
   project: string,
-  query: any,
+  query: Record<string, string | number | boolean>,
 ): Promise<PagedResult<Execution>> {
   try {
     const response = await api.get(`project/${project}/executions`, {
@@ -53,13 +58,20 @@ export async function getExecutions(
       throw { message: response.data.message, response: response };
     }
 
-    const results = response.data.executions.map((e: any) => {
+    const results = response.data.executions.map((e: ExecutionApiItem) => {
       const { "date-started": dateStarted, "date-ended": dateEnded } = e;
       return Object.assign({ dateStarted, dateEnded }, e) as Execution;
     });
     return { results, paging: response.data.paging };
-  } catch (e: any) {
+  } catch (e) {
     // e.message in this case is the error message from the server response
-    throw { message: "Error: " + e.message, response: e.response };
+    const error =
+      typeof e === "object" && e !== null
+        ? (e as { message?: unknown; response?: unknown })
+        : {};
+    throw {
+      message: "Error: " + String(error.message),
+      response: error.response,
+    };
   }
 }

@@ -1,14 +1,16 @@
 import { Rundeck, TokenCredentialProvider } from "@rundeck/client";
 import { BrowserFetchHttpClient } from "@azure/ms-rest-js/es/lib/browserFetchHttpClient";
+import type { RundeckContext } from "../interfaces/rundeckWindow";
 
-const w = window as any;
-w._rundeck = {
+const w = window;
+const storybookContext = {
   rdBase: "http://xubuntu:4440",
   rundeckClient: new Rundeck(new TokenCredentialProvider("foo"), {
     baseUri: "/",
     httpClient: new BrowserFetchHttpClient(),
   }),
-};
+} satisfies Pick<RundeckContext, "rdBase" | "rundeckClient">;
+Object.assign(w, { _rundeck: storybookContext });
 
 console.log("foo");
 

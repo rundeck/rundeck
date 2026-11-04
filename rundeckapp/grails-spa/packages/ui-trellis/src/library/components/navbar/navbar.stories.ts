@@ -154,10 +154,10 @@ export const navBar: StoryFn<typeof NavBar> = () => {
     template:
       '<div id="section-navbar" style="width: 65px; height: 100%;overflow: hidden;"><NavBar /></div>',
     mounted: function () {
-      const el = this.$el as any;
-      el.parentNode.style.height = "100vh";
-      el.parentNode.style.overflow = "hidden";
-      el.parentNode.style.position = "relative";
+      const el = this.$el as HTMLElement;
+      el.parentElement!.style.height = "100vh";
+      el.parentElement!.style.overflow = "hidden";
+      el.parentElement!.style.position = "relative";
       document.body.style.overflow = "hidden";
     },
     provide: () => ({

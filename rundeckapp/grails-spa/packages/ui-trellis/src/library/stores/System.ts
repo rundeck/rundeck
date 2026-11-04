@@ -3,7 +3,7 @@ import { RundeckClient } from "@rundeck/client";
 import { RundeckVersion } from "../utilities/RundeckVersion";
 import { Serial } from "../utilities/Async";
 
-import { RootStore } from "./RootStore";
+import { AppMeta, RootStore } from "./RootStore";
 
 export class SystemStore {
   versionInfo: VersionInfo;
@@ -20,7 +20,7 @@ export class SystemStore {
     this.appInfo = new AppInfo();
   }
 
-  loadMeta(meta: any) {
+  loadMeta(meta: AppMeta) {
     if (meta.title) {
       this.appInfo.title = meta.title;
     }

@@ -221,6 +221,13 @@ import {
 } from "@/app/components/job/resources/services/nodeServices";
 import { NodeSummary } from "@/app/components/job/resources/types/nodeTypes";
 import NodeDefaultFilterDropdown from "@/app/components/job/resources/NodeDefaultFilterDropdown.vue";
+import type { ProjectFilters } from "@/library/stores/NodeFilterLocalstore";
+
+interface NodeFilterState {
+  filter: string;
+  selectedFilter: string;
+  loadStoredProjectNodeFilters(project: string): ProjectFilters;
+}
 
 export default defineComponent({
   name: "NodeCard",
@@ -243,7 +250,7 @@ export default defineComponent({
       required: true,
     },
     nodeFilterStore: {
-      type: Object as PropType<any>,
+      type: Object as PropType<NodeFilterState>,
       required: true,
     },
   },
@@ -357,7 +364,7 @@ export default defineComponent({
         : {};
 
       const page = this.page;
-      const basedata: any = {
+      const basedata: Record<string, string | number | boolean> = {
         view: "table",
         declarenone: true,
         fullresults: true,

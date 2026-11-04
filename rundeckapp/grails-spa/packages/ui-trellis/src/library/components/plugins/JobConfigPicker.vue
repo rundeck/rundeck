@@ -166,7 +166,7 @@ export default defineComponent({
   methods: {
     onProjectOrFilterTypeChange() {
       if (this.project !== "") {
-        const params: { [name: string]: any } = {};
+        const params: Record<string, boolean> = {};
 
         if (this.filterType != "") {
           params["scheduledFilter"] = this.filterType === "scheduled";

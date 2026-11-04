@@ -31,13 +31,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
+import type { Plugin } from "../../stores/Plugins";
 
 export default defineComponent({
   name: "PluginIcon",
   props: {
     detail: {
-      type: Object,
+      type: Object as PropType<Partial<Plugin>>,
       required: true,
     },
     iconClass: {
@@ -47,19 +48,19 @@ export default defineComponent({
     },
   },
   computed: {
-    providerMeta(): any {
+    providerMeta(): NonNullable<Plugin["providerMetadata"]> {
       return (this.detail && this.detail.providerMetadata) || {};
     },
-    iconUrl(): string {
+    iconUrl(): string | undefined {
       return this.detail?.iconUrl;
     },
-    glyphicon(): string {
+    glyphicon(): string | undefined {
       return this.providerMeta.glyphicon;
     },
-    faicon(): string {
+    faicon(): string | undefined {
       return this.providerMeta.faicon;
     },
-    fabicon(): string {
+    fabicon(): string | undefined {
       return this.providerMeta.fabicon;
     },
   },

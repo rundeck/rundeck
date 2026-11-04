@@ -289,11 +289,18 @@ import type { PropType } from "vue";
 
 import { EventBus } from "../../../../library/utilities/vueEventBus";
 
+interface OtherData {
+  defaultTab?: string;
+  logOutputThresholdAction?: string;
+  uuid?: string;
+  [key: string]: unknown;
+}
+
 export default defineComponent({
   name: "OtherEditor",
   props: {
     modelValue: {
-      type: Object as PropType<any>,
+      type: Object as PropType<OtherData>,
       required: true,
     },
     eventBus: {
@@ -304,7 +311,7 @@ export default defineComponent({
   emits: ["update:modelValue"],
   data() {
     return {
-      modelData: {} as { [key: string]: any },
+      modelData: {} as OtherData,
     };
   },
   computed: {

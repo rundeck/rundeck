@@ -8,14 +8,28 @@ import { EventBus } from "../../../../library/utilities/vueEventBus";
 const rundeckContext = getRundeckContext();
 const eventBus = EventBus;
 
+interface DetailsData {
+  jobName?: string;
+  groupPath?: string;
+  href?: string;
+}
+
+interface OtherData {
+  uuid?: string;
+}
+
+interface ProjectAuthorization {
+  types?: { job?: { create?: boolean } };
+}
+
 export default defineComponent({
   name: "HeaderSection",
   data() {
     return {
-      detailsData: {},
-      otherData: {},
+      detailsData: {} as DetailsData,
+      otherData: {} as OtherData,
       subs: {},
-      projAuthz: null as any,
+      projAuthz: null as ProjectAuthorization | null,
     };
   },
   computed: {
@@ -46,16 +60,18 @@ export default defineComponent({
   },
   async mounted() {
     if (rundeckContext.data) {
-      this.detailsData = rundeckContext.data.detailsData;
-      this.otherData = rundeckContext.data.otherData;
+      this.detailsData = rundeckContext.data.detailsData as DetailsData;
+      this.otherData = rundeckContext.data.otherData as OtherData;
     }
 
     const result = await getProjectMeta(rundeckContext.projectName, "authz");
-    this.projAuthz = result.find((meta) => meta.name === "authz")?.data || {};
+    this.projAuthz =
+      (result.find((meta) => meta.name === "authz")
+        ?.data as ProjectAuthorization) || {};
 
     this.subs["job-edit-details-changed"] = eventBus.on(
       "job-edit-details-changed",
-      (data) => {
+      (data: { jobName: string; groupPath: string }) => {
         this.detailsData.jobName = data.jobName;
         this.detailsData.groupPath = data.groupPath;
       },

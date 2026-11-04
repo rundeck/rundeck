@@ -4,6 +4,14 @@ import axios from "axios";
 import { ref } from "vue";
 import { getRundeckContext } from "../rundeckService";
 
+interface NewsPost {
+  title: string;
+  absolute_url: string;
+  meta_description: string;
+  featured_image: string;
+  publish_date: string;
+}
+
 export class NewsStore {
   articles: Array<Article> = [];
 
@@ -25,7 +33,7 @@ export class NewsStore {
         groupid: 7039074342,
       },
     });
-    resp.data.objects.forEach((o: any) => {
+    resp.data.objects.forEach((o: NewsPost) => {
       this.articles.push(Article.FromApi(o));
     });
     this.loaded.value = true;
@@ -39,12 +47,12 @@ export class Article {
   title!: string;
   date!: Date;
 
-  static FromApi(post: any): Article {
+  static FromApi(post: NewsPost): Article {
     const article = new Article();
     return article.fromApi(post);
   }
 
-  fromApi(post: any) {
+  fromApi(post: NewsPost) {
     this.title = post.title;
     this.url = post.absolute_url;
     this.description = post.meta_description;

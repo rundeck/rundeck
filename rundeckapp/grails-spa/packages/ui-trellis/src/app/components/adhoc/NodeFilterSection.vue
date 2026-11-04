@@ -136,7 +136,7 @@ export default defineComponent({
         document.location.href = url(nodesUrl).href;
       }
     },
-    handleFilter(filterData: any) {
+    handleFilter(filterData: { filter?: string } | null) {
       if (filterData && filterData.filter) {
         this.nodeFilterStore.setSelectedFilter(filterData.filter);
         // Sync to event bus so the NodeFilterInput search bar updates its displayed value

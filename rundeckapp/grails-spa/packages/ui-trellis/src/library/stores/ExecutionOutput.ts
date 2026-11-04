@@ -20,6 +20,28 @@ import { api, apiClient } from "../services/api";
 const BACKOFF_MIN = 100;
 const BACKOFF_MAX = 5000;
 
+interface ExecutionOutputApiEntry {
+  time: string;
+  absolute_time: string;
+  log?: string;
+  level?: string;
+  loghtml?: string;
+  stepctx?: string;
+  node?: string;
+  metadata: object;
+}
+
+interface ExecutionOutputResponse {
+  offset: string;
+  totalSize: number;
+  completed: boolean;
+  execCompleted: boolean;
+  percentLoaded?: number;
+  empty?: boolean;
+  error?: string;
+  entries: ExecutionOutputApiEntry[];
+}
+
 export class ExecutionOutputStore {
   @observable executionOutputsById: Map<string, ExecutionOutput> = new Map();
 
@@ -148,7 +170,7 @@ export class ExecutionOutput {
     executionId: string,
     offset: number,
     maxLines: number,
-  ) {
+  ): Promise<ExecutionOutputResponse> {
     return apiClient(43)
       .get(`execution/${executionId}/output`, {
         params: {
@@ -267,7 +289,7 @@ export class ExecutionOutputEntry {
 
   static FromApiResponse(
     executionOutput: ExecutionOutput,
-    resp: any,
+    resp: ExecutionOutputApiEntry,
     line: number,
     workflow: JobWorkflow,
   ) {

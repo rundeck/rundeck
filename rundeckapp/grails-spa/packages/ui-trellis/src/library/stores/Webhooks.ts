@@ -6,6 +6,37 @@ import { api } from "../services/api";
 import { Plugin, ServiceType } from "./Plugins";
 import { RootStore } from "./RootStore";
 
+type WebhookConfig = Record<string, unknown> & {
+  __ob__?: { value: Record<string, unknown> };
+};
+
+interface NewWebhookData {
+  uuid?: string;
+  id?: string;
+  authToken?: string;
+  enabled: boolean;
+  name: string;
+  creator?: string;
+  config: WebhookConfig;
+  project: string;
+  roles: string;
+  user: string;
+  useAuth: boolean;
+  regenAuth?: boolean;
+  authString?: string;
+  eventPlugin?: string;
+  new?: boolean;
+}
+
+interface WebhookApiData extends NewWebhookData {
+  uuid: string;
+  id: string;
+  authToken: string;
+  creator: string;
+  regenAuth: boolean;
+  authString: string;
+}
+
 export const webhookui = reactive({
   activeTab: 0,
   setActiveTab(idx: number) {
@@ -38,7 +69,7 @@ export class WebhookStore {
       api.get(`project/${project}/webhooks`),
     ]);
 
-    resp.data.forEach((json: any) => {
+    resp.data.forEach((json: WebhookApiData) => {
       return this.addFromApi(json);
     });
   }
@@ -72,7 +103,7 @@ export class WebhookStore {
     return this.webhooks.filter((wh) => wh.project == project) || [];
   }
 
-  addFromApi(json: any) {
+  addFromApi(json: WebhookApiData) {
     const webhook = Webhook.FromApi(this, json);
     webhook.eventPlugin = this.root.plugins
       .getServicePlugins(ServiceType.WebhookEvent)
@@ -81,7 +112,7 @@ export class WebhookStore {
     this.add(webhook);
   }
 
-  newFromApi(json: any) {
+  newFromApi(json: NewWebhookData) {
     const webhook = Webhook.FromApi(this, json);
     webhook.eventPlugin = this.root.plugins
       .getServicePlugins(ServiceType.WebhookEvent)
@@ -89,7 +120,7 @@ export class WebhookStore {
     return webhook;
   }
 
-  async save(webhook: Webhook): Promise<any> {
+  async save(webhook: Webhook) {
     const resp = await api.post(
       `project/${webhook.project}/webhook/${webhook.id.toString()}`,
       webhook.toApi(),
@@ -106,7 +137,7 @@ export class WebhookStore {
     return resp;
   }
 
-  async create(webhook: Webhook): Promise<any> {
+  async create(webhook: Webhook) {
     const resp = await api.post(
       `project/${webhook.project}/webhook`,
       webhook.toApi(),
@@ -120,7 +151,7 @@ export class WebhookStore {
     return resp;
   }
 
-  async delete(webhook: Webhook): Promise<any> {
+  async delete(webhook: Webhook) {
     const resp = await api.delete(
       `project/${webhook.project}/webhook/${webhook.id.toString()}`,
     );
@@ -143,40 +174,40 @@ export class Webhook {
   enabled!: boolean;
   name!: string;
   creator!: string;
-  config: any = {};
+  config: WebhookConfig = {};
   project!: string;
   roles!: string;
   user!: string;
   useAuth!: boolean;
   regenAuth!: boolean;
   authString!: string;
-  eventPluginName!: string;
+  eventPluginName?: string;
   eventPlugin?: Plugin;
 
   new = true;
 
   constructor(readonly store: WebhookStore) {}
 
-  static FromApi(store: WebhookStore, json: any) {
+  static FromApi(store: WebhookStore, json: NewWebhookData) {
     const webhook = new Webhook(store);
     webhook.fromApi(json);
     return webhook;
   }
 
-  fromApi(json: any) {
+  fromApi(json: NewWebhookData) {
     this.uuid = json.uuid || this.uuid;
-    this.id = json.id;
-    this.authToken = json.authToken;
+    this.id = json.id!;
+    this.authToken = json.authToken!;
     this.enabled = json.enabled;
     this.name = json.name;
-    this.creator = json.creator;
+    this.creator = json.creator!;
     this.config = json.config;
     this.project = json.project;
     this.roles = json.roles;
     this.user = json.user;
     this.useAuth = json.useAuth;
-    this.regenAuth = json.regenAuth;
-    this.authString = json.authString;
+    this.regenAuth = json.regenAuth!;
+    this.authString = json.authString!;
     this.eventPluginName = json.eventPlugin;
   }
 

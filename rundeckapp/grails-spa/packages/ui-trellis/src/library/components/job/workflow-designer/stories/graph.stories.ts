@@ -16,8 +16,8 @@ export const graph: StoryFn<typeof WorkflowGraph> = (args) => ({
   },
   mounted: function () {
     document.documentElement.dataset.colorTheme = "light";
-    const el = this.$el as any;
-    el.parentNode.style.height = "100vh";
+    const el = this.$el as HTMLElement;
+    el.parentElement!.style.height = "100vh";
   },
 
   template:

@@ -133,13 +133,25 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
+import type { Plugin } from "../../stores/Plugins";
 import PluginIcon from "./PluginIcon.vue";
 import PluginInfo from "./PluginInfo.vue";
 import Skeleton from "primevue/skeleton";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
+
+interface ProviderGroup {
+  iconDetail: Partial<Plugin>;
+  isGroup: boolean;
+  providers: Plugin[];
+}
+
+interface GroupedProviders {
+  highlighted: Record<string, ProviderGroup>;
+  nonHighlighted: Record<string, ProviderGroup>;
+}
 
 export default defineComponent({
   name: "PluginAccordionList",
@@ -153,7 +165,7 @@ export default defineComponent({
   },
   props: {
     groupedProviders: {
-      type: Object,
+      type: Object as PropType<GroupedProviders>,
       required: true,
     },
     loading: {
@@ -203,7 +215,7 @@ export default defineComponent({
     },
   },
   methods: {
-    handleAccordionClick(group: any, key: string) {
+    handleAccordionClick(group: ProviderGroup, key: string) {
       this.$emit("select", { group, key });
     },
   },

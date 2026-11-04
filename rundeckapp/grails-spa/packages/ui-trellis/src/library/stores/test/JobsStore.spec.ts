@@ -76,6 +76,14 @@ describe("Jobs Store", () => {
     expect(jobStore.jobs["!new"].executionEnabled).toBe(true);
   });
 
+  it("initializes a placeholder for an existing job ID", () => {
+    const jobStore = useJobStore();
+    jobStore.initializeJobPlaceholder("job-123");
+
+    expect(jobStore.jobs["job-123"].id).toBe("job-123");
+    expect(jobStore.hasJob("job-123")).toBe(true);
+  });
+
   it("setActiveId sets the active ID", () => {
     const jobStore = useJobStore();
     jobStore.setActiveId("test-job-123");

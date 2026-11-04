@@ -16,11 +16,24 @@ const i18n = initI18n();
 const elm = document.getElementById("userListPage");
 
 const rundeckContext = getRundeckContext();
-const userListData: UserListData = rundeckContext.data?.userListData || {
-  users: [],
-  appAdmin: false,
-  currentUser: "",
-};
+const rawUserListData = rundeckContext.data?.userListData;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+const userListData: UserListData =
+  isRecord(rawUserListData) && Array.isArray(rawUserListData.users)
+    ? {
+        users: rawUserListData.users as UserListData["users"],
+        appAdmin: Boolean(rawUserListData.appAdmin),
+        currentUser:
+          typeof rawUserListData.currentUser === "string"
+            ? rawUserListData.currentUser
+            : "",
+      }
+    : {
+        users: [],
+        appAdmin: false,
+        currentUser: "",
+      };
 
 const vue = createApp({
   name: "UserListApp",

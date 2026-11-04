@@ -90,6 +90,12 @@ import { ServiceType, type Plugin } from "../../../library/stores/Plugins";
 
 const context = getRundeckContext();
 
+interface LoadedService {
+  service: string;
+  providers: Plugin[];
+  dividerIndex?: number;
+}
+
 export default defineComponent({
   name: "ChoosePluginModal",
   components: { PluginSearch, pluginInfo },
@@ -128,7 +134,7 @@ export default defineComponent({
   emits: ["cancel", "selected", "update:modelValue"],
   data() {
     return {
-      loadedServices: [] as Array<{ service: string; providers: any[] }>,
+      loadedServices: [] as LoadedService[],
       loading: false,
       modalShown: false,
       searchQuery: "",
@@ -194,7 +200,7 @@ export default defineComponent({
     filterLoadedServices(searchQuery: string) {
       this.searchQuery = searchQuery.toLowerCase();
     },
-    matchesSearchQuery(provider: any) {
+    matchesSearchQuery(provider: Plugin) {
       if (!this.searchQuery) return true;
       const filterValue = this.searchQuery.split("=");
       const prop = filterValue.length > 1 ? filterValue[0] : "title";
@@ -224,7 +230,7 @@ export default defineComponent({
         (provider: Plugin) => provider.isHighlighted === false,
       );
     },
-    dividerTitle(service: any): string {
+    dividerTitle(service: LoadedService): string {
       if (service.dividerIndex && service.dividerIndex > 0) {
         const numberOfPluginsNotHighlighted: number =
           service.providers.length - service.dividerIndex;

@@ -137,9 +137,8 @@ describe("workflowFuncs", () => {
         nodeStep: true,
         errorhandler: {
           type: "exec-command",
-          config: { adhocRemoteString: "echo fallback" },
+          configuration: { adhocRemoteString: "echo fallback" },
           nodeStep: true,
-          id: "eh-1",
           keepgoingOnSuccess: true,
         },
       };

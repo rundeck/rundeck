@@ -33,7 +33,7 @@ export interface JobMetadata {
   scheduled?: boolean;
   scheduleEnabled?: boolean;
   averageDuration?: number;
-  options?: any;
+  options?: Record<string, unknown>;
 }
 
 export interface Execution {

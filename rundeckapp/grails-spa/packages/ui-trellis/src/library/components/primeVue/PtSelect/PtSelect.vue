@@ -86,7 +86,11 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import Select from "primevue/select";
+import Select, { type SelectFilterEvent } from "primevue/select";
+
+type SelectOption = unknown;
+type OptionLabelField = string | ((option: SelectOption) => string);
+type OptionValueField = string | ((option: SelectOption) => unknown);
 
 export default defineComponent({
   name: "PtSelect",
@@ -94,19 +98,19 @@ export default defineComponent({
   components: { Select },
   props: {
     modelValue: {
-      type: [String, Number, Object, Array] as PropType<any>,
+      type: [String, Number, Object, Array] as PropType<unknown>,
       default: undefined,
     },
     options: {
-      type: Array as PropType<any[]>,
+      type: Array as PropType<SelectOption[]>,
       default: () => [],
     },
     optionLabel: {
-      type: [String, Function] as PropType<string | ((option: any) => string)>,
+      type: [String, Function] as PropType<OptionLabelField>,
       default: undefined,
     },
     optionValue: {
-      type: [String, Function] as PropType<string | ((option: any) => any)>,
+      type: [String, Function] as PropType<OptionValueField>,
       default: undefined,
     },
     placeholder: {
@@ -222,10 +226,10 @@ export default defineComponent({
   },
   computed: {
     internalValue: {
-      get(): any {
+      get(): unknown {
         return this.modelValue;
       },
-      set(value: any) {
+      set(value: unknown) {
         if (this.debounceMs > 0) {
           // Debounce the update
           if (this.debounceTimer) {
@@ -260,7 +264,7 @@ export default defineComponent({
     onHide() {
       this.$emit("hide");
     },
-    onFilter(event: any) {
+    onFilter(event: SelectFilterEvent) {
       this.$emit("filter", event);
     },
   },

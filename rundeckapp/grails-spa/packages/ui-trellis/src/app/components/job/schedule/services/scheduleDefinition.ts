@@ -15,6 +15,26 @@ export interface Month {
   shortName: string;
 }
 
+interface ScheduleDefinition {
+  crontabString?: string;
+  schedule?: {
+    seconds?: string;
+    minute: string;
+    hour: string;
+    dayOfMonth: string;
+    month: string;
+    dayOfWeek: string;
+    year?: string;
+  };
+}
+
+export interface SimpleScheduleDecomposition {
+  hour: string;
+  minute: string;
+  days: string[];
+  months: string[];
+}
+
 export function getMonths() {
   const monthIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
@@ -45,7 +65,7 @@ export function getDays() {
   return ans;
 }
 
-export function getCronExpression(scheduleDef: any) {
+export function getCronExpression(scheduleDef: ScheduleDefinition) {
   return (
     scheduleDef.crontabString ||
     (scheduleDef.schedule &&
@@ -119,8 +139,10 @@ export function getSimpleDecomposition(
   };
 }
 
-export function flatten(arr: any) {
-  return arr.reduce(function (flat: any, toFlatten: any) {
+type NestedArray<T> = Array<T | NestedArray<T>>;
+
+export function flatten<T>(arr: NestedArray<T>): T[] {
+  return arr.reduce<T[]>(function (flat, toFlatten) {
     return flat.concat(
       Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten,
     );
@@ -163,7 +185,7 @@ export function decomposeUsingValues(
   } else {
     const smallResults = splitItems.map((item) =>
       valueToName(item, listOfLongValues, indexStartAtZero),
-    ) as any;
+    );
     return flatten(smallResults);
   }
 }

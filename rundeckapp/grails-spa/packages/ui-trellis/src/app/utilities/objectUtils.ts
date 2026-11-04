@@ -1,8 +1,13 @@
-const isObject = (item: any) => {
-  return item && typeof item === "object" && !Array.isArray(item);
+type UnknownRecord = Record<string, unknown>;
+
+const isObject = (item: unknown): item is UnknownRecord => {
+  return Boolean(item) && typeof item === "object" && !Array.isArray(item);
 };
 
-const mergeDeep = (target: any, ...sources: any[]) => {
+const mergeDeep = <T extends UnknownRecord>(
+  target: T,
+  ...sources: unknown[]
+): T => {
   if (!sources.length) return target;
   const source = sources.shift();
 
@@ -13,7 +18,7 @@ const mergeDeep = (target: any, ...sources: any[]) => {
           Object.assign(target, {
             [key]: {},
           });
-        mergeDeep(target[key], source[key]);
+        mergeDeep(target[key] as UnknownRecord, source[key]);
       } else {
         Object.assign(target, {
           [key]: source[key],

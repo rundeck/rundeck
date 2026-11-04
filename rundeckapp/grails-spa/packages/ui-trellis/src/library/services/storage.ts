@@ -5,7 +5,7 @@ import { api } from "./api";
  * An interface representing StorageKeyMetadata.
  */
 export interface StorageKeyMetadata {
-  meta?: any;
+  meta?: Record<string, unknown>;
   url?: string;
   name?: string;
   type?: string;

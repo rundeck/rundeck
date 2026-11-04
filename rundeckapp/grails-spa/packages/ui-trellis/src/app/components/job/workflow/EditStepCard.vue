@@ -126,7 +126,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
+import {
+  defineComponent,
+  type ComponentPublicInstance,
+  type PropType,
+} from "vue";
 import BaseStepCard from "../../../../library/components/primeVue/StepCards/BaseStepCard.vue";
 import pluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import PtButton from "../../../../library/components/primeVue/PtButton/PtButton.vue";
@@ -255,8 +259,14 @@ export default defineComponent({
     if (this.shouldScrollIntoView) {
       this.$nextTick(() => {
         setTimeout(() => {
-          const baseStepCard = this.$refs.baseStepCard as any;
-          const element = baseStepCard?.$el || baseStepCard;
+          const baseStepCard = this.$refs.baseStepCard as
+            ComponentPublicInstance | HTMLElement;
+          const element =
+            baseStepCard instanceof HTMLElement
+              ? baseStepCard
+              : baseStepCard?.$el instanceof HTMLElement
+                ? baseStepCard.$el
+                : undefined;
 
           if (element) {
             VueScrollTo.scrollTo(element, 500, {

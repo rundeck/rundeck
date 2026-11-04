@@ -74,7 +74,7 @@ interface Project {
   label?: string;
   config?: object;
   meta?: MetaType[];
-  extra?: any;
+  extra?: unknown;
 }
 
 interface ProjectActionsItemDropdown {

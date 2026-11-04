@@ -105,11 +105,26 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 // AdhocCommandStore removed - state is now local to AdhocCommandForm
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import { getRundeckContext } from "../../../library";
 import { killExecution, getExecutionDetails } from "./services/adhocService";
+
+interface AdhocPageParams {
+  adhocKillAllowed?: boolean;
+  project?: string;
+  [key: string]: unknown;
+}
+
+interface ExecutionStateResponse {
+  error?: string;
+  executionState?: string;
+  completed?: boolean;
+  allNodes?: string[];
+  targetNodes?: string[];
+  project?: string;
+}
 
 export default defineComponent({
   name: "ExecutionOutput",
@@ -126,7 +141,7 @@ export default defineComponent({
       required: true,
     },
     pageParams: {
-      type: Object,
+      type: Object as PropType<AdhocPageParams>,
       required: true,
     },
     // adhocCommandStore removed - state is now local to AdhocCommandForm
@@ -207,8 +222,7 @@ export default defineComponent({
       if (!this.showHeader || !this.executionId) {
         return false;
       }
-      const pageParams = this.pageParams as any;
-      const adhocKillAllowed = pageParams?.adhocKillAllowed === true;
+      const adhocKillAllowed = this.pageParams?.adhocKillAllowed === true;
       const isRunning =
         !this.executionCompleted &&
         this.executionState?.toUpperCase() === "RUNNING";
@@ -329,7 +343,7 @@ export default defineComponent({
         );
       }
 
-      const data = await response.json();
+      const data: ExecutionStateResponse = await response.json();
       if (data.error) {
         throw new Error(data.error);
       }
@@ -338,7 +352,7 @@ export default defineComponent({
       // showHeader only controls UI visibility, not state tracking
       this.updateExecutionState(data);
     },
-    updateExecutionState(data: any) {
+    updateExecutionState(data: ExecutionStateResponse) {
       // Update execution state from ajaxExecState response
       this.executionState = data.executionState || null;
       this.executionCompleted = data.completed === true;
@@ -348,8 +362,8 @@ export default defineComponent({
       );
 
       // Get project from pageParams or try to extract from data
-      if (this.pageParams && (this.pageParams as any).project) {
-        this.executionProject = (this.pageParams as any).project;
+      if (this.pageParams?.project) {
+        this.executionProject = this.pageParams.project;
       } else if (data.project) {
         this.executionProject = data.project;
       }

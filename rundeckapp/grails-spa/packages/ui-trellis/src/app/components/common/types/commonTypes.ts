@@ -4,13 +4,13 @@ type ModalLinks = {
   css?: string;
   message?: string;
   messageCode?: string;
-  js?: any;
+  js?: unknown;
 };
 
 type ModalButtons = {
   id?: string;
   css?: string;
-  js?: any;
+  js?: unknown;
   message?: string;
   messageCode?: string;
 };

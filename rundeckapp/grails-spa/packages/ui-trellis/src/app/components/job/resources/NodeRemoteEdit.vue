@@ -56,8 +56,16 @@ const PROTOCOL = "rundeck:node:edit";
 
 interface Message {
   origin?: string;
-  data: any;
+  data: string;
 }
+
+const prototypeEvent = Event as typeof Event & {
+  observe(
+    target: Window,
+    eventName: string,
+    handler: (message: Message) => void,
+  ): void;
+};
 
 export default defineComponent({
   name: "NodeRemoteEdit",
@@ -100,7 +108,7 @@ export default defineComponent({
       this.remoteEditExpect = true;
       this.remoteSite = this.remoteUrl as string;
       this.remoteEditStarted = false;
-      (Event as any).observe(window, "message", this._rdeckNodeEditOnmessage);
+      prototypeEvent.observe(window, "message", this._rdeckNodeEditOnmessage);
     },
     remoteEditCompleted() {
       this.remoteEditClear();
@@ -115,7 +123,7 @@ export default defineComponent({
     remoteEditStop() {
       this.remoteEditExpect = false;
       this.remoteSite = null;
-      (Event as any).observe(window, "message", this._rdeckNodeEditOnmessage);
+      prototypeEvent.observe(window, "message", this._rdeckNodeEditOnmessage);
 
       this.$emit("remoteEditStop");
     },

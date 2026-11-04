@@ -128,6 +128,15 @@
 import { defineComponent, PropType } from "vue";
 import Chip from "primevue/chip";
 
+interface ConfigSectionElement {
+  name?: string;
+  title?: string;
+  type?: string;
+  providerMetadata?: {
+    faicon?: string;
+  };
+}
+
 export default defineComponent({
   name: "ConfigSection",
   components: { Chip },
@@ -142,7 +151,7 @@ export default defineComponent({
       default: "",
     },
     modelValue: {
-      type: Array as PropType<object[]>,
+      type: Array as PropType<ConfigSectionElement[]>,
       default: () => [],
     },
     hideWhenSingle: {
@@ -180,10 +189,10 @@ export default defineComponent({
       const element = this.modelValue[index];
       this.$emit("editElement", element, index);
     },
-    getElementLabel(element: any): string {
+    getElementLabel(element: ConfigSectionElement): string {
       return element.title || element.type || "Unknown";
     },
-    getElementIcon(element: any): string {
+    getElementIcon(element: ConfigSectionElement): string {
       const icon = element.providerMetadata?.faicon || "filter";
       return `fa fa-${icon}`;
     },

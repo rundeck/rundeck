@@ -7,6 +7,16 @@ import { defineComponent } from "vue";
 
 const rundeckContext = getRundeckContext();
 
+interface JobStats {
+  executionCount?: number;
+  successRate?: number;
+  averageDuration?: number;
+}
+
+interface JobStatsItemData {
+  uuid: string;
+}
+
 export default defineComponent({
   name: "JobStatsBasic",
   components: {
@@ -14,13 +24,13 @@ export default defineComponent({
   },
   props: {
     itemData: {
-      type: Object as () => Record<string, any>,
+      type: Object as () => JobStatsItemData,
       required: true,
     },
   },
   data() {
     return {
-      jobStats: null as Record<string, any> | null,
+      jobStats: null as JobStats | null,
     };
   },
   computed: {
@@ -66,7 +76,7 @@ export default defineComponent({
       );
       const stats = metadata.find((v) => v.name == "stats");
       if (stats) {
-        this.jobStats = stats.data;
+        this.jobStats = stats.data as JobStats;
       } else {
         this.jobStats = null;
       }

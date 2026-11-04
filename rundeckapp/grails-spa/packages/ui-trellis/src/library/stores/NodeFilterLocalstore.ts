@@ -21,7 +21,7 @@ export const STORAGE_NODE_FILTER_KEY = "node-filters";
 export class NodeFilterStore {
   private filter: string = "";
 
-  constructor(data: any = {}) {
+  constructor(data: { filter?: string } = {}) {
     this.filter = data.filter || this.filter;
   }
 

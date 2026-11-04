@@ -52,7 +52,7 @@ export async function getProjectConfigurable(
 export async function setProjectConfigurable(
   project: string,
   category: string,
-  extraConfig: any,
+  extraConfig: Record<string, unknown>,
 ) {
   const response = await api.post(
     `/project/${project}/configurable`,

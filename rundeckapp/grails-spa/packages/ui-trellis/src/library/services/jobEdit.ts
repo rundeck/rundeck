@@ -10,6 +10,12 @@ import { _genUrl } from "../utilities/genUrl";
 
 const rundeckContext = getRundeckContext();
 
+export interface JobImportOptions {
+  dupeOption?: string;
+  uuidOption?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
 export async function validateJobOption(
   project: string,
   jobWasScheduled: boolean,
@@ -30,7 +36,7 @@ export async function validateJobOption(
     });
 }
 
-export async function getJobDefinition(jobId: string): Promise<any> {
+export async function getJobDefinition(jobId: string): Promise<unknown[]> {
   const resp = await api.get(`job/${jobId}`);
   if (resp.status === 200) {
     return resp.data;
@@ -43,8 +49,8 @@ export async function getJobDefinition(jobId: string): Promise<any> {
 }
 
 export async function postJobDefinition(
-  job: JobDefinition[] | any[],
-  options: any = {
+  job: JobDefinition[],
+  options: JobImportOptions = {
     dupeOption: "create",
     uuidOption: "remove",
   },

@@ -26,7 +26,7 @@ function init() {
   ]);
 }
 
-eventBus.on("ko-adhoc-running", (data: any) => {
+eventBus.on("ko-adhoc-running", (data: { id: string | number }) => {
   const elm = document.querySelector(
     "#runcontent > .execution-show-log",
   ) as HTMLElement;

@@ -383,7 +383,7 @@ import {
   styleForNode,
 } from "../../../utilities/nodeUi";
 import NodeFilterLink from "./NodeFilterLink.vue";
-import { Node } from "./types/nodeTypes";
+import { Node, NodeFilterSelection } from "./types/nodeTypes";
 
 export default defineComponent({
   name: "NodeTable",
@@ -498,11 +498,12 @@ export default defineComponent({
 
       return classnames.join(" ");
     },
-    filterClick(filter: any) {
+    filterClick(filter: NodeFilterSelection) {
       this.$emit("filter", filter);
     },
-    changePaginationMax(event: any) {
-      this.$emit("changePagingMax", Number(event.target.value));
+    changePaginationMax(event: Event) {
+      const target = event.target as HTMLInputElement;
+      this.$emit("changePagingMax", Number(target.value));
     },
     browseNodesPageNext() {
       if (this.maxPages && this.page + 1 < this.maxPages) {

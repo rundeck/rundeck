@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { CSSProperties, defineComponent } from "vue";
 import { RundeckVersion } from "../../utilities/RundeckVersion";
 import VersionIconNameDisplay from "./VersionIconNameDisplay.vue";
 import VersionDateDisplay from "./VersionDateDisplay.vue";
@@ -140,7 +140,7 @@ export default defineComponent({
     versionColor(): string {
       return this.rdversion !== null ? this.rdversion.versionColor() : "";
     },
-    versionColorStyle(): any {
+    versionColorStyle(): CSSProperties {
       return {
         color: this.versionColor,
       };
@@ -153,7 +153,7 @@ export default defineComponent({
     displayTitle(): string {
       return `${this.appName} ${this.version} (${this.versionText}) ${this.date}`;
     },
-    badgeStyle(): any {
+    badgeStyle(): CSSProperties {
       const rdversion = this.rdversion;
       const color = this.versionColor;
       return rdversion !== null

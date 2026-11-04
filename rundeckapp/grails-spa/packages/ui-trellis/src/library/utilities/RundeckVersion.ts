@@ -1,7 +1,38 @@
+interface RundeckVersionOptions {
+  versionString?: string;
+  versionDate?: string;
+  colorIdentity?: string;
+  nameIdentity?: string;
+  iconIdentity?: string;
+  appId?: string;
+  serverName?: string;
+}
+
+interface VersionData {
+  version?: string;
+  major: number;
+  minor: number;
+  majorMinor: number;
+  point: number;
+  minorPoint: number;
+  semantic: string;
+  tag: string;
+  release: number;
+  pointRelease: number;
+  minorPointRelease: number;
+  full: number;
+  [key: string]: string | number | undefined;
+}
+
+interface UUIDData extends Record<string, string | number | string[]> {
+  uuid0: number;
+  sixes: string[];
+}
+
 export class RundeckVersion {
-  private versionString: string;
-  private versionData: { [key: string]: any };
-  private versionDate: string;
+  private versionString?: string;
+  private versionData!: VersionData;
+  private versionDate?: string;
   private colorIdentity: string;
   private nameIdentity: string;
   private iconIdentity: string;
@@ -9,9 +40,8 @@ export class RundeckVersion {
   private serverName?: string;
   private nameTilt = 32;
 
-  constructor(data: any) {
+  constructor(data: RundeckVersionOptions) {
     this.versionString = data["versionString"];
-    this.versionData = {};
     this.versionDate = data["versionDate"];
     this.colorIdentity =
       data && data.colorIdentity ? data.colorIdentity : "minorPoint";
@@ -231,12 +261,25 @@ export class RundeckVersion {
     "Volans",
   ];
 
-  splitVersion(versionString: string): { [p: string]: any } {
+  splitVersion(versionString?: string): VersionData {
     const partsa = String(versionString).split(" ");
     const version = partsa.length > 1 ? partsa[0] : versionString;
     const parts = String(version).split("-");
     const vparts = parts[0].split(".");
-    const data: { [key: string]: any } = { version: version };
+    const data: VersionData = {
+      version,
+      major: 0,
+      minor: 0,
+      majorMinor: 0,
+      point: 0,
+      minorPoint: 0,
+      semantic: "",
+      tag: "",
+      release: 1,
+      pointRelease: 0,
+      minorPointRelease: 0,
+      full: 0,
+    };
     if (vparts.length > 0) {
       data["major"] = parseInt(vparts[0]);
     } else {
@@ -272,15 +315,19 @@ export class RundeckVersion {
     return data;
   }
 
-  splitUUID(versionString: string) {
+  splitUUID(versionString: string): UUIDData {
     const partsa = String(versionString).split("-");
-    const data: { [key: string]: any } = { uuid: versionString };
+    const data: UUIDData = {
+      uuid: versionString,
+      uuid0: 0,
+      sixes: [],
+    };
     for (let i = 0; i < partsa.length; i++) {
       data["uuid" + i] = parseInt(partsa[i].substring(0, 2), 16);
       data["hexuuid" + i] = partsa[i];
     }
     const partsb = partsa.join("");
-    const sixes = [];
+    const sixes = data.sixes;
     for (let j = 0; (j + 1) * 6 < partsb.length; j++) {
       data["6let" + j] = partsb.substring(j * 6, (j + 1) * 6);
       sixes.push(partsb.substring(j * 6, (j + 1) * 6));
@@ -315,7 +362,7 @@ export class RundeckVersion {
    * @param list
    * @param val number
    */
-  inList(list: any[], val: number) {
+  inList<T>(list: T[], val: number): T {
     return list[val % list.length];
   }
 
@@ -328,14 +375,14 @@ export class RundeckVersion {
   }
 
   nameForVersion(val: number) {
-    const major = this.versionData.major as number;
+    const major = this.versionData.major;
     return this.inList(RundeckVersion.nameListForMajor(major), val);
   }
   nameForVersion4(val: number) {
     return this.inList(RundeckVersion.names4, val);
   }
 
-  iconForVersion(val: any) {
+  iconForVersion(val: number) {
     return this.inList(RundeckVersion.glyphicons3, val);
   }
 
@@ -348,7 +395,7 @@ export class RundeckVersion {
   }
 
   versionColor() {
-    return this.colorForVersion(this.versionData[this.colorIdentity]);
+    return this.colorForVersion(this.versionData[this.colorIdentity] as number);
   }
 
   versionSemantic() {
@@ -357,12 +404,12 @@ export class RundeckVersion {
 
   versionName() {
     return this.nameForVersion(
-      this.versionData[this.nameIdentity] + this.nameTilt,
+      (this.versionData[this.nameIdentity] as number) + this.nameTilt,
     );
   }
 
   versionIcon() {
-    return this.iconForVersion(this.versionData[this.iconIdentity]);
+    return this.iconForVersion(this.versionData[this.iconIdentity] as number);
   }
 
   text() {

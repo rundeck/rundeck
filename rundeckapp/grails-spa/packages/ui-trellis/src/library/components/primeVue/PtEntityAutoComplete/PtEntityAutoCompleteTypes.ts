@@ -6,5 +6,5 @@
  * is handed back untouched when the user picks it.
  */
 export interface EntitySuggestion {
-  [key: string]: any;
+  [key: string]: unknown;
 }

@@ -1,4 +1,7 @@
 import { RundeckToken } from "../interfaces/rundeckWindow";
+import type { AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
+
+type TokenHeaders = AxiosResponseHeaders | RawAxiosResponseHeaders;
 
 export async function getUIAjaxTokens(): Promise<RundeckToken> {
   if (window._rundeck.token) {
@@ -18,10 +21,10 @@ export async function getUIAjaxTokens(): Promise<RundeckToken> {
   }
 }
 
-export async function setNewUIToken(responseHeaders: any) {
+export async function setNewUIToken(responseHeaders: TokenHeaders) {
   window._rundeck.token = {
-    TOKEN: responseHeaders["x-rundeck-token-key"],
-    URI: responseHeaders["x-rundeck-token-uri"],
+    TOKEN: responseHeaders["x-rundeck-token-key"] as string,
+    URI: responseHeaders["x-rundeck-token-uri"] as string,
   };
 }
 
@@ -43,10 +46,13 @@ export async function getToken(token_name: string) {
   }
 }
 
-export async function setToken(responseHeaders: any, token_name: string) {
+export async function setToken(
+  responseHeaders: TokenHeaders,
+  token_name: string,
+) {
   window._rundeck.tokens[token_name] = {
-    TOKEN: responseHeaders["x-rundeck-token-key"],
-    URI: responseHeaders["x-rundeck-token-uri"],
+    TOKEN: responseHeaders["x-rundeck-token-key"] as string,
+    URI: responseHeaders["x-rundeck-token-uri"] as string,
   };
 }
 

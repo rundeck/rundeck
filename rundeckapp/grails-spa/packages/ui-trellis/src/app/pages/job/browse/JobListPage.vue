@@ -105,10 +105,13 @@ export default defineComponent({
         this.queryRefresh = !this.queryRefresh;
       }
     });
-    eventBus.on("job-list-page:rootBrowse", async (evt) => {
-      const { path, href } = evt;
-      this.rootBrowse(path, href);
-    });
+    eventBus.on(
+      "job-list-page:rootBrowse",
+      async (evt: { path: string; href: string }) => {
+        const { path, href } = evt;
+        this.rootBrowse(path, href);
+      },
+    );
     if (typeof history.replaceState == "function") {
       if (!history.state) {
         //set first page load state
