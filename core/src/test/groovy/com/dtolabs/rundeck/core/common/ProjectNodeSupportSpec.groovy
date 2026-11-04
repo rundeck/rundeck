@@ -39,9 +39,9 @@ import java.util.concurrent.atomic.AtomicInteger
 class ProjectNodeSupportSpec extends Specification {
     static final String PROJECT_NAME = 'ProjectNodeSupportSpec'
     /**
-     * Project name for sources from supportWithSources, unique per feature so no feature inherits another's load pool
+     * Project name for sources from supportWithSources; cleanup removes its load pool, so no feature inherits another's
      */
-    String loadProject = "${PROJECT_NAME}-${UUID.randomUUID()}".toString()
+    static final String loadProject = "${PROJECT_NAME}-load".toString()
     Framework framework
     FrameworkProject testProject
     File directory
