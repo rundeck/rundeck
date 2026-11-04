@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { EventEmitter } from "node:events";
 import path from "node:path";
 import Watchpack = require("watchpack");
 import appConfig = require("../../vue.config.app");
@@ -22,12 +23,15 @@ describe("canonical translation development watch", () => {
           reject(new Error("canonical translation mutation was not observed")),
         5000,
       );
-      watcher.once("change", (changedPath: string) => {
-        if (path.resolve(changedPath) === canonicalPath) {
-          clearTimeout(timeout);
-          resolve();
-        }
-      });
+      (watcher as unknown as EventEmitter).once(
+        "change",
+        (changedPath: string) => {
+          if (path.resolve(changedPath) === canonicalPath) {
+            clearTimeout(timeout);
+            resolve();
+          }
+        },
+      );
     });
 
     try {
