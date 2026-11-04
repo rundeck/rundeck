@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
-import com.dtolabs.rundeck.core.utils.TextUtils;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Data;
 import lombok.Getter;
@@ -420,7 +419,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         nodeCount(nodes),
                         cacheFallback.getMessage()
                 );
-            } else if (logger.isInfoEnabled()) {
+            } else {
                 logger.info(
                         "Loaded {} nodes from {} in {} ms",
                         nodeCount(nodes),
@@ -437,7 +436,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                                  modelSourceErrors);
                     error = new ResourceModelSourceException(
                             //one error per line, so the node sources page shows each error on its own line
-                            TextUtils.join(modelSourceErrors.toArray(new String[0]), '\n')
+                            String.join("\n", modelSourceErrors)
                     );
                 }
             }
