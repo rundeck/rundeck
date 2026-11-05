@@ -81,19 +81,28 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
     ) throws ExecutionServiceException
     {
         final Map<String, String> providerMeta = getProvider().getProviderMeta();
-        if (providerMeta == null) {
-            return RemoteCommandShell.DEFAULT;
-        }
-        final String configuredShell = providerMeta.get(RemoteCommandShell.PROVIDER_METADATA_KEY);
+        String configuredShell = providerMeta == null
+                ? null
+                : providerMeta.get(RemoteCommandShell.PROVIDER_METADATA_KEY);
+        final Description pluginDesc = getDescription();
         if (configuredShell == null) {
-            return RemoteCommandShell.DEFAULT;
+            boolean supportsPowerShell = pluginDesc.getProperties().stream().anyMatch(
+                    property -> "shell".equals(property.getName())
+                            && property.getSelectValues() != null
+                            && property.getSelectValues().stream().anyMatch(
+                                    value -> RemoteCommandShell.POWERSHELL.name().equalsIgnoreCase(value)
+                            )
+            );
+            if (!supportsPowerShell) {
+                return RemoteCommandShell.DEFAULT;
+            }
+            configuredShell = "${config.shell}";
         }
 
         try {
             if (!configuredShell.contains("${")) {
                 return RemoteCommandShell.parse(configuredShell);
             }
-            final Description pluginDesc = getDescription();
             final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
                     executionContext.getFramework(),
                     executionContext.getFrameworkProject(),

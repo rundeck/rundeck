@@ -147,13 +147,40 @@ class ScriptPluginNodeExecutorSpec extends Specification {
         thrown(ExecutionServiceException)
     }
 
+    def "resolve legacy PowerShell shell property without metadata"() {
+        given:
+        def context = Mock(ExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext()
+        }
+        def executor = new ScriptPluginNodeExecutor(
+            testProvider(null, "Instance", true),
+            framework
+        )
+
+        expect:
+        executor.getRemoteCommandShell(context, new NodeEntryImpl("node")) == RemoteCommandShell.POWERSHELL
+    }
+
     private TestScriptNodeExecutor testProvider(String remoteCommandShell, String scope = "Instance") {
+        testProvider(remoteCommandShell, scope, false)
+    }
+
+    private TestScriptNodeExecutor testProvider(
+        String remoteCommandShell,
+        String scope,
+        boolean legacyPowerShellProperty
+    ) {
         def shellProperty = [
             name: "shell",
-            type: "String",
+            type: legacyPowerShellProperty ? "Select" : "String",
             default: "powershell",
             renderingOptions: ["instance-scope-node-attribute": "remote-shell"]
         ]
+        if (legacyPowerShellProperty) {
+            shellProperty.values = "cmd,powershell"
+        }
         if (scope != null) {
             shellProperty.scope = scope
         }
