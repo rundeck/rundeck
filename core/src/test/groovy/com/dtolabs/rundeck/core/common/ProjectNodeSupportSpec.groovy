@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import groovy.transform.CompileStatic
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.LoggerContext
@@ -1103,6 +1104,7 @@ class ProjectNodeSupportSpec extends Specification {
     /**
      * Source that returns nodes and also reports errors, like the EC2 plugin when some regions fail
      */
+    @CompileStatic
     static class PartialErrorsSource implements ResourceModelSource, ResourceModelSourceErrors {
         List<String> modelSourceErrors
 
