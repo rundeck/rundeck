@@ -52,8 +52,8 @@ public interface ProjectDeleteCoordinator {
     boolean isOwner(String projectName, long projectId, String claimToken);
 
     /**
-     * Atomically move a current claim into finalization. Once finalization begins, takeover
-     * must not replace the claim.
+     * Atomically move a current claim into finalization. Once finalization begins, a different
+     * owner must not replace the claim; the same stable owner identity may resume after restart.
      *
      * @param projectName project name
      * @param projectId persistent project row identifier
