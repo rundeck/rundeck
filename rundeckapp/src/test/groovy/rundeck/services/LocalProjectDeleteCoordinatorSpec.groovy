@@ -14,6 +14,7 @@ class LocalProjectDeleteCoordinatorSpec extends Specification {
         then:
         claim
         coordinator.isOwner('project', 42L, claim)
+        coordinator.beginFinalization('project', 42L, claim)
         coordinator.tryAcquire('project', 42L) == null
     }
 

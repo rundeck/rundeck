@@ -64,6 +64,7 @@ import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.project.ProjectMetadataComponent
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import rundeck.data.report.SaveReportRequestImpl
@@ -1979,7 +1980,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             throw new UnsupportedOperationException("Could not delete project. Project disabling not supported by framework: ${e.getMessage()}", e)
         }
 
-        startDeferredProjectDelete(project, framework, authContext, username, projectId)
+        startDeferredProjectDelete(project, framework, authContext, username, projectId, false, false)
     }
 
     /**
@@ -2000,11 +2001,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         if (!framework.frameworkProjectMgr.isFrameworkProjectDisabled(project.name)) {
             return new DeleteResponse(success: false, error: "Project is not disabled.")
         }
-        Long projectId = currentProjectId(project.name)
+        Long projectId = currentDisabledProjectId(project.name)
         if (projectId == null) {
-            return new DeleteResponse(success: false, error: "Project identity is not available.")
+            return new DeleteResponse(success: false, error: "Disabled project identity is not available.")
         }
-        startDeferredProjectDelete(project, framework, authContext, username, projectId)
+        startDeferredProjectDelete(project, framework, authContext, username, projectId, true, true)
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
@@ -2013,9 +2014,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final IFramework framework,
             final AuthContext authContext,
             final String username,
-            final Long projectId
+            final Long projectId,
+            final boolean trustedCleanup,
+            final boolean recovery
     ) {
-        String claimToken = projectDeleteCoordinator.tryAcquire(project.name, projectId)
+        String claimToken = recovery ?
+            projectDeleteCoordinator.tryAcquireRecovery(project.name, projectId) :
+            projectDeleteCoordinator.tryAcquire(project.name, projectId)
         if (claimToken == null) {
             return new DeleteResponse(success: false, error: "Project deletion is owned by another process.")
         }
@@ -2024,7 +2029,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         try {
             def promise = Promises.task {
-                runOwnedProjectDelete(project, framework, authContext, username, projectId, claimToken)
+                runOwnedProjectDelete(
+                    project,
+                    framework,
+                    authContext,
+                    username,
+                    trustedCleanup,
+                    projectId,
+                    claimToken
+                )
             }
             promise.onComplete { DeleteResponse it ->
                 log.info("Deletion of Project [${project.name}] finished with success [${it.success}]: ${it.error}")
@@ -2049,12 +2062,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final IFramework framework,
             final AuthContext authContext,
             final String username,
+            final boolean trustedCleanup,
             final Long projectId,
             final String claimToken
     ) {
         try {
             Project.withNewSession {
-                deleteProjectInternal(project, framework, authContext, username, projectId, claimToken)
+                deleteProjectInternal(
+                    project,
+                    framework,
+                    authContext,
+                    username,
+                    trustedCleanup,
+                    projectId,
+                    claimToken
+                )
             }
         } finally {
             projectDeleteCoordinator.release(project.name, projectId, claimToken)
@@ -2064,6 +2086,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     private Long currentProjectId(final String projectName) {
         Project.withNewTransaction {
             Project.findByName(projectName)?.id as Long
+        }
+    }
+
+    private Long currentDisabledProjectId(final String projectName) {
+        Project.withNewTransaction {
+            Project.findByNameAndState(projectName, RdProject.State.DISABLED)?.id as Long
         }
     }
 
@@ -2080,21 +2108,30 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Promises.task {
             try {
                 IFramework framework = frameworkService.rundeckFramework
-                framework.frameworkProjectMgr.listDisabledFrameworkProjectNames().each { String projectName ->
-                    try {
-                        IRundeckProject project = framework.frameworkProjectMgr.getFrameworkProject(projectName)
-                        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
-                            'system',
-                            ['admin'],
-                            projectName
-                        )
-                        resumeDeferredProjectDelete(project, framework, authContext, 'system')
-                    } catch (Throwable t) {
-                        log.error("Failed to resume deletion of project [${projectName}]: ${t.message}", t)
-                    }
-                }
+                resumeDisabledProjects(framework)
             } catch (Throwable t) {
                 log.error("Failed to reconcile disabled project deletions: ${t.message}", t)
+            }
+        }
+    }
+
+    /**
+     * Resume every persisted disabled project independently.
+     *
+     * @param framework framework containing the disabled projects
+     */
+    void resumeDisabledProjects(final IFramework framework) {
+        framework.frameworkProjectMgr.listDisabledFrameworkProjectNames().each { String projectName ->
+            try {
+                IRundeckProject project = framework.frameworkProjectMgr.getFrameworkProject(projectName)
+                AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
+                    'system',
+                    ['admin'],
+                    projectName
+                )
+                resumeDeferredProjectDelete(project, framework, authContext, 'system')
+            } catch (Throwable t) {
+                log.error("Failed to resume deletion of project [${projectName}]: ${t.message}", t)
             }
         }
     }
@@ -2111,6 +2148,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             IFramework framework,
             AuthContext authContext,
             String username,
+            boolean trustedCleanup = false,
             Long projectId = null,
             String claimToken = null
     ) {
@@ -2137,7 +2175,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                 List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(project.name)
                 for (ScheduledExecution se : jobs) {
-                    ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(se, true, authContext, username)
+                    ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(
+                        se,
+                        true,
+                        authContext,
+                        username,
+                        trustedCleanup
+                    )
                     if (!sedresult.success) {
                         throw new Exception(sedresult.error)
                     }
@@ -2145,7 +2189,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 //delete all remaining executions
                 List<Execution> allexecs = Execution.findAllByProject(project.name)
                 def other = allexecs.size()
-                executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
+                def bulk = executionService.deleteBulkExecutionIds(
+                    allexecs*.id,
+                    authContext,
+                    username,
+                    trustedCleanup
+                )
+                if (bulk != null && !bulk.success) {
+                    def detail = bulk.failures?.collect {
+                        it?.message ?: it?.error ?: it?.id
+                    }?.findAll { it }?.join('; ')
+                    throw new Exception(detail ?: 'Failed to delete executions')
+                }
                 log.debug("${other} other executions deleted")
 
 
@@ -2177,7 +2232,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         //if success, delete framework dir
         if (result.success) {
-            if (projectId == null || ownsCurrentProject(project.name, projectId, claimToken)) {
+            if (projectId == null || projectDeleteCoordinator.beginFinalization(
+                project.name,
+                projectId,
+                claimToken
+            )) {
                 boolean removed = projectId == null ?
                     removeProject(framework, project.name) :
                     framework.frameworkProjectMgr.removeFrameworkProject(project.name, projectId)

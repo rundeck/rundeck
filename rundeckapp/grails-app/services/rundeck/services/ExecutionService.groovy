@@ -2210,7 +2210,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext
      * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
      */
-    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username) {
+    Map deleteBulkExecutionIds(
+            Collection ids,
+            AuthContext authContext,
+            String username,
+            boolean skipAuthorization = false
+    ) {
         def failures=[]
         def failed=false
         def count=0;
@@ -2220,7 +2225,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (!exec) {
                 result = [success: false, message: 'Execution Not found: ' + id, id: id]
             } else {
-                result = deleteExecution(exec, authContext, username)
+                result = skipAuthorization ?
+                    deleteExecutionAuthorized(exec, username) :
+                    deleteExecution(exec, authContext, username)
                 result.id = id
             }
             if(!result.success){

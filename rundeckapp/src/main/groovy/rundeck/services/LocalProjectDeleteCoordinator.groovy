@@ -25,6 +25,11 @@ class LocalProjectDeleteCoordinator implements ProjectDeleteCoordinator {
     }
 
     @Override
+    boolean beginFinalization(final String projectName, final long projectId, final String claimToken) {
+        isOwner(projectName, projectId, claimToken)
+    }
+
+    @Override
     void release(final String projectName, final long projectId, final String claimToken) {
         if (claimToken != null) {
             claims.remove(projectId, claimToken)

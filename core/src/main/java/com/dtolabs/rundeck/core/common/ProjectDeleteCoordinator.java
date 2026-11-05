@@ -31,6 +31,17 @@ public interface ProjectDeleteCoordinator {
     String tryAcquire(String projectName, long projectId);
 
     /**
+     * Try to acquire cleanup ownership during startup recovery.
+     *
+     * @param projectName project name
+     * @param projectId persistent project row identifier
+     * @return an opaque fencing token, or {@code null} when this node is not the recovery winner
+     */
+    default String tryAcquireRecovery(String projectName, long projectId) {
+        return tryAcquire(projectName, projectId);
+    }
+
+    /**
      * Test whether a claim still owns cleanup.
      *
      * @param projectName project name
@@ -39,6 +50,17 @@ public interface ProjectDeleteCoordinator {
      * @return true when the claim is current
      */
     boolean isOwner(String projectName, long projectId, String claimToken);
+
+    /**
+     * Atomically move a current claim into finalization. Once finalization begins, takeover
+     * must not replace the claim.
+     *
+     * @param projectName project name
+     * @param projectId persistent project row identifier
+     * @param claimToken opaque token returned by an acquire method
+     * @return true when this claim exclusively owns final removal
+     */
+    boolean beginFinalization(String projectName, long projectId, String claimToken);
 
     /**
      * Release cleanup ownership if the supplied token is still current.
