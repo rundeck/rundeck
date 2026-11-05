@@ -77,6 +77,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.TransactionStatus
 
 import retrofit2.Converter
@@ -2108,7 +2109,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * Reconcile disabled projects after startup. The coordinator decides whether this node may resume each row.
      */
     @Subscriber('rundeck.bootstrap')
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void resumeDisabledProjectsFromBootstrap() {
+        log.info("Scheduling disabled project deletion recovery")
         Promises.task {
             try {
                 IFramework framework = frameworkService.rundeckFramework
@@ -2123,6 +2126,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     private void scheduleProjectDeleteRecoveryRetry() {
         try {
+            log.info("Rescheduling disabled project deletion recovery in ${PROJECT_DELETE_RECOVERY_RETRY_SECONDS} seconds")
             taskService.schedule(
                 PROJECT_DELETE_RECOVERY_RETRY_SECONDS,
                 PROJECT_DELETE_RECOVERY_TASK,
