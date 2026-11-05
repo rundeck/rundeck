@@ -101,6 +101,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
@@ -1704,6 +1705,78 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.reportService.deleteByExecution(execution)
 
         result.success
+    }
+
+    def "execution files are removed only after transaction commit"() {
+        given:
+        def execution = new Execution()
+        def file = File.createTempFile('execution-commit', '.log')
+        int remoteDeletes = 0
+        Closure<Map> remoteRemoval = {
+            remoteDeletes++
+            [started: true]
+        }
+        def method = ExecutionService.getDeclaredMethod(
+            'deleteExecutionFilesAfterCommit',
+            Execution,
+            Collection,
+            Collection
+        )
+        method.accessible = true
+        TransactionSynchronizationManager.initSynchronization()
+
+        when:
+        method.invoke(service, execution, [remoteRemoval], [file])
+
+        then:
+        file.exists()
+        remoteDeletes == 0
+
+        when:
+        TransactionSynchronizationManager.synchronizations.each { it.afterCommit() }
+
+        then:
+        !file.exists()
+        remoteDeletes == 1
+
+        cleanup:
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+        file.delete()
+    }
+
+    def "execution files remain when transaction rolls back"() {
+        given:
+        def execution = new Execution()
+        def file = File.createTempFile('execution-rollback', '.log')
+        int remoteDeletes = 0
+        Closure<Map> remoteRemoval = {
+            remoteDeletes++
+            [started: true]
+        }
+        def method = ExecutionService.getDeclaredMethod(
+            'deleteExecutionFilesAfterCommit',
+            Execution,
+            Collection,
+            Collection
+        )
+        method.accessible = true
+        TransactionSynchronizationManager.initSynchronization()
+
+        when:
+        method.invoke(service, execution, [remoteRemoval], [file])
+        TransactionSynchronizationManager.clearSynchronization()
+
+        then:
+        file.exists()
+        remoteDeletes == 0
+
+        cleanup:
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+        file.delete()
     }
 
     def "delete execution job file records"() {
