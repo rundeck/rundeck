@@ -84,6 +84,7 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
         String configuredShell = providerMeta == null
                 ? null
                 : providerMeta.get(RemoteCommandShell.PROVIDER_METADATA_KEY);
+        boolean explicitShellMetadata = configuredShell != null;
         final Description pluginDesc = getDescription();
         if (configuredShell == null) {
             boolean supportsPowerShell = pluginDesc.getProperties().stream().anyMatch(
@@ -123,16 +124,20 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
                     config,
                     localDataContext
             );
-            return RemoteCommandShell.parse(
-                    DataContextUtils.replaceDataReferencesInString(
-                            configuredShell,
-                            DataContextUtils.addContext(
-                                    "config",
-                                    MapData.toStringStringMap(expandedConfig),
-                                    localDataContext
-                            )
+            final String resolvedShell = DataContextUtils.replaceDataReferencesInString(
+                    configuredShell,
+                    DataContextUtils.addContext(
+                            "config",
+                            MapData.toStringStringMap(expandedConfig),
+                            localDataContext
                     )
             );
+            if (!explicitShellMetadata) {
+                return RemoteCommandShell.POWERSHELL.name().equalsIgnoreCase(resolvedShell)
+                        ? RemoteCommandShell.POWERSHELL
+                        : RemoteCommandShell.DEFAULT;
+            }
+            return RemoteCommandShell.parse(resolvedShell);
         } catch (IllegalArgumentException e) {
             throw new ExecutionServiceException(
                     "Unable to resolve remote command shell",
