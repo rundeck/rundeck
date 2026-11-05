@@ -54,10 +54,7 @@ describe("PluginStore", () => {
 
   beforeEach(() => {
     mockedApiClient.mockImplementation(() => mockedApi as any);
-    pluginStore = new PluginStore(
-      mockRootStore,
-      null as any,
-    );
+    pluginStore = new PluginStore(mockRootStore, null as any);
   });
 
   afterEach(() => {
@@ -78,9 +75,9 @@ describe("PluginStore", () => {
       await pluginStore.load(ServiceType.WorkflowStep);
 
       expect(pluginStore.plugins).toEqual(expectedResponse);
-      expect(
-        pluginStore.pluginsByService[ServiceType.WorkflowStep],
-      ).toEqual(expectedResponse);
+      expect(pluginStore.pluginsByService[ServiceType.WorkflowStep]).toEqual(
+        expectedResponse,
+      );
 
       const pluginNames = mockWorkflowStepPlugins.map(
         (plugin) => `${plugin.name}-${plugin.service}`,
@@ -109,9 +106,9 @@ describe("PluginStore", () => {
       await pluginStore.load(ServiceType.WorkflowStep);
 
       expect(pluginStore.plugins).toEqual(expectedResponse);
-      expect(
-        pluginStore.pluginsByService[ServiceType.WorkflowStep],
-      ).toEqual(expectedResponse);
+      expect(pluginStore.pluginsByService[ServiceType.WorkflowStep]).toEqual(
+        expectedResponse,
+      );
 
       const pluginNames = expectedResponse.map(
         (plugin) => `${plugin.name}-${plugin.service}`,

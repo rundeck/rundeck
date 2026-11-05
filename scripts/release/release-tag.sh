@@ -1,0 +1,196 @@
+#!/bin/bash
+#
+# release-tag.sh - creates (and optionally pushes) an annotated git tag at a specific commit.
+#
+# This is the single mechanism used to cut release tags. It has no opinion about the
+# release type - the caller resolves the tag name and target commit and hands them
+# here. Shared by:
+#   - setversion.sh, for GA / rc1 / alpha# (it resolves tag name + commit itself)
+#   - release-rc.sh (same directory), for rc2+
+#
+# Can be sourced for its create_and_push_tag() function (callers set PUSH_TO_ORIGIN/DRY_RUN
+# before calling), or invoked directly as a CLI:
+#   release-tag.sh <tag-name> <commit> [message] [--push] [--dry-run] [--debug]
+
+: "${PUSH_TO_ORIGIN:=false}"
+: "${DRY_RUN:=false}"
+
+# Commands the dry-run git() wrapper below treats as read-only (always run for real)
+# vs. as writes (echoed instead of run) when DRY_RUN=true. `git tag` is classified
+# separately (see _release_git_tag_is_write) since whether it's a write depends on
+# its arguments, not just the subcommand name.
+#
+# A caller that needs extra commands (e.g. release-rc.sh, which also runs
+# cherry-pick/fetch/cat-file/rev-list) appends to these after sourcing this file,
+# instead of redefining git() itself - see release-rc.sh.
+: "${RELEASE_GIT_READONLY_CMDS:="rev-parse show-ref diff log status branch ls-remote symbolic-ref"}"
+: "${RELEASE_GIT_WRITE_CMDS:="checkout push commit add"}"
+
+function _release_git_word_in_list {
+    local needle="$1" haystack="$2"
+    [[ " $haystack " == *" $needle "* ]]
+}
+
+# `git tag` with no args, or with -l/--list, is a read-only listing. Anything else
+# (creating a tag, -d/--delete, etc.) is a write. Matched as exact arguments, not
+# substring, so a tag message containing "-l" or "--list" can't be misclassified as
+# a listing. Options that take a following value (e.g. `-m <message>`) have their
+# value skipped so it's never scanned as an option itself - otherwise a message
+# whose entire value is "-l" would be misclassified as list mode and let a real tag
+# creation through.
+function _release_git_tag_is_write {
+    local skip_next=false
+    for arg in "$@"; do
+        if [ "$skip_next" = true ]; then
+            skip_next=false
+            continue
+        fi
+        case "$arg" in
+            -l|--list)
+                return 1
+                ;;
+            -m|--message|-F|--file|-u|--local-user|--cleanup)
+                skip_next=true
+                ;;
+        esac
+    done
+    [ $# -gt 0 ]
+}
+
+# Git wrapper function for dry-run support
+function git() {
+    if [ "$DRY_RUN" = true ]; then
+        if _release_git_word_in_list "$1" "$RELEASE_GIT_READONLY_CMDS"; then
+            command git "$@"
+        elif [ "$1" = "tag" ]; then
+            shift
+            if _release_git_tag_is_write "$@"; then
+                echo "[DRY-RUN] git tag $*"
+            else
+                command git tag "$@"
+            fi
+        elif _release_git_word_in_list "$1" "$RELEASE_GIT_WRITE_CMDS"; then
+            echo "[DRY-RUN] git $*"
+            return 0
+        else
+            command git "$@"
+        fi
+    else
+        command git "$@"
+    fi
+}
+
+# create_and_push_tag <tag-name> <commit> [message]
+#
+# Creates an annotated tag named <tag-name> pointing at <commit>, and pushes it if
+# PUSH_TO_ORIGIN=true. Does not resolve branches, does not know about GA/rc/alpha -
+# the caller is responsible for deciding what <commit> should be.
+function create_and_push_tag {
+    local TAG_NAME="$1"
+    local COMMIT_REF="$2"
+    local MESSAGE="${3:-Release $TAG_NAME}"
+
+    if [ -z "$TAG_NAME" ] || [ -z "$COMMIT_REF" ]; then
+        echo "Error: create_and_push_tag requires a tag name and a commit"
+        return 5
+    fi
+
+    if ! git rev-parse --verify "${COMMIT_REF}^{commit}" >/dev/null 2>&1; then
+        echo "Error: Commit '$COMMIT_REF' not found in repository"
+        return 5
+    fi
+    local TARGET_COMMIT
+    TARGET_COMMIT="$(git rev-parse "${COMMIT_REF}^{commit}")"
+
+    echo "Creating tag: $TAG_NAME"
+    if ! git tag -a -m "$MESSAGE" "$TAG_NAME" "$TARGET_COMMIT"; then
+        echo "Error: Failed to create tag $TAG_NAME"
+        return 1
+    fi
+    echo "Tag created: $TAG_NAME"
+
+    if [ "$PUSH_TO_ORIGIN" = true ]; then
+        echo "Pushing tag to remote..."
+        if ! git push origin "$TAG_NAME"; then
+            echo "Error: Failed to push tag $TAG_NAME (client-reported failure)"
+            # A failed `git push` doesn't prove the remote doesn't have the
+            # tag: the connection can drop after the server's receive-pack
+            # updates the ref but before this client sees the ack. Blindly
+            # deleting the local tag and reporting failure in that case would
+            # leave release-rc.sh unable to add its applied labels for a tag
+            # that actually exists, and the next run's own `git fetch --tags`
+            # would then hit "already exists" against a tag it never pushed
+            # itself. Ask the remote directly what's actually there before
+            # deciding what to do.
+            if ! LS_REMOTE_TAG_OUTPUT="$(git ls-remote --tags origin "refs/tags/$TAG_NAME" 2>&1)"; then
+                echo "Error: could not check the remote for $TAG_NAME either (network/auth failure?): $LS_REMOTE_TAG_OUTPUT"
+                echo "Not deleting the local tag without knowing the remote's actual state - investigate manually before retrying."
+                return 1
+            fi
+            REMOTE_TAG_SHA="$(awk '{print $1}' <<< "$LS_REMOTE_TAG_OUTPUT")"
+            if [ -n "$REMOTE_TAG_SHA" ]; then
+                # git ls-remote of an annotated tag returns the tag OBJECT's
+                # sha, not the commit it points at - compare against the
+                # local tag ref the same way, not $TARGET_COMMIT directly.
+                LOCAL_TAG_OBJECT_SHA="$(git rev-parse "refs/tags/$TAG_NAME")"
+                if [ "$REMOTE_TAG_SHA" = "$LOCAL_TAG_OBJECT_SHA" ]; then
+                    echo "The remote actually has $TAG_NAME already (push succeeded despite the client-side error) - treating this as success."
+                    echo "Tag pushed to remote."
+                    return 0
+                fi
+                echo "Error: origin already has a DIFFERENT $TAG_NAME ($REMOTE_TAG_SHA) than what this run just created ($LOCAL_TAG_OBJECT_SHA)."
+                echo "Not deleting the local tag or guessing which is right - investigate manually before retrying."
+                return 1
+            fi
+            # Remote confirms no such tag exists there (empty, successful
+            # ls-remote) - the push genuinely never landed. Safe to delete
+            # the local-only copy so a retry isn't blocked by it already
+            # existing locally.
+            echo "Confirmed against the remote: $TAG_NAME does not exist there - the push genuinely failed."
+            echo "Deleting local tag $TAG_NAME so a retry isn't blocked by it already existing locally."
+            git tag -d "$TAG_NAME" >/dev/null 2>&1 || echo "  Warning: failed to delete local tag $TAG_NAME - remove it manually before retrying."
+            return 1
+        fi
+        echo "Tag pushed to remote."
+    else
+        echo "Use 'git push origin $TAG_NAME' to push the tag to remote."
+    fi
+}
+
+# Allow running this file directly as a CLI, not just sourcing it for the function
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    function usage {
+        echo "Usage: release-tag.sh <tag-name> <commit> [message] [--push] [--dry-run] [--debug]"
+        exit 2
+    }
+
+    if [ -z "$1" ]; then
+        usage
+    fi
+
+    ARGS=()
+    for arg in "$@"; do
+        case "$arg" in
+            --push)
+                PUSH_TO_ORIGIN=true
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                echo "[DRY-RUN MODE] No changes will be made"
+                ;;
+            --debug|-v)
+                set -x
+                ;;
+            *)
+                ARGS+=("$arg")
+                ;;
+        esac
+    done
+    set -- "${ARGS[@]}"
+
+    if [ -z "$2" ]; then
+        usage
+    fi
+
+    create_and_push_tag "$1" "$2" "$3"
+fi

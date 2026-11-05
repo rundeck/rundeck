@@ -71,8 +71,8 @@ export default defineComponent({
       if (this.index >= this.stack.length) {
         return;
       }
-      let newindex = this.index + 1;
-      let change = this.stack[this.index];
+      const newindex = this.index + 1;
+      const change = this.stack[this.index];
       this.index = newindex;
       this.eventBus?.emit("undo", change);
     },
@@ -80,8 +80,8 @@ export default defineComponent({
       if (this.index < 1) {
         return;
       }
-      let newindex = this.index - 1;
-      let change = this.stack[newindex];
+      const newindex = this.index - 1;
+      const change = this.stack[newindex];
       this.index = newindex;
       this.eventBus?.emit("redo", change);
     },
@@ -103,6 +103,7 @@ export default defineComponent({
   margin-left: var(--spacing-2);
 }
 </style>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- depends on ancestor classes outside the component -->
 <style lang="scss">
 .edit-lock-disabled .btn.btn-xs.btn-default,
 .edit-lock-disabled .btn.btn-simple.btn-xs.btn-muted {

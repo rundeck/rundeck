@@ -12,7 +12,7 @@
         :select="selectItem"
         :highlight="highlight"
       >
-        <li v-for="(item, index) in items">
+        <li v-for="(item, index) in items" :key="index">
           <a href="#" @click.prevent="selectItem(item)">
             <span v-html="highlight(item)"></span>
           </a>

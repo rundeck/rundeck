@@ -37,7 +37,7 @@
       :class="markdownContainerCss"
       data-testid="markdown-container"
     >
-      <VMarkdownView mode="" :content="extraDescription" />
+      <MarkdownView :content="extraDescription" />
     </div>
 
     <slot v-else name="extraDescriptionText"> {{ extraDescription }}</slot>
@@ -46,11 +46,11 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { VMarkdownView } from "vue3-markdown";
+import MarkdownView from "../utils/MarkdownView.vue";
 
 export default defineComponent({
   name: "PluginDetails",
-  components: { VMarkdownView },
+  components: { MarkdownView },
   props: {
     showDescription: {
       type: Boolean,

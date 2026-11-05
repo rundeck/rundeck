@@ -56,8 +56,13 @@ export const FilterInputComp = defineComponent({
         this.extraAttrs.nodeFilterStore.setSelectedFilter(val);
       } else {
         // Emit EventBus event for adhoc page and other pages without NodeFilterStore
-        console.debug("[FilterInputComp] Emitting nodefilter:value:changed event with filter:", val);
-        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: val });
+        console.debug(
+          "[FilterInputComp] Emitting nodefilter:value:changed event with filter:",
+          val,
+        );
+        rundeckContext.eventBus.emit("nodefilter:value:changed", {
+          filter: val,
+        });
       }
     },
     filterClicked(filter: any) {
@@ -66,11 +71,12 @@ export const FilterInputComp = defineComponent({
         this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter);
       } else {
         // Emit EventBus event for adhoc page and other pages without NodeFilterStore
-        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: filter.filter || filter });
+        rundeckContext.eventBus.emit("nodefilter:value:changed", {
+          filter: filter.filter || filter,
+        });
       }
     },
-    nodeFilterKo() {
-      //@ts-ignore
+    nodeFilterKo(): any {
       if (
         this.koFieldName &&
         this.koParam &&
@@ -81,13 +87,11 @@ export const FilterInputComp = defineComponent({
       } else if (this.koFieldName && window[this.koFieldName]) {
         return window[this.koFieldName];
       } else if (!this.koFieldName) {
-        //@ts-ignore
-        return window.nodeFilter;
+        return (window as any).nodeFilter;
       }
     },
     attachKnockout(retry: number) {
       //set up reactive connection to existing Knockout
-      //@ts-ignore
       if (this.nodeFilterKo()) {
         this.subs.push(
           this.nodeFilterKo().filter.subscribe(
@@ -96,7 +100,10 @@ export const FilterInputComp = defineComponent({
         );
         const koVal = this.nodeFilterKo().filter();
         if (this.filterValue) {
-          this.nodeFilterKo().selectNodeFilter({ filter: this.filterValue }, false);
+          this.nodeFilterKo().selectNodeFilter(
+            { filter: this.filterValue },
+            false,
+          );
         } else {
           this.filterValue = koVal;
         }
@@ -170,7 +177,10 @@ function init() {
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              if (filterName === ".*" || this.nodeFilterStore.selectedFilter === ".*") {
+              if (
+                filterName === ".*" ||
+                this.nodeFilterStore.selectedFilter === ".*"
+              ) {
                 this.nodeFilterStore.setSelectedFilter(filterName);
               } else {
                 this.nodeFilterStore.setSelectedFilter(
@@ -277,7 +287,7 @@ function init() {
 }
 window.addEventListener("DOMContentLoaded", init);
 
-window.addEventListener("DOMContentLoaded", (event) => {
+window.addEventListener("DOMContentLoaded", () => {
   const elem = document.querySelector("#execDiv");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });

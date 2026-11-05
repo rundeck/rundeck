@@ -1,6 +1,5 @@
 package rundeck.services.scm
 
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
@@ -47,6 +46,11 @@ class ScmLoaderService implements EventBusAware {
     final Map<String, Boolean> scmProjectInitLoaded = Collections.synchronizedMap([:])
     final Map<String, ScmPluginConfigData> scmPluginMeta = Collections.synchronizedMap([:])
 
+    /**
+     * Bootstrap poller: every loader interval, start a project loader for each project/integration with SCM
+     * enabled and cancel loaders whose SCM was disabled or removed. Scheduled with a fixed delay so a slow
+     * pass never queues back-to-back runs.
+     */
     @Subscriber("rundeck.bootstrap")
     @CompileDynamic
     void beginScmLoader(){
@@ -54,7 +58,7 @@ class ScmLoaderService implements EventBusAware {
             return
         }
         //check if each project has set the SCM Loader process (if needed)
-        scheduledExecutor.scheduleAtFixedRate(
+        scheduledExecutor.scheduleWithFixedDelay(
                 {
                         for (String project : frameworkService.projectNames()) {
                                 for (String integration : scmService.INTEGRATIONS) {
@@ -230,11 +234,20 @@ class ScmLoaderService implements EventBusAware {
         }
     }
 
+    /**
+     * Schedule the per-project SCM loader. Uses a fixed delay between runs, so when a cycle exceeds the
+     * configured interval the next one starts a full interval after it finishes instead of running
+     * back-to-back to catch up.
+     *
+     * @param project project name
+     * @param integration scm integration (import or export)
+     * @return the scheduled future for the loader task
+     */
     def startScmLoader(String project, String integration){
 
         def loader = createProjectLoader(project, integration)
         //enable project integration cache loader
-        def scheduler = scheduledExecutor.scheduleAtFixedRate(
+        def scheduler = scheduledExecutor.scheduleWithFixedDelay(
             {
                     try {
                         loader.run()
@@ -311,11 +324,7 @@ class ScmLoaderService implements EventBusAware {
 
     @CompileDynamic
     List<ScheduledExecution> getJobs(String project){
-        def query=new ScheduledExecutionQuery()
-        query.projFilter = project
-        def listWorkflows = scheduledExecutionService.listWorkflows(query)
-        List<ScheduledExecution> jobs = listWorkflows["schedlist"]
-        return jobs
+        scheduledExecutionService.listJobsForProjectUncached(project)
     }
 
     /**
@@ -507,6 +516,8 @@ class ScmLoaderService implements EventBusAware {
 
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
+
+            plugin.reconcileJobState(jobs*.extid.findAll { it } as Set<String>)
 
             Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project, false)
             List<JobScmReference> joblist = scmService.scmJobRefsForJobs(jobs, jobPluginMeta)

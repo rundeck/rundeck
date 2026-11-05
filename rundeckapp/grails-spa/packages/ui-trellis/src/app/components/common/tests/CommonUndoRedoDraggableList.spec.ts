@@ -1,4 +1,4 @@
-import { mount, VueWrapper } from "@vue/test-utils";
+import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import CommonUndoRedoDraggableList from "../CommonUndoRedoDraggableList.vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 jest.mock("@/library", () => ({
@@ -31,7 +31,10 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   return wrapper;
 };
 
-const assertRenderedItems = (wrapper: VueWrapper<any>, itemsArray: any[] = []) => {
+const assertRenderedItems = (
+  wrapper: VueWrapper<any>,
+  itemsArray: any[] = [],
+) => {
   expect(wrapper.find('[data-testid="item-container"]').exists()).toBe(true);
   const allRenderedItems = wrapper.findAll('[data-testid="rendered-items"]');
   expect(allRenderedItems).toHaveLength(itemsArray.length);
@@ -94,9 +97,7 @@ describe("CommonUndoRedoDraggableList", () => {
 
     await wrapper.vm.$nextTick();
     const emitted = wrapper.emitted("update:modelValue");
-    expect(emitted![0][0]).toEqual(
-      expectedResult,
-    );
+    expect(emitted![0][0]).toEqual(expectedResult);
   });
 
   it("does not emit update:modelValue when data changes from parent", async () => {
@@ -128,6 +129,49 @@ describe("CommonUndoRedoDraggableList", () => {
     expect(wrapper.emitted()["update:modelValue"]).toBeTruthy();
   });
 
+  describe("beforeMove guard", () => {
+    const dragSecondAboveFirst = async (wrapper: VueWrapper<any>) => {
+      const draggable = wrapper.findComponent({ name: "draggable" });
+      await draggable.vm.$emit("update:modelValue", [
+        { name: "Item 2" },
+        { name: "Item 1" },
+      ]);
+      await draggable.vm.$emit("update", { oldIndex: 0, newIndex: 1 });
+      await flushPromises();
+    };
+
+    it("records the move when the guard resolves true", async () => {
+      const beforeMove = jest.fn().mockResolvedValue(true);
+      const wrapper = await createWrapper({
+        modelValue: [{ name: "Item 1" }, { name: "Item 2" }],
+        beforeMove,
+      });
+      await dragSecondAboveFirst(wrapper);
+
+      expect(beforeMove).toHaveBeenCalledWith([
+        { name: "Item 2" },
+        { name: "Item 1" },
+      ]);
+      expect(wrapper.emitted("update:modelValue")![0][0]).toEqual([
+        { name: "Item 2" },
+        { name: "Item 1" },
+      ]);
+    });
+
+    it("reverts the move and records nothing when the guard resolves false", async () => {
+      const beforeMove = jest.fn().mockResolvedValue(false);
+      const wrapper = await createWrapper({
+        modelValue: [{ name: "Item 1" }, { name: "Item 2" }],
+        beforeMove,
+      });
+      await dragSecondAboveFirst(wrapper);
+
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+      assertRenderedItems(wrapper, [{ name: "Item 1" }, { name: "Item 2" }]);
+      expect(wrapper.findComponent(UndoRedo).vm.stack).toHaveLength(0);
+    });
+  });
+
   describe("addButtonDisabled prop", () => {
     it("add button is not disabled by default", async () => {
       const wrapper = await createWrapper({ mode: "edit" });
@@ -151,7 +195,7 @@ describe("CommonUndoRedoDraggableList", () => {
 
   describe("eventBus null guard in wasChanged", () => {
     it("does not throw and still emits update:modelValue when eventBus is undefined", async () => {
-      const { getRundeckContext } = require("@/library");
+      const { getRundeckContext } = jest.requireMock("@/library");
       (getRundeckContext as jest.Mock).mockImplementationOnce(() => ({
         eventBus: undefined,
       }));

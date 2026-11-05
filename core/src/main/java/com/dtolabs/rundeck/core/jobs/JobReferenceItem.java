@@ -3,8 +3,10 @@ package com.dtolabs.rundeck.core.jobs;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 public class JobReferenceItem extends JobRefCommandBase {
     private final String label;
     private final String jobIdentifier;

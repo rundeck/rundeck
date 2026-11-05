@@ -26,6 +26,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.Base64;
 
 /**
  * Decrypts data produced by Jasypt's {@code StandardPBEByteEncryptor} without
@@ -106,6 +107,45 @@ public class LegacyJasyptDecryptor {
             throw new EncryptionException("Encrypted message is null or too short for salt extraction");
         }
 
+        byte[] base64Decoded = tryBase64Decode(encryptedMessage);
+        boolean base64Shaped = isPlausibleCiphertextShape(base64Decoded);
+
+        // When the raw bytes are valid Base64 text that decodes to a plausible [salt][ciphertext]
+        // shape, try that interpretation FIRST. AES-CBC (and DES-CBC) are unauthenticated: the only
+        // thing that makes decryption fail is PKCS#5 padding validation, which random bytes pass by
+        // chance about 1 in `blockSize` times. The raw ASCII bytes of a Base64 string can themselves
+        // coincidentally be block-aligned once the salt-sized prefix is stripped (e.g. a 48-byte
+        // payload Base64-encodes to 64 bytes; 64-16=48 is itself a multiple of 16), so trying the raw
+        // interpretation first risks a false "success" with garbage on the wrong (ASCII) bytes,
+        // using the wrong "salt", before ever reaching the actually-correct decoded ciphertext.
+        if (base64Shaped) {
+            try {
+                return decryptRaw(password, base64Decoded);
+            } catch (EncryptionException ignored) {
+                // fall through to the raw-bytes interpretation
+            }
+        }
+        return decryptRaw(password, encryptedMessage);
+    }
+
+    /**
+     * @return {@code true} if {@code data} is long enough to contain a salt plus at least one
+     * cipher block, and the ciphertext portion (after the salt) is a whole number of cipher
+     * blocks -- i.e. a plausible {@code [salt][ciphertext]} shape for this algorithm, not proof
+     * that the content actually decrypts correctly.
+     */
+    private boolean isPlausibleCiphertextShape(byte[] data) {
+        return data != null
+                && data.length > saltSizeBytes
+                && (data.length - saltSizeBytes) % saltSizeBytes == 0;
+    }
+
+    /**
+     * Interpret {@code encryptedMessage} as raw Jasypt binary output ({@code [salt][ciphertext]})
+     * and decrypt it. Throws {@link EncryptionException} if the bytes are not a valid ciphertext
+     * for this algorithm/password (wrong shape, wrong password, or not ciphertext at all).
+     */
+    private byte[] decryptRaw(char[] password, byte[] encryptedMessage) {
         try {
             byte[] salt = Arrays.copyOfRange(encryptedMessage, 0, saltSizeBytes);
             byte[] ciphertext = Arrays.copyOfRange(encryptedMessage, saltSizeBytes, encryptedMessage.length);
@@ -125,6 +165,19 @@ public class LegacyJasyptDecryptor {
             return cipher.doFinal(ciphertext);
         } catch (Exception e) {
             throw new EncryptionException("Legacy Jasypt decryption failed", e);
+        }
+    }
+
+    /**
+     * Attempt to Base64-decode {@code data}, for recovering content that was stored as a
+     * Base64-encoded string on top of the raw Jasypt binary format. Returns {@code null}
+     * (rather than throwing) if {@code data} is not valid Base64.
+     */
+    private static byte[] tryBase64Decode(byte[] data) {
+        try {
+            return Base64.getDecoder().decode(data);
+        } catch (IllegalArgumentException notBase64) {
+            return null;
         }
     }
 

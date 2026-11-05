@@ -1,7 +1,6 @@
-// @ts-nocheck
-import { mount } from "@vue/test-utils";
+import { mount, VueWrapper } from "@vue/test-utils";
 import ProjectPluginGroups from "../ProjectPluginGroups.vue";
-import { getRundeckContext } from "@/library/rundeckService";
+import { getRundeckContext } from "../../../../library/rundeckService";
 
 // eventBus is created once inside the factory closure (not referencing an
 // outer variable, which jest.mock hoisting would otherwise break) so every
@@ -34,15 +33,26 @@ jest.mock("@/library/modules/pluginService", () => ({
 // out of the DOM at module-load time and isn't relevant to this behavior.
 jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   name: "PluginConfig",
-  props: ["mode", "serviceName", "provider", "showDescription", "showTitle", "config", "validation", "validationWarningText"],
-  template: "<div><slot name=\"extra\"></slot></div>",
+  props: [
+    "mode",
+    "serviceName",
+    "provider",
+    "showDescription",
+    "showTitle",
+    "config",
+    "validation",
+    "validationWarningText",
+  ],
+  template: '<div><slot name="extra"></slot></div>',
 }));
 
 import pluginService from "../../../../library/modules/pluginService";
 
-const mockEmit = getRundeckContext().eventBus.emit;
+const mockEmit = getRundeckContext().eventBus.emit as jest.Mock;
 
-const mountWidget = async (props: Record<string, any> = {}) => {
+const mountWidget = async (
+  props: Record<string, any> = {},
+): Promise<VueWrapper<any>> => {
   const wrapper = mount(ProjectPluginGroups, {
     props: {
       serviceName: "PluginGroup",
@@ -107,7 +117,7 @@ describe("ProjectPluginGroups editing-state event", () => {
 
     wrapper.vm.addPlugin("test-plugin");
     wrapper.vm.workingData[0].entry.config = { host: "example.com" };
-    await wrapper.vm.savePlugin(wrapper.vm.workingData[0], 0);
+    await wrapper.vm.savePlugin(wrapper.vm.workingData[0]);
     await wrapper.vm.$nextTick();
 
     expect(pluginService.validatePluginConfig).toHaveBeenCalled();
@@ -142,6 +152,9 @@ describe("ProjectPluginGroups editing-state event", () => {
 
     wrapper.unmount();
 
-    expect(mockEmit).toHaveBeenCalledWith("project-plugin-group-editing", false);
+    expect(mockEmit).toHaveBeenCalledWith(
+      "project-plugin-group-editing",
+      false,
+    );
   });
 });

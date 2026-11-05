@@ -46,6 +46,7 @@ class ScmPluginInputField {
 
     @Schema(
         description='data type of the field: `String`, `Integer`, `Select` (multi-value), `FreeSelect` (open-ended multi-value), `Boolean` (true/false)',
+        type = 'string',
         allowableValues = ['String','Integer','Select','FreeSelect','Boolean']
     )
     /**

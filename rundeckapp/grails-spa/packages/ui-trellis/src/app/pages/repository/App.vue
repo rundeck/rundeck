@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import Overlay from "./components/Overlay.vue";
+import Overlay from "./components/RdOverlay.vue";
 export default {
   name: "PluginApplication",
   components: {
@@ -16,4 +16,3 @@ export default {
   methods: {},
 };
 </script>
-<style lang="scss"></style>

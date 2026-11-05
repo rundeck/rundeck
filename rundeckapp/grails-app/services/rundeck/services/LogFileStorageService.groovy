@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
+import org.rundeck.app.grails.events.AppEvents
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import org.hibernate.sql.JoinType
@@ -50,7 +52,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextClosedEvent
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
@@ -66,6 +68,7 @@ import jakarta.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -93,8 +96,8 @@ class LogFileStorageService
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
-    AsyncListenableTaskExecutor logFileTaskExecutor
-    AsyncListenableTaskExecutor logFileStorageTaskExecutor
+    AsyncTaskExecutor logFileTaskExecutor
+    AsyncTaskExecutor logFileStorageTaskExecutor
     TaskScheduler logFileStorageTaskScheduler
     TaskExecutor logFileStorageDeleteRemoteTask
     def executorService
@@ -284,20 +287,93 @@ class LogFileStorageService
     ])
 
 
+    /**
+     * Fast-path flag: true once every consumer and scheduler has been started. The per-step flags below
+     * let a retry after a partial failure submit only what is still missing.
+     */
+    private final AtomicBoolean consumersStarted = new AtomicBoolean(false)
+    private boolean storageConsumerStarted = false
+    private boolean retrievalConsumerStarted = false
+    private boolean periodicDequeueScheduled = false
+
+    /**
+     * Applies the executor concurrency limits and, when a LogFileStorage plugin is configured, starts the
+     * consumers; otherwise logs a WARN. A plugin configured later through a configuration change starts
+     * them via {@link #onAppConfigChanged(Set)}.
+     */
     @Override
     void afterPropertiesSet() throws Exception {
-        def pluginName = getConfiguredPluginName()
-        if(!pluginName){
-            //System.err.println("LogFileStoragePlugin not configured, disabling...")
+        applyExecutorConcurrencyLimits()
+        if (!getConfiguredPluginName()) {
+            log.warn(
+                "LogFileStorage plugin is not configured (${FILE_STORAGE_PLUGIN.key}); " +
+                "log storage consumers are disabled until it is set."
+            )
             return
         }
+        startConsumers()
+    }
 
-        logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
-        logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(RETRIEVAL_CONCURRENCY_LIMIT, 5)
+    /**
+     * Starts the consumers when a configuration change makes the LogFileStorage plugin resolvable after
+     * initialization (for example a value saved only in DB-backed System Configuration). Never throws:
+     * the event bus dispatches asynchronously and the publisher must not be affected. A failed or partial
+     * start is retried on the next configuration change.
+     * @param keys configuration keys reported as changed
+     */
+    @Subscriber(AppEvents.APP_CONFIG_CHANGED)
+    void onAppConfigChanged(Set<String> keys) {
+        if (consumersStarted.get()) {
+            return
+        }
+        try {
+            def pluginName = getConfiguredPluginName()
+            if (!pluginName) {
+                return
+            }
+            if (startConsumers()) {
+                log.info(
+                    "Log storage consumers started: ${FILE_STORAGE_PLUGIN.key} is now configured " +
+                    "(plugin: ${pluginName})"
+                )
+            }
+        } catch (Exception e) {
+            log.error(
+                "Failed to start log storage consumers after a configuration change; " +
+                "the missing consumers will be retried on the next configuration change",
+                e
+            )
+        }
+    }
 
-        log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
-        log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
-        logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
+    /**
+     * Sets the executor concurrency limits from configuration, independently of the plugin: the retrieval
+     * executor also serves direct retrieval requests, so its limit must be fixed before first use.
+     */
+    private void applyExecutorConcurrencyLimits() {
+        if (configurationService == null) {
+            return
+        }
+        if (logFileStorageTaskExecutor != null) {
+            logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
+            log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
+        }
+        if (logFileTaskExecutor != null) {
+            logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(RETRIEVAL_CONCURRENCY_LIMIT, 5)
+            log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
+        }
+    }
+
+    /**
+     * Starts whatever is still missing: the storage consumer, the retrieval consumer and, for the periodic
+     * resume strategy, the incomplete-request scheduler. Each step is submitted at most once per service
+     * lifetime, so a retry after a partial failure never duplicates a running consumer.
+     * @return true when this invocation started at least one step
+     */
+    private synchronized boolean startConsumers() {
+        boolean startedSomething = false
+        if (!storageConsumerStarted) {
+            logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
 
             if (!task.partial) {
                 storageQueueCounter?.dec()
@@ -315,8 +391,15 @@ class LogFileStorageService
                 }
             }
         }))
-        logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
-        if (getConfiguredResumeStrategy() == 'periodic') {
+            storageConsumerStarted = true
+            startedSomething = true
+        }
+        if (!retrievalConsumerStarted) {
+            logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
+            retrievalConsumerStarted = true
+            startedSomething = true
+        }
+        if (!periodicDequeueScheduled && getConfiguredResumeStrategy() == 'periodic') {
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(
                 {
@@ -326,7 +409,11 @@ class LogFileStorageService
                         log.error("Error dequeueing incomplete log storage requests", t)
                     }
                 }, new Date(System.currentTimeMillis() + delay), delay)
+            periodicDequeueScheduled = true
+            startedSomething = true
         }
+        consumersStarted.set(true)
+        return startedSomething
     }
 
     static SystemConfig.SystemConfigBuilder configDefaults(SystemConfig.SystemConfigBuilder builder) {
@@ -1188,9 +1275,58 @@ class LogFileStorageService
         if (useStoredPath && execution.outputfilepath && !execution.isRemoteOutputfilepath()) {
             //use previously stored outputfilepath if present, substitute correct filetype
             String path = execution.outputfilepath.replaceAll(/\.([^\.]+)$/,'')
-            return new File(path + '.' + filetype + (partial ? '.part' : ''))
-        } else{
-            return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype, partial))
+            File storedFile = new File(path + '.' + filetype + (partial ? '.part' : ''))
+            if (isStoredPathSafeForProject(storedFile, execution.project)) {
+                return storedFile
+            }
+            //isStoredPathSafeForProject already logged the specific reason for rejecting the path
+            log.warn(
+                    "Execution ${execution.id} stored outputfilepath \"${execution.outputfilepath}\" was rejected; " +
+                    "using generated path instead"
+            )
+        }
+        return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype, partial))
+    }
+
+    /**
+     * Verify a stored log file path does not resolve into a different project's log directory
+     * under the shared local logs root. A path outside the local logs root entirely (e.g. a
+     * legacy custom-configured storage location from a pre-1.6 upgrade) is considered safe,
+     * since project-scoped containment cannot be meaningfully enforced outside that root.
+     * @param storedFile resolved File for the stored path
+     * @param project the execution's own project name
+     * @return true if the path is not a cross-project path within the local logs root
+     */
+    private boolean isStoredPathSafeForProject(File storedFile, String project) {
+        File logsRoot
+        try {
+            logsRoot = getLocalLogsDir().canonicalFile
+        } catch (Exception e) {
+            //the local logs root can't be resolved here (e.g. frameworkService/framework.logs.dir
+            //not available): cross-project containment can't be evaluated, so fail closed rather
+            //than risk trusting a path that was never actually validated
+            log.warn("Unable to resolve local logs directory to validate stored outputfilepath \"${storedFile}\": ${e.message}")
+            return false
+        }
+        try {
+            File canonicalStored = storedFile.canonicalFile
+            String rootPrefix = logsRoot.path + File.separator
+            if (!canonicalStored.path.startsWith(rootPrefix)) {
+                //outside the shared logs root entirely: not a cross-project path
+                return true
+            }
+            File projectDir = new File(logsRoot, project).canonicalFile
+            String projectPrefix = projectDir.path + File.separator
+            boolean safe = canonicalStored.path.startsWith(projectPrefix)
+            if (!safe) {
+                log.warn(
+                        "Stored outputfilepath \"${storedFile}\" resolves into another project's log directory " +
+                        "(expected under \"${projectDir}\")"
+                )
+            }
+            return safe
+        } catch (IOException ignored) {
+            return false
         }
     }
     /**

@@ -43,17 +43,17 @@ export default defineComponent({
   },
   watch: {
     dateString: {
-      handler(newVal, oldVal) {
+      handler() {
         this.recalcDate();
       },
     },
     time: {
-      handler(newVal, oldVal) {
+      handler() {
         this.$emit("update:modelValue", this.datetime);
       },
     },
     modelValue: {
-      handler(newVal, oldVal) {
+      handler() {
         this.setFromValue();
       },
     },
@@ -80,6 +80,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles third-party component internals -->
 <style lang="scss">
 .bs-date-picker {
   .btn-primary {

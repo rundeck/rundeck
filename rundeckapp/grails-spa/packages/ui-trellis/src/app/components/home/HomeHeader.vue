@@ -64,6 +64,7 @@
               {{ $t("projects") }}:
               <a
                 v-for="project in recentProjects"
+                :key="project"
                 class="project-link"
                 :href="projectLink(project)"
               >
@@ -165,7 +166,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .homeHeader {
   .card {
     margin: 0 15px 20px;

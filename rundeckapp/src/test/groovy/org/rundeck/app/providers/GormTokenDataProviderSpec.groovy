@@ -257,6 +257,40 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
 
     }
 
+    def "findByTokenAndType matches both SECURED-hashed and LEGACY-raw rows"() {
+        given:
+        def user = new User(login: "admin2")
+        def clearSecured = "clear-secured-value-abc"
+        def clearLegacy = "clear-legacy-value-xyz"
+
+        new AuthToken(
+                user: user,
+                uuid: "secured-1",
+                authRoles: "admin",
+                token: clearSecured,
+                tokenMode: AuthTokenMode.SECURED,
+                type: AuthTokenType.WEBHOOK,
+        ).save(flush: true, failOnError: true)
+        new AuthToken(
+                user: user,
+                uuid: "legacy-1",
+                authRoles: "admin",
+                token: clearLegacy,
+                tokenMode: AuthTokenMode.LEGACY,
+                type: AuthTokenType.WEBHOOK,
+        ).save(flush: true, failOnError: true)
+
+        when:
+        def securedMatch = provider.findByTokenAndType(clearSecured, AuthTokenType.WEBHOOK)
+        def legacyMatch = provider.findByTokenAndType(clearLegacy, AuthTokenType.WEBHOOK)
+        def noMatch = provider.findByTokenAndType("not-a-real-token", AuthTokenType.WEBHOOK)
+
+        then:
+        securedMatch.uuid == "secured-1"
+        legacyMatch.uuid == "legacy-1"
+        noMatch == null
+    }
+
     def "findAllByUser returns the user's tokens without loading the full user row"() {
         given:
         User owner = new User(login: 'bob').save(flush: true, failOnError: true)

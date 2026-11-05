@@ -1,6 +1,7 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiModeFlag
 import org.rundeck.util.annotations.UiModeStatus
@@ -61,6 +62,7 @@ class JobReferenceSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
+    @ExcludePro
     def "create a job with referenced execution node step by uuid and run it successfully"(){
         setup:
         String projectName = 'JobReferenceUUIDTest'
@@ -92,6 +94,7 @@ class JobReferenceSpec extends SeleniumBase {
         [legacyUi] << UI_MODES
     }
 
+    @ExcludePro
     def "create a job with referenced execution node step by name and run it successfully"(){
         setup:
         String projectName = 'JobReferenceByNameTest'
@@ -114,6 +117,47 @@ class JobReferenceSpec extends SeleniumBase {
         ExecutionShowPage executionPage = jobPage.runJob(true)
         def executionId = executionPage.getCurrentExecutionId()
         then:
+        noExceptionThrown()
+        verifyAll {
+            JobUtils.waitForExecution(
+                    ExecutionStatus.SUCCEEDED.state,
+                    executionId as String,
+                    client)
+
+            executionPage.waitForElementAttributeToChange executionPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
+            executionPage.getLogOutput().first().getText() == 'this is my jobref'
+        }
+        cleanup:
+        deleteProject(projectName)
+        where:
+        [legacyUi] << UI_MODES
+    }
+
+    @ExcludePro
+    def "create a job with referenced execution node step picked from the job name autocomplete and run it successfully"(){
+        setup:
+        String projectName = 'JobReferenceNameAutocompleteTest'
+        setupProject(projectName)
+
+        expect:
+        JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
+
+        when: "the child job is chosen from the name field suggestions rather than typed in full"
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        JobShowPage jobPage = jobCreatePage
+                .withName('parentJob')
+                .addStep(new JobReferenceStep([
+                        childJobName        : 'simple-child-job',
+                        useNameAutocomplete : true,
+                        stepType            : StepType.NODE
+                ]))
+                .addDefaultTab('output')
+                .saveJob()
+
+        ExecutionShowPage executionPage = jobPage.runJob(true)
+        def executionId = executionPage.getCurrentExecutionId()
+
+        then: "the reference resolves, proving the suggestion populated the name field"
         noExceptionThrown()
         verifyAll {
             JobUtils.waitForExecution(

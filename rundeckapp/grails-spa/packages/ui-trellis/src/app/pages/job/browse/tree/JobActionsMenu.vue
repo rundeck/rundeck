@@ -115,7 +115,7 @@
       </li>
       <template v-if="authz['read']">
         <li class="divider"></li>
-        <li v-for="format in ['xml', 'yaml', 'json']">
+        <li v-for="format in ['xml', 'yaml', 'json']" :key="format">
           <a :href="downloadFormatHref(format)">
             <b class="glyphicon glyphicon-file"></b>
             {{

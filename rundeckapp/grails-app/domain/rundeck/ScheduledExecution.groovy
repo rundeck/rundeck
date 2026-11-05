@@ -1079,7 +1079,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             } catch (NumberFormatException e) {
             }
             if (!found) {
-                found = ScheduledExecution.findByUuid(anid)
+                //uncached: the query cache is local to each JVM, so in cluster mode it can resolve
+                //a UUID to the id of a row another node already deleted
+                found = ScheduledExecution.findByUuid(anid, [cache: false])
             }
         }
         return found

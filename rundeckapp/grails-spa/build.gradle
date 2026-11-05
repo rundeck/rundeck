@@ -49,6 +49,7 @@ tasks.register("runNpmBuild", NpmTask) {
     inputs.file 'packages/ui-trellis/.env.production'
 
     inputs.dir 'packages/ui-trellis/src/app'
+    inputs.dir 'packages/ui-trellis/src/library'
 
     outputs.dir(file("$spaBuildDir"))
     outputs.cacheIf { false }

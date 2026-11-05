@@ -27,6 +27,12 @@ group "webhooks"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
+// Pre-register sourcesJar before the grails-plugin applies: it synchronously checks for this
+// task inside its own apply() and logs "A sourcesJar task was not found, creating one." if missing.
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
 apply plugin:"org.apache.grails.gradle.grails-plugin"
 apply plugin:"cloud.wondrify.asset-pipeline"
 apply plugin:"org.apache.grails.gradle.grails-gsp"

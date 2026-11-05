@@ -989,6 +989,11 @@ Since: v15''',
                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, isExport)
                 //relaod all jobs to get project status
                 scmService.exportStatusForJobs(params.project, authContext, jobs.schedlist, true, jobsPluginMeta)
+            } else {
+                scmService.reconcileImportJobState(
+                    params.project,
+                    scheduledExecutionService.listJobsForProjectUncached(params.project)
+                )
             }
         }
 
@@ -1231,7 +1236,7 @@ Since: v15''',
                 item.status = ImportSynchState.IMPORT_NEEDED
                 if(item.job){
                     if(item.job.jobId){
-                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        def se = ScheduledExecution.getByIdOrUUID(item.job.jobId)
                         if(se){
                             def status = scmService.importStatusForJob(se)
                             item.status = status?.get(item.job.jobId).synchState
@@ -1283,7 +1288,9 @@ Since: v15''',
                 ScheduledExecution.getByIdOrUUID(it)
             }.findAll { it }
         } else {
-            jobs = ScheduledExecution.findAllByProject(project)
+            //uncached: the query cache is local to each JVM, so in cluster mode it can return jobs
+            //another node already deleted, which fails this request with ObjectNotFoundException
+            jobs = scheduledExecutionService.listJobsForProjectUncached(project)
             jobPluginMeta = scmService.getJobsPluginMeta(project, true)
         }
 
@@ -1511,7 +1518,8 @@ Since: v15''',
             Set<String> exportJobIds = actionInput.jobIds.collect { it.trim() }.findAll { it }
 
             //add job ids determined from input paths
-            List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
+            //uncached: see getViewExportActionItems, the query cache is not invalidated by other nodes
+            List<ScheduledExecution> alljobs = scheduledExecutionService.listJobsForProjectUncached(project)
             Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
 
             def jobsPluginMeta = scmService.getJobsPluginMeta(project, isExport)

@@ -116,7 +116,7 @@ import { RecycleScroller } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 
 import { getAppLinks } from "../../../rundeckService";
-import Skeleton from "../../skeleton/Skeleton.vue";
+import Skeleton from "../../skeleton/RdSkeleton.vue";
 import { url } from "../../../rundeckService";
 import { Project } from "../../../stores/Projects";
 

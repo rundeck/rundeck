@@ -251,4 +251,161 @@ class ResourceJsonFormatParserSpec extends Specification {
         basicJsonScalars   | ['test1', 'test2']
 
     }
+
+    def "nested attributes sub-object is merged into node attributes"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "username": "admin",
+    "attributes": {
+      "custom-key": "custom-value",
+      "env": "prod"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node != null
+        node.getAttributes()["custom-key"] == "custom-value"
+        node.getAttributes()["env"] == "prod"
+        node.getAttributes()["hostname"] == "host1"
+    }
+
+    def "nested attributes coexist with top-level attributes when no key conflict"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "username": "admin",
+    "top-level-key": "top-value",
+    "attributes": {
+      "nested-key": "nested-value"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node.getAttributes()["top-level-key"] == "top-value"
+        node.getAttributes()["nested-key"] == "nested-value"
+        !node.getAttributes().containsKey("attributes")
+    }
+
+    def "nested attributes override top-level attributes with the same key"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "username": "admin",
+    "env": "staging",
+    "attributes": {
+      "env": "prod"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node.getAttributes()["env"] == "prod"
+    }
+
+    def "all standard and custom attributes nested inside attributes sub-object are applied correctly"() {
+        given:
+        def json = '''
+{
+  "madmartigan.local": {
+    "tags": ["local", "server"],
+    "attributes": {
+      "nodename": "madmartigan.local",
+      "hostname": "madmartigan.local",
+      "osFamily": "unix",
+      "osName": "Mac OS X",
+      "osVersion": "10.10.3",
+      "osArch": "x86_64",
+      "username": "RODRIGO",
+      "description": "Rundeck server node",
+      "currentenv": "test"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("madmartigan.local")
+
+        then:
+        node != null
+        node.getAttributes()["hostname"] == "madmartigan.local"
+        node.getAttributes()["osFamily"] == "unix"
+        node.getAttributes()["username"] == "RODRIGO"
+        node.getAttributes()["currentenv"] == "test"
+        node.getTags() == ["local", "server"] as Set
+    }
+
+    def "tags string nested inside attributes sub-object overrides top-level tags"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "tags": "top1, top2",
+    "attributes": {
+      "tags": "nested1, nested2"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node.getTags() == ["nested1", "nested2"] as Set
+    }
+
+    def "tags collection nested inside attributes sub-object is applied when no top-level tags present"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "attributes": {
+      "tags": ["nested1", "nested2"]
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node.getTags() == ["nested1", "nested2"] as Set
+    }
 }

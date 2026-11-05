@@ -24,17 +24,17 @@ describe("PluginSearch", () => {
     it("shows the filter label", async () => {
       const wrapper = await createWrapper();
 
-      expect(
-        wrapper.find('[data-testid="plugin-search-label"]').exists(),
-      ).toBe(true);
+      expect(wrapper.find('[data-testid="plugin-search-label"]').exists()).toBe(
+        true,
+      );
     });
 
     it("shows the search input", async () => {
       const wrapper = await createWrapper();
 
-      expect(
-        wrapper.find('[data-testid="plugin-search-input"]').exists(),
-      ).toBe(true);
+      expect(wrapper.find('[data-testid="plugin-search-input"]').exists()).toBe(
+        true,
+      );
     });
 
     it("shows the search button", async () => {
@@ -99,9 +99,9 @@ describe("PluginSearch", () => {
     it("hides the filter label", async () => {
       const wrapper = await createWrapper({ props: { ea: true } });
 
-      expect(
-        wrapper.find('[data-testid="plugin-search-label"]').exists(),
-      ).toBe(false);
+      expect(wrapper.find('[data-testid="plugin-search-label"]').exists()).toBe(
+        false,
+      );
     });
 
     it("hides the search button", async () => {
@@ -112,10 +112,11 @@ describe("PluginSearch", () => {
       ).toBe(false);
     });
 
-    it("renders the PtInput component", async () => {
+    it("renders the PtInput component without the col-sm-12 wrapper class", async () => {
       const wrapper = await createWrapper({ props: { ea: true } });
 
       expect(wrapper.findComponent(PtInput).exists()).toBe(true);
+      expect(wrapper.classes("col-sm-12")).toBe(false);
     });
 
     it("emits searching=true immediately when typing", async () => {

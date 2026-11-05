@@ -314,6 +314,7 @@ public class DataContextUtils {
      * @return string with values substituted, or original string
      * @deprecated use {@link #replaceDataReferencesInString(String, Map)}
      */
+    @Deprecated
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data) {
         return replaceDataReferencesInString(input, data);
     }
@@ -347,6 +348,7 @@ public class DataContextUtils {
      * @return string with values substituted, or original string
      * @deprecated use {@link #replaceDataReferencesInString(String, Map, Converter, boolean)}
      */
+    @Deprecated
     public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
                                                        final Converter<String, String> converter, boolean failOnUnexpanded) {
         return replaceDataReferencesInString(input, data, converter, failOnUnexpanded, false);
@@ -475,6 +477,7 @@ public class DataContextUtils {
      * @return string with values substituted, or original string
      * @deprecated use {@link #replaceDataReferencesInString(String, Map, Converter, boolean, boolean)}
      */
+    @Deprecated
     public static String replaceDataReferences(
             final String input,
             final Map<String, Map<String, String>> data,

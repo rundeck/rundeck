@@ -41,6 +41,8 @@
       :theme="theme"
       :height="height"
       :width="width"
+      :min-lines="minLines"
+      :max-lines="maxLines"
       @init="aceEditorInit"
     ></ace>
   </div>
@@ -88,6 +90,14 @@ export default defineComponent({
     codeSyntaxSelectable: Boolean,
     softWrapControl: Boolean,
     readOnly: Boolean,
+    minLines: {
+      type: Number,
+      default: 0,
+    },
+    maxLines: {
+      type: Number,
+      default: Infinity,
+    },
   },
   emits: ["update:modelValue", "init"],
   data() {
@@ -121,13 +131,13 @@ export default defineComponent({
     };
   },
   watch: {
-    valueInternal(newValue, oldValue) {
+    valueInternal(newValue) {
       this.$emit("update:modelValue", newValue);
     },
-    modelValue(newValue, oldValue) {
+    modelValue(newValue) {
       this.valueInternal = newValue;
     },
-    lang(newValue, oldValue) {
+    lang(newValue) {
       this.modeInternal = newValue;
     },
   },

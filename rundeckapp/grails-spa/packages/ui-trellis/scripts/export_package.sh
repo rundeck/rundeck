@@ -25,6 +25,7 @@ npm_stage_package(){
   mkdir -p "$buildPackDir"
 
   sourceDirs=(
+    'eslint'
     'lib'
     'src'
   )

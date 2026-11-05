@@ -39,7 +39,6 @@ const messages = {
   message_fieldLabel: "Label",
   message_fieldKey: "Key",
   message_fieldFilter: "Filtrar campos",
-  message_empty: "Puede dejarse vacio",
   message_cancel: "Cancelar",
   message_add: "Agregar",
   message_addField: "Agregar Nuevo Campo",
@@ -195,8 +194,10 @@ const messages = {
 
   "acl.config.link.title": "Project Settings > Access Control",
   "acl.config.system.link.title": "System Settings > Access Control",
-  "settings.uiEarlyAccess.toast.enabled": "Acceso anticipado a Next UI habilitado. Puedes volver a cambiarlo en cualquier momento.",
-  "settings.uiEarlyAccess.toast.disabled": "Next UI ha sido desactivado. Puedes volver a cambiarlo en cualquier momento.",
+  "settings.uiEarlyAccess.toast.enabled":
+    "Acceso anticipado a Next UI habilitado. Puedes volver a cambiarlo en cualquier momento.",
+  "settings.uiEarlyAccess.toast.disabled":
+    "Next UI ha sido desactivado. Puedes volver a cambiarlo en cualquier momento.",
 
   "acl.example.summary": "Ejemplo de ACL Policy",
 

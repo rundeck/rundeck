@@ -23,7 +23,9 @@ describe("PtSelect", () => {
   describe("label", () => {
     it("does not show a label when none is provided", async () => {
       const wrapper = await createWrapper();
-      expect(wrapper.find('[data-testid="pt-select-label"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="pt-select-label"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows the label text above the dropdown so users know what to pick", async () => {
@@ -34,19 +36,32 @@ describe("PtSelect", () => {
     });
 
     it("links the label to the dropdown via the for attribute so clicking the label opens it", async () => {
-      const wrapper = await createWrapper({ label: "Environment", inputId: "env-field" });
-      expect(wrapper.find('[data-testid="pt-select-label"]').attributes("for")).toBe("env-field");
+      const wrapper = await createWrapper({
+        label: "Environment",
+        inputId: "env-field",
+      });
+      expect(
+        wrapper.find('[data-testid="pt-select-label"]').attributes("for"),
+      ).toBe("env-field");
     });
   });
 
   describe("error message", () => {
     it("does not show an error when the field is valid", async () => {
-      const wrapper = await createWrapper({ invalid: false, errorText: "Required" });
-      expect(wrapper.find('[data-testid="pt-select-error"]').exists()).toBe(false);
+      const wrapper = await createWrapper({
+        invalid: false,
+        errorText: "Required",
+      });
+      expect(wrapper.find('[data-testid="pt-select-error"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows the error message when the field is invalid so users know what to fix", async () => {
-      const wrapper = await createWrapper({ invalid: true, errorText: "Please select an option" });
+      const wrapper = await createWrapper({
+        invalid: true,
+        errorText: "Please select an option",
+      });
       const error = wrapper.find('[data-testid="pt-select-error"]');
       expect(error.exists()).toBe(true);
       expect(error.text()).toBe("Please select an option");
@@ -54,14 +69,18 @@ describe("PtSelect", () => {
 
     it("does not show an error even when invalid if no errorText is provided", async () => {
       const wrapper = await createWrapper({ invalid: true });
-      expect(wrapper.find('[data-testid="pt-select-error"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="pt-select-error"]').exists()).toBe(
+        false,
+      );
     });
   });
 
   describe("when user picks an option", () => {
     it("emits the selected value so the parent can update its state", async () => {
       const wrapper = await createWrapper();
-      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 2");
+      await wrapper
+        .findComponent(Select)
+        .vm.$emit("update:modelValue", "Option 2");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
@@ -72,7 +91,9 @@ describe("PtSelect", () => {
       jest.useFakeTimers();
       const wrapper = await createWrapper({ debounceMs: 300 });
 
-      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 1");
+      await wrapper
+        .findComponent(Select)
+        .vm.$emit("update:modelValue", "Option 1");
 
       // Should not emit immediately
       expect(wrapper.emitted("update:modelValue")).toBeFalsy();
@@ -88,9 +109,15 @@ describe("PtSelect", () => {
       jest.useFakeTimers();
       const wrapper = await createWrapper({ debounceMs: 300 });
 
-      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 1");
-      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 2");
-      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 3");
+      await wrapper
+        .findComponent(Select)
+        .vm.$emit("update:modelValue", "Option 1");
+      await wrapper
+        .findComponent(Select)
+        .vm.$emit("update:modelValue", "Option 2");
+      await wrapper
+        .findComponent(Select)
+        .vm.$emit("update:modelValue", "Option 3");
 
       jest.advanceTimersByTime(300);
       await wrapper.vm.$nextTick();

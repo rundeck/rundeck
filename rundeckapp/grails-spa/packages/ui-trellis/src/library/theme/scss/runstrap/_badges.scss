@@ -91,3 +91,9 @@ a.badge {
     cursor: pointer;
   }
 }
+
+// RUN-4966: .badge is fully static Bootstrap CSS with no dark coverage.
+*[data-color-theme="dark"] .badge {
+  color: var(--font-color);
+  background-color: var(--default-color);
+}

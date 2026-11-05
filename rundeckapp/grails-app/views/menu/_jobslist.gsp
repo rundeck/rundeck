@@ -204,6 +204,36 @@
                                 </g:elseif>
                             </span>
                             </g:if>
+                                <g:if test="${executionAclValid && executionAclValid[scheduledExecution.uuid] == false}">
+                                    <%-- enforced means the trigger already skips the run, so the
+                                         wording says so rather than warning about something a
+                                         later release might do --%>
+                                    <g:set var="executionAclWarning"
+                                           value="${scheduledExecution.user
+                                                   ? g.message(
+                                                           code: executionAclEnforced
+                                                                   ? 'job.execution.acl.invalid.blocked.warning.title'
+                                                                   : 'job.execution.acl.invalid.warning.title',
+                                                           args: [scheduledExecution.user])
+                                                   : g.message(
+                                                           code: executionAclEnforced
+                                                                   ? 'job.execution.acl.missing.owner.blocked.warning.title'
+                                                                   : 'job.execution.acl.missing.owner.warning.title')}"/>
+                                    <%-- icon-only, so the warning must be reachable without a mouse --%>
+                                    %{-- a bare span is role=generic, which does not take an
+                                         author-provided name, so aria-label alone is ignored --}%
+                                    <span class="has_tooltip text-warning"
+                                          data-testid="execution-acl-warning-badge"
+                                          tabindex="0"
+                                          role="img"
+                                          aria-label="${executionAclWarning}"
+                                          title="${executionAclWarning}"
+                                          data-toggle="tooltip"
+                                          data-container="#section-content"
+                                          data-placement="auto bottom">
+                                        <i class="glyphicon glyphicon-warning-sign" aria-hidden="true"></i>
+                                    </span>
+                                </g:if>
                                 <span class="vue-ui-socket">
                                     <ui-socket section="job-list-job-name"
                                                location="badges"

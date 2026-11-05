@@ -6,7 +6,8 @@ const meta: Meta<typeof PtInput> = {
   title: "PtInput",
   component: PtInput,
   parameters: {
-    componentSubtitle: "A wrapper component for PrimeVue InputText and IconField with custom styling, labels, helper text, and error states",
+    componentSubtitle:
+      "A wrapper component for PrimeVue InputText, Textarea and IconField with custom styling, labels, helper text, and error states",
     actions: {
       disable: true,
     },
@@ -39,7 +40,8 @@ const meta: Meta<typeof PtInput> = {
         type: "boolean",
       },
       type: "boolean",
-      description: "When true, displays the input in an invalid state with error styling.",
+      description:
+        "When true, displays the input in an invalid state with error styling.",
     },
     label: {
       control: {
@@ -60,35 +62,40 @@ const meta: Meta<typeof PtInput> = {
         type: "text",
       },
       type: "string",
-      description: "Error message displayed below the input when invalid is true.",
+      description:
+        "Error message displayed below the input when invalid is true.",
     },
     leftIcon: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Icon class for left icon (e.g., 'pi pi-search'). When provided, renders IconField component.",
+      description:
+        "Icon class for left icon (e.g., 'pi pi-search'). When provided, renders IconField component.",
     },
     rightIcon: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Icon class for right icon (e.g., 'pi pi-times'). When provided, renders IconField component.",
+      description:
+        "Icon class for right icon (e.g., 'pi pi-times'). When provided, renders IconField component.",
     },
     inputId: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "ID for the input element. Used to associate label with input.",
+      description:
+        "ID for the input element. Used to associate label with input.",
     },
     name: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Name attribute for the element, typically used in form submissions.",
+      description:
+        "Name attribute for the element, typically used in form submissions.",
     },
     type: {
       options: ["text", "password", "email", "number", "tel", "url", "search"],
@@ -96,7 +103,8 @@ const meta: Meta<typeof PtInput> = {
         type: "select",
       },
       type: "string",
-      description: "Input type. Options: 'text', 'password', 'email', 'number', 'tel', 'url', 'search'.",
+      description:
+        "Input type. Options: 'text', 'password', 'email', 'number', 'tel', 'url', 'search'.",
     },
     readonly: {
       control: {
@@ -131,7 +139,8 @@ const meta: Meta<typeof PtInput> = {
         type: "text",
       },
       type: "string",
-      description: "Identifier of the element that labels the input for accessibility.",
+      description:
+        "Identifier of the element that labels the input for accessibility.",
     },
   },
   args: {
@@ -169,7 +178,7 @@ export const Playground: Story = {
   }),
 };
 
-const generateTemplate = (args: Record<string, any>) => {
+const generateTemplate = () => {
   return `<div>
     <PtInput v-bind="args" />
   </div>`;
@@ -182,7 +191,7 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {},
 };
@@ -194,11 +203,30 @@ export const WithLabel: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
     placeholder: "Enter text...",
+  },
+};
+
+export const Multiline: Story = {
+  render: (args) => ({
+    props: Object.keys(args),
+    components: { PtInput },
+    setup() {
+      return { args };
+    },
+    template: generateTemplate(),
+  }),
+  args: {
+    multiline: true,
+    rows: 3,
+    label: "Execution Notes",
+    helpText:
+      "Optional. Add a note to override the step's default description.",
+    placeholder: "e.g. Restarts the web tier on production nodes...",
   },
 };
 
@@ -209,7 +237,7 @@ export const WithHelperText: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -225,7 +253,7 @@ export const WithLeftIcon: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -242,7 +270,7 @@ export const WithRightIcon: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -259,7 +287,7 @@ export const WithBothIcons: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -277,7 +305,7 @@ export const InvalidState: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -295,7 +323,7 @@ export const DisabledState: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",

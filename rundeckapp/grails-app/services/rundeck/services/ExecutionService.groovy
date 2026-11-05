@@ -41,6 +41,8 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
+import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
@@ -214,6 +216,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final String status
         final String user
         final String execType
+        /** Normalized to a String to keep the all-Strings/Boolean invariant above. */
+        final String execTypeExclude
         final Boolean adhoc
         final String recentFilter
         final String olderFilter
@@ -224,6 +228,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             this.status = args.status
             this.user = args.user
             this.execType = args.execType
+            this.execTypeExclude = args.execTypeExclude
             this.adhoc = args.adhoc
             this.recentFilter = args.recentFilter
             this.olderFilter = args.olderFilter
@@ -247,6 +252,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 status: query.statusFilter,
                 user: query.userFilter,
                 execType: query.executionTypeFilter,
+                execTypeExclude: query.excludeExecutionTypeFilter?.sort()?.join(','),
                 adhoc: query.adhoc,
                 recentFilter: query.recentFilter,
                 olderFilter: query.olderFilter,
@@ -626,6 +632,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
+                //Execution types to leave out, NULL-safe for rows predating the column
+                if (query.excludeExecutionTypeFilter) {
+                    or {
+                        isNull('executionType')
+                        not { inList('executionType', query.excludeExecutionTypeFilter) }
+                    }
+                }
+
                 //running status filter.
                 if (query.runningFilter) {
                     Date now = new Date()
@@ -733,6 +747,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                  }
                              }
                          }
+                     }
+                 }
+
+                 //Execution types to leave out, NULL-safe for rows predating the column
+                 if (query.excludeExecutionTypeFilter) {
+                     or {
+                         isNull('executionType')
+                         not { inList('executionType', query.excludeExecutionTypeFilter) }
                      }
                  }
 
@@ -1178,6 +1200,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         grailsLinkGenerator.link(controller: 'execution', action: 'show', id: execution.id, absolute: true,
                 params: [project: execution.project])
     }
+    /**
+     * Absolute server base URL exposed as the {@code job.serverUrl} context variable.
+     * The link generator resolves the root URL mapping, so the value ends with a trailing slash
+     * (e.g. {@code http://host:4440/}). Concatenating it with an absolute path produces a double slash,
+     * which the server tolerates (see {@code EmptySegmentCompactingCustomizer}).
+     *
+     * @param grailsLinkGenerator link generator used to build the absolute URL
+     * @return server base URL, or null if no link could be generated
+     */
+    @CompileStatic
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {
         grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
@@ -1240,11 +1272,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // bypass all server-side validation (validateOptionValues only iterates the job's declared
             // options) yet are still parsed into the option DataContext and exported as RD_OPTION_*
             // env vars. Fail the (already created) execution here — before any workflow step runs —
-            // with a clear message in the log output. Gated by rundeck.execution.rejectUndeclaredOptions
-            // (default true; set false to restore the legacy passthrough, e.g. re-running a job whose
-            // option set has since changed).
+            // with a clear message in the log output. Opt-in, gated by
+            // rundeck.execution.rejectUndeclaredOptions (default false: undeclared options pass through,
+            // preserving the legacy behavior; set true to reject them).
             if (scheduledExecution != null
-                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
+                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false)) {
                 Set<String> declaredOptionNames = (scheduledExecution.options?.collect { it.name } ?: []) as Set
                 Set<String> providedOptionNames = OptionsParserUtil.parseOptsFromString(execution.argString)?.keySet() ?: ([] as Set)
                 List<String> undeclaredOptionNames = providedOptionNames.findAll { !declaredOptionNames.contains(it) }.sort()
@@ -1396,6 +1428,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
             def wfStepMetricsListener = new WorkflowExecutionListenerStepMetrics(new WorkflowMetricsWriterImpl(metricService))
+            def stepNodeUsageListener = new StepNodeUsageWorkflowListener(execution.id)
             def listenersList = [
                     contextmanager,
                     executionListener, //manages context for logging
@@ -1404,6 +1437,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
                     wfStepMetricsListener, //collects step metrics
+                    stepNodeUsageListener, //accumulates per-step-node elapsed time and dispatch count
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
@@ -1414,6 +1448,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = ExecutionContextImpl.builder(createInitContext)
                     .executionListener(multiListener)
                     .workflowExecutionListener(multiListener)
+                    .addComponent(
+                            SshExportQuotingConfig.COMPONENT_NAME,
+                            new SshExportQuotingConfig(resolveSshExportQuoting()),
+                            SshExportQuotingConfig
+                    )
                     .build()
 
             fileUploadService.executionBeforeStart(
@@ -1952,6 +1991,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //start a sub context
             builder.pushContextStep(1)
         }
+        //Any WorkflowItemErrorHandlerContext marker on origContext is intentionally kept: it describes how
+        //THIS job is being invoked by its caller (as an error handler), and execution lifecycle components
+        //read it when the job starts. WorkflowExecutionServiceThread removes it after those callbacks, so it
+        //does not leak into the job's own internal steps, which are not error handlers of anything.
         return builder.build()
     }
 
@@ -2300,6 +2343,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         return nodeset
     }
 
@@ -2327,6 +2371,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         nodeset.createInclude(
                 DataContextUtils.replaceDataReferences(BaseNodeFilters.asIncludeMap(econtext),datacontext)
         ).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet([
+                filterExclude       : DataContextUtils.replaceDataReferencesInString(econtext.filterExclude, datacontext),
+                excludeFilterUncheck: econtext.excludeFilterUncheck
+        ]))
         nodeset.setKeepgoing(econtext.nodeKeepgoing ? true : false)
         nodeset.setThreadCount(econtext.nodeThreadcount ? econtext.nodeThreadcount : 1)
         return nodeset
@@ -2338,6 +2386,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -2350,6 +2399,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final NodeSet nodeset = new NodeSet();
         nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
+        nodeset.setExcludeFilter(BaseNodeFilters.asExcludeFilterNodeSet(econtext))
         nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
         nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
         return nodeset
@@ -2372,7 +2422,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflowData:params.workflow,
                                       argString:params.argString,
-                                      executionType: params.executionType ?: 'scheduled',
+                                      executionType: params.executionType ?: ExecutionTypes.SCHEDULED,
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
@@ -2381,7 +2431,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
                                       excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
-                                      extraMetadataMap: params.extraMetadataMap?:null
+                                      extraMetadataMap: params.extraMetadataMap?:null,
+                                      note: params.note?:null
             )
 
             execution.userRoles = params.userRoles
@@ -2462,7 +2513,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def props =[:]
         props.putAll(params)
 
-        props.executionType = 'scheduled'
+        //Callers that build this map themselves (e.g. the Ad Hoc Step plugin) can type the
+        //execution. Callers passing a bound request params map must set it explicitly rather
+        //than rely on this default, so a request parameter can't choose the type.
+        props.executionType = params.executionType ?: ExecutionTypes.SCHEDULED
 
         Execution execution = createExecution(scheduledExecution, authContext, props.user, props)
         execution.dateStarted = new Date()
@@ -2573,6 +2627,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 e.delete()
             }
         }
+    }
+
+    /**
+     * @return true when a scheduled trigger must re-check ACTION_RUN before it creates an
+     * execution. Exposed separately from {@link #validateExecution} so the Quartz path can
+     * decline a job with no saved user before it tries to build an auth context for one,
+     * which would throw rather than skip.
+     */
+    @CompileStatic
+    boolean isScheduledRunAuthorizationEnforced() {
+        return featureService.featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION)
+    }
+
+    /**
+     * Check whether the given authContext is authorized to run (ACTION_RUN) the given job.
+     * Used by the Quartz scheduled-trigger path (ExecutionJob), which builds its authContext
+     * from the job's stored user/roles rather than an interactively-authenticated caller.
+     * Gated by {@link Features#SCHEDULED_RUN_AUTHORIZATION} ({@code feature.scheduledRunAuthorization.enabled}).
+     */
+    @CompileStatic
+    public boolean validateExecution(ScheduledExecution se, UserAndRolesAuthContext authContext) {
+        if (!isScheduledRunAuthorizationEnforced()) {
+            return true
+        }
+        return rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project)
     }
 
     /**
@@ -2783,7 +2862,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId','note']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -3364,6 +3443,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         opt.regex || (opt.enforced && opt.optionValues)
     }
 
+    /**
+     * RUN-4579: resolve whether values exported to remote nodes via {@code ssh-variable-export-pattern}
+     * should be POSIX shell-quoted. System-level, opt-in: read from
+     * {@link AppConstants#SYSTEM_SSH_EXPORT_QUOTING} through ConfigurationService (editable via the
+     * System Configuration UI). Defaults to {@code false} (legacy unquoted behavior) when unset.
+     * @return true when exported variable values should be shell-quoted
+     */
+    private boolean resolveSshExportQuoting() {
+        try {
+            return configurationService.getBoolean(AppConstants.SYSTEM_SSH_EXPORT_QUOTING, false)
+        } catch (Exception e) {
+            log.warn("Could not resolve ssh export quoting setting; defaulting to legacy (unquoted)", e)
+            return false
+        }
+    }
+
     private Pattern resolveDefaultOptionInputPattern(String project) {
         String pattern = null
         try {
@@ -3560,6 +3655,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // cleanupExecution), so recording here (rather than in
             // ExecutionUtilService.finishExecutionMetrics) captures all of them exactly once.
             micrometerExecutionMetricsService?.recordExecution(execution)
+            // Read once: StepNodeUsageStore.takeFinishedBreakdown is read-and-remove, so a
+            // second call below (e.g. when building the completion event) would see null.
+            Map<String, StepNodeUsageWorkflowListener.StepNodeUsageEntry> stepNodeUsageBreakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(execution.id)
+            // Sum nanoseconds across every step, then round once here -- rounding each step's
+            // own duration individually first would undercount many small steps that each
+            // round to zero but sum to a real total.
+            Long totalNanos = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nanos.sum() ?: 0L) as Long
+            Long stepNodeSeconds = totalNanos == null ? null : Math.round(totalNanos / 1_000_000_000.0) as Long
+            Long stepNodeCount = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nodeCount.sum() ?: 0L) as Long
+            micrometerExecutionMetricsService?.recordStepNodeSeconds(execution, stepNodeSeconds)
+            micrometerExecutionMetricsService?.recordStepNodeCount(execution, stepNodeCount)
+            // Per-step emission, in addition to the two summed totals above: the breakdown is
+            // the only place plugin type and per-step node count survive, and both are flattened
+            // away by the sums.
+            micrometerExecutionMetricsService?.recordStepUsage(execution, stepNodeUsageBreakdown)
 
             //summarize node success
             String node=null
@@ -3607,7 +3717,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: execution,
                     job: scheduledExecution,
                     nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
-                    context: context?.dataContext
+                    context: context?.dataContext,
+                    stepNodeUsageBreakdown: stepNodeUsageBreakdown
             )
 
             notify('executionComplete', completedEvent)
@@ -4996,12 +5107,32 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Detects Microsoft SQL Server datasources. SQL Server does not support subtracting
+     * {@code datetime2} values (error 8117, "Operand data type datetime2 is invalid for
+     * subtract operator"), so durations are computed with {@code DATEDIFF_BIG(MILLISECOND, ...) / 1000}.
+     * This truncates to whole seconds like the other databases; {@code DATEDIFF(SECOND, ...)} counts second
+     * boundaries crossed instead, so it can report up to a second more. DATEDIFF_BIG needs SQL Server 2016 or later.
+     */
+    boolean isSqlServerDatasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'Microsoft SQL Server'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-SQL Server", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
         try {
             boolean isH2 = isH2Datasource()
             boolean isMySql = isMySqlDatasource()
             boolean isOracle = isOracleDatasource()
+            boolean isSqlServer = isSqlServerDatasource()
             Execution.createCriteria().list(max:1) {
                 projections {
                     if (isH2) {
@@ -5010,6 +5141,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         sqlProjection 'TIMESTAMPDIFF(SECOND, date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else if (isOracle) {
                         sqlProjection 'round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else if (isSqlServer) {
+                        sqlProjection 'DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000 as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else {
                         sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
                     }
@@ -5149,6 +5282,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return Arrays.asList(metricCriteriaOracle)
         }
 
+        if (isSqlServerDatasource()) {
+            // SQL Server: datetime2 values cannot be subtracted. DATEDIFF_BIG in milliseconds divided by 1000
+            // truncates to whole seconds like the other databases, and returns BIGINT so the sum cannot overflow.
+            def metricCriteriaSqlServer = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaSqlServer)
+        }
+
         def metricCriteriaB = {
             // Run main query criteria
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
@@ -5197,16 +5354,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def succeededCount = metricsData?.succeededCount ? metricsData.succeededCount : 0
         def failedCount = metricsData?.failedCount ? metricsData.failedCount : 0
 
-        if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
-            maxDuration = epochToTime(metricsData?.durationMax)
-            minDuration = epochToTime(metricsData?.durationMin)
-            durationSum = epochToTime(metricsData?.durationSum)
+        def avgDuration
+        def maxDurationToMillis
+        def minDurationToMillis
+        // Check the raw values: the defaults above turn a 0 duration, or null when no matched execution has
+        // completed, into Integer 0, which is neither a number of seconds nor a java.sql.Time.
+        boolean timeDurations = [metricsData?.durationMax, metricsData?.durationMin, metricsData?.durationSum].any {
+            it instanceof Time
         }
-
-        def avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
-
-        def maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
-        def minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
+        if (!timeDurations) {
+            // Durations are numbers of seconds. Convert them directly: converting them through java.sql.Time
+            // depends on the JVM time zone and wraps at 24 hours.
+            long sumMillis = secondsToMillis(metricsData?.durationSum)
+            avgDuration = totalCount != 0 ? (sumMillis / totalCount) : 0
+            maxDurationToMillis = secondsToMillis(metricsData?.durationMax)
+            minDurationToMillis = secondsToMillis(metricsData?.durationMin)
+        } else {
+            avgDuration = totalCount != 0 ? (durationSum.getTime() / totalCount) : 0
+            maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
+            minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
+        }
 
         // Calculate success rate
         def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
@@ -5224,16 +5391,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Parse Unix time in Long, into a java.sql.Time object
+     * Convert a duration in seconds, as returned by the database specific metrics queries, to milliseconds
      *
-     * @param epoch - Long : The result of the query
-     * @return a new instance of Time
+     * @param seconds - Number : The result of the query, or null
+     * @return the duration in milliseconds, 0 if null
      *
      * */
     @CompileStatic
-    private Time epochToTime(Long epoch){
-        Date date = new Date(epoch * 1000L)
-        return new Time(date.getTime())
+    private static long secondsToMillis(Object seconds){
+        return seconds != null ? ((Number) seconds).longValue() * 1000L : 0L
     }
 
     private def queryExecutionMetricsOnMemory(ExecutionQuery query){
@@ -5528,8 +5694,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 },
                 SystemConfig.builder().with {
                     key AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY
-                    description "Security control. When enabled (default), an execution that provides options not defined on the job is created and then failed at start. Disable ONLY if you must allow undeclared options to pass through."
-                    defaultValue "true"
+                    description "Security control (opt-in; default off). When enabled, an execution that provides options not defined on the job is created and then failed at start. Left off by default so undeclared options pass through, preserving the current behavior."
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key AppConstants.SYSTEM_SSH_EXPORT_QUOTING_KEY
+                    description "Security control (opt-in; default off). When enabled, values exported to remote nodes via the node's ssh-variable-export-pattern are POSIX shell-quoted, preventing command injection through option values. Left off by default to preserve the current behavior. Note: when enabling, node export patterns should reference {value} without surrounding quotes."
+                    defaultValue "false"
                     required false
                     datatype "Boolean"
                     visibility 'Advanced'

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageConverterPluginAdapter
@@ -543,6 +544,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             log.error("Failed to delete all associated resources for project ${projectName}")
         }
         projectCache.invalidate(projectName)
+        ProjectNodeSupport.removeLoadPool(projectName)
         rundeckNodeService.refreshProjectNodes(projectName)
     }
 

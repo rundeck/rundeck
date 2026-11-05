@@ -4,8 +4,6 @@ import { getAppLinks } from "../rundeckService";
 import Tokens from "./tokens";
 import Generators from "./generators";
 
-import { RundeckToken } from "../interfaces/rundeckWindow";
-
 export const setFilterPref = (key: any, value: any) => {
   return new Promise((resolve) => {
     Tokens.getUIAjaxTokens().then((uiToken) => {

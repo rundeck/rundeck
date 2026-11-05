@@ -35,7 +35,9 @@ describe("BaseStepCard", () => {
         content: "<div>Content</div>",
       },
     });
-    expect(wrapper.findComponent({ name: "StepCardHeader" }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: "StepCardHeader" }).exists()).toBe(
+      true,
+    );
   });
 
   it("renders custom header when header slot is provided", () => {
@@ -49,9 +51,13 @@ describe("BaseStepCard", () => {
         content: "<div>Content</div>",
       },
     });
-    expect(wrapper.findComponent({ name: "StepCardHeader" }).exists()).toBe(false);
+    expect(wrapper.findComponent({ name: "StepCardHeader" }).exists()).toBe(
+      false,
+    );
     expect(wrapper.find("[data-testid='custom-header']").exists()).toBe(true);
-    expect(wrapper.find("[data-testid='custom-header']").text()).toBe("Custom Header");
+    expect(wrapper.find("[data-testid='custom-header']").text()).toBe(
+      "Custom Header",
+    );
   });
 
   it("renders content slot", () => {
@@ -65,7 +71,9 @@ describe("BaseStepCard", () => {
       },
     });
     expect(wrapper.find("[data-testid='slot-content']").exists()).toBe(true);
-    expect(wrapper.find("[data-testid='slot-content']").text()).toBe("Slot content");
+    expect(wrapper.find("[data-testid='slot-content']").text()).toBe(
+      "Slot content",
+    );
   });
 
   it("renders footer slot when provided", () => {

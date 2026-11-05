@@ -43,7 +43,12 @@ public enum Features implements FeaturesDefinition{
     EXECUTION_CLEANUP_ENABLE("defaultExecutionCleanup"),
     MULTILINE_JOB_OPTIONS("multilineJobOptions"),
     EARLY_ACCESS_JOB_CONDITIONAL("earlyAccessJobConditional"),
-    ACTIVITY_DEFAULT_TIME_FILTER("activityDefaultTimeFilter");
+    ACTIVITY_DEFAULT_TIME_FILTER("activityDefaultTimeFilter"),
+    AD_HOC_STEP("adHocStep"),
+    /**
+     * When enabled, Quartz scheduled triggers re-check ACTION_RUN for the job's stored user before creating an execution.
+     */
+    SCHEDULED_RUN_AUTHORIZATION("scheduledRunAuthorization");
 
     private final String propertyName;
 

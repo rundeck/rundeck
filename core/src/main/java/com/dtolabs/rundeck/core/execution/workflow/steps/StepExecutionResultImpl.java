@@ -56,8 +56,18 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
         this.failureReason=failureReason;
         this.failureMessage=failureMessage;
     }
+    /**
+     * Wrap a StepException as a failed result, preserving its failure data (e.g. resultCode)
+     *
+     * @param e step exception
+     * @return failed result
+     */
     public static StepExecutionResultImpl wrapStepException(StepException e) {
-        return new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
+        StepExecutionResultImpl result = new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
+        if (e.getFailureData() != null) {
+            result.getFailureData().putAll(e.getFailureData());
+        }
+        return result;
     }
 
     public boolean isSuccess() {

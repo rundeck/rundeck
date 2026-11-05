@@ -6,6 +6,7 @@
       :has-options="hasOptions"
       :element="element"
       :name="name"
+      @update:model-value="onModelValueUpdate"
     ></DynamicFormPluginProp>
   </div>
 </template>
@@ -19,7 +20,11 @@ export default {
     DynamicFormPluginProp,
   },
   props: ["fields", "options", "element", "hasOptions", "name"],
+  emits: ["update:modelValue"],
+  methods: {
+    onModelValueUpdate(value) {
+      this.$emit("update:modelValue", value);
+    },
+  },
 };
 </script>
-
-<style></style>

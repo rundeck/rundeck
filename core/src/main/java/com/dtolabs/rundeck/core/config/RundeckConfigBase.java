@@ -160,12 +160,22 @@ public class RundeckConfigBase {
         RetryConfig status;
         ExecutionLogs logs;
         /**
-         * RUN-4693: when true (default), an execution that provides options not declared on the job
-         * is created and then failed at start. Set false to restore the legacy passthrough. Bound
-         * from {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via
-         * ConfigurationService and editable in the System Configuration UI.
+         * RUN-4693: opt-in (default false). When true, an execution that provides options not declared
+         * on the job is created and then failed at start. Left false by default so undeclared options
+         * pass through, preserving the current behavior. Bound from
+         * {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via ConfigurationService
+         * and editable in the System Configuration UI.
          */
         Boolean rejectUndeclaredOptions;
+
+        /**
+         * RUN-4579: opt-in (default false). When true, values exported to remote nodes via the node's
+         * {@code ssh-variable-export-pattern} are POSIX shell-quoted, preventing command injection
+         * through option values. Left false by default to preserve the current behavior. Bound from
+         * {@code rundeck.execution.sshExportQuoting} so it is resolvable via ConfigurationService and
+         * editable in the System Configuration UI.
+         */
+        Boolean sshExportQuoting;
 
         @Data
         public static class RetryConfig {
@@ -506,14 +516,19 @@ public class RundeckConfigBase {
         Enabled multilineJobOptions = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
-        Enabled earlyAccessJobConditional = new Enabled();
+        Enabled earlyAccessJobConditional = new Enabled(true);
         Enabled activityDefaultTimeFilter = new Enabled();
+        Enabled nextUiMode = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
-        // RUN-4277/#10321: default raised from 12 to 20 — Ace no longer supports a manual
-        // resize handle (upstream removed it), so a taller out-of-the-box default is the
-        // supported way to make the inline-script/code editor more usable without configuration.
-        int guiAceEditorMinLines = 20;
+        Enabled adHocStep = new Enabled();
+        // Off unless an operator turns it on: enabling it makes Quartz re-check ACTION_RUN
+        // for a job's stored user, which stops schedules that have been running until now.
+        Enabled scheduledRunAuthorization = new Enabled();
+        // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
+        // (the default) makes the editor manually resizable via drag handle instead of
+        // auto-sizing to a fixed number of lines.
+        int guiAceEditorMinLines = 0;
         int guiAceEditorMaxLines = 0;
 
         @Data
@@ -801,6 +816,28 @@ public class RundeckConfigBase {
     @Data
     public static class ScmConfig {
         ScmStartup startup;
+        /**
+         * Git remote URL controls ({@code rundeck.scm.git.*}).
+         * A null field means the control is unset.
+         */
+        ScmGit git;
+    }
+
+    /**
+     * Git SCM remote URL controls bound from {@code rundeck.scm.git.*}.
+     * Blank or null values stay unset so framework.properties can still apply.
+     */
+    @Data
+    public static class ScmGit {
+        /**
+         * Comma-separated URL schemes. Blank means every scheme is allowed.
+         */
+        String allowedSchemes;
+        /**
+         * When true, Git hosts that resolve to an internal address are rejected.
+         * Null means unset.
+         */
+        Boolean blockInternalAddresses;
     }
 
     @Data

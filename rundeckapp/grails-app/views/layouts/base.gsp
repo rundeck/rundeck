@@ -134,7 +134,7 @@
             logo:'${g.appLogo()}',
             logocss:'${g.appLogocss()}',
             appRundeckGatewayUrl: '${g.appRundeckGatewayUrl()}',
-            aceEditorMinLines: ${cfg.getInteger(config:'feature.guiAceEditorMinLines', default:20)},
+            aceEditorMinLines: ${cfg.getInteger(config:'feature.guiAceEditorMinLines', default:0)},
             aceEditorMaxLines: ${cfg.getInteger(config:'feature.guiAceEditorMaxLines', default:0)}
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
@@ -172,7 +172,7 @@
     <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
-    <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+    <g:set var="uiType" value="${params.boolean('nextUi')?'next':params.legacyUi?'legacy':'current'}"/>
     <g:set var="nextUiCapable" value="${request.getAttribute('nextUiCapable') ?: false}"/>
     <g:embedJSON id="pageUiMeta" data="[uiType: uiType, nextUiCapable: nextUiCapable]"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">

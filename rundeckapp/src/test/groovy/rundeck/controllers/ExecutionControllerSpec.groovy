@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -1072,4 +1073,57 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
             false  | 'apiExecutionModePassive'
     }
 
+
+
+    /**
+     * The generic execution list does not exclude ad hoc steps; the type exclusion is an internal-only
+     * filter, so a value bound from the request is ignored.
+     */
+    private void wireQueryCollaborators() {
+        controller.apiService = Mock(ApiService) {
+            _ * requireApi(_, _) >> true
+            _ * requireExists(_, _, _) >> true
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            _ * existsFrameworkProject('test') >> true
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * filterAuthorizedProjectExecutionsAny(_, _, _) >> []
+        }
+        controller.executionService = Mock(ExecutionService) {
+            _ * queryExecutions(_, _, _) >> [result: [], total: 0]
+            _ * respondExecutionsJson(_, _, _, _, _) >> null
+        }
+        controller.configurationService = Mock(ConfigurationService) {
+            _ * getInteger(_, _) >> { it[1] }
+        }
+    }
+
+    def "api execution query no longer excludes adhoc-step by default"() {
+        given:
+        def query = new ExecutionQuery()
+        wireQueryCollaborators()
+
+        when: 'ad-hoc-step executions are listed like any other type and gated per-row by the authorization filter'
+        params.project = 'test'
+        request.api_version = 60
+        controller.apiExecutionsQueryv14(query)
+
+        then: 'nothing is excluded by type'
+        query.excludeExecutionTypeFilter == null
+    }
+
+    def "api execution query ignores a caller-supplied exclusion"() {
+        given:
+        def query = new ExecutionQuery(excludeExecutionTypeFilter: [ExecutionTypes.USER])
+        wireQueryCollaborators()
+
+        when:
+        params.project = 'test'
+        request.api_version = 60
+        controller.apiExecutionsQueryv14(query)
+
+        then: 'the filter is not part of the API contract'
+        query.excludeExecutionTypeFilter == null
+    }
 }

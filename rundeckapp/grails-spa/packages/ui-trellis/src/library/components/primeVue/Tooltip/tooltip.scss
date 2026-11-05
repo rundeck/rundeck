@@ -5,6 +5,13 @@
   --p-tooltip-border-radius: 6px;
 }
 
+// The rem sizes above assume a 16px root, but the app root is 10px; this wider
+// variant is for longer help text, set with the directive option `class`.
+.p-tooltip.pt-tooltip-wide {
+  --p-tooltip-max-width: var(--sizes-lg);
+  --p-tooltip-padding: var(--sizes-4);
+}
+
 .p-tooltip {
   &-text {
     background: var(--colors-gray-800);

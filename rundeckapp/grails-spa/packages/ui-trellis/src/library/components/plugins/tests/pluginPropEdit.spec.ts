@@ -1,7 +1,15 @@
 import pluginPropEdit from "@/library/components/plugins/pluginPropEdit.vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
+import DynamicFormPluginProp from "@/library/components/plugins/DynamicFormPluginProp.vue";
+import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
-import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
+import {
+  config,
+  flushPromises,
+  mount,
+  shallowMount,
+  VueWrapper,
+} from "@vue/test-utils";
 jest.mock("../../../modules/rundeckClient", () => ({}));
 
 jest.mock("@/library/rundeckService", () => {
@@ -54,17 +62,43 @@ const createCodeWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   await flushPromises();
   return wrapper;
 };
+const numberProp = (type: string) => ({
+  type,
+  title: "Maximum resources allowed to retrieve",
+  name: "maximumResources",
+});
+
+const createNumberWrapper = async (
+  propsData = {},
+): Promise<VueWrapper<any>> => {
+  const wrapper = mount(pluginPropEdit, {
+    props: {
+      modelValue: "100",
+      rkey: "test_",
+      validation: null,
+      readOnly: false,
+      selectorData: {},
+      ...propsData,
+    },
+    global: {
+      stubs: { UiSocket: true },
+    },
+  });
+  await flushPromises();
+  return wrapper;
+};
+
 describe("pluginPropEdit aceEditor computed props", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe("aceEditorMinLines", () => {
-    it("passes minLines of 20 to AceEditorVue when appMeta has no aceEditorMinLines", async () => {
+    it("passes minLines of 0 to AceEditorVue when appMeta has no aceEditorMinLines", async () => {
       mockGetRundeckContext.mockReturnValueOnce({ appMeta: {} });
       const wrapper = await createCodeWrapper({ prop: codeProp });
 
-      expect(wrapper.findComponent(AceEditorVue).props("minLines")).toBe(20);
+      expect(wrapper.findComponent(AceEditorVue).props("minLines")).toBe(0);
     });
 
     it("passes the configured minLines to AceEditorVue when appMeta provides it", async () => {
@@ -163,4 +197,64 @@ describe("pluginPropEdit", () => {
       expect(wrapper.vm.inputColSize(prop)).toBe("col-sm-" + size);
     },
   );
+
+  it("renders the description above the DYNAMIC_FORM widget, once, not below it", async () => {
+    const wrapper = await createWrapper({
+      modelValue: "",
+      prop: {
+        type: "String",
+        title: "Custom Fields",
+        name: "custom",
+        desc: "Any custom fields to be included in the change event",
+        options: { displayType: "DYNAMIC_FORM" },
+      },
+      rkey: "test_",
+      validation: null,
+      readOnly: false,
+      selectorData: {},
+    });
+
+    const descriptions = wrapper.findAllComponents(PluginDetails);
+    const widget = wrapper.findComponent(DynamicFormPluginProp);
+
+    expect(descriptions.length).toBe(1);
+    expect(descriptions[0].props("description")).toContain(
+      "Any custom fields to be included in the change event",
+    );
+    expect(widget.exists()).toBe(true);
+    expect(
+      descriptions[0].element.compareDocumentPosition(widget.element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+});
+
+describe("pluginPropEdit numeric property", () => {
+  it.each(["Integer", "Long"])(
+    "renders an editable input for a %s property and emits the typed value",
+    async (type: string) => {
+      const wrapper = await createNumberWrapper({ prop: numberProp(type) });
+
+      const input = wrapper.get(
+        "[data-testid='plugin-prop-number-input'] input",
+      );
+      expect((input.element as HTMLInputElement).value).toBe("100");
+
+      await input.setValue("500");
+
+      expect(wrapper.emitted("update:modelValue")).toContainEqual(["500"]);
+    },
+  );
+
+  it("cannot render the numeric input when the app does not install PrimeVue", async () => {
+    const plugins = config.global.plugins;
+    config.global.plugins = [];
+    try {
+      await expect(
+        createNumberWrapper({ prop: numberProp("Integer") }),
+      ).rejects.toThrow();
+    } finally {
+      config.global.plugins = plugins;
+    }
+  });
 });

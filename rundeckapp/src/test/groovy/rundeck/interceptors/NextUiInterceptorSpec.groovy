@@ -38,6 +38,8 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
             'menu'               | 'home'                  | true
             'menu'               | 'index'                 | false
             'menu'               | 'projectHome'           | false
+            'user'               | 'list'                  | true
+            'user'               | 'edit'                  | false
             'other'              | 'someAction'            | false
     }
 
@@ -135,6 +137,24 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
         then:
             result == true
             params.nextUi == null || !params.containsKey('nextUi')
+    }
+
+    /**
+     * The system flag takes precedence over a URL nextUi=false when no cookie is set.
+     */
+    void "Test system flag overrides URL nextUi=false when no cookie set"() {
+        given:
+            interceptor.featureService = Mock(FeatureService) {
+                featurePresent('nextUiMode') >> true
+            }
+
+        when:
+            params.nextUi = 'false'
+            withRequest(controller: 'scheduledExecution', action: 'create')
+            interceptor.before()
+
+        then:
+            params.nextUi == true
     }
 
     void "Test interceptor always returns true from before()"() {

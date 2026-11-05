@@ -12,7 +12,7 @@
 <script>
 import activityList from "../../components/activity/activityList";
 
-import { getRundeckContext, RundeckContext } from "../../../library";
+import { getRundeckContext } from "../../../library";
 
 export default {
   name: "App",
@@ -49,5 +49,3 @@ export default {
   },
 };
 </script>
-
-<style></style>

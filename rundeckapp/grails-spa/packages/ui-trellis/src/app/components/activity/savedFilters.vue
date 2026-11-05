@@ -165,6 +165,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 .modal-footer .btn-primary {
   color: var(--font-fill-color);

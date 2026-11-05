@@ -247,7 +247,7 @@ dependencies {
     implementation ("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:${owaspHtmlSanitizerVersion}") { // CVE-2025-66021
         exclude(group:'com.google.guava',module:'guava')
     }
-    implementation 'org.owasp.encoder:encoder:1.4.0'
+    implementation 'org.owasp.encoder:encoder:1.4.1'
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
@@ -488,7 +488,9 @@ bootRun {
             '-noverify',
             '-XX:TieredStopAtLevel=1',
             '-Xmx4096m',
-            '-XX:MaxMetaspaceSize=1024m')
+            '-XX:MaxMetaspaceSize=1024m',
+            // Keep asset URLs pointing to live files during bootRun.
+            '-Dgrails.assets.bundle=false')
     systemProperties(System.properties)
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
@@ -762,7 +764,7 @@ project.gradle.projectsEvaluated {
 }
 
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
-    println "copying plugin libs"
+    println "Note: Copying plugin libs"
     File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")
     File manifestFile = new File(buildDir, "WEB-INF/rundeck/plugins/manifest.properties")
 
@@ -829,7 +831,8 @@ task vendorAssetDeps(type: NpmTask) { it ->
 
     it.inputs.file "${baseDir}/_package-manager/package.json"
     it.inputs.file "${baseDir}/_package-manager/package-lock.json"
-    it.inputs.file "${baseDir}/_package-manager/webpack.mix.js"
+    it.inputs.file "${baseDir}/_package-manager/build.js"
+    it.inputs.dir "${baseDir}/_package-manager/lib"
 
     it.outputs.dir "${baseDir}/vendor"
 
@@ -852,6 +855,35 @@ task vendorAssetDeps(type: NpmTask) { it ->
 }
 
 assetPluginPackage.dependsOn vendorAssetDeps
+
+task verifyVendorAssets(type: NpmTask) { it ->
+    group = 'verification'
+    description = 'Runs the _package-manager vendor asset build/verification tests (npm test).'
+    dependsOn vendorAssetDeps
+    def baseDir = "${projectDir}/grails-app/assets/javascripts"
+
+    it.inputs.file "${baseDir}/_package-manager/package.json"
+    it.inputs.file "${baseDir}/_package-manager/package-lock.json"
+    it.inputs.file "${baseDir}/_package-manager/build.js"
+    it.inputs.file "${baseDir}/_package-manager/verify-build.js"
+    it.inputs.file "${baseDir}/_package-manager/test-fileops.js"
+    it.inputs.dir "${baseDir}/_package-manager/lib"
+    it.inputs.dir "${baseDir}/vendor"
+
+    it.args = ['run', 'test']
+
+    execOverrides {
+        it.workingDir = "${baseDir}/_package-manager"
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
+}
+check.dependsOn verifyVendorAssets
 assetCompile.dependsOn vendorAssetDeps
 
 // Copy manifest to META-INF for runtime asset resolution
@@ -860,6 +892,13 @@ task copyAssetManifest(type: Copy) {
     from "$buildDir/assets/manifest.properties"
     into "$buildDir/resources/main/META-INF/assets"
 }
+
+// Remove the manifest only for bootRun to prevent stale UI assets without affecting packaged builds.
+task removeDevManifestForBootRun(type: Delete) {
+    dependsOn copyAssetManifest
+    delete "$buildDir/resources/main/META-INF/assets/manifest.properties"
+}
+bootRun.dependsOn removeDevManifestForBootRun
 
 // Copy compiled assets to classpath:/assets/ for bootRun only.
 //

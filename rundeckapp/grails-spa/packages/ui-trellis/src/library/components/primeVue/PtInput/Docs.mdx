@@ -6,7 +6,7 @@ import * as PtInputStories from './PtInput.stories'
 <Title />
 
 <Subtitle />
-[InputText component reference on primevue](https://primevue.org/llms/components/inputtext.md) | [IconField component reference on primevue](https://primevue.org/llms/components/iconfield.md)
+[InputText component reference on primevue](https://primevue.org/llms/components/inputtext.md) | [Textarea component reference on primevue](https://primevue.org/llms/components/textarea.md) | [IconField component reference on primevue](https://primevue.org/llms/components/iconfield.md)
 
 ## Import
 
@@ -23,7 +23,8 @@ import PtInput from "@rundeck/ui-trellis/src/library/components/primeVue/PtInput
 
 ## How to use
 
-PtInput is a wrapper component that conditionally renders either:
+PtInput is a wrapper component that conditionally renders one of:
+- **Textarea** when `multiline` is set (the icon props are ignored)
 - **IconField + InputText** when `leftIcon` or `rightIcon` props are provided
 - **InputText** when no icons are needed
 
@@ -43,6 +44,8 @@ The component supports:
 - `invalid`: Boolean to show invalid/error state
 - `errorText`: Error message displayed when `invalid` is true
 - `disabled`: Boolean to disable the input
+- `multiline`: Boolean to render a multi-line textarea instead of a single-line input
+- `rows`: Number of visible lines when `multiline` is set (default 3)
 
 ### Example
 

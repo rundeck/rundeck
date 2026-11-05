@@ -2,8 +2,8 @@ import { shallowMount, VueWrapper } from "@vue/test-utils";
 import HomeWelcome from "../HomeWelcome.vue";
 import messages from "../../../../app/utilities/locales/en_US.js";
 
-const VMarkdownViewStub = {
-  name: "VMarkdownView",
+const MarkdownViewStub = {
+  name: "MarkdownView",
   props: ["content"],
   template: "<div>{{content}}</div>",
 };
@@ -38,7 +38,7 @@ const mountHomeWelcome = async (
         },
       },
       stubs: {
-        VMarkdownView: VMarkdownViewStub,
+        MarkdownView: MarkdownViewStub,
         FirstRun: {
           name: "FirstRun",
           template: "<div></div>",
@@ -67,7 +67,7 @@ describe("HomeWelcome", () => {
     expect(wrapper.find("img").attributes("src")).toBe(
       "/assets/custom-logo.png",
     );
-    expect(wrapper.findComponent(VMarkdownViewStub).props("content")).toContain(
+    expect(wrapper.findComponent(MarkdownViewStub).props("content")).toContain(
       "/custom-help",
     );
   });
@@ -75,10 +75,10 @@ describe("HomeWelcome", () => {
   it("displays the correct content in the markdown view", async () => {
     const wrapper = await mountHomeWelcome();
 
-    expect(wrapper.findComponent(VMarkdownViewStub).props("content")).toContain(
+    expect(wrapper.findComponent(MarkdownViewStub).props("content")).toContain(
       "Test App",
     );
-    expect(wrapper.findComponent(VMarkdownViewStub).props("content")).toContain(
+    expect(wrapper.findComponent(MarkdownViewStub).props("content")).toContain(
       "/help",
     );
   });

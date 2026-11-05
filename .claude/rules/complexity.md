@@ -1,3 +1,10 @@
+---
+description: Cyclomatic complexity threshold for new/modified code (agents only, informative for humans)
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
 # Cyclomatic Complexity Rule (agents only, informative for humans)
 
 The project has deterministic complexity checking enabled (CodeNarc for Groovy,
@@ -16,7 +23,7 @@ nothing blocks builds or PRs.
 ## How to check
 
 - Backend: `./gradlew codenarcComplexity` — report in `build/reports/codenarc/complexity.html`
-- Frontend: `npm run lint` in ui-trellis (rule active in `.eslintrc.js`)
+- Frontend: `npm run lint` in ui-trellis (rule active in the shared `eslint/base.js`)
 
 ## Before Completing
 

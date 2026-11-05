@@ -8,7 +8,9 @@ describe("workflowTypes", () => {
           { exec: "echo hello", nodeStep: true },
           {
             type: "conditional",
-            conditionGroups: [[{ key: "job.id", operator: "==", value: "abc" }]],
+            conditionGroups: [
+              [{ key: "job.id", operator: "==", value: "abc" }],
+            ],
             subSteps: [{ exec: "echo conditional" }],
             nodeStep: true,
           },

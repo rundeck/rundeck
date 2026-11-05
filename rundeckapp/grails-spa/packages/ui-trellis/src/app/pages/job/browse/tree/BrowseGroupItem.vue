@@ -23,6 +23,7 @@
       v-if="allowFolderNavigation"
       class="groupname text-strong group-name visibility-hidden"
       :title="`Browse job group: ${item.groupPath}`"
+      :aria-label="$t('job.tree.browse.group.label', [item.groupPath])"
       :href="href"
       @click.prevent="$emit('rootBrowse', item.groupPath)"
     >

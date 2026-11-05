@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import org.rundeck.app.AppConstants
@@ -54,6 +55,7 @@ import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeFilter
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
@@ -62,8 +64,15 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
+import com.dtolabs.rundeck.core.execution.component.ContextComponent
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowItemErrorHandlerContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageStore
+import com.dtolabs.rundeck.core.execution.StatusResult
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import rundeck.services.events.ExecutionCompleteEvent
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
@@ -75,6 +84,7 @@ import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener
 import com.dtolabs.rundeck.core.execution.workflow.IWorkflow
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -1334,6 +1344,57 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         null         | _
         'UTF-8'      | _
         'ISO-8859-1' | _
+    }
+
+    def "validateExecution returns true when authorized"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> true
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> true
+        result
+    }
+
+    def "validateExecution returns false when unauthorized"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> true
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> false
+        !result
+    }
+
+    def "validateExecution skips ACTION_RUN check when feature disabled"() {
+        given:
+        service.featureService = Mock(rundeck.services.feature.FeatureService) {
+            featurePresent(Features.SCHEDULED_RUN_AUTHORIZATION) >> false
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        0 * service.rundeckAuthContextProcessor._
+        result
     }
 
     def "delete execution unauthorized"() {
@@ -2730,6 +2791,30 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
+    def "list now running excludes the given execution types from both the list and the total"() {
+        given:
+        def query = new QueueQuery()
+        query.projFilter = 'AProject'
+        query.excludeExecutionTypeFilter = [ExecutionTypes.ADHOC_STEP]
+        [ExecutionTypes.ADHOC_STEP, ExecutionTypes.ADHOC_STEP, ExecutionTypes.USER, null].each { type ->
+            new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'userB',
+                    project: 'AProject',
+                    executionType: type
+            ).save()
+        }
+        service.configurationService = Mock(ConfigurationService)
+
+        when:
+        def result = service.queryQueue(query)
+
+        then: 'the paging total agrees with the rows listed, keeping rows with no type'
+        2 == result.nowrunning.size()
+        2 == result.total
+    }
+
     @Unroll
     def "list should not consider postponed runs as running filter: considerPostpone: #considerPostponedRunsAsRunningFilter, nowRunning: #nowrunning"() {
         given:
@@ -3552,6 +3637,59 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val != null
         val.getNodeService() != null
 
+    }
+
+    def "createContext keeps the error handler marker so lifecycle components can read it when the job reference starts"() {
+        // The job reference context is what execution lifecycle components receive in
+        // beforeJobStarts, so the marker describing a job reference invoked as an error handler must survive it
+        given:
+        def jobProj = 'testproj'
+
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * filterAuthorizedNodes(*_)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, jobProj)
+            1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+        service.rundeckNodeService = Mock(NodeService) {}
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: jobProj,
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        def origContext = Mock(StepExecutionContext) {
+            getFrameworkProject() >> jobProj
+            getStepContext() >> []
+            getComponentList() >> [
+                    ContextComponent.with(
+                            "WorkflowItemErrorHandlerContext",
+                            WorkflowItemErrorHandlerContext.INSTANCE,
+                            WorkflowItemErrorHandlerContext
+                    )
+            ]
+        }
+
+        when:
+        def val = service.createContext(se, origContext, null, null, null, null, null,
+                                        null, null, null, null, null, null, null, false)
+
+        then:
+        val != null
+        val.componentForType(WorkflowItemErrorHandlerContext).present
     }
 
     def "parent job fails if the job ref goes timeout"(){
@@ -5499,8 +5637,74 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         val != null
         val.nodeSelector != null
-        val.nodeSelector.excludes.name == "nodea"
+        val.nodeSelector.acceptNode(new NodeEntryImpl(nodename: 'nodeb', tags: ['running'] as Set))
+        !val.nodeSelector.acceptNode(new NodeEntryImpl(nodename: 'nodea', tags: ['running'] as Set))
         val.frameworkProject == "testproj"
+    }
+
+    /**
+     * Issue #9895: the exclude filter must remove nodes independently of the exclusions in the node filter,
+     * as scheduled executions rely on the filters alone to select nodes.
+     */
+    def "Create execution context applies exclude filter independently of node filter exclusions"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                executionType: 'scheduled',
+                filter: 'tags: qa+businessunit+system !tags: db,lab2',
+                filterExclude: 'hostname: testhost1.domain.com,testhost2.domain.com'
+        )
+        def nodes = new NodeSetImpl()
+        nodes.putNode(new NodeEntryImpl(nodename: 'app1', hostname: 'app1.domain.com', tags: ['qa', 'businessunit', 'system'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'db1', hostname: 'db1.domain.com', tags: ['qa', 'businessunit', 'system', 'db'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'test1', hostname: 'testhost1.domain.com', tags: ['qa', 'businessunit', 'system'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'other1', hostname: 'other1.domain.com', tags: ['prod'] as Set))
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+
+        then:
+        NodeFilter.filterNodes(val.nodeSelector, nodes).nodeNames as Set == ['app1'] as Set
+    }
+
+    /**
+     * Issue #9895: exclusions in the node filter and the exclude filter are both applied
+     */
+    def "filtersAsNodeSet applies exclude filter independently of node filter exclusions"() {
+        given:
+        def nodes = new NodeSetImpl()
+        nodes.putNode(new NodeEntryImpl(nodename: 'app1', hostname: 'app1.domain.com', tags: ['web'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'db1', hostname: 'db1.domain.com', tags: ['web', 'db'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'test1', hostname: 'testhost1.domain.com', tags: ['web'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'legacy1', hostname: 'legacy1.domain.com', tags: ['web', 'legacy'] as Set))
+        nodes.putNode(new NodeEntryImpl(nodename: 'other1', hostname: 'other1.domain.com', tags: ['prod'] as Set))
+
+        when:
+        def nodeset = ExecutionService.filtersAsNodeSet(
+                [filter: filter, filterExclude: filterExclude, nodeExcludePrecedence: true]
+        )
+
+        then:
+        NodeFilter.filterNodes(nodeset, nodes).nodeNames as Set == expected as Set
+
+        where:
+        filter                 | filterExclude                       | expected
+        'tags: web'            | null                                | ['app1', 'db1', 'test1', 'legacy1']
+        'tags: web !tags: db'  | null                                | ['app1', 'test1', 'legacy1']
+        'tags: web'            | 'hostname: testhost1.domain.com'    | ['app1', 'db1', 'legacy1']
+        'tags: web !tags: db'  | 'hostname: testhost1.domain.com'    | ['app1', 'legacy1']
+        'tags: web !tags: db'  | 'tags: legacy'                      | ['app1', 'test1']
+        'tags: web'            | 'tags: web !name: app1'             | ['app1']
+        null                   | 'tags: web'                         | ['other1']
     }
 
     def "get Global Plugin Configurations"() {
@@ -6436,6 +6640,84 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         })
     }
 
+    def "saveExecutionState includes the step_node_seconds total on the completion event"() {
+        given:
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'abc',
+                project: project,
+                groupPath: 'path',
+                description: 'a job',
+                argString: '-args b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ),
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea02'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                workflow: job.workflow
+        )
+        e1.scheduledExecution = job
+        e1.save() != null
+
+        // simulate what StepNodeUsageWorkflowListener would have already done during the
+        // real execution: accumulate a total and finalize it into the store under this
+        // execution's id, before saveExecutionState ever runs.
+        def listener = new StepNodeUsageWorkflowListener(e1.id)
+        def item = Mock(StepExecutionItem)
+        listener.beginStepExecution(Mock(StepExecutor), Mock(StepExecutionContext), item)
+        listener.finishStepExecution(Mock(StepExecutor), Mock(StatusResult), Mock(StepExecutionContext), item)
+        listener.finishWorkflowExecution(Mock(WorkflowExecutionResult), Mock(StepExecutionContext), null)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+        service.workflowService = Mock(WorkflowService)
+        service.notificationService = Mock(NotificationService)
+        service.reportService = Mock(ReportService) {
+            reportExecutionResult(_) >> [:]
+        }
+        service.micrometerExecutionMetricsService = Mock(MicrometerExecutionMetricsService)
+
+        def capturedEvent = null
+        service.metaClass.notify = { String name, Object evt -> capturedEvent = evt }
+        Long recordedStepNodeSeconds = null
+        service.micrometerExecutionMetricsService.recordStepNodeSeconds(_, _) >> { Execution e, Long sns -> recordedStepNodeSeconds = sns }
+
+        Map resultMap = [
+                status       : ExecutionState.succeeded.toString(),
+                dateCompleted: new Date(),
+                cancelled    : false,
+                timedOut     : false,
+        ]
+        ExecutionService.AsyncStarted execmap = new ExecutionService.AsyncStarted(
+                execution         : e1,
+                scheduledExecution: job
+        )
+
+        when:
+        service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
+
+        then:
+        capturedEvent instanceof ExecutionCompleteEvent
+        capturedEvent.stepNodeUsageBreakdown != null
+
+        and: "the metric is recorded with the value derived from the event's own breakdown"
+        recordedStepNodeSeconds == Math.round(capturedEvent.stepNodeUsageBreakdown.values().sum { it.nanos } / 1_000_000_000.0)
+
+        and: "the store's read-and-remove semantics mean a second lookup for the same execution finds nothing left"
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(e1.id) == null
+    }
+
     def "opt enforced allowed values from Remote Url with sending the username"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
@@ -6799,6 +7081,73 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             service.metaClass = null
     }
 
+    def "isSqlServerDatasource returns true when databaseProductName is Microsoft SQL Server"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'Microsoft SQL Server' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isSqlServerDatasource()
+    }
+
+    def "isSqlServerDatasource returns false when databaseProductName is not Microsoft SQL Server"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isSqlServerDatasource()
+    }
+
+    def "getCriteriaScenarios uses DATEDIFF_BIG durations when datasource is SQL Server"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> false }
+            service.metaClass.isSqlServerDatasource = { -> true }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBeansOfType(JobQuery) >> [:]
+            }
+            def recorder = new SqlProjectionRecorder()
+        when:
+            def scenarios = service.getCriteriaScenarios(new ExecutionQuery())
+            recorder.run(scenarios[0])
+            def durations = recorder.sqlProjections.findAll { it.contains('duration') }
+        then:
+            scenarios.size() == 1
+            durations.size() == 3
+            durations.every { it.contains('DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000') }
+            !durations.any { it.contains('date_completed - date_started') }
+        cleanup:
+            service.metaClass = null
+    }
+
+    def "isSqlCompatible uses a DATEDIFF_BIG duration when datasource is SQL Server"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> false }
+            service.metaClass.isSqlServerDatasource = { -> true }
+            def recorder = new SqlProjectionRecorder()
+            Execution.metaClass.static.createCriteria = { ->
+                new Expando(list: { Map args, Closure criteria -> recorder.run(criteria); [] })
+            }
+        when:
+            def result = service.isSqlCompatible()
+        then:
+            result
+            recorder.sqlProjections == ['DATEDIFF_BIG(MILLISECOND, date_started, date_completed) / 1000 as durationSum']
+        cleanup:
+            GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+            service.metaClass = null
+    }
+
     def "isSqlCompatible returns false without propagating exception when criteria throws"() {
         given:
             service.metaClass.isH2Datasource = { -> false }
@@ -6829,6 +7178,41 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.duration.average == 1000L
         result.duration.min == 2000L
         result.duration.max == 1000L
+    }
+
+    @Unroll
+    def "metrics data from criteria result with durations in seconds does not depend on time zone #tz"() {
+        given:
+            def originalTz = TimeZone.getDefault()
+            TimeZone.setDefault(TimeZone.getTimeZone(tz))
+            def critresult = [count: 2L, durationMax: 90000L, durationMin: 1L, durationSum: 90001L]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then: "a 25 hour max duration is not wrapped at 24 hours or shifted by the time zone offset"
+            result.duration.max == 90000L * 1000L
+            result.duration.min == 1000L
+            result.duration.average == 90001L * 1000L / 2
+        cleanup:
+            TimeZone.setDefault(originalTz)
+        where:
+            tz << ['UTC', 'America/Denver', 'Asia/Kolkata']
+    }
+
+    @Unroll
+    def "metrics data from criteria result with #description durations returns zero durations"() {
+        given:
+            def critresult = [count: count, durationMax: duration, durationMin: duration, durationSum: duration]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then:
+            result.total == count
+            result.duration.average == 0
+            result.duration.max == 0
+            result.duration.min == 0
+        where:
+            description                          | count | duration
+            'zero (all executions under 1s)'     | 1L    | 0L
+            'null (no completed executions yet)' | 2L    | null
     }
 
     def "metrics data from projection result"(){
@@ -6987,7 +7371,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.loggingService = Mock(LoggingService) { openLogWriter(_, _, _, _) >> loghandler }
         service.frameworkService = Mock(FrameworkService) { getDefaultInputCharsetForProject(_) >> 'UTF-8' }
         service.configurationService = Mock(ConfigurationService) {
-            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true) >> true
+            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false) >> true
         }
         service.grailsLinkGenerator = Mock(LinkGenerator)
         service.metricService = Mock(MetricService)
@@ -7000,6 +7384,49 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then: "the execution fails to start and the undeclared option is reported in the log output"
         result == null
         1 * loghandler.logError({ String m -> m.contains('Execution rejected') && m.contains('ghost') })
+    }
+
+    def "executeAsyncBegin does NOT reject undeclared options by default (flag off) (RUN-4693 #4)"() {
+        given: "an execution whose argString carries an option not declared on the job, with the reject control at its default (off)"
+        def project = 'TestProject'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                argString: '-declared x -ghost y',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        )
+        execution.save(flush: true)
+        def scheduledExecution = new ScheduledExecution(jobName: 'j', project: project, workflow: execution.workflow)
+        scheduledExecution.addToOptions(new Option(name: 'declared', enforced: false))
+        scheduledExecution.save(flush: true)
+
+        def framework = Mock(IFramework) { getFrameworkNodeName() >> 'n' }
+        def authContext = Mock(UserAndRolesAuthContext)
+        def loghandler = Mock(ExecutionLogWriter) {
+            filepath >> new File('/tmp/test.log')
+            openStream() >> {}
+        }
+        service.loggingService = Mock(LoggingService) { openLogWriter(_, _, _, _) >> loghandler }
+        service.frameworkService = Mock(FrameworkService) { getDefaultInputCharsetForProject(_) >> 'UTF-8' }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false) >> false
+        }
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.metricService = Mock(MetricService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        when:
+        service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "the undeclared option is NOT rejected (no rejection is logged); it passes through"
+        0 * loghandler.logError({ String m -> m.contains('Execution rejected') })
     }
 
     def "executeAsyncBegin workflow modification - workflow updated when isUpdateWorkflowDataValues is #updateWorkflowDataValues"() {
@@ -7198,6 +7625,94 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then: "the execution start is recorded, using the same execution reference passed in"
         result != null
         1 * service.micrometerExecutionMetricsService.recordExecutionStart(execution)
+
+        cleanup:
+        result?.thread?.interrupt()
+    }
+
+    def "executeAsyncBegin registers a StepNodeUsageWorkflowListener for step_node_seconds tracking"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'original command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: 'testJob',
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+        service.micrometerExecutionMetricsService = Mock(MicrometerExecutionMetricsService)
+
+        and: "execution lifecycle handler setup"
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> Mock(ExecutionLifecycleComponentHandler) {
+                beforeWorkflowIsSet(_, _) >> Optional.empty()
+            }
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "the constructed workflow execution listener set includes a StepNodeUsageWorkflowListener"
+        result != null
+        def multiListener = result.thread.context.workflowExecutionListener
+        multiListener.listenerList.any { it instanceof StepNodeUsageWorkflowListener }
 
         cleanup:
         result?.thread?.interrupt()
@@ -7812,4 +8327,30 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * executionListener.log(0, { it.contains("Error executing runner workflow") })
     }
 
+}
+
+/**
+ * Criteria delegate for tests: records sqlProjection SQL and ignores other criteria calls
+ */
+class SqlProjectionRecorder {
+    List<String> sqlProjections = []
+
+    void run(Closure criteria) {
+        Closure c = (Closure) criteria.clone()
+        c.delegate = this
+        c.resolveStrategy = Closure.DELEGATE_FIRST
+        c.call()
+    }
+
+    void projections(Closure c) {
+        run(c)
+    }
+
+    void sqlProjection(String sql, String alias, Object type) {
+        sqlProjections << sql
+    }
+
+    def methodMissing(String name, Object args) {
+        null
+    }
 }

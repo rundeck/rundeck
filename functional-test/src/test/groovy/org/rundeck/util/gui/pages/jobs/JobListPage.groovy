@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.jobs
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.Cookie
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -23,6 +24,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     String loadPath = "/jobs"
     By createJobLink = By.partialLinkText('New Job')
+    By executionAclWarningBadgeBy = By.cssSelector("[data-testid='execution-acl-warning-badge']")
     By jobsActionsButtonBy = By.cssSelector('#project_job_actions')
 
     // Bulk modal elements
@@ -210,6 +212,40 @@ class JobListPage extends BasePage implements ActivityListTrait {
         el bodyNextUIBy
     }
 
+    /**
+     * Set the nextUi preference cookie for the current site. A page must already be loaded on the Rundeck host.
+     * @param enabled cookie value
+     */
+    void setNextUiCookie(boolean enabled) {
+        context.driver.manage().addCookie(new Cookie('nextUi', enabled.toString(), '/'))
+    }
+
+    /**
+     * Remove the nextUi preference cookie.
+     */
+    void clearNextUiCookie() {
+        context.driver.manage().deleteCookieNamed('nextUi')
+    }
+
+    static By nextUiJobListTemplateBy = By.id('pageQueryParams')
+    static By currentUiJobListTemplateBy = By.id('nextScheduled')
+
+    /**
+     * @return true if the Next UI job list template (jobs.next.gsp) was rendered
+     */
+    boolean hasNextUiJobListTemplate() {
+        waitForAnyElementPresent(nextUiJobListTemplateBy, currentUiJobListTemplateBy)
+        !els(nextUiJobListTemplateBy).isEmpty()
+    }
+
+    /**
+     * @return true if the Current UI job list template (jobs.gsp) was rendered
+     */
+    boolean hasCurrentUiJobListTemplate() {
+        waitForAnyElementPresent(nextUiJobListTemplateBy, currentUiJobListTemplateBy)
+        !els(currentUiJobListTemplateBy).isEmpty()
+    }
+
     def getCountJobList(){
         (els jobRunLinkBy).size()
     }
@@ -233,6 +269,17 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     List<WebElement> getJobList(){
         els jobListBy
+    }
+
+    /**
+     * The warning badges marking listed jobs whose saved owner is not authorized to
+     * run them. Waits for the first one, since the list renders asynchronously, so
+     * this is for asserting presence rather than absence.
+     * @return one element per warned job in the list
+     */
+    List<WebElement> getExecutionAclWarningBadges() {
+        waitForElementVisible executionAclWarningBadgeBy
+        els executionAclWarningBadgeBy
     }
 
     WebElement getAlertInfo(){

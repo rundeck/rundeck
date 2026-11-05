@@ -14,7 +14,7 @@
       </btn>
       <btn
         v-else
-        :v-tooltip.hover="$t('disabled.job.run')"
+        v-tooltip.hover="$t('disabled.job.run')"
         disabled
         size="xs"
         type="simple"
@@ -61,7 +61,7 @@ export default defineComponent({
     job(): JobBrowseItem {
       return this.itemData?.job;
     },
-    authz(): Object | undefined {
+    authz(): Record<string, any> | undefined {
       const data: any = this.job?.meta?.find(
         (meta: JobBrowseMeta) => meta.name === "authz",
       )?.data;

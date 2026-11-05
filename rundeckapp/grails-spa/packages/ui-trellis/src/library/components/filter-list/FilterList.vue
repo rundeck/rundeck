@@ -55,7 +55,7 @@
 import { defineComponent, nextTick } from "vue";
 import type { PropType } from "vue";
 import { RecycleScroller } from "vue-virtual-scroller";
-import Skeleton from "../skeleton/Skeleton.vue";
+import Skeleton from "../skeleton/RdSkeleton.vue";
 import { Webhook } from "../../stores/Webhooks";
 
 export default defineComponent({

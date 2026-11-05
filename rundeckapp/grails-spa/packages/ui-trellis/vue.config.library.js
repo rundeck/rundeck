@@ -80,9 +80,7 @@ module.exports = {
 
     config.externals = [
       /** Externalize everything under node_modules: Use peer deps */
-      nodeExternals({
-          allowlist: ['vue3-markdown']
-      }),
+      nodeExternals(),
       /** Externalize local project imports: ie require('../util/Foo') */
       function ({ context, request }, callback) {
         if (/^\..*\.vue$/.test(request))

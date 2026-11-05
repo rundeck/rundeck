@@ -34,7 +34,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
-import Pagination from "./Pagination.vue";
+import Pagination from "./RdPagination.vue";
 import { Pageable } from "../../interfaces/UiTypes";
 
 export default defineComponent({

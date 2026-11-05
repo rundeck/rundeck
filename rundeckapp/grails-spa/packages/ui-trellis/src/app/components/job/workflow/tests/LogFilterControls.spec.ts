@@ -1,16 +1,26 @@
 import { shallowMount, flushPromises } from "@vue/test-utils";
 import LogFilterControls from "../LogFilterControls.vue";
+import EditPluginModal from "../../../../../library/components/plugins/EditPluginModal.vue";
 
 jest.mock("@/library/modules/pluginService", () => ({
-  validatePluginConfig: jest.fn().mockResolvedValue({ valid: true, errors: {} }),
-  getPluginProvidersForService: jest.fn().mockResolvedValue({ service: "LogFilter", descriptions: [], labels: {} }),
+  validatePluginConfig: jest
+    .fn()
+    .mockResolvedValue({ valid: true, errors: {} }),
+  getPluginProvidersForService: jest
+    .fn()
+    .mockResolvedValue({ service: "LogFilter", descriptions: [], labels: {} }),
 }));
 
 jest.mock("@/library/modules/rundeckClient", () => ({ client: jest.fn() }));
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
-    rootStore: { plugins: { getServicePlugins: jest.fn().mockReturnValue([]), load: jest.fn() } },
+    rootStore: {
+      plugins: {
+        getServicePlugins: jest.fn().mockReturnValue([]),
+        load: jest.fn(),
+      },
+    },
     projectName: "testProject",
     eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
     rdBase: "http://localhost:4440",
@@ -29,6 +39,7 @@ jest.mock("../stepEditorUtils", () => ({
 }));
 
 import { resetValidation } from "../stepEditorUtils";
+import { validatePluginConfig } from "../../../../../library/modules/pluginService";
 
 const createMockEventBus = () => ({
   on: jest.fn(),
@@ -46,6 +57,7 @@ const createWrapper = async (props = {}) => {
       eventBus: createMockEventBus(),
       ...props,
     },
+    global: { stubs: { teleport: true } },
   });
   await flushPromises();
   return wrapper;
@@ -61,20 +73,26 @@ describe("LogFilterControls", () => {
     it("renders the add filter button when showButton is true", async () => {
       const wrapper = await createWrapper({ showButton: true });
 
-      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(
+        true,
+      );
     });
 
     it("hides the add filter button when showButton is false", async () => {
       const wrapper = await createWrapper({ showButton: false });
 
-      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(
+        false,
+      );
     });
 
     it("does not render the add filter modal until the button is clicked", async () => {
       const wrapper = await createWrapper();
 
       // ChoosePluginModal has v-if="addFilterModal" — not shown on initial render
-      expect(wrapper.find('[data-testid="add-filter-modal"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="add-filter-modal"]').exists()).toBe(
+        false,
+      );
     });
   });
 
@@ -107,6 +125,58 @@ describe("LogFilterControls", () => {
       const result = (resetValidation as jest.Mock).mock.results[0]?.value;
       expect(result).toEqual({ errors: {}, valid: true });
       expect(Array.isArray(result.errors)).toBe(false);
+    });
+  });
+
+  describe("saving a filter (RUN-5055)", () => {
+    const createEditWrapper = () =>
+      createWrapper({
+        modelValue: { type: "key-value-data", config: { regex: "a" } },
+      });
+
+    it("validates ignoring Project/Framework scoped properties", async () => {
+      const wrapper = await createEditWrapper();
+
+      wrapper.findComponent(EditPluginModal).vm.$emit("save");
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      expect(validatePluginConfig).toHaveBeenCalledWith(
+        "LogFilter",
+        "key-value-data",
+        { regex: "a" },
+        "Project",
+      );
+    });
+
+    it("emits update:modelValue with the filter when validation passes", async () => {
+      const wrapper = await createEditWrapper();
+
+      wrapper.findComponent(EditPluginModal).vm.$emit("save");
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+        { type: "key-value-data", config: { regex: "a" } },
+      ]);
+    });
+
+    it("does not emit and passes errors to the modal when validation fails", async () => {
+      jest.mocked(validatePluginConfig).mockResolvedValueOnce({
+        valid: false,
+        errors: { regex: "required" },
+      });
+      const wrapper = await createEditWrapper();
+
+      wrapper.findComponent(EditPluginModal).vm.$emit("save");
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+      expect(
+        wrapper.findComponent(EditPluginModal).props("validation"),
+      ).toEqual({ valid: false, errors: { regex: "required" } });
     });
   });
 });

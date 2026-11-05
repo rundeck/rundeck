@@ -73,7 +73,7 @@ import { defineComponent } from "vue";
 import _ from "lodash";
 import Trellis, { getRundeckContext } from "../../../../library";
 import TourServices from "../services";
-import { Tour, Step } from "../interfaces/Tours";
+import { Tour } from "../interfaces/Tours";
 
 const context = getRundeckContext();
 
@@ -216,7 +216,6 @@ export default defineComponent({
       }
     },
     nextStep() {
-      const step = this.tour.steps[this.stepIndex];
       if (this.stepIndex !== this.tour.steps.length - 1) {
         this.stepIndex++;
         Trellis.FilterPrefs.setFilterPref(
@@ -298,6 +297,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- root/body-level selectors -->
 <style lang="scss">
 body.tour-open {
   #layoutBody {

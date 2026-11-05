@@ -36,7 +36,6 @@
                     </div>
                 </div>
                 </g:form>
-                <g:message code="plugin.form.groovyNote" />
             </div>
         </div>
     </div>

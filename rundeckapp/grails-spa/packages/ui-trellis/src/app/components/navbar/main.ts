@@ -9,7 +9,7 @@ import SettingsModal from "../../../library/components/widgets/settings-bar/Sett
 
 import { UtilityBarItem } from "../../../library/stores/UtilityBar";
 import { UiMessage } from "../../../library/stores/UIStore";
-import { getRundeckContext, getAppLinks } from "../../../library";
+import { getRundeckContext } from "../../../library";
 import {
   commonAddUiMessages,
   initI18n,
@@ -18,7 +18,6 @@ import {
 import * as uiv from "uiv";
 import VueCookies from "vue-cookies";
 
-const appLinks = getAppLinks();
 const rootStore = getRundeckContext().rootStore;
 
 window.addEventListener("DOMContentLoaded", initNav);

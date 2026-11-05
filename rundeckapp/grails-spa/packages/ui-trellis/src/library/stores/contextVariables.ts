@@ -1,12 +1,22 @@
-import { RundeckContext as RundeckContextType } from "../interfaces/rundeckWindow";
-import { getRundeckContext } from "../rundeckService";
 import { JobOption } from "../types/jobs/JobEdit";
 
 export type ContextVariable = {
   name: string;
   title: string;
   description?: string;
-  type: "job" | "node" | "result" | "execution" | "option" | "global";
+  type:
+    | "job"
+    | "node"
+    | "result"
+    | "execution"
+    | "option"
+    | "global"
+    | "note"
+    | "step"
+    | "step-header";
+  // Step name a "step"/"step-header" option belongs to, for consumers that
+  // group a flat suggestion list into an accordion.
+  group?: string;
 };
 
 export type ContextVariablesByType = {

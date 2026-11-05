@@ -32,6 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * AES-GCM storage encryption plugin using AES-256-GCM with PBKDF2 key derivation.
@@ -146,7 +150,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
             } else {
                 logger.debug("readResource (jasypt-encrypted, legacy) {}", path);
             }
-            return decryptLegacy(hasInputStream);
+            return decryptLegacy(path, hasInputStream);
         }
         if (aesEncrypted) {
             logger.debug("readResource (aes-gcm-encrypted) {}", path);
@@ -202,11 +206,29 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
         }
     }
 
-    private HasInputStream decryptLegacy(HasInputStream input) {
+    private HasInputStream decryptLegacy(Path path, HasInputStream input) {
         try {
             return new TransformStream(input) {
                 @Override
                 protected byte[] transform(byte[] data) {
+                    if (looksLikeProjectPropertiesPlaintext(path, data)) {
+                        // A pre-existing 5.x condition: the jasypt-encryption:encrypted flag was set
+                        // on this record, but the content was never actually encrypted. Checked BEFORE
+                        // attempting decryption (not just as a post-failure fallback): legacy CBC is
+                        // unauthenticated, so decrypting these plaintext bytes could occasionally
+                        // "succeed" with garbage instead of throwing (if their length happens to be
+                        // block-aligned), which would skip a post-failure check entirely. The exact
+                        // path + full header match below is specific enough to check safely up front.
+                        if (plaintextFallbackWarnedPaths.add(String.valueOf(path))) {
+                            logger.warn("readResource: content flagged jasypt-encryption:encrypted=true "
+                                    + "at '{}' looks like plaintext; returning raw content unchanged "
+                                    + "without attempting to decrypt it.", path);
+                        } else {
+                            logger.debug("readResource: returning raw plaintext content for '{}' "
+                                    + "(already warned).", path);
+                        }
+                        return data;
+                    }
                     return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
                 }
             };
@@ -214,6 +236,63 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
             logger.error("Legacy Jasypt decryption failed. Wrong password or incompatible algorithm.", e);
             throw new RuntimeException("Legacy Jasypt decryption failed", e);
         }
+    }
+
+    /**
+     * Records paths for which the plaintext-fallback warning has already been logged, so a resource
+     * re-read on every project-cache refresh (e.g. every minute) doesn't log a fresh WARNING each time.
+     */
+    private final Set<String> plaintextFallbackWarnedPaths = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Matches exactly {@code projects/<name>/etc/project.properties} -- one non-empty path segment
+     * for the project name, anchored at both ends -- so it can never match an unrelated storage path
+     * that merely ends the same way, e.g. a Key Storage entry at {@code keys/foo/etc/project.properties}
+     * (this same plugin class is also configured for Key Storage; see {@code JASYPT_PROVIDER_NAME}
+     * usage in {@code rundeck-config.properties}). The plaintext-recovery fallback below is
+     * deliberately restricted to this one real path: it must never apply to SCM config, Key Storage,
+     * or any other legacy-flagged resource.
+     */
+    private static final Pattern PROJECT_PROPERTIES_PATH_PATTERN =
+            Pattern.compile("^projects/[^/]+/etc/project\\.properties$");
+
+    /**
+     * The exact header {@code java.util.Properties.store()} writes as its first comment line,
+     * matching {@code ProjectManagerService.isValidConfigFile()}'s own check
+     * ({@code '#' + MIME_TYPE_PROJECT_PROPERTIES}). Requiring this full header -- not just a leading
+     * {@code '#'} -- combined with the exact-path match above, makes this check specific enough to
+     * run safely before ever attempting decryption.
+     */
+    private static final byte[] PROJECT_PROPERTIES_HEADER =
+            "#text/x-java-properties".getBytes(StandardCharsets.ISO_8859_1);
+
+    /**
+     * Detects a pre-existing 5.x condition: {@code project.properties} stored as genuine plaintext
+     * (a real {@code Properties.store()} header) while still carrying a stale
+     * {@code jasypt-encryption:encrypted=true} flag. Requires an exact match on both the real project-
+     * config path and the full header -- not just a leading {@code '#'} -- which is specific enough
+     * that this can run before attempting decryption at all, rather than only as a post-failure
+     * fallback: a byte {@code 0x23} ('#') alone is a perfectly valid (if unlikely, ~1/256) first byte
+     * of this decryptor's random salt for genuine ciphertext, but the full header plus the exact path
+     * together make an accidental match on real ciphertext astronomically unlikely. This must never
+     * apply to SCM config, Key Storage, or any other legacy-flagged resource, where a still-
+     * undecryptable payload must keep failing loudly instead of being returned as "plaintext" and
+     * potentially persisted as such on the next write.
+     */
+    private static boolean looksLikeProjectPropertiesPlaintext(Path path, byte[] data) {
+        if (data == null || data.length < PROJECT_PROPERTIES_HEADER.length) {
+            return false;
+        }
+        String pathString = path != null ? path.getPath() : null;
+        if (pathString == null || !PROJECT_PROPERTIES_PATH_PATTERN.matcher(pathString).matches()) {
+            return false;
+        }
+        for (int i = 0; i < PROJECT_PROPERTIES_HEADER.length; i++) {
+            if (data[i] != PROJECT_PROPERTIES_HEADER[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     char[] getResolvedPassword() {

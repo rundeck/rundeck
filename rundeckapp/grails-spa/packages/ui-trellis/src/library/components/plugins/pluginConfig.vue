@@ -71,6 +71,9 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
+        <div class="col-sm-12">
+          <slot name="extraProperties"></slot>
+        </div>
         <template v-for="prop in props" :key="prop.name">
           <span
             v-if="
@@ -79,6 +82,7 @@
               !isPropHidden(prop)
             "
             class="configprop"
+            :data-testid="`configprop-${prop.name}`"
           >
             <plugin-prop-view
               :prop="prop"
@@ -87,9 +91,6 @@
             />
           </span>
         </template>
-        <div class="col-sm-12">
-          <slot name="extraProperties"></slot>
-        </div>
       </div>
       <div
         v-else-if="isShowConfigForm && inputLoaded"
@@ -101,50 +102,53 @@
           </div>
         </div>
         <div v-for="(group, gindex) in groupedProperties" :key="group.name">
-          <div
-            v-for="(prop, pindex) in group.props"
-            v-if="!group.name"
-            :key="'g_' + gindex + '/' + prop.name"
-          >
-            <input
-              v-if="isPropHidden(prop)"
-              type="hidden"
-              :value="inputValues[prop.name]"
-              :data-hidden-field-identity="prop.options['hidden_identity']"
-              :data-testid="`prop-hidden-${prop.name}`"
-              class="_config_prop_display_hidden"
-            />
-
+          <template v-if="!group.name">
             <div
-              v-else
-              :class="
-                'form-group ' +
-                (prop.required ? 'required' : '') +
-                (validation && validation.errors[prop.name] ? ' has-error' : '')
-              "
-              :data-prop-name="prop.name"
-              :data-testid="`prop-field-${prop.name}`"
+              v-for="(prop, pindex) in group.props"
+              :key="'g_' + gindex + '/' + prop.name"
             >
-              <plugin-prop-edit
-                v-model="inputValues[prop.name]"
-                :prop="prop"
-                :event-bus="eventBus"
-                :input-values="inputValues"
-                :use-runner-selector="useRunnerSelector"
-                :context-autocomplete="inputContextAutocomplete"
-                :validation="validation"
-                :rkey="'g_' + gindex + '_' + rkey"
-                :read-only="readOnly"
-                :pindex="pindex"
-                :selector-data="propsComputedSelectorData"
-                :autocomplete-callback="autocompleteCallback"
-                :step-type="serviceName"
-                :plugin-type="modelValue.type"
-                :extra-autocomplete-vars="extraAutocompleteVars"
-                @plugin-props-mounted="notifyHandleAutoComplete"
+              <input
+                v-if="isPropHidden(prop)"
+                type="hidden"
+                :value="inputValues[prop.name]"
+                :data-hidden-field-identity="prop.options['hidden_identity']"
+                :data-testid="`prop-hidden-${prop.name}`"
+                class="_config_prop_display_hidden"
               />
+
+              <div
+                v-else
+                :class="
+                  'form-group ' +
+                  (prop.required ? 'required' : '') +
+                  (validation && validation.errors[prop.name]
+                    ? ' has-error'
+                    : '')
+                "
+                :data-prop-name="prop.name"
+                :data-testid="`prop-field-${prop.name}`"
+              >
+                <plugin-prop-edit
+                  v-model="inputValues[prop.name]"
+                  :prop="prop"
+                  :event-bus="eventBus"
+                  :input-values="inputValues"
+                  :use-runner-selector="useRunnerSelector"
+                  :context-autocomplete="inputContextAutocomplete"
+                  :validation="validation"
+                  :rkey="'g_' + gindex + '_' + rkey"
+                  :read-only="readOnly"
+                  :pindex="pindex"
+                  :selector-data="propsComputedSelectorData"
+                  :autocomplete-callback="autocompleteCallback"
+                  :step-type="serviceName"
+                  :plugin-type="modelValue.type"
+                  :extra-autocomplete-vars="extraAutocompleteVars"
+                  @plugin-props-mounted="notifyHandleAutoComplete"
+                />
+              </div>
             </div>
-          </div>
+          </template>
           <details
             v-if="group.name"
             :open="!group.secondary"
@@ -228,9 +232,7 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import {
-  getPluginProvidersForService,
-} from "../../modules/pluginService";
+import { getPluginProvidersForService } from "../../modules/pluginService";
 
 interface PropGroup {
   name?: string;
@@ -295,8 +297,9 @@ export default defineComponent({
         this.showDescription !== null ? this.showDescription : true,
       inputValues: {} as any,
       inputSaved: {} as any,
-      inputSavedProps:
-        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
+      inputSavedProps: (typeof this.savedProps !== "undefined"
+        ? this.savedProps
+        : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
@@ -385,7 +388,7 @@ export default defineComponent({
   },
   watch: {
     inputValues: {
-      handler(newValue, oldValue) {
+      handler() {
         if (this.isShowConfigForm) {
           this.$emit(
             "update:modelValue",
@@ -403,7 +406,7 @@ export default defineComponent({
       deep: true,
     },
     mode: {
-      handler(newValue, oldValue) {
+      handler() {
         this.loadForMode();
       },
     },
@@ -457,7 +460,12 @@ export default defineComponent({
         if (config[prop.name]) {
           this.inputValues[prop.name] = config[prop.name];
         }
-        if (modeCreate && !this.inputValues[prop.name] && prop.defaultValue) {
+        if (
+          modeCreate &&
+          !this.isStaticTextProp(prop) &&
+          !this.inputValues[prop.name] &&
+          prop.defaultValue
+        ) {
           this.inputValues[prop.name] = prop.defaultValue;
         }
         if (
@@ -506,6 +514,12 @@ export default defineComponent({
       const values: { [index: string]: any } = {};
       //convert true boolean to 'true'
       this.props.forEach((prop: any) => {
+        if (this.isStaticTextProp(prop)) {
+          // STATIC_TEXT properties are display-only help text (e.g. workflow strategy
+          // "info" panels) and must never be persisted as real config data.
+          // See https://github.com/rundeck/rundeck/issues/10420
+          return;
+        }
         if (prop.type === "Boolean") {
           if (
             this.inputValues[prop.name] === true ||
@@ -625,6 +639,20 @@ export default defineComponent({
     isPropHidden(testProp: any): boolean {
       return testProp.options && testProp.options["displayType"] === "HIDDEN";
     },
+    isStaticTextProp(testProp: any): boolean {
+      // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
+      // rendered from prop.staticTextDefaultValue and are never user-editable, so
+      // they must not be seeded with a default value or exported as config data.
+      // AutogenInstanceId properties are also displayed as STATIC_TEXT (see
+      // PropertyBuilder.autogenInstanceId) but their generated id is real config
+      // that must be seeded in create mode and persisted (e.g. the Node Wizard
+      // "wizard-id"), so they are excluded here.
+      return (
+        testProp.type !== "AutogenInstanceId" &&
+        testProp.options &&
+        testProp.options["displayType"] === "STATIC_TEXT"
+      );
+    },
     isPropInScope(testProp: any): boolean {
       // determine if property is visible in scope
       const testScope = testProp.scope || this.defaultScope;
@@ -660,7 +688,7 @@ export default defineComponent({
     },
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;
-      this.props.forEach((prop: any, index) => {
+      this.props.forEach((prop: any) => {
         if (prop.options != null && prop.options["selectionAccessor"]) {
           storageAccess = true;
         }
@@ -690,6 +718,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles third-party component internals -->
 <style lang="scss">
 .configprop + .configprop:before {
   content: " ";

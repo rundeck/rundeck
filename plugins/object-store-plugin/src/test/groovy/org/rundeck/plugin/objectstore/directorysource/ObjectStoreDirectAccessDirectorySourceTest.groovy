@@ -20,14 +20,14 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioContainer
-import testhelpers.MinioTestUtils
+import testhelpers.S3Container
+import testhelpers.S3TestUtils
 
 class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
     static MinioClient mClient
 
     @Shared
-    public MinioContainer minio = new MinioContainer()
+    public S3Container minio = new S3Container()
 
 
     @Shared
@@ -43,14 +43,14 @@ class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
         }
         directory = new ObjectStoreDirectAccessDirectorySource(mClient, bucket)
 
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"rootfile.test","data", [:])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"etc/framework.properties","data",["description":"rundeck framework property file"])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/config/rundeck-config.properties","data",["description":"main config properties"])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/config/realm.properties","data",["description":"security data"])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/logs/server.log","data",[:])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/data/grailsdb.mv.db","data",[:])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/random.file","data",[:])
-        MinioTestUtils.ifNotExistAdd(mClient,bucket,"tobedeleted/delete.me","data",[:])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"rootfile.test","data", [:])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"etc/framework.properties","data",["description":"rundeck framework property file"])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"server/config/rundeck-config.properties","data",["description":"main config properties"])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"server/config/realm.properties","data",["description":"security data"])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"server/logs/server.log","data",[:])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"server/data/grailsdb.mv.db","data",[:])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"server/random.file","data",[:])
+        S3TestUtils.ifNotExistAdd(mClient,bucket,"tobedeleted/delete.me","data",[:])
     }
 
     void cleanupSpec() {

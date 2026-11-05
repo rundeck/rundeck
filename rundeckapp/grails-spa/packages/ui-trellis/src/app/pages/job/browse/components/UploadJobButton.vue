@@ -24,7 +24,7 @@ export default defineComponent({
       default: "default",
     },
   },
-  setup(props) {
+  setup() {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,
     ) as JobPageStore;

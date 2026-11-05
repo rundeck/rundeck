@@ -2,6 +2,7 @@
   <div
     :id="id"
     class="switch"
+    data-testid="switch-toggle"
     type="button"
     role="switch"
     :aria-checked="modelValue"
@@ -16,11 +17,12 @@
   >
     <input
       ref="input"
-      v-model="modelValue"
+      data-testid="switch-input"
+      :checked="modelValue"
       type="checkbox"
       style="height: 0; width: 0; appearance: none"
       @input="
-        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+        $emit('update:modelValue', ($event.target as HTMLInputElement).checked)
       "
     />
     <span

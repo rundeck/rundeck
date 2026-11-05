@@ -23,6 +23,7 @@
             index !== availableOptions.length - 1 &&
             visibleOptions > 1
           "
+          :key="`divider${index}`"
           class="divider"
         ></li>
       </template>

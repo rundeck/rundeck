@@ -10,7 +10,7 @@ import {
   commonAddUiMessages,
   type LocalizedMessages,
 } from "../../utilities/i18n";
-import {configurePrimeVue} from "../../../library/utilities/primeVueConfig";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const rootStore = getRundeckContext().rootStore;
 const EventBus = getRundeckContext().eventBus;
@@ -71,7 +71,9 @@ function initUiComponents(elmElement: any) {
   vue.use(i18n);
   vue.use(uiv);
 
-  configurePrimeVue(vue);
+  // widgets mounted into these sockets render after the page's one-shot tooltip
+  // initialiser has run, so they need a directive of their own to explain themselves
+  configurePrimeVue(vue, { includeTooltip: true });
 
   vue.provide("registerComponent", (name: string, comp: Component) => {
     vue.component(name, comp);

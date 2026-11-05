@@ -60,9 +60,21 @@
         </label>
       </div>
     </template>
-    <template
-      v-else-if="prop.options && prop.options['displayType'] === 'DYNAMIC_FORM'"
-    >
+    <template v-else-if="isDynamicForm">
+      <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
+        <plugin-details
+          :description="translatedDesc(prop)"
+          :extended-css="extendedCss"
+          description-css="more-info"
+          markdown-container-css="m-0 p-0"
+          inline-description
+          allow-html
+        >
+          <template #extraDescriptionText>
+            <div class="help-block">{{ translatedDesc(prop) }}</div>
+          </template>
+        </plugin-details>
+      </div>
       <dynamic-form-plugin-prop
         v-model="currentValue"
         :fields="modelValue"
@@ -172,6 +184,7 @@
         <pt-auto-complete
           v-if="['Integer', 'Long'].indexOf(prop.type) >= 0 && !renderReadOnly"
           v-model="currentValue"
+          data-testid="plugin-prop-number-input"
           :suggestions="inputTypeContextVariables"
         />
         <template
@@ -217,11 +230,9 @@
                 prop.options['codeSyntaxSelectable'] === 'true' &&
                 !renderReadOnly
               "
-              height="200"
-              width="100%"
               :read-only="renderReadOnly"
               :context-variable-suggestions="scriptTypeContextVariables"
-              :min-lines="aceEditorMinLines"
+              :min-lines="aceEditorMinLines > 0 ? aceEditorMinLines : undefined"
               :max-lines="aceEditorMaxLines"
             />
           </ui-socket>
@@ -392,7 +403,10 @@
       ></slot>
     </template>
 
-    <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
+    <div
+      v-if="prop.desc && !isDynamicForm"
+      class="col-sm-10 col-sm-offset-2 help-block"
+    >
       <plugin-details
         :description="translatedDesc(prop)"
         :extended-css="extendedCss"
@@ -436,10 +450,7 @@ import {
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
-// RUN-4277/#10321: default raised from 12 to 20 — Ace no longer supports a manual resize
-// handle (upstream removed it), so a taller out-of-the-box default is the supported way to
-// make the inline-script/code editor more usable without configuration.
-const ACE_EDITOR_DEFAULT_MIN_LINES = 20;
+const ACE_EDITOR_DEFAULT_MIN_LINES = 0;
 const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
 
 interface Prop {
@@ -576,6 +587,9 @@ export default defineComponent({
     isAutoCompleteField(): boolean {
       return isAutoCompleteField(this.stepType);
     },
+    isDynamicForm(): boolean {
+      return this.prop.options?.["displayType"] === "DYNAMIC_FORM";
+    },
     inputTypeContextVariables(): any {
       if (!this.isAutoCompleteField) return [];
       return [
@@ -602,7 +616,8 @@ export default defineComponent({
       return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
     },
     aceEditorMaxLines(): number {
-      const raw = this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+      const raw =
+        this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
       return raw === 0 ? Infinity : raw;
     },
   },
@@ -703,8 +718,6 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="scss">
-@import "~vue3-markdown/dist/vue3-markdown.css";
-
 .longlist {
   max-height: 500px;
   overflow-y: auto;

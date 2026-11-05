@@ -48,7 +48,7 @@
         <div class="col-sm-6">
           <select
             id="jobProjectField"
-            v-model="modelValue.project"
+            v-model="localModel.project"
             data-testid="jobProjectField"
             name="jobProject"
             class="form-control"
@@ -88,25 +88,27 @@
       <div
         class="form-group"
         :class="{ 'has-error': showValidation && isUseName }"
+        data-testid="jobNameFieldGroup"
       >
         <label class="col-sm-2 control-label"></label>
         <div class="col-sm-5">
-          <input
-            :id="`jobNameField${rkey}`"
-            v-model="modelValue.name"
-            type="text"
+          <PtEntityAutoComplete
+            v-model="localModel.name"
+            :input-id="`jobNameField${rkey}`"
             name="jobName"
-            data-testid="jobNameField"
+            input-testid="jobNameField"
+            option-label="name"
+            option-secondary="group"
+            :search="fetchJobSuggestions"
+            :read-only="!isUseName"
             :placeholder="$t('scheduledExecution.jobName.label')"
-            class="form-control"
-            size="100"
-            :readonly="!isUseName"
+            @select="onJobSuggestionSelected"
           />
         </div>
         <div class="col-sm-5">
           <input
             :id="`jobGroupField${rkey}`"
-            v-model="modelValue.group"
+            v-model="localModel.group"
             data-testid="jobGroupField"
             type="text"
             name="jobGroup"
@@ -128,7 +130,7 @@
         <div class="col-sm-10">
           <PtAutoComplete
             :id="`jobUuidField${rkey}`"
-            v-model="modelValue.uuid"
+            v-model="localModel.uuid"
             class="context_var_autocomplete"
             name="uuid"
             data-testid="jobUuidField"
@@ -155,7 +157,7 @@
         <div class="col-sm-10">
           <PtAutoComplete
             id="jobArgStringField"
-            v-model="modelValue.args"
+            v-model="localModel.args"
             name="argString"
             :suggestions="inputTypeContextVariables"
             :placeholder="
@@ -171,7 +173,7 @@
           <div class="checkbox">
             <input
               id="importOptionsCheck"
-              v-model="modelValue.importOptions"
+              v-model="localModel.importOptions"
               type="checkbox"
               name="importOptions"
               :value="true"
@@ -192,7 +194,7 @@
           <div class="checkbox">
             <input
               id="ignoreNotificationsCheck"
-              v-model="modelValue.ignoreNotifications"
+              v-model="localModel.ignoreNotifications"
               type="checkbox"
               name="ignoreNotifications"
               :value="true"
@@ -213,7 +215,7 @@
           <div class="checkbox">
             <input
               id="failOnDisableCheck"
-              v-model="modelValue.failOnDisable"
+              v-model="localModel.failOnDisable"
               type="checkbox"
               name="failOnDisable"
               :value="true"
@@ -234,7 +236,7 @@
           <div class="checkbox">
             <input
               id="childNodesCheck"
-              v-model="modelValue.childNodes"
+              v-model="localModel.childNodes"
               type="checkbox"
               name="childNodes"
               :value="true"
@@ -287,7 +289,7 @@
           <div class="radio">
             <input
               id="nodeIntersectFalse"
-              v-model="modelValue.nodefilters.dispatch.nodeIntersect"
+              v-model="localModel.nodefilters.dispatch.nodeIntersect"
               type="radio"
               name="nodeIntersect"
               :value="null"
@@ -299,7 +301,7 @@
           <div class="radio">
             <input
               id="nodeIntersectTrue"
-              v-model="modelValue.nodefilters.dispatch.nodeIntersect"
+              v-model="localModel.nodefilters.dispatch.nodeIntersect"
               type="radio"
               name="nodeIntersect"
               :value="true"
@@ -317,7 +319,7 @@
         </label>
         <div class="col-sm-10 vue-ui-socket">
           <node-filter-input
-            :value="modelValue.nodefilters.filter"
+            :value="localModel.nodefilters.filter"
             :project="currentProject"
             filter-field-name="nodeFilter"
             :filter-field-id="`nodeFilterField${rkey}`"
@@ -385,7 +387,7 @@
         <div class="col-sm-2">
           <input
             :id="`nodeThreadcountField${rkey}`"
-            v-model="modelValue.nodefilters.dispatch.threadcount"
+            v-model="localModel.nodefilters.dispatch.threadcount"
             data-testid="nodeThreadcountField"
             type="number"
             name="nodeThreadcount"
@@ -408,7 +410,7 @@
           <div class="radio">
             <input
               id="nodeKeepgoingNull"
-              v-model="modelValue.nodefilters.dispatch.keepgoing"
+              v-model="localModel.nodefilters.dispatch.keepgoing"
               type="radio"
               name="nodeKeepgoing"
               :value="null"
@@ -421,7 +423,7 @@
           <div class="radio">
             <input
               id="nodeKeepgoingTrue"
-              v-model="modelValue.nodefilters.dispatch.keepgoing"
+              v-model="localModel.nodefilters.dispatch.keepgoing"
               data-testid="nodeKeepgoingTrue"
               type="radio"
               name="nodeKeepgoing"
@@ -435,7 +437,7 @@
           <div class="radio">
             <input
               id="nodeKeepgoingFalse"
-              v-model="modelValue.nodefilters.dispatch.keepgoing"
+              v-model="localModel.nodefilters.dispatch.keepgoing"
               type="radio"
               name="nodeKeepgoing"
               :value="false"
@@ -458,7 +460,7 @@
         <div class="col-sm-10">
           <input
             :id="`nodeRankAttributeField${rkey}`"
-            v-model="modelValue.nodefilters.dispatch.rankAttribute"
+            v-model="localModel.nodefilters.dispatch.rankAttribute"
             :disabled="!hasFilter"
             type="text"
             name="nodeRankAttribute"
@@ -481,7 +483,7 @@
           <div class="radio">
             <input
               id="nodeRankOrderAscendingNull"
-              v-model="modelValue.nodefilters.dispatch.rankOrder"
+              v-model="localModel.nodefilters.dispatch.rankOrder"
               type="radio"
               name="nodeRankOrderAscending"
               :value="null"
@@ -494,7 +496,7 @@
           <div class="radio">
             <input
               id="nodeRankOrderAscending"
-              v-model="modelValue.nodefilters.dispatch.rankOrder"
+              v-model="localModel.nodefilters.dispatch.rankOrder"
               type="radio"
               name="nodeRankOrderAscending"
               value="ascending"
@@ -509,7 +511,7 @@
           <div class="radio">
             <input
               id="nodeRankOrderDescending"
-              v-model="modelValue.nodefilters.dispatch.rankOrder"
+              v-model="localModel.nodefilters.dispatch.rankOrder"
               type="radio"
               name="nodeRankOrderAscending"
               value="descending"
@@ -535,7 +537,7 @@
           <div class="radio">
             <input
               id="jobNodeStepFieldTrue"
-              v-model="modelValue.nodeStep"
+              v-model="localModel.nodeStep"
               type="radio"
               name="nodeStep"
               :value="true"
@@ -548,7 +550,7 @@
           <div class="radio">
             <input
               id="jobNodeStepFieldFalse"
-              v-model="modelValue.nodeStep"
+              v-model="localModel.nodeStep"
               type="radio"
               name="nodeStep"
               :value="false"
@@ -581,8 +583,8 @@
             showBulkEdit: false,
             showCreateButton: false,
             allowFolderNavigation: false,
-            projectToDisplay: modelValue.project || selectedProject,
-            key: modelValue.project,
+            projectToDisplay: localModel.project || selectedProject,
+            key: localModel.project,
           }"
         />
       </modal>
@@ -596,9 +598,14 @@ import { getRundeckContext } from "../../../../library";
 import NodeFilterInput from "../resources/NodeFilterInput.vue";
 import NodeListEmbed from "../resources/NodeListEmbed.vue";
 import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
+import PtEntityAutoComplete from "../../../../library/components/primeVue/PtEntityAutoComplete/PtEntityAutoComplete.vue";
+import {
+  searchJobsByName,
+  type JobSearchResult,
+} from "../../../../library/services/jobBrowse";
 import UiSocket from "../../../../library/components/utils/UiSocket.vue";
 import { ContextVariable } from "../../../../library/stores/contextVariables";
-import { cloneDeep, merge } from "lodash";
+import { cloneDeep, isEqual, merge } from "lodash";
 import { mapState, mapActions } from "pinia";
 import { useNodesStore } from "../../../../library/stores/NodesStorePinia";
 import {
@@ -649,6 +656,7 @@ export default defineComponent({
     NodeFilterInput,
     NodeListEmbed,
     PtAutoComplete,
+    PtEntityAutoComplete,
     UiSocket,
   },
   provide() {
@@ -674,6 +682,8 @@ export default defineComponent({
   emits: ["update:modelValue"],
   data() {
     return {
+      // local copy edited by the form; changes are emitted as update:modelValue
+      localModel: cloneDeep(this.modelValue) as JobRefModel,
       nodeFilterOverrideExpanded: null as boolean | null,
       projectStore: rundeckContext.rootStore.projects,
       selectedProject: rundeckContext.projectName,
@@ -699,14 +709,14 @@ export default defineComponent({
   computed: {
     isUseName: {
       get(): boolean {
-        return this.modelValue.useName ?? false;
+        return this.localModel.useName ?? false;
       },
       set(val: boolean) {
-        this.$emit("update:modelValue", { ...this.modelValue, useName: val });
+        this.localModel.useName = val;
       },
     },
     hasFilter() {
-      return Boolean(this.modelValue?.nodefilters?.filter);
+      return Boolean(this.localModel?.nodefilters?.filter);
     },
     inputTypeContextVariables() {
       return [
@@ -723,10 +733,26 @@ export default defineComponent({
     ]),
   },
   watch: {
+    modelValue: {
+      handler(val: JobRefModel) {
+        if (!isEqual(val, this.localModel)) {
+          this.localModel = cloneDeep(val);
+        }
+      },
+      deep: true,
+    },
+    localModel: {
+      handler(val: JobRefModel) {
+        if (!isEqual(val, this.modelValue)) {
+          this.$emit("update:modelValue", cloneDeep(val));
+        }
+      },
+      deep: true,
+    },
     "nodeFilterStore.filter": {
       async handler(val) {
-        if (val !== this.modelValue.nodefilters.filter) {
-          this.modelValue.nodefilters.filter = val;
+        if (val !== this.localModel.nodefilters.filter) {
+          this.localModel.nodefilters.filter = val;
           await this.triggerFetchNodes();
         }
       },
@@ -739,8 +765,8 @@ export default defineComponent({
 
     // Set expanded state for node filter if there's a filter
     if (
-      this.modelValue.nodefilters?.filter ||
-      this.modelValue.nodefilters?.dispatch?.nodeIntersect
+      this.localModel.nodefilters?.filter ||
+      this.localModel.nodefilters?.dispatch?.nodeIntersect
     ) {
       this.nodeFilterOverrideExpanded = true;
     }
@@ -763,9 +789,9 @@ export default defineComponent({
       }
 
       // Initialize node filter if exists
-      if (this.modelValue.nodefilters?.filter) {
+      if (this.localModel.nodefilters?.filter) {
         this.nodeFilterStore.setSelectedFilter(
-          this.modelValue.nodefilters.filter,
+          this.localModel.nodefilters.filter,
         );
 
         if (rundeckContext.data) {
@@ -787,15 +813,44 @@ export default defineComponent({
     },
 
     updateJobSelection(job: JobSelection) {
-      this.modelValue.uuid = job.id;
-      this.modelValue.name = job.jobName;
-      this.modelValue.group = job.groupPath;
+      this.localModel.uuid = job.id;
+      this.localModel.name = job.jobName;
+      this.localModel.group = job.groupPath;
       this.jobBrowserLoading = false;
       this.openJobSelectionModal = false;
     },
 
     handleFavoritesButton() {
       this.showFavoritesButton = false;
+    },
+
+    /**
+     * Load job name suggestions for the job reference name field.
+     *
+     * Filtering runs server side against the project currently selected in the
+     * form, so projects with a large number of jobs stay responsive and jobs
+     * the user cannot run are left out.
+     *
+     * @param query partial job name typed by the user
+     * @returns matching jobs, flattened across group paths
+     */
+    async fetchJobSuggestions(query: string): Promise<JobSearchResult[]> {
+      const project = this.localModel.project || this.selectedProject;
+      if (!project) {
+        return [];
+      }
+      return await searchJobsByName(project, query);
+    },
+
+    /**
+     * Populate name, group and uuid from a job picked in the name autocomplete.
+     *
+     * @param job the selected job
+     */
+    onJobSuggestionSelected(job: JobSearchResult) {
+      this.localModel.name = job.name;
+      this.localModel.group = job.group || "";
+      this.localModel.uuid = job.id;
     },
 
     updatedValue(val: string) {

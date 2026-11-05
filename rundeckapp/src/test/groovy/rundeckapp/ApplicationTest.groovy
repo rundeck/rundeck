@@ -43,6 +43,7 @@ class ApplicationTest extends Specification {
         runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION,"fake")
         runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME,"fake")
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
+        Application.prebootstrapSucceeded = true
         Application app = new Application()
         TestEnvironment env = new TestEnvironment()
 
@@ -57,6 +58,7 @@ class ApplicationTest extends Specification {
 
         cleanup:
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
+        Application.prebootstrapSucceeded = null
     }
 
     def "setEnvironment adds liquibase migration prop with migration cli option"() {
@@ -68,6 +70,7 @@ class ApplicationTest extends Specification {
         runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION,"fake")
         runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME,"fake")
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
+        Application.prebootstrapSucceeded = true
         Application app = new Application()
         TestEnvironment env = new TestEnvironment()
 
@@ -77,6 +80,30 @@ class ApplicationTest extends Specification {
         then:
         propertiesLoaded.contains("ensure-migration-flag")
 
+        cleanup:
+        Application.prebootstrapSucceeded = null
+    }
+
+    def "loadRundeckPropertySources aborts on a prior failed prebootstrap even though rundeckConfig is already non-null"() {
+        // Regression test: rundeckConfig != null doesn't mean prebootstrap succeeded --
+        // InitializeRundeckPreboostrap assigns it before finishing initialization, and other callers
+        // (RundeckWebAppInitializer, main()) can run prebootstrap first and leave it non-null but
+        // broken. loadRundeckPropertySources must check prebootstrapSucceeded, not rundeckConfig.
+        given:
+        def previousRundeckConfig = Application.rundeckConfig
+        def previousPrebootstrapSucceeded = Application.prebootstrapSucceeded
+        Application.rundeckConfig = new RundeckInitConfig()
+        Application.prebootstrapSucceeded = false
+
+        when:
+        Application.loadRundeckPropertySources(new TestEnvironment())
+
+        then:
+        thrown(IllegalStateException)
+
+        cleanup:
+        Application.rundeckConfig = previousRundeckConfig
+        Application.prebootstrapSucceeded = previousPrebootstrapSucceeded
     }
 
     def "load default rundeck-config.groovy if file exist and RDECK_CONFIG_LOCATION not set"() {

@@ -155,6 +155,11 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     }
 
     @Override
+    Map<String, String> authResourceForExecutionType(final String executionType) {
+        return rundeckAuthContextEvaluator.authResourceForExecutionType(executionType)
+    }
+
+    @Override
     boolean authorizeProjectExecutionAll(
         final AuthContext authContext,
         final Execution exec,

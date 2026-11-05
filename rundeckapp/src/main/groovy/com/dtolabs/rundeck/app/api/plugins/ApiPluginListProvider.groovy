@@ -29,4 +29,7 @@ class ApiPluginListProvider {
     @ApiVersion(51)
     @Schema(description = 'Order of the highlighted plugin. Since: v51')
     Integer highlightedOrder
+
+    @Schema(description = 'Values a step plugin computes and exposes for reference by a Conditional Logic step, including output-only values. Omitted when the plugin exposes none.')
+    List<ApiPluginOutput> outputs
 }

@@ -113,21 +113,38 @@ export default defineComponent({
     hideConfigSection: {
       type: Boolean,
       default: false,
-    }
+    },
   },
-  emits: ["update:logFilters", "add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "delete", "duplicate", "edit"],
+  emits: [
+    "update:logFilters",
+    "add-log-filter",
+    "add-error-handler",
+    "edit-log-filter",
+    "edit-error-handler",
+    "remove-error-handler",
+    "delete",
+    "duplicate",
+    "edit",
+  ],
   computed: {
     computedServiceName() {
-      return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
+      return (
+        this.serviceName ||
+        (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep")
+      );
     },
     errorHandlerData(): ErrorHandlerDefinition | null {
-      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] as ErrorHandlerDefinition : null;
+      return this.errorHandler && this.errorHandler.length > 0
+        ? (this.errorHandler[0] as ErrorHandlerDefinition)
+        : null;
     },
     computedErrorHandlerConfig() {
       return this.errorHandlerData?.config || {};
     },
     computedErrorHandlerServiceName() {
-      return this.errorHandlerData?.nodeStep ? "WorkflowNodeStep" : "WorkflowStep";
+      return this.errorHandlerData?.nodeStep
+        ? "WorkflowNodeStep"
+        : "WorkflowStep";
     },
     computedErrorHandlerProvider() {
       if (this.errorHandlerData?.type === "job.reference") return "";

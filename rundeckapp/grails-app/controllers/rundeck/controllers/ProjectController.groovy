@@ -415,6 +415,9 @@ class ProjectController extends ControllerBase{
             ) {
                 return null
             }
+            if (archiveParams.importConfig || archiveParams.importNodesSources || archiveParams.importScm) {
+                authorizing.authorize(RundeckAccess.Project.APP_CONFIGURE)
+            }
             //validate component input options
             archiveParams.cleanComponentOpts()
             def validations = projectService.validateAllProjectComponentImportOptions(archiveParams.importOpts)
@@ -3769,6 +3772,9 @@ Note: `other_errors` included since API v35""",
         //previous version must import nodes together with the project config
         if(request.api_version <= ApiVersions.V38) {
             archiveParams.importNodesSources = archiveParams.importConfig
+        }
+        if (archiveParams.importConfig || archiveParams.importNodesSources) {
+            authorizingProject.authorize(RundeckAccess.Project.APP_CONFIGURE)
         }
 
         if( asyncImportService.statusFileExists(project.name) ){

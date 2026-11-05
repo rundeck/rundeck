@@ -150,8 +150,8 @@ class JobExecutionStatusSpec extends BaseContainer {
         }
     }
 
-    def "job/id/run rejects options not declared on the job (RUN-4693)"() {
-        setup: "a job that declares NO options"
+    def "job/id/run does not reject undeclared options by default (RUN-4693)"() {
+        setup: "a job that declares NO options; the reject control is opt-in and off by default"
         def projectName = UUID.randomUUID().toString()
         setupProject(projectName)
         def xml = """
@@ -172,7 +172,7 @@ class JobExecutionStatusSpec extends BaseContainer {
         def path = JobUtils.generateFileToImport(xml, 'xml')
         def jobId = JobUtils.jobImportFile(projectName, path, client).succeeded[0].id
 
-        when: "the job is run with an option it does not declare (option injection attempt)"
+        when: "the job is run with an option it does not declare"
         def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-ghost pwned")
         def execId = jsonValue(jobRun.body()).id
 
@@ -181,20 +181,20 @@ class JobExecutionStatusSpec extends BaseContainer {
 
         when: "the execution finishes"
         def execFinal = JobUtils.waitForExecution(
-                ExecutionStatus.FAILED.state,
+                ExecutionStatus.SUCCEEDED.state,
                 execId as String,
                 client,
                 WaitingTime.EXCESSIVE)
 
-        then: "it is failed at start because the option is not declared on the job"
-        execFinal.status == 'failed'
+        then: "the undeclared option passes through (default off) and the execution succeeds"
+        execFinal.status == 'succeeded'
 
         when:
         def output = JobUtils.getExecutionOutput(execId as String, client)
         def logs = output.entries.collect { it.log }
 
-        then: "the rejection is reported in the log and the job step never ran"
-        logs.any { it.contains('Execution rejected') && it.contains('ghost') }
-        !logs.any { it.contains('hello') }
+        then: "the step ran and no rejection was logged"
+        logs.any { it.contains('hello') }
+        !logs.any { it.contains('Execution rejected') }
     }
 }

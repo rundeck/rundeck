@@ -1,8 +1,10 @@
+import type { App } from "vue";
+
 export class UIStore {
   items: Array<UIItem> = [];
   watchers: Array<UIWatcher> = [];
   uiMessages: Array<UiMessage> = [];
-  registerComponent: Function | null = null;
+  registerComponent: App["component"] | null = null;
 
   notifyWatchers() {
     this.watchers.forEach((w) => {
@@ -56,7 +58,7 @@ export interface UIItem {
   section: string;
   location: string;
   visible: boolean;
-  widget?: Object;
+  widget?: object;
   html?: string;
   text?: string;
 }
@@ -65,7 +67,8 @@ export interface UiMessage {
   [key: string]: string;
 }
 
-export type LocaleMessageValue =
-  | string
-  | { [key: string]: LocaleMessageValue };
-export type LocalizedMessages = Record<string, Record<string, LocaleMessageValue>>;
+export type LocaleMessageValue = string | { [key: string]: LocaleMessageValue };
+export type LocalizedMessages = Record<
+  string,
+  Record<string, LocaleMessageValue>
+>;

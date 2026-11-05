@@ -39,7 +39,7 @@
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 
-import { NavBar, NavContainer, NavItem } from "../../stores/NavBar";
+import { NavContainer } from "../../stores/NavBar";
 
 import NavBarItem from "./NavBarItem.vue";
 
@@ -233,6 +233,7 @@ a {
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles teleported overlay content -->
 <style lang="scss">
 .v-popover,
 .v-popover .trigger {

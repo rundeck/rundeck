@@ -22,8 +22,7 @@
               <summary>{{ $t("acl.example.summary") }}</summary>
               <pre
                 >{{ aclExample }}
-            </pre
-              >
+            </pre>
             </details>
           </form>
         </div>
@@ -52,7 +51,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { EventBus, getRundeckContext, RundeckContext } from "../../../library";
+import { EventBus, getRundeckContext } from "../../../library";
 
 export default defineComponent({
   name: "ProjectNodeSourcesHelp",
@@ -79,7 +78,7 @@ export default defineComponent({
     },
   },
   watch: {
-    unauthorized: function (val, oldVal) {
+    unauthorized: function () {
       this.$forceUpdate();
     },
   },

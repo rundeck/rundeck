@@ -38,7 +38,7 @@ import {
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject, ref } from "vue";
-import Browser from "./tree/Browser.vue";
+import Browser from "./tree/JobBrowser.vue";
 const eventBus = getRundeckContext().eventBus;
 const currentProject = getRundeckContext().projectName;
 export default defineComponent({
@@ -77,7 +77,7 @@ export default defineComponent({
       default: "",
     },
   },
-  setup(props) {
+  setup() {
     const jobBrowserStore: JobBrowserStore = inject(
       JobBrowserStoreInjectionKey,
     ) as JobBrowserStore;
