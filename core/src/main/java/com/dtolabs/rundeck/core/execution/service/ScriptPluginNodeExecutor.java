@@ -73,6 +73,50 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
         }
     }
 
+    @Override
+    public RemoteCommandShell getRemoteCommandShell(
+            final ExecutionContext executionContext,
+            final INodeEntry node
+    ) throws ExecutionServiceException
+    {
+        final Map<String, String> providerMeta = getProvider().getProviderMeta();
+        if (providerMeta == null) {
+            return RemoteCommandShell.DEFAULT;
+        }
+        final String configuredShell = providerMeta.get(RemoteCommandShell.PROVIDER_METADATA_KEY);
+        if (configuredShell == null) {
+            return RemoteCommandShell.DEFAULT;
+        }
+
+        try {
+            if (!configuredShell.contains("${")) {
+                return RemoteCommandShell.parse(configuredShell);
+            }
+            final Description pluginDesc = getDescription();
+            final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+                    executionContext.getFramework(),
+                    executionContext.getFrameworkProject(),
+                    executionContext.getDataContext()
+            );
+            final Map<String, Map<String, String>> finalDataContext = loadConfigData(
+                    executionContext,
+                    loadInstanceDataFromNodeAttributes(node, pluginDesc),
+                    localDataContext,
+                    pluginDesc,
+                    ServiceNameConstants.NodeExecutor
+            );
+            return RemoteCommandShell.parse(
+                    DataContextUtils.replaceDataReferencesInString(configuredShell, finalDataContext)
+            );
+        } catch (ConfigurationException | IllegalArgumentException e) {
+            throw new ExecutionServiceException(
+                    "Unable to resolve remote command shell",
+                    e,
+                    ServiceNameConstants.NodeExecutor
+            );
+        }
+    }
+
     public NodeExecutorResult executeCommand(
             final ExecutionContext executionContext,
             final String[] command,

@@ -24,7 +24,8 @@ import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.RemoteCommandShell
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -39,7 +40,7 @@ import spock.lang.Unroll
 class ExecutionServiceImplSpec extends Specification {
 
     @Unroll
-    def "resolve command interpreter for #provider with #attributes as #expected"() {
+    def "resolve command interpreter for #remoteShell with #attributes as #expected"() {
         given:
         def project = Mock(IRundeckProject) {
             getProperty(_) >> { String key -> projectProperties[key] }
@@ -47,37 +48,30 @@ class ExecutionServiceImplSpec extends Specification {
         def projectManager = Mock(ProjectManager) {
             getFrameworkProject("test-project") >> project
         }
-        def nodeExecutorService = Mock(NodeExecutorService) {
-            getDefaultProviderNameForNodeAndProject(_, "test-project") >> provider
-        }
         def framework = Mock(IFramework) {
             getFrameworkProjectMgr() >> projectManager
-            getNodeExecutorService() >> nodeExecutorService
-            isLocalNode(_) >> false
         }
-        def dataContext = new BaseDataContext("node", [remoteShell: "powershell"])
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> "test-project"
             getIFramework() >> framework
-            getDataContext() >> dataContext
         }
         def node = new NodeEntryImpl("node")
         node.setAttributes(attributes)
+        def nodeExecutor = Mock(NodeExecutor) {
+            getRemoteCommandShell(context, node) >> remoteShell
+        }
 
         expect:
-        ExecutionServiceImpl.resolveCommandInterpreter(context, node) == expected
+        ExecutionServiceImpl.resolveCommandInterpreter(context, node, nodeExecutor) == expected
 
         where:
-        provider       | attributes                                                            | projectProperties                                              || expected
-        "WinRMPython"  | ["node-executor": "WinRMPython"]                                       | [:]                                                            || "powershell"
-        "WinRMPython"  | ["node-executor": "WinRMPython", "winrm-shell": "powershell"]           | [:]                                                            || "powershell"
-        "WinRMPython"  | ["node-executor": "WinRMPython", "winrm-shell": "cmd"]                  | [:]                                                            || null
-        "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": "powershell"] || "powershell"
-        "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": "cmd"]        || null
-        "WinRMPython"  | [:]                                                                    | ["project.plugin.NodeExecutor.WinRMPython.shell": '${node.remoteShell}'] || "powershell"
-        "sshj-ssh"     | [:]                                                                    | [:]                                                            || null
-        "WinRMPython"  | ["node-executor": "WinRMPython", "shell-escaping-interpreter": "cmd"]   | [:]                                                            || "cmd"
-        "WinRMPython"  | ["node-executor": "WinRMPython", "shell-escaping-interpreter": "powershell"] | [:]                                                        || "powershell"
+        remoteShell                 | attributes                                        | projectProperties                                      || expected
+        RemoteCommandShell.DEFAULT  | [:]                                               | [:]                                                    || null
+        RemoteCommandShell.CMD      | [:]                                               | [:]                                                    || null
+        RemoteCommandShell.POWERSHELL | [:]                                             | [:]                                                    || "powershell"
+        RemoteCommandShell.POWERSHELL | ["shell-escaping-interpreter": "cmd"]            | [:]                                                    || "cmd"
+        RemoteCommandShell.CMD      | ["shell-escaping-interpreter": "powershell"]       | [:]                                                    || "powershell"
+        RemoteCommandShell.POWERSHELL | [:]                                             | ["project.plugin.Shell.Escaping.interpreter": "cmd"]   || "cmd"
     }
 
     /**

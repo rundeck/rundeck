@@ -65,10 +65,6 @@ public class ExecutionServiceImpl implements ExecutionService {
 
     private static final String NODE_LEVEL_INTERPRETER = "shell-escaping-interpreter";
     private static final String PROJECT_LEVEL_INTERPRETER = "project.plugin.Shell.Escaping.interpreter";
-    private static final String WINRM_NODE_EXECUTOR = "WinRMPython";
-    private static final String WINRM_SHELL_ATTRIBUTE = "winrm-shell";
-    private static final String WINRM_PROJECT_SHELL = "project.plugin.NodeExecutor.WinRMPython.shell";
-    private static final String WINRM_FRAMEWORK_SHELL = "framework.plugin.NodeExecutor.WinRMPython.shell";
     private static final String POWERSHELL = "powershell";
 
     public ExecutionServiceImpl() {
@@ -425,7 +421,12 @@ public class ExecutionServiceImpl implements ExecutionService {
                 .nodeContextData(node)
                 .build();
 
-        String commandInterpreter = resolveCommandInterpreter(nodeContext, node);
+        final String commandInterpreter;
+        try {
+            commandInterpreter = resolveCommandInterpreter(nodeContext, node, nodeExecutor);
+        } catch (ExecutionServiceException e) {
+            throw new CoreException(e);
+        }
 
         final ArrayList<String> commandList = command.buildCommandForNode(
                 nodeContext.getSharedDataContext(),
@@ -452,7 +453,12 @@ public class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    static String resolveCommandInterpreter(final ExecutionContext context, final INodeEntry node) {
+    static String resolveCommandInterpreter(
+            final ExecutionContext context,
+            final INodeEntry node,
+            final NodeExecutor nodeExecutor
+    ) throws ExecutionServiceException
+    {
         String commandInterpreter = node.getAttributes().get(NODE_LEVEL_INTERPRETER);
         IRundeckProjectConfig project = context.getIFramework()
                 .getFrameworkProjectMgr()
@@ -464,31 +470,8 @@ public class ExecutionServiceImpl implements ExecutionService {
         if (commandInterpreter != null) {
             return commandInterpreter;
         }
-
-        String providerAttribute = NodeExecutorService.getNodeAttributeForProvider(
-                context.getIFramework().isLocalNode(node)
-        );
-        String provider = node.getAttributes().get(providerAttribute);
-        if (provider == null) {
-            provider = context.getIFramework()
-                    .getNodeExecutorService()
-                    .getDefaultProviderNameForNodeAndProject(node, context.getFrameworkProject());
-        }
-        if (!WINRM_NODE_EXECUTOR.equals(provider)) {
-            return null;
-        }
-
-        String winrmShell = node.getAttributes().get(WINRM_SHELL_ATTRIBUTE);
-        if (winrmShell == null) {
-            winrmShell = project.getProperty(WINRM_PROJECT_SHELL);
-        }
-        if (winrmShell == null && context.getIFramework().getPropertyRetriever() != null) {
-            winrmShell = context.getIFramework().getPropertyRetriever().getProperty(WINRM_FRAMEWORK_SHELL);
-        }
-        if (winrmShell != null) {
-            winrmShell = DataContextUtils.replaceDataReferencesInString(winrmShell, context.getDataContext());
-        }
-        return winrmShell == null || POWERSHELL.equalsIgnoreCase(winrmShell) ? POWERSHELL : null;
+        RemoteCommandShell remoteShell = nodeExecutor.getRemoteCommandShell(context, node);
+        return remoteShell == RemoteCommandShell.POWERSHELL ? POWERSHELL : null;
     }
 
     public String getName() {
