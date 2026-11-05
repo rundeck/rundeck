@@ -96,7 +96,7 @@ class ScriptPluginNodeExecutorSpec extends Specification {
     @Unroll
     def "resolve remote command shell from plugin metadata #metaValue"() {
         given:
-        def provider = testProvider(metaValue)
+        def provider = testProvider(metaValue, scope)
         def projectProperties = new Properties()
         if (projectValue != null) {
             projectProperties.setProperty(
@@ -105,10 +105,11 @@ class ScriptPluginNodeExecutorSpec extends Specification {
             )
         }
         testProject.setProjectProperties(projectProperties)
+        def contextData = new BaseDataContext("node", [remoteShell: "powershell"])
         def context = Mock(ExecutionContext) {
             getFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext()
+            getDataContext() >> contextData
         }
         def node = new NodeEntryImpl("node")
         if (nodeValue != null) {
@@ -120,12 +121,14 @@ class ScriptPluginNodeExecutorSpec extends Specification {
         executor.getRemoteCommandShell(context, node) == expected
 
         where:
-        metaValue          | nodeValue    | projectValue || expected
-        null               | null         | null         || RemoteCommandShell.DEFAULT
-        "powershell"       | null         | null         || RemoteCommandShell.POWERSHELL
-        '${config.shell}'  | null         | null         || RemoteCommandShell.POWERSHELL
-        '${config.shell}'  | "cmd"        | null         || RemoteCommandShell.CMD
-        '${config.shell}'  | null         | "cmd"        || RemoteCommandShell.CMD
+        metaValue          | nodeValue    | projectValue       | scope      || expected
+        null               | null         | null               | "Instance" || RemoteCommandShell.DEFAULT
+        "powershell"       | null         | null               | "Instance" || RemoteCommandShell.POWERSHELL
+        '${config.shell}'  | null         | null               | "Instance" || RemoteCommandShell.POWERSHELL
+        '${config.shell}'  | "cmd"        | null               | "Instance" || RemoteCommandShell.CMD
+        '${config.shell}'  | null         | "cmd"              | "Instance" || RemoteCommandShell.CMD
+        '${config.shell}'  | null         | "cmd"              | null       || RemoteCommandShell.CMD
+        '${config.shell}'  | '${node.remoteShell}' | null         | "Instance" || RemoteCommandShell.POWERSHELL
     }
 
     def "reject invalid remote command shell metadata"() {
@@ -144,18 +147,21 @@ class ScriptPluginNodeExecutorSpec extends Specification {
         thrown(ExecutionServiceException)
     }
 
-    private TestScriptNodeExecutor testProvider(String remoteCommandShell) {
+    private TestScriptNodeExecutor testProvider(String remoteCommandShell, String scope = "Instance") {
+        def shellProperty = [
+            name: "shell",
+            type: "String",
+            default: "powershell",
+            renderingOptions: ["instance-scope-node-attribute": "remote-shell"]
+        ]
+        if (scope != null) {
+            shellProperty.scope = scope
+        }
         def provider = new TestScriptNodeExecutor(
             name: "test-script-node-executor",
             service: "NodeExecutor",
             metadata: [
-                config: [[
-                    name: "shell",
-                    type: "String",
-                    default: "powershell",
-                    scope: "Instance",
-                    renderingOptions: ["instance-scope-node-attribute": "remote-shell"]
-                ]]
+                config: [shellProperty]
             ],
             providerMeta: remoteCommandShell != null
                 ? ["remote-command-shell": remoteCommandShell]

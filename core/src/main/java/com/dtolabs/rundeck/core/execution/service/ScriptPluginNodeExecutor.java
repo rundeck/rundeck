@@ -107,12 +107,21 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
             );
             final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
                     resolver,
-                    pluginDesc
+                    pluginDesc,
+                    PropertyScope.Instance
+            );
+            final Map<String, Object> expandedConfig = DataContextUtils.replaceDataReferences(
+                    config,
+                    localDataContext
             );
             return RemoteCommandShell.parse(
                     DataContextUtils.replaceDataReferencesInString(
                             configuredShell,
-                            DataContextUtils.addContext("config", MapData.toStringStringMap(config), localDataContext)
+                            DataContextUtils.addContext(
+                                    "config",
+                                    MapData.toStringStringMap(expandedConfig),
+                                    localDataContext
+                            )
                     )
             );
         } catch (IllegalArgumentException e) {
