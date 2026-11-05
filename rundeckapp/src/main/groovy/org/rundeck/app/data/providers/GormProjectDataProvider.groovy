@@ -102,9 +102,19 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     ) {
         Serializable expectedId = id
         String expectedName = name
+        Project current = Project.findByName(expectedName)
+        if (current?.id != expectedId) {
+            return false
+        }
+        Long expectedVersion = current.version
         Project.where {
-            id == expectedId && name == expectedName
-        }.updateAll(state: state) == 1
+            id == expectedId &&
+                name == expectedName &&
+                version == expectedVersion
+        }.updateAll(
+            state: state,
+            version: expectedVersion + 1L
+        ) == 1
     }
 
     @Override

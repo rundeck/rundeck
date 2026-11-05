@@ -2146,8 +2146,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return true when at least one project should be retried
      */
     boolean resumeDisabledProjects(final IFramework framework) {
-        boolean retryNeeded = false
-        framework.frameworkProjectMgr.listDisabledFrameworkProjectNames().each { String projectName ->
+        Collection<String> projectNames = framework.frameworkProjectMgr.listDisabledFrameworkProjectNames()
+        boolean retryNeeded = !projectNames.empty
+        projectNames.each { String projectName ->
             try {
                 IRundeckProject project = framework.frameworkProjectMgr.getFrameworkProject(projectName)
                 AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
@@ -2191,6 +2192,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         log.info("Starting deletion of project ${project.name} by username $username")
         if (projectId != null && !ownsCurrentProject(project.name, projectId, claimToken)) {
             return new DeleteResponse(success: false, error: "Project deletion ownership changed.")
+        }
+        if (projectId != null && !projectDeleteCoordinator.beginFinalization(
+            project.name,
+            projectId,
+            claimToken
+        )) {
+            return new DeleteResponse(success: false, error: "Project deletion finalization was not acquired.")
         }
         notify('projectWillBeDeleted', project.name)
         def result = new DeleteResponse(success: false)

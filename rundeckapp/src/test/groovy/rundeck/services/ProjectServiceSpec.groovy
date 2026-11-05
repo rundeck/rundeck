@@ -644,7 +644,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         0 * service.scmService.removeAllPluginConfiguration(_)
     }
 
-    def "deferred deletion abandons a stale fencing token"() {
+    def "deferred deletion does not start cleanup without finalization fence"() {
         given:
         def storedProject = new Project(name: 'myproject').save(failOnError: true)
         def project = Mock(IRundeckProject) {
@@ -652,7 +652,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         service.projectDeleteCoordinator = Mock(ProjectDeleteCoordinator) {
             1 * tryAcquire('myproject', storedProject.id) >> 'claim'
-            1 * isOwner('myproject', storedProject.id, 'claim') >> false
+            1 * isOwner('myproject', storedProject.id, 'claim') >> true
+            1 * beginFinalization('myproject', storedProject.id, 'claim') >> false
             1 * release('myproject', storedProject.id, 'claim')
         }
         service.configurationService = Mock(ConfigurationService) {
