@@ -1029,8 +1029,20 @@ class ProjectNodeSupportSpec extends Specification {
      * Create a support with one source of a type that uses the file cache, whose cached nodes are node "cached"
      */
     private ProjectNodeSupport supportWithCachedSource(ResourceModelSource plugin) {
+        supportWithCachedSources([:], [plugin])
+    }
+
+    /**
+     * Create a support whose sources are of a type that uses the file cache, one per plugin, whose cached nodes
+     * are node "cached"
+     */
+    private ProjectNodeSupport supportWithCachedSources(Map extraProps, List<ResourceModelSource> plugins) {
         def props = new Properties()
-        props['resources.source.1.type'] = 'cachedtype'
+        plugins.eachWithIndex { p, i ->
+            props["resources.source.${i + 1}.type".toString()] = 'cachedtype'
+            props["resources.source.${i + 1}.config.id".toString()] = "${i}".toString()
+        }
+        extraProps.each { k, v -> props[k] = v }
         def config = Mock(IRundeckProjectConfig) {
             getName() >> loadProject
             getProperties() >> props
@@ -1045,7 +1057,9 @@ class ProjectNodeSupportSpec extends Specification {
             }
         }
         def sourceService = Mock(ResourceModelSourceService) {
-            getCloseableSourceForConfiguration('cachedtype', _) >> Closeables.closeableProvider(plugin)
+            getCloseableSourceForConfiguration('cachedtype', _) >> { String type, Properties p ->
+                Closeables.closeableProvider(plugins[p.getProperty('id') as int])
+            }
             getSourceForConfiguration('file', _) >> cacheFile
         }
         def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
@@ -1168,5 +1182,48 @@ class ProjectNodeSupportSpec extends Specification {
         then:
         lines.any { it.startsWith('WARN [') && it.endsWith("Empty nodes result from [${label}]") }
         lines.any { it.contains("Loaded 0 nodes from ${label} in ") }
+    }
+
+    def "a failing cached source logs the cache fallback warning on its loading thread when loadThreads is #loadThreads"() {
+        given: "two cached sources: the first fails, the second succeeds"
+        def failing = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                throw new ResourceModelSourceException('not authorized')
+            }
+        }
+        def working = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                ProjectNodeSupportSpec.nodes('fresh', 'v')
+            }
+        }
+        def support = supportWithCachedSources(
+                loadThreads == null ? [:] : [(ProjectNodeSupport.PROJECT_RESOURCES_LOAD_THREADS): loadThreads],
+                [failing, working]
+        )
+        def label1 = "project=${loadProject} source #1 (cachedtype)".toString()
+        def label2 = "project=${loadProject} source #2 (cachedtype)".toString()
+        def expectedThread = parallel ? "ProjectNodeSupport-load-${loadProject}-".toString() : Thread.currentThread().name
+        def result = null
+
+        when:
+        def lines = captureLogs { result = support.getNodeSet() }
+
+        then: "the failing source falls back to cached nodes and the other source loads"
+        result.nodeNames as Set == ['cached', 'fresh'] as Set
+        support.getResourceModelSourceExceptionsMap().keySet() == ['1.source'] as Set
+
+        and: "the warning is logged for the failing source only, on the thread that loaded it"
+        def warn1 = lines.find { it.contains("Loading nodes from ${label1} failed after ") }
+        warn1 ==~ /WARN \[\Q${expectedThread}\E.*\] Loading nodes from \Q${label1}\E failed after \d+ ms, using 1 cached nodes: not authorized/
+        !lines.any { it.contains("Loaded 1 nodes from ${label1}") }
+        lines.any { it.startsWith("INFO [${expectedThread}") && it.contains("Loaded 1 nodes from ${label2} in ") }
+        !lines.any { it.contains("Loading nodes from ${label2} failed") }
+
+        where:
+        loadThreads | parallel
+        null        | false
+        '2'         | true
     }
 }
