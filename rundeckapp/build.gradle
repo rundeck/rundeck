@@ -1,4 +1,5 @@
 import java.util.jar.JarInputStream
+import java.util.zip.ZipFile
 import java.util.regex.Matcher
 
 buildscript {
@@ -163,13 +164,62 @@ repositories {
         }
     }
 }
+File canonicalCoreTranslationDirectory =
+        project.file('../translations/core/rundeckapp/grails-app/i18n')
+
 sourceSets {
     main {
         resources {
             srcDir 'grails-app/migrations'
+            // POC: package sparse public catalogs without moving the existing
+            // grails-app/i18n bundles or introducing a synchronization step.
+            srcDir canonicalCoreTranslationDirectory
         }
     }
 }
+
+tasks.register('verifyCanonicalTranslationArchive') {
+    dependsOn tasks.named('bootWar')
+    inputs.dir(canonicalCoreTranslationDirectory)
+
+    doLast {
+        Map<String, File> expected = fileTree(canonicalCoreTranslationDirectory) {
+            include 'public-messages*.properties'
+        }.files.collectEntries { [("WEB-INF/classes/${it.name}".toString()): it] }
+        if (expected.empty) {
+            throw new GradleException('Core WAR canonical translation input is empty')
+        }
+        ZipFile archive = new ZipFile(tasks.named('bootWar').get().archiveFile.get().asFile)
+        try {
+            Map<String, List> entries = archive.entries().toList().groupBy { it.name }
+            List<String> duplicateTranslations = entries.findAll { name, values ->
+                name.startsWith('WEB-INF/classes/') &&
+                        name.endsWith('.properties') &&
+                        values.size() != 1
+            }.keySet().toList()
+            Set<String> packaged = entries.keySet().findAll {
+                it ==~ /WEB-INF\/classes\/public-messages.*\.properties/
+            } as Set<String>
+            if (packaged != expected.keySet() || duplicateTranslations) {
+                throw new GradleException(
+                        "Core WAR canonical translation mismatch: expected ${expected.keySet()}, " +
+                                "found ${packaged}, duplicates ${duplicateTranslations}"
+                )
+            }
+            expected.each { String archivePath, File source ->
+                byte[] packagedBytes = archive.getInputStream(entries[archivePath].first()).bytes
+                if (!Arrays.equals(source.bytes, packagedBytes)) {
+                    throw new GradleException(
+                            "Core WAR canonical translation bytes differ for ${archivePath}"
+                    )
+                }
+            }
+        } finally {
+            archive.close()
+        }
+    }
+}
+
 dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]

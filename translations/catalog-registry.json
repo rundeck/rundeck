@@ -1,0 +1,85 @@
+[
+  {
+    "family": "core-spring",
+    "publicNamespace": "core/rundeckapp/grails-app/i18n",
+    "originalSource": "rundeckapp/grails-app/i18n/messages*.properties",
+    "basename": "messages",
+    "localeVariants": ["default", "fr"],
+    "archiveDestination": "WEB-INF/classes/public-messages*.properties",
+    "runtimeLoader": "RundeckExtendedMessageBundle and application messageSource",
+    "precedence": "administrator messages > public-messages > bundled messages",
+    "developmentWatch": false
+  },
+  {
+    "family": "named-grails-plugin",
+    "publicNamespace": "rundeckpro/plugins/schedule-forecast/grails-app/i18n",
+    "originalSource": "plugins/schedule-forecast/grails-app/i18n/forecast-messages*.properties",
+    "basename": "forecast-messages",
+    "canonicalBasename": "forecast-public-messages",
+    "legacyBasename": "forecast-messages",
+    "localeVariants": ["default", "es_419", "ja"],
+    "archiveDestination": "forecast-public-messages*.properties",
+    "runtimeLoader": "TranslationMessageSourceRegistrar and application messageSource",
+    "precedence": "canonical locale > legacy locale > canonical default > legacy default",
+    "developmentWatch": false
+  },
+  {
+    "family": "core-vue",
+    "publicNamespace": "core/rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd",
+    "originalSource": "rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd/i18n.ts",
+    "basename": "readme-motd",
+    "localeVariants": ["en_US", "de_DE", "nl_NL"],
+    "archiveDestination": "ui-trellis compiled asset",
+    "runtimeLoader": "mergeTranslationCatalogs",
+    "precedence": "public object > original object per key",
+    "developmentWatch": true
+  },
+  {
+    "family": "pro-vue",
+    "publicNamespace": "rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast",
+    "originalSource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
+    "bootstrapSource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n-legacy.ts",
+    "bootstrapTarget": "i18n.ts",
+    "basename": "rundeckpro-forecast",
+    "localeVariants": ["en_US", "ja"],
+    "archiveDestination": "rundeckpro-ui-components compiled asset",
+    "runtimeLoader": "mergeTranslationCatalogs via Rundeck submodule import",
+    "precedence": "public object > original object per key",
+    "developmentWatch": true
+  },
+  {
+    "family": "standalone-plugin-resources",
+    "publicNamespace": "core/plugins/flow-control-plugin/src/main/resources/resources/i18n",
+    "originalSource": "plugins/*/src/main/resources/resources/i18n/messages*.properties",
+    "basename": "messages",
+    "canonicalBasename": "public-messages",
+    "legacyBasename": "messages",
+    "localeVariants": ["default", "es_419"],
+    "archiveDestination": "resources/i18n/public-messages*.properties",
+    "runtimeLoader": "UiPluginService",
+    "precedence": "canonical locale > legacy locale > canonical default > legacy default",
+    "developmentWatch": false
+  },
+  {
+    "family": "legacy-javascript-gsp",
+    "publicNamespace": "core/rundeckapp/grails-app/i18n",
+    "originalSource": "UtilityTagLib.jsMessages",
+    "basename": "messages",
+    "localeVariants": ["request locale"],
+    "archiveDestination": "generated inline JSON",
+    "runtimeLoader": "Grails g.message backed by application messageSource",
+    "precedence": "inherits core-spring precedence",
+    "developmentWatch": false
+  },
+  {
+    "family": "pro-war-overlay",
+    "publicNamespace": "rundeckpro/templates/war/src/WEB-INF/classes",
+    "originalSource": "templates/war/src/WEB-INF/classes/messages*.properties",
+    "basename": "messages",
+    "localeVariants": ["default", "es_419", "zh_CN"],
+    "archiveDestination": "WEB-INF/classes/messages*.properties",
+    "runtimeLoader": "core application messageSource after customizeWar",
+    "precedence": "packaging replacement of the Core messages basename",
+    "developmentWatch": false
+  }
+]

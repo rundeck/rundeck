@@ -281,35 +281,79 @@ class UiPluginService implements InitializingBean {
         def reslist = resourcesForPlugin(service, name)
         def meta = fileMetadataForPlugin(service, name)
         if (reslist) {
-            def testlangs = [locale.toLanguageTag(), locale.language].collect {
-                '_' + it.replaceAll('-', '_')
-            }
-            testlangs << ''
-            def testlist = testlangs.inject([]) { list, langstr ->
-                def suffix = 'messages' + langstr + '.properties'
-                list + [
-                        "$service.$name.$suffix",
-                        "$name.$suffix",
-                        "$service.$suffix",
-                        suffix
-                ]
-            }
-            String found = testlist.find { path ->
-                reslist?.contains('i18n/' + path.toString())
-            }
-            if (found != null) {
-                def instream = openResourceForPlugin(service, name, 'i18n/' +found)
-                if (instream != null) {
-                    try {
-                        def reader = new InputStreamReader(instream, 'UTF-8')
-                        messages.load(reader)
-                    } finally {
-                        instream.close()
-                    }
-                }
-            }
+            String legacyDefault = messageResourceCandidates(
+                    service, name, locale, 'messages', false
+            ).
+                    find { reslist.contains('i18n/' + it) }
+            String publicDefault = messageResourceCandidates(
+                    service, name, locale, 'public-messages', false
+            ).
+                    find { reslist.contains('i18n/' + it) }
+            String legacyLocalized = messageResourceCandidates(
+                    service, name, locale, 'messages', true
+            ).
+                    find { reslist.contains('i18n/' + it) }
+            String publicLocalized = messageResourceCandidates(
+                    service, name, locale, 'public-messages', true
+            ).
+                    find { reslist.contains('i18n/' + it) }
+            loadMessageResource(messages, service, name, legacyDefault)
+            loadMessageResource(messages, service, name, publicDefault)
+            loadMessageResource(messages, service, name, legacyLocalized)
+            loadMessageResource(messages, service, name, publicLocalized)
         }
         return new CachedMessages(messages: messages, date: meta?.dateLoaded)
+    }
+
+    /**
+     * Produces plugin message resource candidates from most specific locale and
+     * provider naming to the default resource.
+     */
+    private static List<String> messageResourceCandidates(
+            String service,
+            String name,
+            Locale locale,
+            String basename,
+            boolean localized
+    ) {
+        List<String> localeSuffixes = localized ?
+                [locale.toLanguageTag(), locale.language].collect {
+                    '_' + it.replaceAll('-', '_')
+                } :
+                ['']
+        localeSuffixes.unique().collectMany { String localeSuffix ->
+            String suffix = basename + localeSuffix + '.properties'
+            [
+                    "$service.$name.$suffix",
+                    "$name.$suffix",
+                    "$service.$suffix",
+                    suffix
+            ]
+        }
+    }
+
+    /**
+     * Loads one UTF-8 plugin resource into the supplied properties. Later
+     * calls intentionally overlay earlier values.
+     */
+    private void loadMessageResource(
+            Properties messages,
+            String service,
+            String name,
+            String resource
+    ) {
+        if (resource == null) {
+            return
+        }
+        InputStream input = openResourceForPlugin(service, name, 'i18n/' + resource)
+        if (input == null) {
+            return
+        }
+        try {
+            messages.load(new InputStreamReader(input, 'UTF-8'))
+        } finally {
+            input.close()
+        }
     }
 
     /**
