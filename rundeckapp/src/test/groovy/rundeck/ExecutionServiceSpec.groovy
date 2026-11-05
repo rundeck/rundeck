@@ -5,7 +5,11 @@ import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import org.rundeck.app.AppConstants
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.logging.LogEventControl
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
+import com.dtolabs.rundeck.server.plugins.logging.KeyValueDataLogFilterPlugin
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -8174,6 +8178,84 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then: "it returns a success result"
         result instanceof StepExecutionResultImpl
         result.success
+    }
+
+    def "runSubworkflowExecutionItem propagates global Key/Value data when success is #success"() {
+        given: "a subworkflow with output captured by the global Key/Value data log filter"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+        def nestedOutput = new DataOutput(ContextView.global())
+        def filter = new KeyValueDataLogFilterPlugin(
+                regex: '.*(RBA_MARK\\s+.*?ts=\\d+).*',
+                name: 'rba-mark',
+                logData: false,
+                invalidKeyPattern: null
+        )
+        def filterContext = Mock(PluginLoggingContext) {
+            getOutputContext() >> nestedOutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> 'runner output: RBA_MARK node=test ts=5122'
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+        filter.init(filterContext)
+        filter.handleEvent(filterContext, event)
+        filter.complete(filterContext)
+        nestedOutput.addOutput(ContextView.step(7), 'result', [status: 'captured'])
+        def stepFailures = success
+                ? [:]
+                : [1: new StepExecutionResultImpl(null, StepFailureReason.PluginFailed, 'nested failed')]
+        def nestedResult = Mock(WorkflowExecutionResult) {
+            isSuccess() >> success
+            getSharedContext() >> nestedOutput.sharedContext
+            getStepFailures() >> stepFailures
+        }
+        def workflowResult = [result: nestedResult, interrupt: false]
+
+        and: "a parent context with an output context"
+        def framework = Mock(Framework) {
+            getWorkflowExecutionService() >> Mock(WorkflowExecutionService)
+        }
+        def parentOutput = new DataOutput(ContextView.step(3))
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> Mock(ExecutionListener)
+            getOutputContext() >> parentOutput
+        }
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                workflowResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> workflowResult
+        }
+
+        when:
+        def result = service.runSubworkflowExecutionItem(
+                context,
+                runnerItem,
+                { FailureReason reason, String msg -> new StepExecutionResultImpl(null, reason, msg) },
+                { new StepExecutionResultImpl() }
+        )
+
+        then:
+        result.success == success
+        parentOutput.sharedContext.getData(ContextView.global()).getData() == [
+                data: ['rba-mark': 'RBA_MARK node=test ts=5122']
+        ]
+        parentOutput.sharedContext.getData(ContextView.step(7)).getData() == [
+                result: [status: 'captured']
+        ]
+
+        where:
+        success << [true, false]
     }
 
 
