@@ -755,7 +755,8 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     }
 
     /**
-     * Capture ProjectNodeSupport log messages at INFO and above while the closure runs
+     * Capture ProjectNodeSupport log messages at INFO and above while the closure runs. Same approach as
+     * ProjectNodeSupportSpec.captureLogs in core; not shared because core has no test fixtures module.
      *
      * @return captured messages
      */

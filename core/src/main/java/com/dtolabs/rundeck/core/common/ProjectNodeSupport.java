@@ -42,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,7 +85,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * caching source here, so the query can tell it returned cached nodes. Per thread and per query, so concurrent
      * loads do not see each other's failures.
      */
-    private static final ThreadLocal<Throwable[]> CACHE_FAILURE = new ThreadLocal<>();
+    private static final ThreadLocal<AtomicReference<Throwable>> CACHE_FAILURE = new ThreadLocal<>();
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -399,8 +400,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         //keep an enclosing query's slot, for a source that loads another project's nodes on this thread
-        final Throwable[] enclosingCacheFailure = CACHE_FAILURE.get();
-        final Throwable[] cacheFailure = new Throwable[1];
+        final AtomicReference<Throwable> enclosingCacheFailure = CACHE_FAILURE.get();
+        final AtomicReference<Throwable> cacheFailure = new AtomicReference<>();
         CACHE_FAILURE.set(cacheFailure);
         try {
             logger.info("Loading nodes from {}", nodesSource);
@@ -410,7 +411,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
             }
             //a caching source catches the failure, records it with StoreExceptionHandler and returns cached nodes
-            final Throwable cacheFallback = cacheFailure[0];
+            final Throwable cacheFallback = cacheFailure.get();
             if (null != cacheFallback) {
                 logger.warn(
                         "Loading nodes from {} failed after {} ms, using {} cached nodes: {}",
@@ -619,9 +620,9 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         @Override
         public void handleException(final Throwable t, final ResourceModelSource origin) {
             nodesSourceExceptions.put(sourceIdent, t);
-            final Throwable[] cacheFailure = CACHE_FAILURE.get();
+            final AtomicReference<Throwable> cacheFailure = CACHE_FAILURE.get();
             if (null != cacheFailure) {
-                cacheFailure[0] = t;
+                cacheFailure.set(t);
             }
         }
     }

@@ -942,20 +942,11 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     /**
-     * Capture ProjectNodeSupport log output at INFO and above while the closure runs
+     * Capture log output of the named loggers, ProjectNodeSupport by default, at INFO and above while the closure runs
      *
      * @return captured lines, formatted as "LEVEL [thread] message"
      */
-    private static List<String> captureLogs(Closure action) {
-        captureLogs([ProjectNodeSupport.name], action)
-    }
-
-    /**
-     * Capture log output of the named loggers at INFO and above while the closure runs
-     *
-     * @return captured lines, formatted as "LEVEL [thread] message"
-     */
-    private static List<String> captureLogs(List<String> names, Closure action) {
+    private static List<String> captureLogs(Closure action, List<String> names = [ProjectNodeSupport.name]) {
         def writer = new StringWriter()
         def ctx = (LoggerContext) LogManager.getContext(false)
         def config = ctx.getConfiguration()
@@ -1043,13 +1034,6 @@ class ProjectNodeSupportSpec extends Specification {
             props["resources.source.${i + 1}.config.id".toString()] = "${i}".toString()
         }
         extraProps.each { k, v -> props[k] = v }
-        def config = Mock(IRundeckProjectConfig) {
-            getName() >> loadProject
-            getProperties() >> props
-            hasProperty(_) >> { String k -> props.containsKey(k) }
-            getProperty(_) >> { String k -> props.getProperty(k) }
-            getConfigLastModifiedTime() >> new Date()
-        }
         def cacheFile = new ResourceModelSource() {
             @Override
             INodeSet getNodes() throws ResourceModelSourceException {
@@ -1061,6 +1045,20 @@ class ProjectNodeSupportSpec extends Specification {
                 Closeables.closeableProvider(plugins[p.getProperty('id') as int])
             }
             getSourceForConfiguration('file', _) >> cacheFile
+        }
+        newSupport(props, sourceService)
+    }
+
+    /**
+     * Create a support for project loadProject with the given project properties and source service
+     */
+    private ProjectNodeSupport newSupport(Properties props, ResourceModelSourceService sourceService) {
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> loadProject
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
         }
         def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
         def varDir = File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp")
@@ -1082,9 +1080,7 @@ class ProjectNodeSupportSpec extends Specification {
         def result = null
 
         when:
-        def lines = captureLogs([ProjectNodeSupport.name, ExceptionCatchingResourceModelSource.name]) {
-            result = support.getNodeSet()
-        }
+        def lines = captureLogs({ result = support.getNodeSet() }, [ProjectNodeSupport.name, ExceptionCatchingResourceModelSource.name])
 
         then: "cached nodes are served and the failure is recorded"
         result.nodeNames as List == ['cached']
@@ -1121,24 +1117,11 @@ class ProjectNodeSupportSpec extends Specification {
         def props = new Properties()
         props['resources.source.1.type'] = 'file'
         props['resources.source.1.config.file'] = '/tmp/file0'
-        def config = Mock(IRundeckProjectConfig) {
-            getName() >> loadProject
-            getProperties() >> props
-            hasProperty(_) >> { String k -> props.containsKey(k) }
-            getProperty(_) >> { String k -> props.getProperty(k) }
-            getConfigLastModifiedTime() >> new Date()
-        }
         def source = new PartialErrorsSource(modelSourceErrors: ['region 1 failed', 'region 2 failed'])
         def sourceService = Mock(ResourceModelSourceService) {
             getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(source)
         }
-        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework, framework)
-        def support = new ProjectNodeSupport(
-                File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"),
-                config,
-                generatorService,
-                sourceService
-        )
+        def support = newSupport(props, sourceService)
 
         when:
         def result = support.getNodeSet()
@@ -1225,5 +1208,28 @@ class ProjectNodeSupportSpec extends Specification {
         loadThreads | parallel
         null        | false
         '2'         | true
+    }
+
+    def "a cached source that loads another project's nodes before failing still logs the cache fallback warning"() {
+        given: "the outer source's plugin loads an inner project's nodes on the same thread, then fails"
+        def inner = supportWithSources([:], [{ -> nodes('inner', 'v') } as Closure<INodeSet>])
+        def outerPlugin = new ResourceModelSource() {
+            @Override
+            INodeSet getNodes() throws ResourceModelSourceException {
+                inner.getNodeSet()
+                throw new ResourceModelSourceException('not authorized')
+            }
+        }
+        def outer = supportWithCachedSource(outerPlugin)
+        def label = "project=${loadProject} source #1 (cachedtype)".toString()
+        def result = null
+
+        when:
+        def lines = captureLogs { result = outer.getNodeSet() }
+
+        then: "the inner query does not discard the outer query's failure"
+        result.nodeNames as List == ['cached']
+        lines.any { it.contains("Loading nodes from ${label} failed after ") }
+        !lines.any { it.contains("Loaded 1 nodes from ${label}") }
     }
 }
