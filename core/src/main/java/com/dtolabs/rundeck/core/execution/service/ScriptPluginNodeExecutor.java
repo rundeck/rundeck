@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -98,17 +99,23 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
                     executionContext.getFrameworkProject(),
                     executionContext.getDataContext()
             );
-            final Map<String, Map<String, String>> finalDataContext = loadConfigData(
+            final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
                     executionContext,
                     loadInstanceDataFromNodeAttributes(node, pluginDesc),
-                    localDataContext,
-                    pluginDesc,
-                    ServiceNameConstants.NodeExecutor
+                    ServiceNameConstants.NodeExecutor,
+                    getProvider().getName()
+            );
+            final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
+                    resolver,
+                    pluginDesc
             );
             return RemoteCommandShell.parse(
-                    DataContextUtils.replaceDataReferencesInString(configuredShell, finalDataContext)
+                    DataContextUtils.replaceDataReferencesInString(
+                            configuredShell,
+                            DataContextUtils.addContext("config", MapData.toStringStringMap(config), localDataContext)
+                    )
             );
-        } catch (ConfigurationException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw new ExecutionServiceException(
                     "Unable to resolve remote command shell",
                     e,
