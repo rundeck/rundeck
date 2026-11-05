@@ -249,8 +249,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def defaultRecentFilter = executionService.getActivityDefaultTimeFilter(params)
 
-        if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
-            params.nextUi = true
+        if (params.boolean('nextUi')) {
             return render(view: 'jobs.next', model: [defaultRecentFilter: defaultRecentFilter])
         }
 
@@ -1848,8 +1847,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             statsLoaded=true
         }
 
-        if (params.nextUi == 'true') {
-            params.nextUi = true
+        if (params.boolean('nextUi')) {
             return render(view: 'home.next', model: [
                     isFirstRun:isFirstRun,
                     projectNames: fprojects,
