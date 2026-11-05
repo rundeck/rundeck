@@ -81,6 +81,7 @@ import retrofit2.mock.MockRetrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -799,6 +800,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         service.fileUploadService = Mock(FileUploadService) {
             1 * deleteRecordsForProject('good')
+        }
+        service.taskService = Mock(TaskService) {
+            1 * schedule(30L, 'project-delete-recovery', TimeUnit.SECONDS, _ as Closure)
         }
         service.targetEventBus = Mock(EventBus)
 

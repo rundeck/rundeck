@@ -100,6 +100,7 @@ import java.text.SimpleDateFormat
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import java.util.concurrent.TimeUnit
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.stream.Collectors
@@ -113,12 +114,15 @@ import retrofit2.Response
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
+    private static final String PROJECT_DELETE_RECOVERY_TASK = 'project-delete-recovery'
+    private static final long PROJECT_DELETE_RECOVERY_RETRY_SECONDS = 30L
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
     AsyncImportService asyncImportService
     ScheduledExecutionService scheduledExecutionService
     ExecutionService executionService
+    TaskService taskService
     FileUploadService fileUploadService
     def loggingService
     def logFileStorageService
@@ -2108,10 +2112,26 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Promises.task {
             try {
                 IFramework framework = frameworkService.rundeckFramework
-                resumeDisabledProjects(framework)
+                if (resumeDisabledProjects(framework)) {
+                    scheduleProjectDeleteRecoveryRetry()
+                }
             } catch (Throwable t) {
                 log.error("Failed to reconcile disabled project deletions: ${t.message}", t)
             }
+        }
+    }
+
+    private void scheduleProjectDeleteRecoveryRetry() {
+        try {
+            taskService.schedule(
+                PROJECT_DELETE_RECOVERY_RETRY_SECONDS,
+                PROJECT_DELETE_RECOVERY_TASK,
+                TimeUnit.SECONDS
+            ) {
+                resumeDisabledProjectsFromBootstrap()
+            }
+        } catch (Throwable t) {
+            log.error("Failed to reschedule disabled project deletion recovery: ${t.message}", t)
         }
     }
 
@@ -2119,8 +2139,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * Resume every persisted disabled project independently.
      *
      * @param framework framework containing the disabled projects
+     * @return true when at least one project should be retried
      */
-    void resumeDisabledProjects(final IFramework framework) {
+    boolean resumeDisabledProjects(final IFramework framework) {
+        boolean retryNeeded = false
         framework.frameworkProjectMgr.listDisabledFrameworkProjectNames().each { String projectName ->
             try {
                 IRundeckProject project = framework.frameworkProjectMgr.getFrameworkProject(projectName)
@@ -2129,11 +2151,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     ['admin'],
                     projectName
                 )
-                resumeDeferredProjectDelete(project, framework, authContext, 'system')
+                DeleteResponse response = resumeDeferredProjectDelete(
+                    project,
+                    framework,
+                    authContext,
+                    'system'
+                )
+                if (!response.success) {
+                    retryNeeded = true
+                }
             } catch (Throwable t) {
                 log.error("Failed to resume deletion of project [${projectName}]: ${t.message}", t)
+                retryNeeded = true
             }
         }
+        retryNeeded
     }
 
     /**
