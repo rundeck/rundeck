@@ -38,6 +38,8 @@
     "family": "pro-vue",
     "publicNamespace": "rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast",
     "originalSource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
+    "bootstrapSource": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n-legacy.ts",
+    "bootstrapTarget": "i18n.ts",
     "basename": "rundeckpro-forecast",
     "localeVariants": ["en_US", "ja"],
     "archiveDestination": "rundeckpro-ui-components compiled asset",

@@ -1,8 +1,5 @@
-/**
- * Canonical Schedule Forecast Vue catalog, migrated without translation changes.
- */
 const messages = {
-  en_US: {
+  "en_US": {
     "plugin.forecast.main.title": "Schedule Forecast",
     "job.filter.apply.button.title": "Search",
     "Project.plural": "Projects",
@@ -29,7 +26,7 @@ const messages = {
     "jobs.adhocBy": "adhoc by",
     "jobs.unknown": "Unknown",
   },
-  ja: {
+  "ja": {
     "plugin.forecast.main.title": "スケジュール予測",
     "job.filter.apply.button.title": "検索",
     "Project.plural": "プロジェクト",
@@ -56,6 +53,6 @@ const messages = {
     "jobs.adhocBy": "アドホック実行者:",
     "jobs.unknown": "不明",
   },
-} as Record<string, Record<string, string>>;
+};
 
 export default messages;

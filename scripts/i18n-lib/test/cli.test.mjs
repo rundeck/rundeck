@@ -461,3 +461,164 @@ test("migrate emits bounded preparation parity and unsupported evidence", () => 
   assert.equal(report.preparation.entries[0].key, "missing");
   assert.equal(report.parity[0].sourceOnly[0].key, "missing");
 });
+
+test("bootstrap generates and idempotently updates one registered real-shaped family", () => {
+  const root = fixture();
+  const sourceRoot = path.join(root, "rundeckpro");
+  const sourceDirectory = path.join(
+    sourceRoot,
+    "plugins",
+    "schedule-forecast",
+    "grails-app",
+    "i18n",
+  );
+  const outputRoot = path.join(root, "rundeck");
+  const registry = path.join(root, "catalog-registry.json");
+  const report = path.join(root, "bootstrap-report.json");
+  fs.mkdirSync(sourceDirectory, { recursive: true });
+  const catalogs = {
+    "forecast-messages.properties":
+      "##forecast\nplugin.forecast.main.title=Schedule Forecast\n",
+    "forecast-messages_es_419.properties":
+      "##forecast\nplugin.forecast.main.title=Schedule Forecast\n",
+    "forecast-messages_ja.properties":
+      "##forecast\nplugin.forecast.main.title=スケジュール予測\n",
+  };
+  for (const [name, content] of Object.entries(catalogs)) {
+    fs.writeFileSync(path.join(sourceDirectory, name), content);
+  }
+  fs.writeFileSync(registry, JSON.stringify([{
+    family: "named-grails-plugin",
+    publicNamespace: "rundeckpro/plugins/schedule-forecast/grails-app/i18n",
+    originalSource: "plugins/schedule-forecast/grails-app/i18n/forecast-messages*.properties",
+    basename: "forecast-messages",
+    canonicalBasename: "forecast-public-messages",
+  }]));
+  const args = [
+    "bootstrap",
+    "--family", "named-grails-plugin",
+    "--source-root", sourceRoot,
+    "--output-root", outputRoot,
+    "--registry", registry,
+    "--output", report,
+  ];
+  const { io } = capture();
+
+  assert.equal(run(args, io), 0);
+  const targetDirectory = path.join(
+    outputRoot,
+    "translations",
+    "rundeckpro",
+    "plugins",
+    "schedule-forecast",
+    "grails-app",
+    "i18n",
+  );
+  for (const [name, content] of Object.entries(catalogs)) {
+    const targetName = name.replace("forecast-messages", "forecast-public-messages");
+    assert.equal(fs.readFileSync(path.join(targetDirectory, targetName), "utf8"), content);
+  }
+  assert.ok(JSON.parse(fs.readFileSync(report, "utf8")).files.every(({ created }) => created));
+
+  const defaultTarget = path.join(targetDirectory, "forecast-public-messages.properties");
+  fs.writeFileSync(
+    defaultTarget,
+    "##forecast\nplugin.forecast.main.title=Translated public value\n",
+  );
+  fs.appendFileSync(
+    path.join(sourceDirectory, "forecast-messages.properties"),
+    "plugin.forecast.menu.head=Schedule Forecast\n",
+  );
+  assert.equal(run(args, io), 0);
+  const rerun = fs.readFileSync(defaultTarget, "utf8");
+  assert.match(rerun, /plugin\.forecast\.main\.title=Translated public value/);
+  assert.match(rerun, /plugin\.forecast\.menu\.head=Schedule Forecast/);
+  assert.equal((rerun.match(/plugin\.forecast\.main\.title=/g) ?? []).length, 1);
+});
+
+test("bootstrap generates and idempotently updates a real-shaped Vue family", () => {
+  const root = fixture();
+  const sourceRoot = path.join(root, "rundeckpro");
+  const sourceDirectory = path.join(
+    sourceRoot,
+    "plugins",
+    "rundeckpro-spa-ui",
+    "rundeckpro-ui-components",
+    "src",
+    "rundeckpro-forecast",
+  );
+  const source = path.join(sourceDirectory, "i18n-legacy.ts");
+  const outputRoot = path.join(root, "rundeck");
+  const registry = path.join(root, "catalog-registry.json");
+  const report = path.join(root, "bootstrap-report.json");
+  fs.mkdirSync(sourceDirectory, { recursive: true });
+  fs.writeFileSync(
+    source,
+    `const messages = {
+  en_US: { "plugin.forecast.main.title": "Schedule Forecast" },
+  ja: { "plugin.forecast.main.title": "スケジュール予測" },
+};
+export default messages;
+`,
+  );
+  fs.writeFileSync(registry, JSON.stringify([{
+    family: "pro-vue",
+    publicNamespace:
+      "rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast",
+    originalSource:
+      "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
+    bootstrapSource:
+      "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n-legacy.ts",
+    bootstrapTarget: "i18n.ts",
+    basename: "rundeckpro-forecast",
+  }]));
+  const args = [
+    "bootstrap",
+    "--family", "pro-vue",
+    "--source-root", sourceRoot,
+    "--output-root", outputRoot,
+    "--registry", registry,
+    "--output", report,
+  ];
+  const { io } = capture();
+
+  assert.equal(run(args, io), 0);
+  const target = path.join(
+    outputRoot,
+    "translations",
+    "rundeckpro",
+    "plugins",
+    "rundeckpro-spa-ui",
+    "rundeckpro-ui-components",
+    "src",
+    "rundeckpro-forecast",
+    "i18n.ts",
+  );
+  const generated = inventoryRoots([target]);
+  assert.deepEqual(generated.map(({ locale }) => locale).sort(), ["en_US", "ja"]);
+  assert.ok(generated.every(({ entries }) => entries.length === 1));
+  assert.equal(run(args, io), 0);
+  assert.equal(JSON.parse(fs.readFileSync(report, "utf8")).files[0].inserted, 0);
+
+  fs.writeFileSync(
+    target,
+    fs.readFileSync(target, "utf8").replace("Schedule Forecast", "Public override"),
+  );
+  fs.writeFileSync(
+    source,
+    fs.readFileSync(source, "utf8").replace(
+      "en_US: {",
+      'en_US: { "job.filter.apply.button.title": "Search",',
+    ),
+  );
+  assert.equal(run(args, io), 0);
+  const updated = inventoryRoots([target]).find(({ locale }) => locale === "en_US");
+  assert.equal(
+    updated.entries.find(({ key }) => key === "plugin.forecast.main.title").value,
+    "Public override",
+  );
+  assert.equal(
+    updated.entries.find(({ key }) => key === "job.filter.apply.button.title").value,
+    "Search",
+  );
+});

@@ -42,12 +42,22 @@ npm ci --prefix scripts/i18n-lib
 ./scripts/i18n apply --input build/es_419.json
 ./scripts/i18n migrate --scope canonical --source-locale en_US \
   --target-locale es_419 --output build/i18n-migration.json
+./scripts/i18n bootstrap --family named-grails-plugin \
+  --source-root /path/to/rundeckpro \
+  --output build/schedule-forecast-bootstrap.json
+./scripts/i18n bootstrap --family pro-vue \
+  --source-root /path/to/rundeckpro \
+  --output build/schedule-forecast-vue-bootstrap.json
 ```
 
 `inventory` reports unsupported candidates rather than silently omitting them.
 `prepare` emits only missing values. `apply` is insert-only and validates all
 planned writes before changing any target. Literal dotted keys remain distinct
 from nested Vue paths, and source integrity is tracked per key.
+
+`bootstrap` is a bounded POC for one registered family at a time. It has been
+run against the real Schedule Forecast backend and Vue families and is
+idempotent, but it does not yet provide repository-wide orchestration.
 
 See `.claude/docs/TRANSLATION_TOOLING_POC_REPORT.md` for feasibility evidence
 and `.claude/docs/CONSUMER_ADAPTER_POC_REPORT.md` in Rundeck Pro for consumer
@@ -58,6 +68,6 @@ and packaging evidence.
 - Schedule Forecast backend and Vue are complete representative families.
 - Core application, Readme/MOTD, and Flow Control catalogs are bounded
   consumer examples.
-- Original catalogs remain fallback until a family reaches generated parity
-  and deletion eligibility.
+- Original catalogs remain fallback throughout the proposed epic. Removing
+  them is a possible future project, not part of this rollout.
 - Translator-directed PR automation remains outside these POCs.

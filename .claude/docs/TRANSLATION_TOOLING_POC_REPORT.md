@@ -83,6 +83,47 @@ occurrences, comments, ordering, and formatting and cannot safely patch Vue
 catalogs or enforce insert-only races, integrity, and idempotence. They remain
 historical utilities, not a production migration foundation.
 
+## POC 4: bounded real-feature bootstrap
+
+The representative catalogs were originally copied or curated manually while
+the consumer adapters were being tested. Inventory and fixture tests alone did
+not prove that the public tree could be generated from a real product source.
+
+The bounded `bootstrap` command now closes that specific evidence gap for one
+real feature spanning a backend family and a Vue family:
+
+```sh
+./scripts/i18n bootstrap \
+  --family named-grails-plugin \
+  --source-root /path/to/rundeckpro \
+  --output-root . \
+  --output .claude/docs/translation-reports/schedule-forecast-bootstrap.json
+
+./scripts/i18n bootstrap \
+  --family pro-vue \
+  --source-root /path/to/rundeckpro \
+  --output-root . \
+  --output .claude/docs/translation-reports/schedule-forecast-vue-bootstrap.json
+```
+
+It read the actual Schedule Forecast backend family from Rundeck Pro and
+generated the default, `es_419`, and `ja` public catalogs beneath the mirrored
+Rundeck translation path. It also read the retained real Forecast Vue source
+and generated its complete `en_US` and `ja` catalog. The first run created four
+tracked files containing 56 real locale-key entries. Each generated properties
+file was byte-identical to its source, apart from the deterministic basename
+change in its filename, and the generated Vue values and key paths exactly
+matched its source. A second run created no files and inserted no keys.
+
+The automated regression also changes an existing public value, adds a new
+source key, and reruns bootstrap. The public value is preserved while only the
+new key is appended. The focused CLI suite passes 21 tests.
+
+This is deliberately a one-feature generator POC. It does not implement or
+claim repository-wide `--scope all` bootstrap behavior. Production work must
+compose the proven bounded operations with fail-closed global discovery and the
+Rundeck Pro wrapper.
+
 ## Limits and risks
 
 - The static Vue parser supports object-literal catalogs, static strings, and
@@ -94,3 +135,5 @@ historical utilities, not a production migration foundation.
   centralize registration and define archive ownership.
 - The duplicate count includes existing source debt; the POC detects it and
   does not collapse or repair it.
+- Global generation remains unproven. Each bounded bootstrap accepts one
+  explicit registry family and one source root.

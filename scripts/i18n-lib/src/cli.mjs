@@ -11,6 +11,7 @@ import {
   insertVueEntries,
   inventoryRoots,
   inventoryRootsDetailed,
+  parseVueSource,
   pipePluralForms,
   publicCatalog,
   targetPath,
@@ -36,6 +37,8 @@ Commands:
       Report integrity/staleness, duplicates, missing keys, and value-shape mismatches.
   migrate --scope SCOPE --source-locale LOCALE --target-locale LOCALE --output FILE
       Inventory a bounded scope and emit preparation, parity, and unsupported-catalog evidence.
+  bootstrap --family FAMILY --source-root DIR [--output-root DIR] [--registry FILE] --output FILE
+      Generate one registered properties or Vue family in the mirrored public tree.
 
 Translation batches use a null "translation" until a translator supplies text.
 `;
@@ -73,6 +76,7 @@ export function run(argv, io = console) {
   if (command === "apply") return runApply(options, io);
   if (command === "validate") return runValidate(resolveRoots(roots, options, true), options, io);
   if (command === "migrate") return runMigrate(roots, options, io);
+  if (command === "bootstrap") return runBootstrap(roots, options, io);
   throw new Error(`Unknown command: ${command}\n\n${HELP}`);
 }
 
@@ -185,6 +189,204 @@ function runMigrate(positionalRoots, options, io) {
   fs.writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
   io.log(`Prepared bounded migration evidence in ${output}`);
   return parseFailures.length === 0 ? 0 : 1;
+}
+
+/**
+ * Generate one explicitly registered family without implying that
+ * repository-wide bootstrap discovery is production-ready.
+ */
+function runBootstrap(positionalRoots, options, io) {
+  if (positionalRoots.length > 0) {
+    throw new Error("bootstrap uses --family and --source-root; positional roots are not accepted");
+  }
+  const family = requiredOption(options, "family");
+  const sourceRoot = path.resolve(requiredOption(options, "source-root"));
+  const outputRoot = path.resolve(options["output-root"] ?? ".");
+  const registryFile = path.resolve(
+    options.registry ?? path.join("translations", "catalog-registry.json"),
+  );
+  const output = path.resolve(requiredOption(options, "output"));
+  const registry = JSON.parse(fs.readFileSync(registryFile, "utf8"));
+  const registration = registry.find((entry) => entry.family === family);
+  if (!registration) throw new Error(`Unknown catalog family: ${family}`);
+  const sourcePattern = registration.bootstrapSource ?? registration.originalSource;
+  if (!sourcePattern || (!registration.canonicalBasename && !registration.bootstrapTarget)) {
+    throw new Error(`Catalog family '${family}' does not define bootstrap paths`);
+  }
+  const sourceFiles = registeredSourceFiles(sourceRoot, sourcePattern);
+  if (sourceFiles.length === 0) {
+    throw new Error(`No source catalogs matched ${sourcePattern}`);
+  }
+  const targetDirectory = safePublicDirectory(outputRoot, registration.publicNamespace);
+  const writes = sourceFiles.map((sourceFile) => planBootstrapCatalog(
+    sourceFile,
+    targetDirectory,
+    registration,
+  ));
+  for (const write of writes) {
+    fs.mkdirSync(path.dirname(write.file), { recursive: true });
+    fs.writeFileSync(write.file, write.output, "utf8");
+  }
+  const report = {
+    version: 1,
+    family,
+    publicNamespace: registration.publicNamespace,
+    files: writes.map(({ source, file, created, inserted }) => ({
+      source: path.relative(sourceRoot, source),
+      target: path.relative(outputRoot, file),
+      created,
+      inserted,
+    })),
+  };
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`);
+  io.log(`Bootstrapped ${writes.length} catalogs for ${family}`);
+  return 0;
+}
+
+/**
+ * Resolve the single-wildcard source pattern used by a registry family.
+ */
+function registeredSourceFiles(sourceRoot, sourcePattern) {
+  const relativeDirectory = path.dirname(sourcePattern);
+  const filenamePattern = path.basename(sourcePattern);
+  const sourceDirectory = path.resolve(sourceRoot, relativeDirectory);
+  if (!fs.existsSync(sourceDirectory)) return [];
+  const expression = new RegExp(
+    `^${filenamePattern.split("*").map(escapeRegExp).join(".*")}$`,
+  );
+  return fs.readdirSync(sourceDirectory)
+    .filter((name) => expression.test(name))
+    .sort()
+    .map((name) => path.join(sourceDirectory, name));
+}
+
+/**
+ * Keep generated catalogs beneath translations/ even if a registry is malformed.
+ */
+function safePublicDirectory(outputRoot, publicNamespace) {
+  const translationsRoot = path.resolve(outputRoot, "translations");
+  const directory = path.resolve(translationsRoot, publicNamespace);
+  const relative = path.relative(translationsRoot, directory);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`Public namespace escapes translations/: ${publicNamespace}`);
+  }
+  return directory;
+}
+
+/**
+ * Plan a bounded properties or Vue family from its real source catalog.
+ */
+function planBootstrapCatalog(source, targetDirectory, registration) {
+  let sourceCatalogs = inventoryRoots([source]);
+  if (sourceCatalogs.length === 0 && /\.[cm]?[jt]s$/.test(source)) {
+    sourceCatalogs = parseVueSource(fs.readFileSync(source, "utf8"), source);
+  }
+  if (sourceCatalogs.length === 0) {
+    throw new Error(`Unsupported bootstrap source: ${source}`);
+  }
+  if (sourceCatalogs.every(({ format }) => format === "properties")) {
+    return planBootstrapProperties(
+      source,
+      targetDirectory,
+      registration.basename,
+      registration.canonicalBasename,
+    );
+  }
+  if (sourceCatalogs.every(({ format }) => format === "vue")) {
+    return planBootstrapVue(
+      source,
+      targetDirectory,
+      registration.bootstrapTarget ?? path.basename(source),
+      sourceCatalogs,
+    );
+  }
+  throw new Error(`Mixed or unsupported bootstrap source: ${source}`);
+}
+
+/**
+ * Preserve source bytes for a new catalog and append only missing keys on rerun.
+ */
+function planBootstrapProperties(source, targetDirectory, basename, canonicalBasename) {
+  const sourceCatalog = inventoryRoots([source])[0];
+  if (!sourceCatalog || sourceCatalog.format !== "properties") {
+    throw new Error(`Unsupported bootstrap source: ${source}`);
+  }
+  if (sourceCatalog.duplicates.length > 0) {
+    throw new Error(`Duplicate keys prevent bootstrap: ${source}`);
+  }
+  const targetName = path.basename(source).replace(basename, canonicalBasename);
+  const file = path.join(targetDirectory, targetName);
+  if (!fs.existsSync(file)) {
+    return {
+      source,
+      file,
+      output: fs.readFileSync(source, "utf8"),
+      created: true,
+      inserted: sourceCatalog.entries.length,
+    };
+  }
+  const planned = planProperties(file, sourceCatalog.entries.map((entry) => ({
+    ...entry,
+    translation: entry.value,
+  })));
+  return { source, ...planned, created: false };
+}
+
+/**
+ * Generate a static Vue catalog while retaining existing public values.
+ */
+function planBootstrapVue(source, targetDirectory, targetName, sourceCatalogs) {
+  const file = path.join(targetDirectory, targetName);
+  const created = !fs.existsSync(file);
+  if (created && sourceCatalogs.every(({ entries }) =>
+    entries.every(({ keyPath }) => keyPath.length === 1))) {
+    return {
+      source,
+      file,
+      output: renderFlatVueCatalogs(sourceCatalogs),
+      created: true,
+      inserted: sourceCatalogs.reduce((sum, { entries }) => sum + entries.length, 0),
+    };
+  }
+  let output = created
+    ? `const messages = {\n  ${JSON.stringify(sourceCatalogs[0].locale)}: {},\n};\n\nexport default messages;\n`
+    : fs.readFileSync(file, "utf8");
+  const existingCatalogs = created ? [] : inventoryRoots([file]);
+  let inserted = 0;
+  for (const sourceCatalog of sourceCatalogs) {
+    const existing = new Set(
+      (existingCatalogs.find(({ locale }) => locale === sourceCatalog.locale)?.entries ?? [])
+        .map(({ identity }) => identity),
+    );
+    const additions = sourceCatalog.entries.filter(({ identity }) => !existing.has(identity));
+    if (additions.length === 0) continue;
+    output = insertVueEntries(
+      output,
+      file,
+      sourceCatalog.locale,
+      additions.map(({ key, keyPath, value }) => ({ key, keyPath, value })),
+    );
+    inserted += additions.length;
+  }
+  return { source, file, output, created, inserted };
+}
+
+/**
+ * Render the flat locale objects used by the representative Forecast catalog.
+ */
+function renderFlatVueCatalogs(catalogs) {
+  const locales = catalogs.map(({ locale, entries }) => {
+    const messages = entries
+      .map(({ key, value }) => `    ${JSON.stringify(key)}: ${JSON.stringify(value)},`)
+      .join("\n");
+    return `  ${JSON.stringify(locale)}: {\n${messages}\n  },`;
+  }).join("\n");
+  return `const messages = {\n${locales}\n};\n\nexport default messages;\n`;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function prepareBatch(catalogs, sourceLocale, targetLocale) {
