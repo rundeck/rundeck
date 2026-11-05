@@ -164,24 +164,31 @@ repositories {
         }
     }
 }
+File canonicalCoreTranslationDirectory =
+        project.file('../translations/core/rundeckapp/grails-app/i18n')
+
 sourceSets {
     main {
         resources {
             srcDir 'grails-app/migrations'
             // POC: package sparse public catalogs without moving the existing
             // grails-app/i18n bundles or introducing a synchronization step.
-            srcDir "${rootDir}/translations/core/rundeckapp/grails-app/i18n/grails-app/i18n"
+            srcDir canonicalCoreTranslationDirectory
         }
     }
 }
 
 tasks.register('verifyCanonicalTranslationArchive') {
     dependsOn tasks.named('bootWar')
+    inputs.dir(canonicalCoreTranslationDirectory)
 
     doLast {
-        Map<String, File> expected = fileTree("${rootDir}/translations/core/rundeckapp/grails-app/i18n/grails-app/i18n") {
+        Map<String, File> expected = fileTree(canonicalCoreTranslationDirectory) {
             include 'public-messages*.properties'
         }.files.collectEntries { [("WEB-INF/classes/${it.name}".toString()): it] }
+        if (expected.empty) {
+            throw new GradleException('Core WAR canonical translation input is empty')
+        }
         ZipFile archive = new ZipFile(tasks.named('bootWar').get().archiveFile.get().asFile)
         try {
             Map<String, List> entries = archive.entries().toList().groupBy { it.name }
