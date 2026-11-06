@@ -46,8 +46,8 @@ class User implements RdUser{
 
     static constraints={
         login(matches: '^[a-zA-Z0-9\\p{L}\\p{M}\\.,@\\(\\)\\s_\\\\\'/-]+$')
-        firstName(nullable:true)
-        lastName(nullable:true)
+        firstName(nullable:true, maxSize: 255)
+        lastName(nullable:true, maxSize: 255)
         email(nullable:true,validator: { val ->
             (!val || new AnyDomainEmailValidator().isValid(val)) ? null : 'email.invalid'
         })

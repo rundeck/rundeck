@@ -2,6 +2,7 @@ package webhooks
 
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.Event
 import com.dtolabs.rundeck.core.event.EventImpl
@@ -359,7 +360,7 @@ class WebhookService {
             return [msg: "Deleted ${name} webhook"]
         } catch(Exception ex) {
             log.error("delete webhook failed",ex)
-            return [err: ex.message]
+            return [err: ClientErrorMessages.publicMessage(ex)]
         }
     }
 
