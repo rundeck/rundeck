@@ -67,7 +67,7 @@ const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
         LogNodeChunk: {
           name: "LogNodeChunk",
           props: ["entries"],
-          emits: ["line-select", "jumped", "follow-change"],
+          emits: ["line-select", "jumped", "follow-change", "content-size"],
           template: `
             <div data-testid="log-node-chunk">
               <div
@@ -378,6 +378,59 @@ describe("LogViewer", () => {
         expect(wrapper.emitted("line-deselect")).toBeTruthy();
         expect(wrapper.emitted("line-deselect")?.[0]).toEqual([42]);
       });
+    });
+  });
+
+  describe("Node view height", () => {
+    it("bounds the scroller at 600px before the log content is measured", async () => {
+      const wrapper = createWrapper({ node: "node1" });
+      await flushPromises();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toContain("height: 600px");
+    });
+
+    it("sizes the scroller to the log content when it is shorter than 600px", async () => {
+      const wrapper = createWrapper({ node: "node1" });
+      await flushPromises();
+
+      await wrapper
+        .findComponent({ name: "LogNodeChunk" })
+        .vm.$emit("content-size", 120);
+      await nextTick();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toContain("height: 120px");
+    });
+
+    it("caps the scroller at 600px when the log content is taller", async () => {
+      const wrapper = createWrapper({ node: "node1" });
+      await flushPromises();
+
+      await wrapper
+        .findComponent({ name: "LogNodeChunk" })
+        .vm.$emit("content-size", 5000);
+      await nextTick();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toContain("height: 600px");
+    });
+
+    it("does not set a scroller height outside the node view", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+
+      await wrapper
+        .findComponent({ name: "LogNodeChunk" })
+        .vm.$emit("content-size", 120);
+      await nextTick();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toBeUndefined();
     });
   });
 
