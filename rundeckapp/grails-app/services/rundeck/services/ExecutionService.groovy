@@ -4742,10 +4742,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (!(workflowResult instanceof WorkflowExecutionResult) || !executionContext.outputContext) {
             return
         }
-        workflowResult.sharedContext?.data?.each { ContextView view, DataContext contextData ->
-            contextData.getData().each { String group, Map<String, String> values ->
-                executionContext.outputContext.addOutput(view, group, values)
-            }
+        DataContext aggregateData = workflowResult.sharedContext?.getData(ContextView.global())
+        aggregateData?.getData()?.each { String group, Map<String, String> values ->
+            executionContext.outputContext.addOutput(group, values)
         }
     }
 
