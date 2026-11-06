@@ -796,10 +796,14 @@ class ExecutionJob implements InterruptableJob {
     }
 
     /**
-     * Return evaluated timeout duration, or -1 if not set
-     * @return
+     * Resolve the duration that triggers the avgduration notification from the job's threshold setting.
+     * Shared with job reference execution in ExecutionService.
+     * @param notifyAvgDurationThreshold threshold setting: absolute ("10m"), percentage ("50%") or offset ("+5m")
+     * @param averageDuration historical average duration in milliseconds
+     * @param dataContext data context used to resolve ${...} references in the setting
+     * @return trigger duration in milliseconds, or the average when no threshold is set
      */
-    long getNotifyAvgDurationThreshold(String notifyAvgDurationThreshold, long averageDuration, Map<String, Map<String, String>> dataContext){
+    static long getNotifyAvgDurationThreshold(String notifyAvgDurationThreshold, long averageDuration, Map<String, Map<String, String>> dataContext){
 
         if(null==notifyAvgDurationThreshold){
             return averageDuration
