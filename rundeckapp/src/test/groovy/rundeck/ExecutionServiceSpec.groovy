@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput
+import com.dtolabs.rundeck.core.execution.workflow.NodeFirstWorkflowExecutor
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
@@ -8180,8 +8181,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.success
     }
 
-    def "runSubworkflowExecutionItem propagates global Key/Value data when success is #success"() {
-        given: "a subworkflow with output captured by the global Key/Value data log filter"
+    def "runSubworkflowExecutionItem maps the latest nested Key/Value data to the parent step when success is #success"() {
+        given: "a subworkflow with an earlier step value and a later aggregate Key/Value capture"
         def workflowItem = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow)
         }
@@ -8189,6 +8190,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getSubWorkflow() >> workflowItem
         }
         def nestedOutput = new DataOutput(ContextView.global())
+        nestedOutput.addOutput(
+                ContextView.step(3),
+                'data',
+                ['rba-mark': 'RBA_MARK node=earlier ts=5122']
+        )
         def filter = new KeyValueDataLogFilterPlugin(
                 regex: '.*(RBA_MARK\\s+.*?ts=\\d+).*',
                 name: 'rba-mark',
@@ -8244,14 +8250,23 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 { FailureReason reason, String msg -> new StepExecutionResultImpl(null, reason, msg) },
                 { new StepExecutionResultImpl() }
         )
+        def combinedResultData = new WFSharedContext()
+        new NodeFirstWorkflowExecutor(Mock(IFramework)).combineResultData(
+                3,
+                parentOutput,
+                combinedResultData,
+                result
+        )
 
         then:
         result.success == success
-        parentOutput.sharedContext.getData(ContextView.global()).getData() == [
+        parentOutput.sharedContext.getData(ContextView.global()) == null
+        parentOutput.sharedContext.getData(ContextView.step(3)).getData() == [
                 data: ['rba-mark': 'RBA_MARK node=test ts=5122']
         ]
-        parentOutput.sharedContext.getData(ContextView.step(7)).getData() == [
-                result: [status: 'captured']
+        parentOutput.sharedContext.getData(ContextView.step(7)) == null
+        combinedResultData.getData(ContextView.global()).getData() == [
+                data: ['rba-mark': 'RBA_MARK node=test ts=5122']
         ]
 
         where:
