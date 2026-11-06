@@ -16,12 +16,14 @@
 package org.rundeck.app.data.providers.v1.project;
 
 import org.rundeck.app.data.model.v1.project.RdProject;
+import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder;
 import org.rundeck.app.data.providers.v1.DataProvider;
 
 import org.rundeck.spi.data.DataAccessException;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Objects;
 
 
 public interface RundeckProjectDataProvider extends DataProvider {
@@ -59,6 +61,42 @@ public interface RundeckProjectDataProvider extends DataProvider {
      * @throws DataAccessException on error
      */
     void delete(final String name) throws DataAccessException;
+
+    /**
+     * Delete a project only if its persistent identity still matches.
+     *
+     * @param id expected project identifier
+     * @param name expected project name
+     * @return true when the expected project was deleted
+     */
+    default boolean deleteIfIdentityMatches(final Serializable id, final String name)
+            throws DataAccessException {
+        RdProject project = findByName(name);
+        if (project == null || !Objects.equals(id, project.getId())) {
+            return false;
+        }
+        delete(name);
+        return true;
+    }
+
+    /**
+     * Update project state only if its persistent identity still matches.
+     *
+     * @param id expected project identifier
+     * @param name expected project name
+     * @param state new state
+     * @return true when the expected project was updated
+     */
+    default boolean updateStateIfIdentityMatches(
+            final Serializable id, final String name, final RdProject.State state)
+            throws DataAccessException {
+        RdProject project = findByName(name);
+        if (project == null || !Objects.equals(id, project.getId())) {
+            return false;
+        }
+        update(id, SimpleProjectBuilder.with(project).setState(state));
+        return true;
+    }
 
     /**
      * Finds a RundeckProject by name

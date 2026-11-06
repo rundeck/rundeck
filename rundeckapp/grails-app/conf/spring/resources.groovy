@@ -177,6 +177,7 @@ import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
 import rundeck.services.JobLifecycleComponentService
 import rundeck.services.LocalJobSchedulesManager
+import rundeck.services.LocalProjectDeleteCoordinator
 import rundeck.services.NodeSourceLoaderService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
@@ -463,6 +464,8 @@ beans={
     rundeckJobScheduleManager(QuartzJobScheduleManagerService){
         quartzScheduler=ref('quartzScheduler')
     }
+
+    projectDeleteCoordinator(LocalProjectDeleteCoordinator)
 
     rundeckJobSchedulesManager(LocalJobSchedulesManager){
         scheduledExecutionService = ref('scheduledExecutionService')
