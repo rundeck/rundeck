@@ -34,6 +34,12 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services
 import org.springframework.core.task.AsyncTaskExecutor
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.LoggerContext
+import org.apache.logging.log4j.core.appender.WriterAppender
+import org.apache.logging.log4j.core.config.LoggerConfig
+import org.apache.logging.log4j.core.layout.PatternLayout
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -224,10 +230,16 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         }) >> modelSource
 
         when:
-        def result1 = service.getNodes('test1')
-        def nodes1 = result1.getNodeSet()
-        def result2 = service.getNodes('test1')
-        def nodes2 = result2.getNodeSet()
+        def result1 = null
+        def nodes1 = null
+        def result2 = null
+        def nodes2 = null
+        def logLines = captureProjectNodeSupportLogs {
+            result1 = service.getNodes('test1')
+            nodes1 = result1.getNodeSet()
+            result2 = service.getNodes('test1')
+            nodes2 = result2.getNodeSet()
+        }
 
         then:
         null != nodes1.getNode('anode')
@@ -236,6 +248,10 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         nodes2.nodeNames as List == ['anode']
         result1.doCache == ('false' != isenabled)
         expectedCount * modelSource.getNodes() >> nodeSet
+
+        and: "source load lines are only logged when the source is queried, not on cache hits"
+        logLines.count { it == 'Loading nodes from project=test1 source #1 (file)' } == expectedCount
+        logLines.count { it.startsWith('Loaded 1 nodes from project=test1 source #1 (file) in ') } == expectedCount
 
         where:
         isenabled | expectedCount
@@ -736,5 +752,41 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         'false' | false         | false
         null    | true          | true
         null    | false         | false
+    }
+
+    /**
+     * Capture ProjectNodeSupport log messages at INFO and above while the closure runs. Same approach as
+     * ProjectNodeSupportSpec.captureLogs in core; not shared because core has no test fixtures module.
+     *
+     * @return captured messages
+     */
+    private static List<String> captureProjectNodeSupportLogs(Closure action) {
+        def name = ProjectNodeSupport.name
+        def writer = new StringWriter()
+        def ctx = (LoggerContext) LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = WriterAppender.newBuilder()
+                .setName('NodeServiceSpecCapture')
+                .setTarget(writer)
+                .setLayout(PatternLayout.newBuilder().withPattern('%m%n').build())
+                .build()
+        appender.start()
+        def loggerConfig = LoggerConfig.newBuilder()
+                .withLoggerName(name)
+                .withLevel(Level.INFO)
+                .withAdditivity(false)
+                .withConfig(config)
+                .build()
+        loggerConfig.addAppender(appender, Level.INFO, null)
+        config.addLogger(name, loggerConfig)
+        ctx.updateLoggers()
+        try {
+            action.call()
+        } finally {
+            config.removeLogger(name)
+            ctx.updateLoggers()
+            appender.stop()
+        }
+        writer.toString().readLines()
     }
 }
