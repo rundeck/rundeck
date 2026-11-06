@@ -5,6 +5,7 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        gradlePluginPortal()
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://repo.grails.org/grails/restricted" }
     }
@@ -146,9 +147,8 @@ configurations {
 
 repositories {
     mavenLocal()
-    maven { url "https://repo.grails.org/grails/core" }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-    
+    mavenCentral()
+
     // PackageCloud plugin repositories
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
@@ -162,6 +162,8 @@ repositories {
             includeGroup('org.rundeck.plugins')
         }
     }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://repo.grails.org/grails/core" }
 }
 sourceSets {
     main {
