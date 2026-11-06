@@ -287,12 +287,16 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
     }
 
     /**
-     * Create a job serializer
-     * @param job
-     * @return
+     * Create a job serializer, used for SCM export and change detection. The schedule owner ({@code user}) is
+     * excluded from the serialized data, because it is overwritten by whoever saves or imports the job, and would
+     * otherwise mark jobs as modified when only the saving user differs.
+     * @param job job
+     * @return serializer for the job's canonical map, without the {@code user} entry
      */
     JobSerializer createJobSerializer(ScheduledExecution job) {
-        new JobFromMapSerializer(this, jobToMap(job))
+        Map data = new HashMap(jobToMap(job))
+        data.remove('user')
+        new JobFromMapSerializer(this, data)
     }
 
     /**
