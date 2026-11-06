@@ -79,10 +79,12 @@ as it the job UUID after import will be different than the one on disk.
     static class PathTemplateValidator implements PropertyValidator {
         @Override
         boolean isValid(final String value) throws ValidationException {
+            if (!value) {
+                throw new ValidationException("Path Template is required.")
+            }
             value ==~ ('^.*' + Pattern.quote('${job.id}') + '.*$')
         }
     }
-
 
     @PluginProperty(
             title = "Git URL",
@@ -236,8 +238,8 @@ Path can include variable references
     )
     String fetchAutomatically
 
-    boolean shouldFetchAutomatically(){
-        return fetchAutomatically in [null,'true']
+    boolean shouldFetchAutomatically() {
+        return fetchAutomatically in [null, 'true']
     }
 
     static class FetchTimeoutValidator implements PropertyValidator {
@@ -274,7 +276,6 @@ Path can include variable references
     int getFetchTimeoutSeconds() {
         fetchTimeout ?: 30
     }
-
 
     static List<Property> addDirDefaultValue(List<Property> properties, File basedir, String finalDir) {
         if (null == basedir) {

@@ -65,4 +65,25 @@ class CommonSpec extends Specification {
         where:
         value << ['0', '-1', '-30', 'notanumber', '']
     }
+
+    def "PathTemplateValidator rejects a null value with a validation error, not an NPE"() {
+        given:
+        def validator = new Common.PathTemplateValidator()
+
+        when:
+        validator.isValid(null)
+
+        then:
+        def e = thrown(ValidationException)
+        e.message == 'Path Template is required.'
+    }
+
+    def "PathTemplateValidator requires the \${job.id} placeholder"() {
+        given:
+        def validator = new Common.PathTemplateValidator()
+
+        expect:
+        validator.isValid('${job.group}${job.name}-${job.id}.xml')
+        !validator.isValid('${job.group}${job.name}.xml')
+    }
 }

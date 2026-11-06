@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
+import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.errors.TransportException
@@ -316,7 +317,9 @@ class GitImportPluginSpec extends Specification {
             getFrameworkProject() >> projectName
         })
         plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
-        plugin.jobStateMap['0001'] = ['synch': 'DELETE_NEEDED', 'path': 'job/xy-0001.xml']
+        synchronized (plugin.jobStateMap) {
+            plugin.jobStateMap['0001'] = ['synch': 'DELETE_NEEDED', 'path': 'job/xy-0001.xml']
+        }
 
         when:
         def ret = plugin.getTrackedItemsForAction('import-jobs')
@@ -345,7 +348,13 @@ class GitImportPluginSpec extends Specification {
         })
         plugin.jobStateMap = new DisappearingEntryMap<String, Map>()
         plugin.jobStateMap['123'] = ['synch': ImportSynchState.CLEAN, 'path': 'job1-123.xml']
-        plugin.importTracker.trackedJobIds['job1-123.xml'] = '123'
+        plugin.importTracker.trackJobAtPath(
+                Stub(JobScmReference) {
+                    getId() >> '123'
+                    getScmImportMetadata() >> [:]
+                },
+                'job1-123.xml'
+        )
 
         when:
         def status = plugin.getStatusInternal(Mock(ScmOperationContext), false)
@@ -469,8 +478,8 @@ class GitImportPluginSpec extends Specification {
         plugin.initialize(context)
         plugin.importTracker = Mock(ImportTracker){
             trackedPaths() >> ['job1-1234.xml']
-            getTrackedCommits() >> ['job1-1234.xml' : '123123']
             getTrackedJobIds() >> ['job1-12345.xml':'1234']
+            trackedCommit('job1-1234.xml') >> '123123'
         }
 
         when:
@@ -633,6 +642,62 @@ class GitImportPluginSpec extends Specification {
         ret.success
     }
 
+    def "an oversized blob for one selected job does not abort importing the others in the same batch"() {
+        given: "two selected jobs, one backed by a blob over the 100MB import guard"
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def actionId = "import-jobs"
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        def oversizedFile = new File(origindir, 'job2-456.xml')
+        //sparse file: reports the real size to JGit without writing real content to disk
+        new RandomAccessFile(oversizedFile, 'rw').withCloseable {
+            it.setLength(GitUtil.MAX_BLOB_SIZE + 1)
+        }
+        git.add().addFilepattern('job2-456.xml').call()
+        git.commit().setOnly('job2-456.xml').setMessage('add oversized job file').setCommitter(
+                'test user1', 'test@example.com'
+        ).call()
+        git.close()
+
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+
+        JobImporter importer = Mock(JobImporter)
+        List<String> selectedPaths = ["job1-123.xml", "job2-456.xml"]
+
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> ["commitId": commit.name]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+        }
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+
+        when:
+        def ret = plugin.scmImport(context, actionId, importer, selectedPaths, [], [:])
+
+        then: "only the valid job is actually imported"
+        1 * importer.importFromStream(_, _, _, _, _) >> Mock(ImportResult) {
+            isSuccessful() >> true
+            getJob() >> job
+        }
+
+        then: "the batch is reported as failed overall, but the valid job still got imported and refreshed"
+        !ret.success
+        ret.extendedMessage.contains('job2-456.xml')
+        ret.extendedMessage.contains('too large')
+        plugin.jobStateMap["123"] != null
+    }
+
     def "get job status IMPORT_NEEDED when job is renamed"() {
         given:
         def projectName = 'GitImportPluginSpec'
@@ -751,6 +816,49 @@ class GitImportPluginSpec extends Specification {
         status.jobRenamed.renamedPath == "job1-rename-123.xml"
     }
 
+    def "getFileDiff deletes its temp serialization file even on the not-found early return"() {
+        given: "a job whose path has no commit history, so getFileDiff hits the early" +
+                " not-found return before reaching its own temp.delete() in the finally block" +
+                " would otherwise be skipped if that early return bypassed it"
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [:]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getJobSerializer() >> Mock(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+
+        def tempPrefix = "${GitImportPlugin.class.name}-serializeTemp"
+        def tmpDir = new File(System.getProperty('java.io.tmpdir'))
+        def before = (tmpDir.listFiles() ?: ([] as File[])).findAll { it.name.startsWith(tempPrefix) }
+
+        when:
+        def status = plugin.getFileDiff(job, null)
+
+        then:
+        status != null
+        status.newNotFound
+        def after = (tmpDir.listFiles() ?: ([] as File[])).findAll { it.name.startsWith(tempPrefix) }
+        after.size() == before.size()
+    }
+
     def "get diff status renamed job"() {
         given:
         def projectName = 'GitImportPluginSpec'
@@ -794,6 +902,67 @@ class GitImportPluginSpec extends Specification {
         status != null
         status.incomingCommit != null
         status.content !=null
+    }
+
+    def "ImportJobs resolves the renamed job's UUID through the target path, not the stale original path"() {
+        given: "a rename A->B already detected by a prior status refresh - jobRenamed's" +
+                " untrackJobPaths already cleared the job's forward mapping at A (the original" +
+                " path), leaving only B mapped to the job and the A->B rename record in" +
+                " renamedTrackedItems"
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        GitExportPluginSpec.renameCommitFile(origindir, git, 'job1-123.xml', 'job1-rename-123.xml', 'blah 333')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        //a prior status refresh detects the rename and records it in the tracker
+        plugin.getJobStatus(job, null)
+        assert plugin.importTracker.trackedJob('job1-123.xml') == null
+        assert plugin.importTracker.trackedJob('job1-rename-123.xml') == '123'
+
+        def importer = Mock(JobImporter)
+        com.dtolabs.rundeck.plugins.scm.JobRenamed capturedRenamedJob = null
+
+        when: "the user imports the renamed path"
+        new org.rundeck.plugin.scm.git.imp.actions.ImportJobs('import-jobs', 'Import', 'Import', null)
+                .performAction(
+                        Mock(ScmOperationContext) { getFrameworkProject() >> projectName },
+                        plugin,
+                        importer,
+                        ['job1-rename-123.xml'],
+                        [:]
+                )
+
+        then: "the importer is told the existing job's real UUID, not null"
+        1 * importer.importFromStream(_, _, _, _, _) >> { args ->
+            capturedRenamedJob = args[4]
+            Mock(ImportResult) {
+                isSuccessful() >> true
+                getJob() >> null
+            }
+        }
+        capturedRenamedJob != null
+        capturedRenamedJob.uuid == '123'
     }
 
     def "get status fetch fails throws ScmPluginException"() {
@@ -849,6 +1018,53 @@ class GitImportPluginSpec extends Specification {
         status != null
     }
 
+    def "scmImport untracks the path of a successfully deleted job so DELETE_NEEDED clears"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+
+        def job = Stub(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> ["commitId": commit.name]
+        }
+        //simulate the job having been previously imported/tracked at this path, plus a second
+        //forward mapping left behind by a rename re-assertion
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+        plugin.importTracker.jobRenamed(job, 'job1-123.xml', 'renamed/job1-123.xml')
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+
+        JobImporter importer = Mock(JobImporter)
+
+        when:
+        plugin.scmImport(context, GitImportPlugin.ACTION_IMPORT_JOBS, importer, [], ['123'], [:])
+
+        then:
+        1 * importer.deleteJob(projectName, '123') >> Mock(ImportResult) {
+            isSuccessful() >> true
+        }
+
+        then:
+        //no tracked path for this deleted job can remain, or getStatusInternal will keep reporting
+        //DELETE_NEEDED even though the job is already gone
+        plugin.importTracker.trackedPath('123') == null
+        !plugin.importTracker.trackedPaths().contains('job1-123.xml')
+        !plugin.importTracker.trackedPaths().contains('renamed/job1-123.xml')
+    }
+
     /**
      * Test map that simulates a loader removing an entry between two live-map reads.
      */
@@ -872,12 +1088,46 @@ class GitImportPluginSpec extends Specification {
      */
     private static class MonitorCheckedMap<K, V> extends LinkedHashMap<K, V> {
         @Override
+        boolean containsKey(Object key) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('containsKey requires the map monitor')
+            }
+            super.containsKey(key)
+        }
+
+        @Override
+        V put(K key, V value) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('put requires the map monitor')
+            }
+            super.put(key, value)
+        }
+
+        @Override
         Set<Map.Entry<K, V>> entrySet() {
             if (!Thread.holdsLock(this)) {
                 throw new ConcurrentModificationException('Iteration requires the map monitor')
             }
             super.entrySet()
         }
+    }
+
+    def "init job status synchronizes the check and insert on the job-state map"() {
+        given:
+        def plugin = new GitImportPlugin(Mock(Import), [])
+        plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
+        def jobs = [
+                Stub(JobScmReference) {
+                    getId() >> '123'
+                    getVersion() >> 1
+                }
+        ]
+
+        when:
+        plugin.initJobsStatus(jobs)
+
+        then:
+        plugin.jobStateMap['123'].synch == SynchState.LOADING
     }
 
     def "lastCommitForPath reuses the path index while HEAD is unchanged and rebuilds after a commit"() {

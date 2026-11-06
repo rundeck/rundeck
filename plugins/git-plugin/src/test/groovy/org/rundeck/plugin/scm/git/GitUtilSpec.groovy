@@ -17,8 +17,15 @@
 package org.rundeck.plugin.scm.git
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.diff.DiffFormatter
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.ObjectLoader
+import org.eclipse.jgit.lib.ObjectReader
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.util.FileUtils
 import org.eclipse.jgit.util.SystemReader
 import spock.lang.Specification
@@ -72,6 +79,90 @@ class GitUtilSpec extends Specification {
 
         then:
         result2 == null
+    }
+
+    def "getCommit closes its RevWalk"() {
+        given: "a leaked RevWalk holds JGit's internal object caches open indefinitely"
+        def origindir = new File(tempdir, 'origin')
+        Git git = BaseGitPluginSpec.createGit(origindir)
+        new File(origindir, "test1") << 'data'
+        git.add().addFilepattern('test1').call()
+        RevCommit newcommit = git.commit().setOnly('test1').setAuthor('a', 'b@test.com').setMessage('abc').call()
+
+        def originalClose = RevWalk.metaClass.getMetaMethod('close')
+        int closeCalls = 0
+        RevWalk.metaClass.close = { ->
+            closeCalls++
+            originalClose.invoke(delegate)
+        }
+
+        when:
+        def result = GitUtil.getCommit(git.repository, newcommit.name)
+
+        then:
+        result == newcommit
+        closeCalls == 1
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(RevWalk)
+    }
+
+    def "lookupId closes its TreeWalk"() {
+        given:
+        def origindir = new File(tempdir, 'origin')
+        Git git = BaseGitPluginSpec.createGit(origindir)
+        new File(origindir, "test1") << 'data'
+        git.add().addFilepattern('test1').call()
+        RevCommit newcommit = git.commit().setOnly('test1').setAuthor('a', 'b@test.com').setMessage('abc').call()
+
+        def originalClose = TreeWalk.metaClass.getMetaMethod('close')
+        int closeCalls = 0
+        TreeWalk.metaClass.close = { ->
+            closeCalls++
+            originalClose.invoke(delegate)
+        }
+
+        when:
+        def id = GitUtil.lookupId(git.repository, newcommit, 'test1')
+
+        then:
+        id != null
+        closeCalls == 1
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(TreeWalk)
+    }
+
+    def "listChanges closes its DiffFormatter"() {
+        given: "two commits to diff against each other - ObjectReader's closing isn't covered" +
+                " here: git.getRepository().newObjectReader() returns an internal JGit subclass" +
+                " instance (WindowCursor), and a metaClass override on the ObjectReader supertype" +
+                " doesn't intercept calls on an already-existing concrete subclass's own metaClass"
+        def origindir = new File(tempdir, 'origin')
+        Git git = BaseGitPluginSpec.createGit(origindir)
+        new File(origindir, "test1") << 'data'
+        git.add().addFilepattern('test1').call()
+        RevCommit commit1 = git.commit().setOnly('test1').setAuthor('a', 'b@test.com').setMessage('first').call()
+        new File(origindir, "test1") << 'more'
+        git.add().addFilepattern('test1').call()
+        RevCommit commit2 = git.commit().setOnly('test1').setAuthor('a', 'b@test.com').setMessage('second').call()
+
+        def originalClose = DiffFormatter.metaClass.getMetaMethod('close')
+        int closeCalls = 0
+        DiffFormatter.metaClass.close = { ->
+            closeCalls++
+            originalClose.invoke(delegate)
+        }
+
+        when:
+        def diffs = GitUtil.listChanges(git, commit1.tree.name, commit2.tree.name)
+
+        then:
+        diffs.size() == 1
+        closeCalls == 1
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(DiffFormatter)
     }
     def "lastCommitsForPaths matches lastCommitForPath across edits, deletion and merges"() {
         given: "linear edits, a deletion and a merge that keeps one side"
@@ -144,6 +235,47 @@ class GitUtilSpec extends Specification {
 
         cleanup:
         git.close()
+    }
+
+    def "getBytes rejects a blob larger than the configured max size"() {
+        given: "a loader reporting a size over the 100MB guard, without actually allocating that memory"
+        def id = ObjectId.zeroId()
+        def loader = Mock(ObjectLoaderMock) {
+            getSize() >> (GitUtil.MAX_BLOB_SIZE + 1)
+        }
+        def repo = Mock(BaseGitPluginSpec.RepositoryMock) {
+            open(id, Constants.OBJ_BLOB) >> loader
+        }
+
+        when:
+        GitUtil.getBytes(repo, id)
+
+        then:
+        def e = thrown(com.dtolabs.rundeck.plugins.scm.ScmPluginException)
+        e.message.contains('too large')
+
+        and: "the oversized content is never actually read into memory"
+        0 * loader.getCachedBytes(_)
+    }
+
+    def "getBytes loads a blob at or under the max size"() {
+        given:
+        def content = 'hello world'.bytes
+        def id = ObjectId.zeroId()
+        def loader = Mock(ObjectLoaderMock) {
+            getSize() >> content.length
+            getCachedBytes(_) >> content
+        }
+        def repo = Mock(BaseGitPluginSpec.RepositoryMock) {
+            open(id, Constants.OBJ_BLOB) >> loader
+        }
+
+        expect:
+        GitUtil.getBytes(repo, id) == content
+    }
+
+    //Signed Jar classes cannot be directly mocked - see BaseGitPluginSpec.RepositoryMock
+    static abstract class ObjectLoaderMock extends ObjectLoader {
     }
 
     private static PersonIdent committer(long epochSeconds) {
