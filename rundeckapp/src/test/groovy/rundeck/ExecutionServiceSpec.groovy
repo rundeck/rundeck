@@ -8375,6 +8375,35 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         true    | 'test buddy'
     }
 
+    def "respondExecutionsJson omits summary for deleted-job executions without executionSummary"() {
+        given:
+        Execution deletedJobExec = new Execution(
+                project: 'AProject',
+                user: 'bob',
+                dateStarted: new Date(),
+                jobUuid: UUID.randomUUID().toString(),
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test buddy')])
+        )
+        service.apiService = Mock(ApiService)
+
+        when:
+        service.respondExecutionsJson(null, null, [deletedJobExec], [:], new ExecutionQuery(executionSummary: summary))
+
+        then:
+        deletedJobExec.scheduledExecution == null
+        deletedJobExec.isJobDeleted()
+        1 * service.apiService.respondExecutionsJson(_, _, _, _) >> { args ->
+            List<Map> execlist = args[2]
+            assert execlist[0].summary == expectedSummary
+            null
+        }
+
+        where:
+        summary | expectedSummary
+        false   | null
+        true    | 'test buddy'
+    }
+
     def "createExecutionLogMDCdata includes command for adhoc execution with workflow json"() {
         given:
         Execution adhoc = new Execution(project: 'AProject', user: 'bob', dateStarted: new Date())

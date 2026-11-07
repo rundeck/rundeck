@@ -467,7 +467,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 ]
 
                 //check if query is set and executionSummary is defined, always summarize adhoc executions
-                if (!query || query?.executionSummary || e.scheduledExecution == null) {
+                //(never a job: executions of a deleted job have no scheduledExecution but keep their jobUuid)
+                if (!query || query?.executionSummary || (e.scheduledExecution == null && e.jobUuid == null)) {
                     data.summary = ExecReportUtil.summarizeJob(e)
                 }
 
