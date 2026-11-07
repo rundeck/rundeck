@@ -211,6 +211,7 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                     'project.execution.history.cleanup.enabled'          : 'true',
                     'project.execution.history.cleanup.retention.days'   : '1',
                     'project.execution.history.cleanup.retention.minimum': '2',
+                    'project.execution.history.cleanup.retention.perJob' : '4',
                     'project.execution.history.cleanup.batch'            : '3',
                     'project.execution.history.cleanup.schedule'         : 'crontab1',
                 ]
@@ -238,7 +239,8 @@ class ProjectControllerSpec extends Specification implements ControllerUnitTest<
                 it.enabled && it.maxDaysToKeep == 1 &&
                 it.cronExpression == 'crontab1' &&
                 it.minimumExecutionToKeep == 2 &&
-                it.maximumDeletionSize == 3
+                it.maximumDeletionSize == 3 &&
+                it.executionsToKeepPerJob == 4
             }
             )
             0 * controller.frameworkService._(*_)
