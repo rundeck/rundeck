@@ -75,4 +75,43 @@ class ExecReportUtilSpec extends Specification {
         then:
         summary == "Plugin[builtin-script, nodeStep: true] [... 3 steps]"
     }
+
+    def "buildSaveReportRequest for adhoc command step deserialized from workflow json"() {
+        given:
+        def exec = Mock(ExecutionData){
+            internalId >> 1
+            statusSucceeded() >> true
+            workflowData >> Mock(WorkflowData){
+                steps >> [Mock(WorkflowStepData) {
+                    pluginType >> "exec-command"
+                    nodeStep >> true
+                    configuration >> [adhocRemoteString: "echo hello"]
+                }]
+            }
+        }
+        when:
+        def request = ExecReportUtil.buildSaveReportRequest(exec, null)
+        then:
+        request.adhocExecution
+        request.adhocScript == "echo hello"
+        request.title == "echo hello"
+        request.reportId == "adhoc"
+    }
+
+    def "summarizeJob for adhoc script step deserialized from workflow json"() {
+        given:
+        def exec = Mock(ExecutionData){
+            getWorkflowData() >> Mock(WorkflowData){
+                steps >> [Mock(WorkflowStepData) {
+                    pluginType >> "script-inline"
+                    nodeStep >> true
+                    configuration >> [adhocLocalString: "echo script", argString: "a b"]
+                }]
+            }
+        }
+        when:
+        def summary = ExecReportUtil.summarizeJob(exec)
+        then:
+        summary == "echo script -- a b"
+    }
 }
