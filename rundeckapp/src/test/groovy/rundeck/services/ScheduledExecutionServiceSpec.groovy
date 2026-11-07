@@ -34,6 +34,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import org.grails.plugins.codecs.JSONCodec
+import org.grails.web.json.JSONObject
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -6752,6 +6753,132 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         result.err.exception.toString() == "java.lang.Exception: java.lang.Exception: some exception"
         result.values == null
         result.err.message == "Failed loading remote option values"
+    }
+
+    def "load remote options accepts non-string list entries"() {
+
+        given: "a job with an url option"
+        def fwkservice = Mock(FrameworkService)
+        defineBeans {
+            frameworkService(InstanceFactoryBean, fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        service.userDataProvider = new GormUserDataProvider()
+
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name: 'test',
+                realValuesUrl: 'file://test',
+                sortValues: sort
+        ))
+        se.save()
+        _ * service.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+            _ * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                _ * loadProjectConfig('testProject')
+            }
+        }
+
+        when: "the remote values are not all strings or JSONObjects"
+        ScheduledExecutionController.metaClass.static.getRemoteJSON = { HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck ->
+            [json: json]
+        }
+        def result = service.loadOptionsRemoteValues(se, [option: 'test'], 'auser', null)
+
+        then: "the values are converted to name/value entries"
+        !result.err
+        result.values == expected
+
+        where:
+        json                                                       | sort  | expected
+        [1, 2, 3]                                                  | false | [[name: '1', value: '1'], [name: '2', value: '2'], [name: '3', value: '3']]
+        [3L, 10L]                                                  | false | [[name: '3', value: '3'], [name: '10', value: '10']]
+        [true, false]                                              | false | [[name: 'true', value: 'true'], [name: 'false', value: 'false']]
+        [[name: 'a', value: 'x'], [name: 'b', value: 2]]           | false | [[name: 'a', value: 'x'], [name: 'b', value: '2']]
+        [[name: 'zero', value: 0], [name: 'empty', value: '']]     | false | [[name: 'zero', value: '0'], [name: 'empty', value: '']]
+        [new JSONObject([name: 'zero', value: 0])]                 | false | [[name: 'zero', value: '0']]
+        [[name: 'no', value: false], [name: 'yes', value: true]]   | false | [[name: 'no', value: 'false'], [name: 'yes', value: 'true']]
+        [[name: 0, value: 'z', selected: true]]                    | false | [[name: '0', value: 'z', selected: true]]
+        ['b', [name: 'c', value: 'cv'], 7]                         | false | [[name: 'b', value: 'b'], [name: 'c', value: 'cv'], [name: '7', value: '7']]
+        ['b', [name: 'c', value: 'cv'], 7]                         | true  | [[name: '7', value: '7'], [name: 'b', value: 'b'], [name: 'c', value: 'cv']]
+    }
+
+    def "load remote options accepts integer values selected by a JSON path filter"() {
+
+        given: "a job with an url option"
+        def fwkservice = Mock(FrameworkService)
+        defineBeans {
+            frameworkService(InstanceFactoryBean, fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        service.userDataProvider = new GormUserDataProvider()
+
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name: 'test',
+                realValuesUrl: 'file://test'
+        ))
+        se.save()
+        _ * service.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+            _ * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                _ * loadProjectConfig('testProject')
+            }
+        }
+
+        when: "the remote payload is filtered with a JSON path selecting integer ids"
+        def payload = '{"results":[{"id":1,"label":"one"},{"id":2,"label":"two"}]}'
+        def filter = new JobOptionConfigRemoteUrl(jsonFilter: '$.results.*.id')
+        ScheduledExecutionController.metaClass.static.getRemoteJSON = { HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck ->
+            [json: ScheduledExecutionController.remoteUrlParse(payload, filter).jsonElement]
+        }
+        def result = service.loadOptionsRemoteValues(se, [option: 'test'], 'auser', null)
+
+        then: "the ids are used as option values"
+        !result.err
+        result.values == [[name: '1', value: '1'], [name: '2', value: '2']]
+    }
+
+    def "load remote options rejects invalid list entries"() {
+
+        given: "a job with an url option"
+        def fwkservice = Mock(FrameworkService)
+        defineBeans {
+            frameworkService(InstanceFactoryBean, fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        service.userDataProvider = new GormUserDataProvider()
+
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name: 'test',
+                realValuesUrl: 'file://test'
+        ))
+        se.save()
+        _ * service.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+            _ * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                _ * loadProjectConfig('testProject')
+            }
+        }
+
+        when: "the remote values contain an invalid entry"
+        ScheduledExecutionController.metaClass.static.getRemoteJSON = { HttpClientCreator httpClientCreator, String url, JobOptionConfigRemoteUrl configRemoteUrl, int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck ->
+            [json: json]
+        }
+        def result = service.loadOptionsRemoteValues(se, [option: 'test'], 'auser', null)
+
+        then: "an error is returned"
+        result.values == null
+        result.err.code == 'invalid'
+        result.err.message == "Failed parsing remote option values: ${message}"
+
+        where:
+        json                          | message
+        ['a', ['nested']]             | "Item: 1 expected string or map like {name:\"..\",value:\"..\"}"
+        [[value: 'x']]                | "Item: 0 has no 'name' entry"
+        [[name: 'a']]                 | "Item: 0 has no 'value' entry"
+        [new JSONObject([name: 'a'])] | "Item: 0 has no 'value' entry"
     }
 
 
