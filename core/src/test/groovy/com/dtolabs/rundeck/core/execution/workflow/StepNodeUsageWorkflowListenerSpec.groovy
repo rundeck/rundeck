@@ -381,4 +381,58 @@ class StepNodeUsageWorkflowListenerSpec extends Specification {
         breakdown.values().first().pluginType == "exec-command"
         breakdown.values().first().isNodeStep == true
     }
+
+    def "an error handler is keyed separately from the step it handles, not merged into it"() {
+        given:
+        def executionId = 130L
+        def listener = new StepNodeUsageWorkflowListener(executionId)
+        // BaseWorkflowExecutor runs a handler under the FAILED STEP'S OWN step number, with a
+        // context built from the same parent, so step number and parent path are identical --
+        // only the WorkflowItemErrorHandlerContext marker component tells the two apart.
+        def stepCtx = Mock(StepExecutionContext) {
+            getStepNumber() >> 3
+            getStepContext() >> []
+            componentForType(_) >> Optional.empty()
+        }
+        def handlerCtx = Mock(StepExecutionContext) {
+            getStepNumber() >> 3
+            getStepContext() >> []
+            componentForType(WorkflowItemErrorHandlerContext) >> Optional.of(WorkflowItemErrorHandlerContext.INSTANCE)
+        }
+        def stepItem = Mock(NodeStepExecutionItem) {
+            getNodeStepType() >> "exec-command"
+        }
+        def handlerItem = Mock(StepExecutionItem) {
+            getType() >> "notification-plugin"
+        }
+
+        when: "the step fans out to 10 nodes, then its handler runs once with no node dispatch"
+        listener.beginStepExecution(executor, stepCtx, stepItem)
+        (1..10).each { i ->
+            def n = node("node${i}")
+            listener.beginExecuteNodeStep(execContext, stepItem, n)
+            listener.finishExecuteNodeStep(nodeStepResult, execContext, stepItem, n)
+        }
+        listener.finishStepExecution(executor, statusResult, stepCtx, stepItem)
+
+        listener.beginStepExecution(executor, handlerCtx, handlerItem)
+        listener.finishStepExecution(executor, statusResult, handlerCtx, handlerItem)
+
+        listener.finishWorkflowExecution(workflowResult, stepCtx, null)
+
+        then: "two entries, the handler suffixed 'e' per the state.json identifier scheme"
+        def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
+        breakdown.keySet() == (["3", "3e"] as Set)
+
+        and: "each keeps its own plugin type and node-step flag, rather than the handler's being dropped by putIfAbsent"
+        breakdown["3"].pluginType == "exec-command"
+        breakdown["3"].isNodeStep == true
+        breakdown["3e"].pluginType == "notification-plugin"
+        breakdown["3e"].isNodeStep == false
+
+        and: "node counts stay separate, so the handler cannot push the parent across a bucket boundary"
+        // merged these would be 11, which buckets as 11-100 rather than the parent's true 2-10
+        breakdown["3"].nodeCount == 10L
+        breakdown["3e"].nodeCount == 1L
+    }
 }

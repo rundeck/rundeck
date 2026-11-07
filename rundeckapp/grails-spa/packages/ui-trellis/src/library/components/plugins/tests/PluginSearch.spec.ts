@@ -112,10 +112,11 @@ describe("PluginSearch", () => {
       ).toBe(false);
     });
 
-    it("renders the PtInput component", async () => {
+    it("renders the PtInput component without the col-sm-12 wrapper class", async () => {
       const wrapper = await createWrapper({ props: { ea: true } });
 
       expect(wrapper.findComponent(PtInput).exists()).toBe(true);
+      expect(wrapper.classes("col-sm-12")).toBe(false);
     });
 
     it("emits searching=true immediately when typing", async () => {

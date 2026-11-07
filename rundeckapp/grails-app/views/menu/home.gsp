@@ -30,7 +30,7 @@
 	<meta name="layout" content="base"/>
 	<meta name="tabpage" content="home"/>
 	<title><g:appTitle/></title>
-	<g:set var="uiType" value="${params.nextUi ? 'next' : params.legacyUi ? 'legacy' : 'current'}"/>
+	<g:set var="uiType" value="${params.boolean('nextUi') ? 'next' : params.legacyUi ? 'legacy' : 'current'}"/>
 	<g:if test="${!projectNames}">
 		<g:embedJSON data="${[projectNames: [], projectNamesTotal: -1]}" id="projectNamesData"/>
 	</g:if>

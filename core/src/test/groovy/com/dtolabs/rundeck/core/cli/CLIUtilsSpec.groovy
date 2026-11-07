@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.cli
 
+import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.utils.Converter
 import spock.lang.Specification
 
@@ -58,9 +59,9 @@ class CLIUtilsSpec extends Specification {
         when: "Windows PowerShell case"
         Converter<String, String> windowsPsConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", "powershell")
         then:
-        windowsPsConverter.convert("foo bar") == '"foo bar"'
-        windowsPsConverter.convert("foo&bar") == '"foo&bar"'
-        windowsPsConverter.convert("`foobar`") == '"`foobar`"'
+        windowsPsConverter.convert("foo bar") == "'foo bar'"
+        windowsPsConverter.convert("foo&bar") == "'foo&bar'"
+        windowsPsConverter.convert("`foobar`") == "'`foobar`'"
 
         when: "Windows default case (no interpreter)"
         Converter<String, String> windowsDefaultConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", null)
@@ -68,6 +69,29 @@ class CLIUtilsSpec extends Specification {
         windowsDefaultConverter.convert("foo bar") == '"foo bar"'
         windowsDefaultConverter.convert("foo&bar") == '"foo&bar"'
         windowsDefaultConverter.convert("`foobar`") == '"`foobar`"'
+    }
+
+    def "PowerShell preserves unresolved file references"() {
+        given:
+        def command = ExecArgList.fromStrings(false, true, "script.ps1", '${file.ImportCSV}')
+
+        expect:
+        command.buildCommandForNode(null, "node", "windows", "powershell") ==
+            ["script.ps1", "'\${file.ImportCSV}'"]
+    }
+
+    def "quotePowerShellArg escapes embedded PowerShell single quotes"() {
+        expect:
+        CLIUtils.quotePowerShellArg(input) == expected
+
+        where:
+        input                || expected
+        "it's safe"          || "'it''s safe'"
+        "left\u2018quote"    || "'left\u2018\u2018quote'"
+        "right\u2019quote"   || "'right\u2019\u2019quote'"
+        "low\u201Aquote"     || "'low\u201A\u201Aquote'"
+        "reverse\u201Bquote" || "'reverse\u201B\u201Bquote'"
+        "x\u2019;whoami;#"   || "'x\u2019\u2019;whoami;#'"
     }
 
     def "quoteWindowsCMDArg escapes internal double quotes"() {
