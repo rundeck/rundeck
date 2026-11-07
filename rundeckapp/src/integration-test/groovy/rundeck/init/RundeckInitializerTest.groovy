@@ -17,6 +17,7 @@ package rundeck.init
 
 import grails.testing.mixin.integration.Integration
 import grails.util.Environment
+import org.springframework.security.crypto.bcrypt.BCrypt
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
 import spock.lang.Specification
@@ -24,6 +25,24 @@ import spock.lang.Unroll
 
 @Integration
 class RundeckInitializerTest extends Specification {
+
+    def "default admin and user passwords are BCrypt-hashed, not plaintext"() {
+        given: "RUN-4555: the generated realm.properties default account must never be plaintext"
+        RundeckInitConfig cfg = new RundeckInitConfig()
+        RundeckInitializer initializer = new RundeckInitializer(cfg)
+        initializer.thisJar = File.createTempFile("this", "jar")
+
+        when:
+        initializer.initConfigurations()
+        String adminPassword = cfg.runtimeConfiguration.getProperty("default.admin.password")
+        String userPassword = cfg.runtimeConfiguration.getProperty("default.user.password")
+
+        then:
+        adminPassword.startsWith("BCRYPT:")
+        userPassword.startsWith("BCRYPT:")
+        BCrypt.checkpw("admin", adminPassword.substring("BCRYPT:".length()))
+        BCrypt.checkpw("user", userPassword.substring("BCRYPT:".length()))
+    }
 
     def "ExpandTemplates"() {
         given:
