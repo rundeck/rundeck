@@ -1,1 +1,609 @@
-PLACEHOLDER
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Rundeck Master-Build Project
+ *
+ * This project does not contain any buildable code and does not generate any
+ * artifacts, however it allows us to set defaults for the subjects and provides
+ * Groovy syntax highlighting for gradle build files (like this one)
+ **/
+
+buildscript {
+    repositories {
+        if (project.findProperty('mavenCentralUrl')) {
+            maven {
+                name 'mavenCentralProxy'
+                url mavenCentralUrl
+                if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+                    credentials {
+                        username mavenUser
+                        password mavenPassword
+                    }
+                }
+            }
+        } else {
+            mavenCentral()
+        }
+    }
+    // CVE-2026-64607: org.owasp:dependency-check-gradle -> dependency-check-core ->
+    // open-vulnerability-clients pulls httpclient5 5.3.1 (<=5.6.2, vulnerable) onto this buildscript
+    // classpath. Build-tooling only (used by the dependencyCheckAnalyze task; never shipped), but
+    // forced here so a standalone-build Snyk scan of this manifest doesn't keep flagging it.
+    configurations.all {
+        resolutionStrategy {
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
+        }
+    }
+
+    dependencies {
+        classpath 'com.adaptc.gradle:nexus-workflow:0.8'
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.7.3'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: "${snakeyamlVersion}"
+        classpath 'org.owasp:dependency-check-gradle:10.0.4'
+    }
+}
+
+plugins {
+    id "org.dvaske.gradle.git-build-info" version "0.9"
+    id "com.dorongold.task-tree" version "1.5"
+    id "org.ajoberstar.grgit" version "5.3.3"
+    id "signing"
+    id 'io.github.gradle-nexus.publish-plugin' version "2.0.0"
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse';
+apply plugin: 'idea'
+apply plugin: 'com.google.osdetector'
+apply plugin: 'codenarc'
+
+/**
+ * Deterministic cyclomatic complexity check (informative only).
+ * Run: ./gradlew codenarcComplexity — report in build/reports/codenarc/complexity.html
+ * Applied to the root project only; production Groovy sources, tests excluded.
+ */
+codenarc {
+    configFile = file("${rootDir}/config/codenarc/rules.groovy")
+    ignoreFailures = true
+}
+
+dependencies {
+    codenarc "org.codenarc:CodeNarc:${codenarcVersion}"
+    // CyclomaticComplexity rule requires GMetrics on the codenarc classpath
+    codenarc "org.gmetrics:GMetrics:${gmetricsVersion}"
+}
+
+tasks.register('codenarcComplexity', CodeNarc) {
+    description = 'Reports methods above the cyclomatic complexity threshold (production Groovy only)'
+    group = 'verification'
+    source = fileTree(rootDir) {
+        include '**/*.groovy'
+        exclude '**/build/**', '**/node_modules/**', '**/.gradle/**', '**/src/test/**',
+                'functional-test/**', 'test/**', '**/*Spec.groovy', '**/*Test.groovy'
+    }
+    reports {
+        html.required = true
+        html.outputLocation = layout.buildDirectory.file('reports/codenarc/complexity.html')
+        text.required = true
+        text.outputLocation = layout.buildDirectory.file('reports/codenarc/complexity.txt')
+    }
+}
+apply plugin: 'org.owasp.dependencycheck'
+
+dependencyCheck {
+    suppressionFile='cve-suppress.xml'
+    formats=['HTML','JUNIT']
+    outputDirectory="build/owasp-reports/junit"
+    failBuildOnCVSS=8
+    skipConfigurations=['agent']
+    scanSet=[]
+}
+
+/*
+ * Project configuration:
+ * Configure build context(release, publish, etc)
+ * Setup global project attributes
+*/
+
+description = 'The main-build project for Rundeck';
+
+eclipse.project.name = 'rundeck'
+
+ext.exportedProjects = [
+        ":core",
+        ":rundeck-authz:rundeck-authz-api",
+        ":rundeck-authz:rundeck-authz-core",
+        ":rundeck-authz:rundeck-authz-yaml",
+        ":rundeck-storage:rundeck-storage-api",
+        ":rundeck-storage:rundeck-storage-data",
+        ":rundeck-storage:rundeck-storage-filesys",
+        ":rundeck-storage:rundeck-storage-conf",
+        ":rundeck-data-models"
+]
+/** Detect if this is being bootRun: typically by the grails cli **/
+def isRunning = project.gradle.startParameter.taskNames.any {
+    return it.toLowerCase().contains('bootrun')
+}
+project.ext.isRunning = isRunning
+project.ext.environment = project.hasProperty('environment') ? environment : 'development'
+project.ext.artifactDir = "$projectDir/artifacts"
+
+def versionProps = new Properties()
+file("version.properties").withInputStream { versionProps.load(it) }
+
+// Check if building from a tag
+def gitTag = System.getenv('CIRCLE_TAG') ?: ''
+def isTagBuild = gitTag && gitTag.startsWith('v')
+
+def vVersion, vNum, vTag, vDate
+
+if (isTagBuild) {
+    // Parse version from git tag
+    def matcher = gitTag =~ /^v(?<vNum>\d+\.\d+\.\d+)(-(?<vTag>[a-z]+[0-9]+))?$/
+
+    if (matcher.matches()) {
+        vNum = ext.vNum = matcher.group('vNum')
+        vTag = ext.vTag = matcher.group('vTag') ?: 'GA'
+        vDate = ext.vDate = new Date().format('yyyyMMdd')
+
+        // Generate version string based on tag
+        if (vTag == 'GA') {
+            vVersion = "${vNum}-${vDate}".toString()
+        } else {
+            vVersion = "${vNum}-${vTag}-${vDate}".toString()
+        }
+
+        logger.lifecycle("Building from tag ${gitTag}: version=${vVersion}")
+    } else {
+        throw new GradleException("Unable to parse version from tag [${gitTag}]!")
+    }
+} else {
+    // Use version.properties as before
+    vVersion = versionProps.getProperty('version.version')
+    vNum = ext.vNum = versionProps.getProperty('version.number')
+    vTag = ext.vTag = project.environment == 'release'? versionProps.getProperty('version.tag') : 'SNAPSHOT'
+    vDate = ext.vDate = versionProps.getProperty('version.date')
+}
+
+/** Determine if incremental build is enabled */
+def enableIncremental = project.hasProperty('rundeck.proj.incremental.enabled') ? findProperty('rundeck.proj.incremental.enabled').toBoolean() : true
+
+
+if (isTagBuild || ext.environment == 'release') {
+    project.ext.resolvedVersion = vVersion
+} else {
+    project.ext.resolvedVersion = "${vNum}-SNAPSHOT".toString()
+}
+
+project.ext.branch = grgit.branch.current().name
+project.ext.commit = grgit.head().id
+
+logger.lifecycle("Building version {}", project.resolvedVersion)
+
+allprojects {
+    version = project.resolvedVersion
+    ext["spring.version"] = springVersion
+    // Spring Boot's dependency-management BOM overrides Spring Framework via this property name
+    // (ext["spring.version"] alone does NOT move the BOM-managed spring-framework version).
+    ext["spring-framework.version"] = springVersion
+    // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
+    ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
+    // micrometer-registry-prometheus must match its prometheus-metrics line (Boot's BOM pins an older one).
+    ext["prometheus-client.version"] = prometheusClientVersion
+    ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
+    ext["httpcore5.version"] = httpCore5Version             // CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)
+    ext["httpclient5.version"] = httpClient5Version         // CVE-2026-64607 (connection pool exhaustion DoS)
+    // CVE-2026-54512, CVE-2026-54513 (jackson-databind PolymorphicTypeValidator bypass). Grails/Spring
+    // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
+    // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
+    // moves jackson onto the patched 2.21.4 across grails-* plugin modules and rundeckapp.
+    ext["jackson-bom.version"] = jacksonDatabindVersion
+    ext.isReleaseBuild = false
+    ext.isSnapshotBuild = false
+    ext.isDevBuild = false
+    ext.enableIncremental = enableIncremental
+    if(isTagBuild || project.environment == 'release'){
+        ext.isReleaseBuild=true
+    } else {
+        ext.isDevBuild=true
+    }
+
+    // Component metadata rule to fix Grails 7.0.9+ groovy-bom issue
+    // Remove the problematic groovy-bom dependency from grails-gradle-bom
+    dependencies {
+        components {
+            withModule('org.apache.grails:grails-gradle-bom') {
+                allVariants {
+                    withDependencies {
+                        removeAll {
+                            it.group == 'org.codehaus.groovy' &&
+                            it.name == 'groovy-bom'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    configurations.all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
+        exclude group: 'com.zaxxer', module: 'HikariCP-java7'
+    }
+    
+    // Global dependency constraints to fix security vulnerabilities
+    configurations.all {
+        resolutionStrategy {
+            // Force Groovy 4 for any transitive dependencies still using old Groovy 3/codehaus coords
+            // Skip Groovy 3.x dependencies (which come from grails-gradle-bom for Gradle plugins)
+            // Per Grails team recommendation: https://github.com/apache/grails-core/issues/15539
+            eachDependency { details ->
+                if (details.requested.group == 'org.codehaus.groovy'
+                        && !details.requested.version.startsWith('3.')) {
+                    details.useTarget(group: 'org.apache.groovy',
+                                    name: details.requested.name,
+                                    version: groovyVersion)
+                    details.because 'Grails 7 uses Apache Groovy 4.x; skip Groovy 3.x for Gradle plugins'
+                }
+                // Align Spring Framework across all configs (grails-bom pins older); plugin subprojects
+                // don't apply spring-boot dependency-management so ext["spring-framework.version"] alone
+                // doesn't reach them. CVE-2026-41839/41840/41845/41848/41850/41851/41852/41853/41854.
+                if (details.requested.group == 'org.springframework') {
+                    details.useVersion springVersion
+                    details.because 'Align Spring Framework to managed version across all configs'
+                }
+                // Align Spring Security (CVE-2026-41706, CVE-2026-47838). Exclude spring-security-rsa (1.x line).
+                if (details.requested.group == 'org.springframework.security' && details.requested.name != 'spring-security-rsa') {
+                    details.useVersion project.findProperty('spring-security.version')
+                    details.because 'Align Spring Security to managed version across all configs'
+                }
+                // Align Micrometer metrics modules (CVE-2026-40983, CVE-2026-40984). Exclude tracing/BOM.
+                if (details.requested.group == 'io.micrometer'
+                        && details.requested.name.startsWith('micrometer-')
+                        && !details.requested.name.contains('-bom')
+                        && !details.requested.name.startsWith('micrometer-tracing')) {
+                    details.useVersion micrometerVersion
+                    details.because 'Align Micrometer metrics modules to managed version'
+                }
+                // spring-integration 6.5.9 pulls spring-retry 2.0.13 (CVE-2026-41710)
+                if (details.requested.group == 'org.springframework.integration') {
+                    details.useVersion springIntegrationVersion
+                    details.because 'spring-integration 6.5.9 (spring-retry 2.0.13)'
+                }
+                if (details.requested.group == 'org.springframework.retry' && details.requested.name == 'spring-retry') {
+                    details.useVersion springRetryVersion
+                    details.because 'spring-retry 2.0.13 fixes CVE-2026-41710'
+                }
+                // CVE-2026-54399: httpcore5-h2 HTTP/2 DoS, fixed in 5.4.2. Pulled transitively via
+                // grails-data-hibernate5-dbmigration -> grails-shell-cli -> spring-boot-cli -> httpclient5.
+                // The Spring Boot BOM manages httpcore5.version and overrides resolutionStrategy.force,
+                // so use a useVersion rule (like spring/micrometer above). Covers httpcore5 and httpcore5-h2
+                // (released together) so the core5 family stays aligned.
+                if (details.requested.group == 'org.apache.httpcomponents.core5') {
+                    details.useVersion httpCore5Version
+                    details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
+                }
+                // CVE-2026-64607: httpclient5's classic transport leaks the pooled connection on an
+                // invalid/unsupported Content-Encoding header (pool exhaustion DoS), fixed in 5.6.3.
+                // Every project applying org.apache.grails.gradle.grails-plugin gets an auto-created
+                // "profile" configuration (used by the Grails Shell to find profile artifacts) that
+                // independently resolves org.apache.grails.profiles:web-plugin -> ... -> grails-shell-cli
+                // -> spring-boot-cli -> httpclient5 via the grails-bom constraint (5.5.2). Like httpcore5
+                // above, the Spring Boot BOM manages httpclient5.version and overrides this useVersion
+                // call; the ext["httpclient5.version"] override above is what actually moves it, this
+                // rule is kept for defense-in-depth on any resolution path that doesn't go through the BOM.
+                if (details.requested.group == 'org.apache.httpcomponents.client5' && details.requested.name == 'httpclient5') {
+                    details.useVersion httpClient5Version
+                    details.because 'httpclient5 5.6.4 fixes CVE-2026-64607 (connection pool exhaustion DoS)'
+                }
+            }
+
+            // org.ehcache:ehcache:3.12.0 publishes plain (runtimeElements) and Jakarta
+            // (jakartaRuntimeElements) feature variants that both declare identical capabilities
+            // (ehcache-api, ehcache-core, ehcache-xml-provider, etc). grails-spring-security:7.1.4
+            // pulls the jakarta variant while some modules depend on the plain variant directly;
+            // Gradle can't auto-resolve two variants claiming the same capability, so always prefer
+            // jakarta here since Grails 7 / GORM 9 runs on Jakarta EE.
+            capabilitiesResolution.all { details ->
+                if (details.candidates.every { it.id.group == 'org.ehcache' && it.id.module == 'ehcache' }) {
+                    def jakartaCandidate = details.candidates.find { it.variantName.contains('jakarta') }
+                    if (jakartaCandidate != null) {
+                        details.select(jakartaCandidate)
+                    }
+                }
+            }
+
+            // CVE and compatibility fixes
+            force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+            force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
+            // CVE-2026-71497: jsoup pulled transitively via micronaut-openapi (compileOnly)
+            force "org.jsoup:jsoup:${jsoupVersion}"
+            // CWE-770 (SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924): build-tooling configs such as
+            // groovyScript pull groovy-yaml -> jackson 2.19.2, which the jackson BOM only covers in
+            // app/plugin configs. Force jackson onto the managed version across ALL configurations.
+            force "com.fasterxml.jackson.core:jackson-core:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-annotations:${jacksonAnnotationsVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
+            // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
+            force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
+            // CVE-2026-47857, CVE-2026-47863 - reactor-core windowTimeout/bufferTimeout
+            // fairBackpressure DoS hangs; pulled via Micronaut HTTP in rundeckapp
+            force "io.projectreactor:reactor-core:${reactorCoreVersion}"
+            // CVE-2026-26032 - Apache Ivy PackagerResolver path traversal; pulled via
+            // grails-console -> groovy-console (interactive shell's Grape support)
+            force "org.apache.ivy:ivy:${ivyVersion}"
+
+            // Force centralized versions to prevent duplicates in WAR
+            force "org.apache.ant:ant:${antVersion}"
+            force "org.apache.ant:ant-launcher:${antVersion}"
+            force "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+            force "io.micrometer:micrometer-observation:${micrometerVersion}"
+            force "io.micrometer:micrometer-commons:${micrometerVersion}"
+            force "jaxen:jaxen:${jaxenVersion}"
+            // Force guava/failureaccess/asm to the versions declared in gradle.properties, kept in
+            // sync with rundeckpro's enterprise packaging so core and pro resolve identically and
+            // don't end up with duplicate jars when pro bundles rundeck's artifacts into its WAR.
+            force "com.google.guava:guava:${guavaVersion}"
+            force "com.google.guava:failureaccess:${failureAccessVersion}"
+            force "org.ow2.asm:asm:${asmVersion}"
+            force "org.ow2.asm:asm-tree:${asmVersion}"
+            force "org.ow2.asm:asm-commons:${asmVersion}"
+            force "org.ow2.asm:asm-analysis:${asmVersion}"
+            force "org.ow2.asm:asm-util:${asmVersion}"
+            // NOTE: Micronaut forced to ${micronautVersion} (CVE-2026-33013 fix)
+            // TODO: Future cleanup - remove explicit ${micronautVersion} from build files and let BOM manage
+        }
+    }
+
+    // resolutionStrategy.force cannot override versions managed by the Spring Boot dependency
+    // management plugin (which applies grails-bom entries as strict constraints, e.g. asm:9.10,
+    // kotlin-stdlib:1.9.25, and ant:1.10.15). Must use the plugin's own API to pin these above the
+    // BOM version; otherwise rundeckapp's own runtimeClasspath (bundled by bootWar) still carries
+    // the un-forced BOM version, which causes duplicate jars when rundeckpro's enterprise packaging
+    // merges it in.
+    plugins.withId('io.spring.dependency-management') {
+        dependencyManagement {
+            dependencies {
+                dependency "org.ow2.asm:asm:${asmVersion}"
+                dependency "org.ow2.asm:asm-tree:${asmVersion}"
+                dependency "org.ow2.asm:asm-commons:${asmVersion}"
+                dependency "org.ow2.asm:asm-analysis:${asmVersion}"
+                dependency "org.ow2.asm:asm-util:${asmVersion}"
+                dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+                dependency "org.apache.ant:ant:${antVersion}"
+                dependency "org.apache.ant:ant-launcher:${antVersion}"
+                // CVE-2026-47857, CVE-2026-47863: spring-boot-dependencies:3.5.16's reactor-bom
+                // (2024.0.18) pins reactor-core 3.7.19 as a strict constraint; plain
+                // resolutionStrategy.force above doesn't reach rundeckapp's own bootWar-bundled
+                // runtimeClasspath, same as asm/kotlin-stdlib/ant/log4j2 above.
+                dependency "io.projectreactor:reactor-core:${reactorCoreVersion}"
+                // Same story again: grails-bom 7.2.x newly manages log4j2 as a strict constraint
+                // (2.25.5), which plain resolutionStrategy.force can't override, causing duplicate
+                // log4j jars (2.25.5 alongside our forced log4j2.version) in the packaged WAR.
+                dependency "org.apache.logging.log4j:log4j-api:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-core:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-jul:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-slf4j2-impl:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-to-slf4j:${project.'log4j2.version'}"
+            }
+        }
+    }
+}
+
+/**
+ * Defaults for all projects
+ */
+subprojects {
+    // set the eclipse project naming convention to rundeck:<path>:<projectName>
+    // so it matches the logical hierarchy more closely
+    apply plugin: 'eclipse'
+    apply from: "${rootDir}/gradle/java-version.gradle"
+    eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
+}
+
+/*
+ Root project Configurations
+ */
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://repo.grails.org/grails/restricted" }
+    
+    // PackageCloud plugin repositories
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeck-plugins/maven2"
+        content {
+            includeGroup('org.rundeck.plugins')
+        }
+    }
+}
+
+configurations{
+    // dependencies for running groovy scripts
+    groovyScript
+}
+
+dependencies{
+
+    // dependencies for running groovy scripts
+    groovyScript localGroovy()
+    groovyScript "org.apache.groovy:groovy-cli-commons:${groovyVersion}"
+    groovyScript "org.apache.groovy:groovy-yaml:${groovyVersion}"
+}
+
+
+/**
+ * Enable incremental Groovy compile
+ */
+if (enableIncremental) {
+    getAllprojects().findAll() {proj ->
+        proj.tasks.withType(GroovyCompile).configureEach {
+            options.incremental = true
+            options.incrementalAfterFailure = true
+        }
+    }
+}
+
+/**
+ * Disable invokedynamic for Groovy 4 (default-on since Groovy 4, but not well-optimized until Groovy 5/6).
+ * Grails 7.1 will do this automatically. Remove when upgrading to Groovy 5+.
+ * See: https://github.com/apache/grails-core/issues/13658
+ */
+getAllprojects().findAll() { proj ->
+    proj.tasks.withType(GroovyCompile).configureEach {
+        groovyOptions.optimizationOptions.indy = false
+    }
+}
+
+
+project(':rundeckapp') {
+    // Bundled external plugin versions come from gradle.properties (*Version props), mirroring rundeckpro
+    it.ext.bundledPlugins = [
+        "org.rundeck.plugins:ansible-plugin:${ansiblePluginVersion}",
+        "org.rundeck.plugins:aws-s3-model-source:${awsS3ModelSourceVersion}",
+        "org.rundeck.plugins:py-winrm-plugin:${pyWinrmPluginVersion}",
+        "org.rundeck.plugins:openssh-node-execution:${opensshNodeExecutionVersion}",
+        "org.rundeck.plugins:multiline-regex-datacapture-filter:${multilineRegexDatacaptureFilterVersion}",
+        "org.rundeck.plugins:attribute-match-node-enhancer:${attributeMatchNodeEnhancerVersion}",
+        "org.rundeck.plugins:sshj-plugin:${sshjPluginVersion}",
+    ]
+
+    it.ext.bundledPlugins += [
+        project(':plugins:script-node-step-plugin'),
+        project(':plugins:script-plugin'),
+        project(':plugins:stub-plugin'),
+        project(':plugins:localexec-plugin'),
+        project(':plugins:copyfile-plugin'),
+        project(':plugins:job-state-plugin'),
+        project(':plugins:flow-control-plugin'),
+        project(':plugins:aes-gcm-encryption-plugin'),
+        project(':plugins:object-store-plugin'),
+        project(':plugins:orchestrator-plugin'),
+        project(':plugins:git-plugin'),
+        project(':plugins:audit-logging-plugin'),
+        project(':plugins:source-refresh-plugin'),
+        project(':plugins:upvar-plugin'),
+        project(':plugins:jsch-plugin')
+    ]
+
+    //extra grails plugins
+    it.ext.extraGrailsPlugins = []
+    //only grails plugins that will be used in bootRun
+    it.ext.bundledGrailsPlugins = []
+}
+
+// prompt for PGP key passphrase if not set
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty( "signing.password") && !project.isDevBuild) {
+        // Use Java 6's console to read from the console (no good for a CI environment)
+        def console = System.console()
+        console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
+
+        //def id = console.readLine("PGP Key Id: ")
+        //def file = console.readLine("PGP Secret Key Ring File (absolute path): ")
+        def password = console.readPassword("PGP Private Key Password: ")
+
+        //allprojects { ext."signing.keyId" = id }
+        //allprojects { ext."signing.secretKeyRingFile" = file }
+        allprojects { ext."signing.password" = password }
+
+        console.printf "\nThanks.\n\n"
+    }
+}
+
+//subproject libs that are uploaded to maven central
+exportedProjects.each {
+    project(it) {
+        apply from: "${rootDir}/gradle/exported-project.gradle"
+    }
+}
+
+nexusPublishing {
+    packageGroup = 'org.rundeck'
+    repositories {
+        sonatype{
+            stagingProfileId = '67d196ce5bae'
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+        }
+    }
+}
+
+
+task bashVersionInfo {
+    doLast {
+        println """\
+        |VERSION_FULL=${project.resolvedVersion}
+        |VERSION_NUMBER=${project.vNum}
+        |VERSION_TAG=${project.vTag}
+        |VERSION_DATE=${project.vDate}""".stripMargin()
+    }
+}
+
+task alljavadoc(type: Javadoc) {
+     source exportedProjects.collect { project(it).sourceSets.main.allJava }
+     classpath = files(exportedProjects.collect { project(it).sourceSets.main.compileClasspath })
+     destinationDir = file("${buildDir}/docs/javadoc")
+
+     if (JavaVersion.current().isJava8Compatible()) {
+         options.addStringOption('Xdoclint:none', '-quiet')
+     }
+}
+
+buildScan {
+    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+    termsOfServiceAgree = 'yes'
+}
+
+// Limit heap size in forked test processes for CI
+test {
+    maxHeapSize = "512m"
+}
+
+// Get the full path to the application war.
+tasks.register('printBootWarPath') {
+    doLast {
+        def rundeckapp = project(":rundeckapp")
+        def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
+        println "${bootArchiveFile}"
+    }
+}
+
+tasks.register('verifyBuild', JavaExec) {
+    classpath = configurations.groovyScript
+    mainClass = 'groovy.ui.GroovyMain'
+    boolean debug = project.hasProperty('debug')
+    def scriptArgs = [
+        "testbuild.groovy",
+        "--buildType=${project.ext.environment}",
+        "--version",
+        project.resolvedVersion]
+    if (debug) {
+        scriptArgs << "-debug"
+    }
+    args scriptArgs
+}
