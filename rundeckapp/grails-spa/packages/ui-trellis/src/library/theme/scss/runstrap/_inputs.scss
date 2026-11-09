@@ -149,6 +149,16 @@
 // RUN-4965: .has-warning has no dark-aware pairing (unlike .has-error/.has-success above),
 // and help-block text keeps the static Bootstrap state color in every validation state.
 *[data-color-theme="dark"] {
+  // RUN-4968: .has-error reuses --danger-color for .control-label/.form-control-feedback
+  // (see the light-mode rule above), but that token is the same red-500 in both themes,
+  // so ACL rule context labels (Project/Group/User) and their icons stayed too dark
+  // against the dark background and missed WCAG AA. Lighten dark-only.
+  .has-error {
+    .form-control-feedback,
+    .control-label {
+      color: var(--red-300);
+    }
+  }
   .has-warning {
     .form-control-feedback,
     .control-label {
