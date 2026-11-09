@@ -172,7 +172,7 @@
     <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
-    <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+    <g:set var="uiType" value="${params.boolean('nextUi')?'next':params.legacyUi?'legacy':'current'}"/>
     <g:set var="nextUiCapable" value="${request.getAttribute('nextUiCapable') ?: false}"/>
     <g:embedJSON id="pageUiMeta" data="[uiType: uiType, nextUiCapable: nextUiCapable]"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">

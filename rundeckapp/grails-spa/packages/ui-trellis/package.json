@@ -58,7 +58,7 @@
     "fuse.js": "6.6.2",
     "graphlib": "2.1.8",
     "jointjs": "3.7.7",
-    "markdown-it": "14.3.0",
+    "markdown-it": "14.3.3",
     "mitt": "3.0.1",
     "mobx": "5.15.7",
     "mobx-utils": "5.6.2",
@@ -126,7 +126,7 @@
     "eslint-plugin-vuejs-accessibility": "2.6.0",
     "eslint-webpack-plugin": "4.2.0",
     "fetch-mock": "9.11.0",
-    "follow-redirects": "1.16.0",
+    "follow-redirects": "1.16.2",
     "globals": "13.24.0",
     "identity-obj-proxy": "3.0.0",
     "isomorphic-fetch": "3.0.0",
@@ -134,7 +134,7 @@
     "jest-junit": "16.0.0",
     "jsdom": "22.1.0",
     "mobx-utils": "5.6.2",
-    "node-forge": "1.4.0",
+    "node-forge": "1.4.1",
     "postcss": "8.5.28",
     "prettier": "3.9.7",
     "prex": "0.4.9",
@@ -169,7 +169,7 @@
     "access": "public"
   },
   "overrides": {
-    "node-forge": "1.4.0",
+    "node-forge": "1.4.1",
     "axios": "$axios",
     "form-data": "4.0.6",
     "cross-spawn": "7.0.6",
@@ -182,7 +182,7 @@
     "@azure/ms-rest-js": "2.7.0",
     "uuid": "$uuid",
     "nanoid": "3.3.19",
-    "happy-dom": "20.14.5"
+    "happy-dom": "21.0.4"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",

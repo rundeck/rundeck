@@ -1,5 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
-import { defineComponent, ref } from "vue";
+import { defineComponent, getCurrentInstance, ref } from "vue";
 import LogNodeChunk from "../LogNodeChunk.vue";
 import { mockEntries } from "./mocks/logNodeChunkEntries";
 
@@ -15,6 +15,8 @@ jest.mock("../logEntryFlex.vue", () => ({
 
 // Measured content height reported by the virtual scroller (RecycleScroller.totalSize)
 const mockTotalSize = ref(0);
+// Rows the virtual scroller has not measured yet (DynamicScroller.$_undefinedSizes)
+const mockUndefinedSizes = ref(0);
 const mockScrollToBottom = jest.fn();
 const mockGetItemSize = jest.fn();
 
@@ -34,6 +36,16 @@ const DynamicScrollerStub = defineComponent({
   name: "DynamicScroller",
   components: { RecycleScroller: RecycleScrollerStub },
   props: { items: { type: Array, default: () => [] } },
+  setup() {
+    // $-prefixed keys are not proxied from data, so expose it on the instance context.
+    const { ctx } = getCurrentInstance() as unknown as {
+      ctx: Record<string, unknown>;
+    };
+    Object.defineProperty(ctx, "$_undefinedSizes", {
+      get: () => mockUndefinedSizes.value,
+      configurable: true,
+    });
+  },
   methods: {
     scrollToBottom() {
       mockScrollToBottom();
@@ -132,10 +144,69 @@ const scrollTo = async (
   await scroller.trigger("scroll");
 };
 
+// requestAnimationFrame queue, flushed by the tests to step the follow pin
+const pendingFrames = new Map<number, FrameRequestCallback>();
+let nextFrameId = 0;
+
+const installFrameMock = () => {
+  pendingFrames.clear();
+  nextFrameId = 0;
+  jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+    nextFrameId += 1;
+    pendingFrames.set(nextFrameId, cb);
+    return nextFrameId;
+  });
+  jest.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+    pendingFrames.delete(id);
+  });
+};
+
+const flushFrames = (max = 12) => {
+  let steps = 0;
+  while (pendingFrames.size > 0 && steps < max) {
+    const [id, cb] = pendingFrames.entries().next().value as [
+      number,
+      FrameRequestCallback,
+    ];
+    pendingFrames.delete(id);
+    cb(0);
+    steps += 1;
+  }
+};
+
+/** Gives the log viewport a scroll position and a (possibly changing) height. */
+const prepareViewport = (
+  wrapper: VueWrapper<any>,
+  scrollTop = 120,
+  scrollHeight: () => number = () => 4000,
+) => {
+  const el = findByTestId(wrapper, "log-node-chunk-scroller")
+    .element as HTMLElement;
+  Object.defineProperty(el, "scrollHeight", {
+    configurable: true,
+    get: scrollHeight,
+  });
+  el.scrollTop = scrollTop;
+  return el;
+};
+
+const settlePin = async (wrapper: VueWrapper<any>) => {
+  await wrapper.vm.$nextTick();
+  flushFrames();
+};
+
+const extraEntry = { ...mockEntries[0], log: "another line", lineNumber: 4 };
+
 describe("LogNodeChunk", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTotalSize.value = 0;
+    mockUndefinedSizes.value = 0;
+    installFrameMock();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe("Rendering", () => {
@@ -253,37 +324,100 @@ describe("LogNodeChunk", () => {
 
   describe("Follow", () => {
     it.each([
-      [true, 1],
-      [false, 0],
+      [true, 9000],
+      [false, 120],
     ])(
-      "scrolls to the bottom when an entry resizes and follow is %p",
-      async (follow: boolean, calls: number) => {
+      "pins the viewport to the bottom when an entry resizes and follow is %p",
+      async (follow: boolean, scrollTop: number) => {
         const wrapper = createWrapper({ props: { follow } });
+        const el = prepareViewport(wrapper);
 
         await wrapper
           .findAllComponents(DynamicScrollerItemStub)[0]
           .vm.$emit("resize");
+        await settlePin(wrapper);
 
-        expect(mockScrollToBottom).toHaveBeenCalledTimes(calls);
+        expect(el.scrollTop).toBe(scrollTop);
+        expect(mockScrollToBottom).not.toHaveBeenCalled();
       },
     );
 
-    it("scrolls to the bottom when new entries arrive while following", async () => {
-      const wrapper = createWrapper({ props: { follow: true } });
+    it("does not pin to the bottom when entries arrive with follow off", async () => {
+      const wrapper = createWrapper({ props: { follow: false } });
+      const el = prepareViewport(wrapper);
 
-      await wrapper.setProps({ entries: mockEntries.slice(0, 2) });
-      await wrapper.vm.$nextTick();
+      await wrapper.setProps({ entries: [...mockEntries, extraEntry] });
+      await settlePin(wrapper);
 
-      expect(mockScrollToBottom).toHaveBeenCalledTimes(1);
+      expect(el.scrollTop).toBe(120);
     });
 
-    it("scrolls to the bottom when follow is re-enabled", async () => {
+    it("pins to the bottom when entries arrive with follow on", async () => {
+      const wrapper = createWrapper({ props: { follow: true } });
+      const el = prepareViewport(wrapper);
+
+      await wrapper.setProps({ entries: [...mockEntries, extraEntry] });
+      await settlePin(wrapper);
+
+      expect(el.scrollTop).toBe(9000);
+    });
+
+    it("keeps pinning until the visible rows are measured", async () => {
+      let height = 100;
+      mockUndefinedSizes.value = 4;
+      const wrapper = createWrapper({ props: { follow: true } });
+      const el = prepareViewport(wrapper, 0, () => height);
+
+      await wrapper.setProps({ entries: [...mockEntries, extraEntry] });
+      await wrapper.vm.$nextTick();
+      flushFrames(4);
+
+      expect(el.scrollTop).toBe(5100);
+
+      height = 4000;
+      mockUndefinedSizes.value = 0;
+      flushFrames();
+
+      expect(el.scrollTop).toBe(9000);
+      expect(pendingFrames.size).toBe(0);
+    });
+
+    it("stops pinning after follow is turned off", async () => {
+      const wrapper = createWrapper({ props: { follow: true } });
+      const el = prepareViewport(wrapper);
+
+      await wrapper.setProps({ follow: false });
+      await settlePin(wrapper);
+
+      expect(el.scrollTop).toBe(120);
+    });
+
+    it("stops a pin that is still measuring when follow is turned off", async () => {
+      let height = 100;
+      mockUndefinedSizes.value = 4;
+      const wrapper = createWrapper({ props: { follow: true } });
+      const el = prepareViewport(wrapper, 0, () => height);
+
+      await wrapper.setProps({ entries: [...mockEntries, extraEntry] });
+      await wrapper.vm.$nextTick();
+      expect(el.scrollTop).toBe(5100);
+
+      await wrapper.setProps({ follow: false });
+      height = 8000;
+      flushFrames();
+
+      expect(el.scrollTop).toBe(5100);
+      expect(pendingFrames.size).toBe(0);
+    });
+
+    it("pins to the bottom when follow is turned on", async () => {
       const wrapper = createWrapper({ props: { follow: false } });
+      const el = prepareViewport(wrapper);
 
       await wrapper.setProps({ follow: true });
-      await wrapper.vm.$nextTick();
+      await settlePin(wrapper);
 
-      expect(mockScrollToBottom).toHaveBeenCalledTimes(1);
+      expect(el.scrollTop).toBe(9000);
     });
 
     // RUN-4814: on a large, actively-streaming log, DynamicScroller's
