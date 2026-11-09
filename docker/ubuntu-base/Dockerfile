@@ -22,7 +22,7 @@ RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
 # distro JDK as the image (the JDK package matching JRE_VERSION, for javac).
 # The file is architecture independent, so this stage runs on the build platform.
 # Remove this stage once the distro openjdk package ships tzdb >= 2026e.
-FROM --platform=$BUILDPLATFORM ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401 AS tzdb
+FROM --platform=$BUILDPLATFORM ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11 AS tzdb
 
 ARG JRE_VERSION
 RUN if [ -z "$JRE_VERSION" ]; then echo "Error: JRE_VERSION is not set"; exit 1; fi && \
@@ -52,7 +52,7 @@ RUN set -e; \
 
 # Build base container
 ######################
-FROM ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
+FROM ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
 
 ARG TARGETARCH
 
