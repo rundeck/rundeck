@@ -411,7 +411,7 @@ dependencies {
     testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver:${seleniumJavaVersion}"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-api:${seleniumJavaVersion}"
     testRuntimeOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
-    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.26'
+    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.27'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
