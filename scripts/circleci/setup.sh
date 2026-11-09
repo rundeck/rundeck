@@ -19,8 +19,18 @@ export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$CI_COMMIT}"
 export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$CI_BRANCH}"
 export RUNDECK_TAG="${RUNDECK_TAG:-$CI_TAG}"
 
-export RUNDECK_BRANCH_CLEAN=$(echo "${RUNDECK_BRANCH}" | tr '/' '-')
-export RUNDECK_TAG_CLEAN=$(echo "${RUNDECK_TAG}" | tr '/' '-')
+# Docker tags allow only [A-Za-z0-9_.-], max 128 chars, and cannot start with '.' or '-'.
+# Branch names (e.g. Renovate's "renovate/docker-images-(ci)") can contain anything.
+# Empty input stays empty (tag builds have no branch); input with no valid chars -> "invalid-tag".
+sanitize_docker_tag() {
+    local raw="$1" t
+    [[ -z "$raw" ]] && { echo ""; return; }
+    t=$(echo "$raw" | sed -e 's/[^A-Za-z0-9_.-]/-/g' -e 's/^[.-]*//' | cut -c1-128)
+    echo "${t:-invalid-tag}"
+}
+
+export RUNDECK_BRANCH_CLEAN=$(sanitize_docker_tag "${RUNDECK_BRANCH}")
+export RUNDECK_TAG_CLEAN=$(sanitize_docker_tag "${RUNDECK_TAG}")
 export RUNDECK_PACKAGING_BRANCH="${RUNDECK_PACKAGING_BRANCH:-"main"}"
 export RUNDECK_MAIN_BUILD=$([[ "${RUNDECK_BRANCH}" = "main" ]] && echo "true" || echo "false")
 
