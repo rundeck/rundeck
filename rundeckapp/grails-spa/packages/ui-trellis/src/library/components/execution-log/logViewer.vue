@@ -37,6 +37,7 @@
             id="logview_gutter"
             v-model="settings.gutter"
             type="checkbox"
+            data-testid="log-viewer-gutter-checkbox"
           />
           <label for="logview_gutter">Display Gutter</label>
         </div>
