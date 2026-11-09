@@ -63,6 +63,24 @@ public class ScriptfileUtilsTest {
     }
 
     @Test
+    public void lineEndingStyleForNode_linux() {
+        for (String family : new String[]{"Linux", "linux", "LINUX"}) {
+            NodeEntryImpl test = new NodeEntryImpl("test");
+            test.setOsFamily(family);
+            testStyleForNode(test, ScriptfileUtils.LineEndingStyle.UNIX);
+        }
+    }
+
+    @Test
+    public void lineEndingStyleForNode_cygwin() {
+        for (String family : new String[]{"cygwin", "Cygwin"}) {
+            NodeEntryImpl test = new NodeEntryImpl("test");
+            test.setOsFamily(family);
+            testStyleForNode(test, ScriptfileUtils.LineEndingStyle.UNIX);
+        }
+    }
+
+    @Test
     public void writeScriptFile_unix2unix() throws IOException {
         assertWriteScriptFileContents(
                 "scriptString\nscriptString\n",
