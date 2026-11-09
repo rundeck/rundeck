@@ -521,7 +521,21 @@ class ExecutionJob implements InterruptableJob {
                     killcount++;
                 } else {
                     //reached pre-set kill limit, so shut down
-                    thread.stop()
+                    try {
+                        thread.stop()
+                    } catch (UnsupportedOperationException e) {
+                        //Java 20+ has no forced stop: Thread.stop() is still on the API but always
+                        //throws. The thread will never exit, so the loop condition would never
+                        //clear -- abandon it and fall through to finalize the execution.
+                        log.warn(
+                            "Execution ${runContext.execution.id}: workflow thread did not exit " +
+                                    "after ${killcount} abort attempts and this runtime has no " +
+                                    "forced stop. Abandoning the thread; it keeps running until " +
+                                    "this instance restarts."
+                        )
+                        markMeter(jobExecutionContext, 'executionJobAbandonedThreadMeter')
+                        break
+                    }
                 }
             }
         }
