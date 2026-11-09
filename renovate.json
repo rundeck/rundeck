@@ -38,9 +38,9 @@
       "enabled": false
     },
     {
-      "description": "asset-pipeline (assetPluginVersion) 5.1+ requires a newer Java than our current build/runtime baseline, so cap it at <=5.0.35 (rundeck#10778 tried to jump 5.0.35 -> 5.2.3). allowedVersions keeps patch bumps within the allowed range flowing. Lift this cap in the same PR that bumps the Java baseline.",
+      "description": "asset-pipeline (assetPluginVersion) 5.1.0+ is compiled with javaVersion=21 (see wondrify/asset-pipeline gradle.properties at rel-5.1.0-M1); the 5.0.x line (last: 5.0.36) is the newest that targets Java 17, our current baseline. rundeck#10778 tried to jump 5.0.35 -> 5.2.3. Cap below 5.1.0 so 5.0.x patches still flow. Lift this cap in the same PR that moves the Java baseline to 21.",
       "matchPackageNames": ["/^cloud\\.wondrify:asset-pipeline/"],
-      "allowedVersions": "<=5.0.35"
+      "allowedVersions": "<5.1.0"
     },
     {
       "description": "Group routine Gradle minor/patch dependency bumps",
