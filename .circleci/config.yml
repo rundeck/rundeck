@@ -76,7 +76,7 @@ executors:
   # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
   docker-builder:
     docker:
-      - image: cimg/openjdk:17.0.20@sha256:f5468d6ddf3849e811edcf03329f013494549e63cf06037302aa7514c3cf41ff
+      - image: cimg/openjdk:17.0.21@sha256:5e03ff3d2e6f863cdb37c51b4fa8a34e2519392d914ccd324b1d5efb23970420
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
