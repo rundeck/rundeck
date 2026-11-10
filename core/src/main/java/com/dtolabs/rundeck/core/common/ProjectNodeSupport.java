@@ -376,7 +376,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
+    private static SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
@@ -390,36 +390,37 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
-     * @param nodesSource source
+     * @param source object to describe
      *
-     * @return the source description (project, index and type), for log messages. A source whose toString() fails is
-     * described by its class name, so logging never hides the original problem.
+     * @return its toString(), or its class name if that fails, so describing a source in a log message can
+     * never replace the original failure
      */
-    String sourceContext(final ResourceModelSource nodesSource) {
-        String description;
+    private static String safeToString(final Object source) {
         try {
-            description = String.valueOf(nodesSource);
-        } catch (RuntimeException e) {
-            description = nodesSource.getClass().getName();
+            return String.valueOf(source);
+        } catch (Throwable e) {
+            return source.getClass().getName();
         }
-        return "[" + description + "]";
     }
 
     /**
      * @param nodesSource source
      *
-     * @return the underlying source of a loaded source, e.g. the file path, as a log suffix; empty otherwise or
-     * when its toString() fails
+     * @return the source description (project, index and type) in brackets, for log messages
+     */
+    static String sourceContext(final ResourceModelSource nodesSource) {
+        return "[" + safeToString(nodesSource) + "]";
+    }
+
+    /**
+     * @param nodesSource source
+     *
+     * @return the underlying source of a loaded source, e.g. the file path, as a log suffix; empty otherwise
      */
     static String sourceDetail(final ResourceModelSource nodesSource) {
-        if (nodesSource instanceof LoadedSource) {
-            try {
-                return " (source: " + ((LoadedSource) nodesSource).getDelegate() + ")";
-            } catch (RuntimeException e) {
-                return "";
-            }
-        }
-        return "";
+        return nodesSource instanceof LoadedSource
+               ? " (source: " + safeToString(((LoadedSource) nodesSource).getDelegate()) + ")"
+               : "";
     }
 
     /**
@@ -429,7 +430,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private SourceResult querySource(final ResourceModelSource nodesSource) {
+    private static SourceResult querySource(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         //keep an enclosing query's slot, for a source that loads another project's nodes on this thread
@@ -471,16 +472,14 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                     );
                 }
             }
-        } catch (ResourceModelSourceException | RuntimeException e) {
-            final String ctx = sourceContext(nodesSource);
-            logger.error("Cannot get nodes from " + ctx + ": " + e.getMessage() + sourceDetail(nodesSource));
-            logger.debug("Cannot get nodes from " + ctx + ": " + e.getMessage() + sourceDetail(nodesSource), e);
-            error = new ResourceModelSourceException(e.getMessage(), e);
         } catch (Throwable e) {
-            final String ctx = sourceContext(nodesSource);
-            logger.error("Cannot get nodes from " + ctx + ": " + e.getMessage() + sourceDetail(nodesSource));
-            logger.debug("Cannot get nodes from " + ctx + ": " + e.getMessage() + sourceDetail(nodesSource), e);
-            error = new ResourceModelSourceException(e.getMessage());
+            final String message = "Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage()
+                                   + sourceDetail(nodesSource);
+            logger.error(message);
+            logger.debug(message, e);
+            error = e instanceof Exception
+                    ? new ResourceModelSourceException(e.getMessage(), (Exception) e)
+                    : new ResourceModelSourceException(e.getMessage());
         } finally {
             if (null == enclosingCacheFailure) {
                 CACHE_FAILURE.remove();

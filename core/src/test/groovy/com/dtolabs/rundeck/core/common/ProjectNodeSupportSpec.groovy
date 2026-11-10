@@ -992,6 +992,22 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     /**
+     * A delegate whose toString() throws an Error, e.g. NoClassDefFoundError, must not escape the log suffix.
+     */
+    def "source detail survives a delegate whose toString throws an Error"() {
+        given:
+        def delegate = new ResourceModelSource() {
+            INodeSet getNodes() { null }
+
+            String toString() { throw new NoClassDefFoundError('missing') }
+        }
+        def loaded = new ProjectNodeSupport.LoadedSource('Foo', 1, 'file', delegate)
+
+        expect:
+        ProjectNodeSupport.sourceDetail(loaded) == " (source: ${delegate.getClass().name})".toString()
+    }
+
+    /**
      * A file source with an unparseable YAML file fails, and its description names the file, so the
      * logged node source identifies the offending file.
      */
