@@ -24,6 +24,7 @@ import org.rundeck.storage.api.Tree;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Read resources and specify a content type
@@ -47,7 +48,7 @@ public class TypedStorageTreeImpl extends StorageTreeImpl implements TypedStorag
             // Tree contract says a missing resource throws; a misbehaving storage plugin may return null instead
             throw StorageException.readException(path, "Path " + path + " not found in storage");
         }
-        if (contentType.equals(resource.getContents().getContentType())) {
+        if (Objects.equals(contentType, resource.getContents().getContentType())) {
             return resource;
         }
         String errorMessage = "Path " + path + " does not store a password, content-type: " + contentType;
@@ -70,7 +71,7 @@ public class TypedStorageTreeImpl extends StorageTreeImpl implements TypedStorag
             return false;
         }
 
-        return contentType.equals(resource.getContents().getContentType());
+        return Objects.equals(contentType, resource.getContents().getContentType());
     }
 
     @Override

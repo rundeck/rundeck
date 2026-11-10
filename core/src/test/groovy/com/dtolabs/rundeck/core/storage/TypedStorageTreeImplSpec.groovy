@@ -148,6 +148,27 @@ class TypedStorageTreeImplSpec extends Specification {
         e.message.contains('a/path')
     }
 
+    def "a null requested content type does not NPE"() {
+        given:
+        def tree = Mock(Tree)
+        def test = new TypedStorageTreeImpl(tree)
+        tree.hasResource(_) >> true
+        tree.getResource(_) >> Mock(Resource) {
+            getContents() >> Mock(ResourceMeta) {
+                getContentType() >> 'correct-type'
+            }
+        }
+
+        expect:
+        !test.hasResourceWithType(PathUtil.asPath('a/path'), null)
+
+        when:
+        test.getResourceWithType(PathUtil.asPath('a/path'), null)
+
+        then:
+        thrown(WrongContentType)
+    }
+
     def "readResourceWithType reads content"() {
         given:
         def tree = Mock(Tree)
