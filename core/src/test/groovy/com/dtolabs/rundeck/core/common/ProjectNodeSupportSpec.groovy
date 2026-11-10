@@ -943,7 +943,7 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     /**
-     * Capture log output of the named loggers, ProjectNodeSupport by default, at INFO and above while the closure runs
+     * Capture log output of the named loggers, ProjectNodeSupport by default, at DEBUG and above while the closure runs
      *
      * @return captured lines, formatted as "LEVEL [thread] message"
      */
@@ -960,11 +960,11 @@ class ProjectNodeSupportSpec extends Specification {
         names.each { name ->
             def loggerConfig = LoggerConfig.newBuilder()
                     .withLoggerName(name)
-                    .withLevel(Level.INFO)
+                    .withLevel(Level.DEBUG)
                     .withAdditivity(false)
                     .withConfig(config)
                     .build()
-            loggerConfig.addAppender(appender, Level.INFO, null)
+            loggerConfig.addAppender(appender, Level.DEBUG, null)
             config.addLogger(name, loggerConfig)
         }
         ctx.updateLoggers()
@@ -996,19 +996,19 @@ class ProjectNodeSupportSpec extends Specification {
 
         then: "the successful source logs start and finish lines"
         def start1 = lines.find { it.endsWith("Loading nodes from ${label1}") }
-        start1.startsWith('INFO [')
+        start1.startsWith('DEBUG [')
         def done1 = lines.find { it.contains("Loaded 1 nodes from ${label1} in ") }
-        done1 ==~ /INFO \[.+\] Loaded 1 nodes from \Q${label1}\E in \d+ ms/
+        done1 ==~ /DEBUG \[.+\] Loaded 1 nodes from \Q${label1}\E in \d+ ms/
 
         and: "the throwing source logs a start line and an error, but no finish line"
         def start2 = lines.find { it.endsWith("Loading nodes from ${label2}") }
-        start2.startsWith('INFO [')
+        start2.startsWith('DEBUG [')
         def error2 = lines.find { it.contains("Cannot get nodes from [${label2}]: boom") }
         error2.startsWith('ERROR [')
         !lines.any { it.contains("nodes from ${label2} in ") }
 
         and: "lines for a source are logged on the thread that loads it"
-        [start1, done1, start2, error2].every { it.startsWith("INFO [${expectedThread}") || it.startsWith("ERROR [${expectedThread}") }
+        [start1, done1, start2, error2].every { it.startsWith("DEBUG [${expectedThread}") || it.startsWith("ERROR [${expectedThread}") }
         !lines.any { it.contains('LoadedSource@') }
 
         where:
@@ -1088,7 +1088,7 @@ class ProjectNodeSupportSpec extends Specification {
         support.getResourceModelSourceExceptionsMap().keySet() == ['1.source'] as Set
 
         and: "the log says the load failed and cached nodes are used, not that nodes were loaded"
-        lines.any { it.startsWith('INFO [') && it.endsWith("Loading nodes from ${label}") }
+        lines.any { it.startsWith('DEBUG [') && it.endsWith("Loading nodes from ${label}") }
         lines.any {
             it ==~ /WARN \[.+\] Loading nodes from \Q${label}\E failed after \d+ ms, using 1 cached nodes: not authorized/
         }
@@ -1203,7 +1203,7 @@ class ProjectNodeSupportSpec extends Specification {
         def warn1 = lines.find { it.contains("Loading nodes from ${label1} failed after ") }
         warn1 ==~ /WARN \[\Q${expectedThread}\E.*\] Loading nodes from \Q${label1}\E failed after \d+ ms, using 1 cached nodes: not authorized/
         !lines.any { it.contains("Loaded 1 nodes from ${label1}") }
-        lines.any { it.startsWith("INFO [${expectedThread}") && it.contains("Loaded 1 nodes from ${label2} in ") }
+        lines.any { it.startsWith("DEBUG [${expectedThread}") && it.contains("Loaded 1 nodes from ${label2} in ") }
         !lines.any { it.contains("Loading nodes from ${label2} failed") }
 
         where:

@@ -404,7 +404,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final AtomicReference<Throwable> cacheFailure = new AtomicReference<>();
         CACHE_FAILURE.set(cacheFailure);
         try {
-            logger.info("Loading nodes from {}", nodesSource);
+            logger.debug("Loading nodes from {}", nodesSource);
             long start = System.nanoTime();
             nodes = nodesSource.getNodes();
             if (null == nodes) {
@@ -421,7 +421,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         cacheFallback.getMessage()
                 );
             } else {
-                logger.info(
+                logger.debug(
                         "Loaded {} nodes from {} in {} ms",
                         nodeCount(nodes),
                         nodesSource,

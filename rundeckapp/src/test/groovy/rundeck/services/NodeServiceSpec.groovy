@@ -755,7 +755,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     }
 
     /**
-     * Capture ProjectNodeSupport log messages at INFO and above while the closure runs. Same approach as
+     * Capture ProjectNodeSupport log messages at DEBUG and above while the closure runs. Same approach as
      * ProjectNodeSupportSpec.captureLogs in core; not shared because core has no test fixtures module.
      *
      * @return captured messages
@@ -773,11 +773,11 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         appender.start()
         def loggerConfig = LoggerConfig.newBuilder()
                 .withLoggerName(name)
-                .withLevel(Level.INFO)
+                .withLevel(Level.DEBUG)
                 .withAdditivity(false)
                 .withConfig(config)
                 .build()
-        loggerConfig.addAppender(appender, Level.INFO, null)
+        loggerConfig.addAppender(appender, Level.DEBUG, null)
         config.addLogger(name, loggerConfig)
         ctx.updateLoggers()
         try {
