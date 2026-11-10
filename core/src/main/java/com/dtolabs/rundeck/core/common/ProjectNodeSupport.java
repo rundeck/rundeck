@@ -400,28 +400,28 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private SourceResult querySource(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
+        final String ctx = sourceContext(nodesSource);
         try {
             nodes = nodesSource.getNodes();
             if (null == nodes) {
-                logger.warn("Empty nodes result from " + sourceContext(nodesSource));
+                logger.warn("Empty nodes result from " + ctx);
             }
             if (nodesSource instanceof ResourceModelSourceErrors errs) {
                 List<String> modelSourceErrors = errs.getModelSourceErrors();
                 if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
-                    logger.error("Some errors getting nodes from " + sourceContext(nodesSource) + ": " +
-                                 modelSourceErrors);
+                    logger.error("Some errors getting nodes from " + ctx + ": " + modelSourceErrors);
                     error = new ResourceModelSourceException(
                             TextUtils.join(modelSourceErrors.toArray(new String[0]), ';')
                     );
                 }
             }
         } catch (ResourceModelSourceException | RuntimeException e) {
-            logger.error("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage());
-            logger.debug("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage(), e);
+            logger.error("Cannot get nodes from " + ctx + ": " + e.getMessage());
+            logger.debug("Cannot get nodes from " + ctx + ": " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage(), e);
         } catch (Throwable e) {
-            logger.error("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage());
-            logger.debug("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage(), e);
+            logger.error("Cannot get nodes from " + ctx + ": " + e.getMessage());
+            logger.debug("Cannot get nodes from " + ctx + ": " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage());
         }
         return new SourceResult(nodes, error);

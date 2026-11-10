@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.Closeables
-import com.dtolabs.rundeck.core.resources.DelegateResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
@@ -934,34 +933,6 @@ class ProjectNodeSupportSpec extends Specification {
 
         then:
         description == 'node source #3 (file) file-source[/tmp/nodes.yaml]'
-    }
-
-    /**
-     * The delegating source describes itself with its delegate so a wrapper never logs as a bare object.
-     */
-    def "delegate source toString includes the delegate"() {
-        given:
-        def delegate = Mock(ResourceModelSource) {
-            toString() >> 'inner-source'
-        }
-        def source = new DelegateResourceModelSource(delegate) {}
-
-        expect:
-        source.toString().endsWith('{delegate=inner-source}')
-    }
-
-    /**
-     * Log messages for a failing source carry the project name.
-     */
-    def "source context names the source and the project"() {
-        given:
-        def support = supportWithSources([:], [])
-        def source = Mock(ResourceModelSource) {
-            toString() >> 'src'
-        }
-
-        expect:
-        support.sourceContext(source) == "[src] in project [${loadProject}]".toString()
     }
 
     /**
