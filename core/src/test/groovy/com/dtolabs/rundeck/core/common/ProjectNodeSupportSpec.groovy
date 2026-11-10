@@ -1093,6 +1093,50 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     /**
+     * End to end through querySource: a real file source with an unparseable YAML file logs an ERROR line naming
+     * the project, source index and type, followed by the file path of the underlying source.
+     */
+    def "failing file source logs project, source label and file path"() {
+        given:
+        def nodesFile = new File(directory, 'bad-log-nodes.yaml')
+        nodesFile.text = 'node1: [unclosed'
+        def fileSource = new FileResourceModelSource(framework)
+        fileSource.configure(
+                [project: PROJECT_NAME, file: nodesFile.absolutePath, format: 'resourceyaml'] as Properties
+        )
+        def props = new Properties()
+        props['resources.source.1.type'] = 'file'
+        props['resources.source.1.config.file'] = nodesFile.absolutePath
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> loadProject
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(fileSource)
+        }
+        def support = new ProjectNodeSupport(
+                File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"),
+                config,
+                ResourceFormatGeneratorService.getInstanceForFramework(framework, framework),
+                sourceService
+        )
+
+        when:
+        def lines = captureLogs { support.getNodeSet() }
+
+        then:
+        def error = lines.find { it.contains("Cannot get nodes from [project=${loadProject} source #1 (file)]") }
+        error.startsWith('ERROR [')
+        and: "the YAML message spans lines, so the suffix ends the last line of the same entry"
+        lines.any { it.endsWith(" (source: ${fileSource})".toString()) }
+        fileSource.toString().contains("file=${nodesFile.absolutePath}".toString())
+        !lines.any { it.contains('LoadedSource@') }
+    }
+
+    /**
      * Create a support with one source of a type that uses the file cache, whose cached nodes are node "cached"
      */
     private ProjectNodeSupport supportWithCachedSource(ResourceModelSource plugin) {
