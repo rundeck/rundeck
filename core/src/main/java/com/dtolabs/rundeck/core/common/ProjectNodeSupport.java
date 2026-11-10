@@ -368,7 +368,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private static SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
+    private SourceResult querySourceWithLoader(final ResourceModelSource nodesSource, final ClassLoader loader) {
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
@@ -388,20 +388,20 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      *
      * @return result with nodes and/or error
      */
-    private static SourceResult querySource(final ResourceModelSource nodesSource) {
+    private SourceResult querySource(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
         try {
             nodes = nodesSource.getNodes();
             if (null == nodes) {
-                logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
+                logger.warn("Empty nodes result from [" + nodesSource + "] in project [" + projectConfig.getName() + "]");
             }
             if (nodesSource instanceof ResourceModelSourceErrors errs) {
                 List<String> modelSourceErrors = errs.getModelSourceErrors();
                 if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
                     logger.error("Some errors getting nodes from [" +
-                                 nodesSource.toString() +
-                                 "]: " +
+                                 nodesSource +
+                                 "] in project [" + projectConfig.getName() + "]: " +
                                  modelSourceErrors);
                     error = new ResourceModelSourceException(
                             TextUtils.join(modelSourceErrors.toArray(new String[0]), ';')
@@ -409,12 +409,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 }
             }
         } catch (ResourceModelSourceException | RuntimeException e) {
-            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+            logger.error("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage());
+            logger.debug("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage(), e);
         } catch (Throwable e) {
-            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+            logger.error("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage());
+            logger.debug("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage());
         }
         return new SourceResult(nodes, error);
@@ -685,6 +685,14 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         @Override
         public ResourceModelSource getSource() {
             return getDelegate();
+        }
+
+        /**
+         * @return description including the node source index, type and underlying source
+         */
+        @Override
+        public String toString() {
+            return "node source #" + index + " (" + type + ") " + getDelegate();
         }
     }
 

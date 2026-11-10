@@ -917,4 +917,20 @@ class ProjectNodeSupportSpec extends Specification {
         errors.keySet() == ['2.source'] as Set
         errors['2.source'].message == 'boom'
     }
+
+    /**
+     * The description of a loaded source names its index, type and underlying source so log lines identify it.
+     */
+    def "loaded source toString includes index, type and delegate"() {
+        given:
+        def delegate = Mock(ResourceModelSource) {
+            toString() >> 'file-source[/tmp/nodes.yaml]'
+        }
+
+        when:
+        def description = new ProjectNodeSupport.LoadedSource(3, 'file', delegate).toString()
+
+        then:
+        description == 'node source #3 (file) file-source[/tmp/nodes.yaml]'
+    }
 }

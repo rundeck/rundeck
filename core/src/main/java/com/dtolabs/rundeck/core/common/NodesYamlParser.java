@@ -126,6 +126,13 @@ public class NodesYamlParser implements NodeFileParser {
         } catch (FileNotFoundException e) {
             throw new NodeFileParserException(e);
         } catch (Exception e) {
+            // include the file path (when known) so errors identify the offending file
+            if (null != file) {
+                throw new NodeFileParserException(
+                    "Error parsing YAML file " + file.getAbsolutePath() + ": " + e,
+                    e
+                );
+            }
             throw new NodeFileParserException(e);
         }
     }
