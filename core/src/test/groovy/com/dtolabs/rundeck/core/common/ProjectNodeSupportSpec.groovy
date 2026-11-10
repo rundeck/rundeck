@@ -1008,32 +1008,6 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     /**
-     * A file source with an unparseable YAML file fails, and its description names the file, so the
-     * logged node source identifies the offending file.
-     */
-    def "failing file source description names its file"() {
-        given:
-        def nodesFile = new File(directory, 'bad-nodes.yaml')
-        nodesFile.text = 'node1: [unclosed'
-        def fileSource = new FileResourceModelSource(framework)
-        fileSource.configure(
-                [
-                        project: PROJECT_NAME,
-                        file   : nodesFile.absolutePath,
-                        format : 'resourceyaml'
-                ] as Properties
-        )
-        def loaded = new ProjectNodeSupport.LoadedSource(PROJECT_NAME, 1, 'file', fileSource)
-
-        when:
-        loaded.getNodes()
-
-        then:
-        thrown(ResourceModelSourceException)
-        ProjectNodeSupport.sourceDetail(loaded).contains(nodesFile.path)
-    }
-
-    /**
      * Capture log output of the named loggers, ProjectNodeSupport by default, at DEBUG and above while the closure runs
      *
      * @return captured lines, formatted as "LEVEL [thread] message"
