@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.resources.DelegateResourceModelSource
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
@@ -932,5 +934,60 @@ class ProjectNodeSupportSpec extends Specification {
 
         then:
         description == 'node source #3 (file) file-source[/tmp/nodes.yaml]'
+    }
+
+    /**
+     * The delegating source describes itself with its delegate so a wrapper never logs as a bare object.
+     */
+    def "delegate source toString includes the delegate"() {
+        given:
+        def delegate = Mock(ResourceModelSource) {
+            toString() >> 'inner-source'
+        }
+        def source = new DelegateResourceModelSource(delegate) {}
+
+        expect:
+        source.toString().endsWith('{delegate=inner-source}')
+    }
+
+    /**
+     * Log messages for a failing source carry the project name.
+     */
+    def "source context names the source and the project"() {
+        given:
+        def support = supportWithSources([:], [])
+        def source = Mock(ResourceModelSource) {
+            toString() >> 'src'
+        }
+
+        expect:
+        support.sourceContext(source) == "[src] in project [${loadProject}]".toString()
+    }
+
+    /**
+     * A file source with an unparseable YAML file fails, and its description names the file, so the
+     * logged node source identifies the offending file.
+     */
+    def "failing file source description names its file"() {
+        given:
+        def nodesFile = new File(directory, 'bad-nodes.yaml')
+        nodesFile.text = 'node1: [unclosed'
+        def fileSource = new FileResourceModelSource(framework)
+        fileSource.configure(
+                [
+                        project: PROJECT_NAME,
+                        file   : nodesFile.absolutePath,
+                        format : 'resourceyaml'
+                ] as Properties
+        )
+        def loaded = new ProjectNodeSupport.LoadedSource(1, 'file', fileSource)
+
+        when:
+        loaded.getNodes()
+
+        then:
+        thrown(ResourceModelSourceException)
+        loaded.toString().contains('node source #1 (file)')
+        loaded.toString().contains(nodesFile.path)
     }
 }

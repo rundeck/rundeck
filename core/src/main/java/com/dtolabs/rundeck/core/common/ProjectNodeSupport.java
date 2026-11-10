@@ -382,6 +382,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
+     * @param nodesSource source
+     *
+     * @return the source and this project's name, for log messages
+     */
+    String sourceContext(final ResourceModelSource nodesSource) {
+        return "[" + nodesSource + "] in project [" + projectConfig.getName() + "]";
+    }
+
+    /**
      * Query a single source, capturing any failure in the result
      *
      * @param nodesSource source
@@ -394,14 +403,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         try {
             nodes = nodesSource.getNodes();
             if (null == nodes) {
-                logger.warn("Empty nodes result from [" + nodesSource + "] in project [" + projectConfig.getName() + "]");
+                logger.warn("Empty nodes result from " + sourceContext(nodesSource));
             }
             if (nodesSource instanceof ResourceModelSourceErrors errs) {
                 List<String> modelSourceErrors = errs.getModelSourceErrors();
                 if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
-                    logger.error("Some errors getting nodes from [" +
-                                 nodesSource +
-                                 "] in project [" + projectConfig.getName() + "]: " +
+                    logger.error("Some errors getting nodes from " + sourceContext(nodesSource) + ": " +
                                  modelSourceErrors);
                     error = new ResourceModelSourceException(
                             TextUtils.join(modelSourceErrors.toArray(new String[0]), ';')
@@ -409,12 +416,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 }
             }
         } catch (ResourceModelSourceException | RuntimeException e) {
-            logger.error("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage(), e);
+            logger.error("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage());
+            logger.debug("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage(), e);
         } catch (Throwable e) {
-            logger.error("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource + "] in project [" + projectConfig.getName() + "]: " + e.getMessage(), e);
+            logger.error("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage());
+            logger.debug("Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage(), e);
             error = new ResourceModelSourceException(e.getMessage());
         }
         return new SourceResult(nodes, error);
