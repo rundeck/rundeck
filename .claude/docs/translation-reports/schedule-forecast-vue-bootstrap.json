@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "family": "pro-vue",
+  "publicNamespace": "rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast",
+  "files": [
+    {
+      "source": "plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n-legacy.ts",
+      "target": "translations/rundeckpro/plugins/rundeckpro-spa-ui/rundeckpro-ui-components/src/rundeckpro-forecast/i18n.ts",
+      "created": true,
+      "inserted": 50
+    }
+  ]
+}

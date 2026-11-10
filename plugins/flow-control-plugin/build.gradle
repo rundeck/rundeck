@@ -24,6 +24,8 @@ ext.pluginDescription = 'Control execution flow'
 apply plugin: "groovy"
 
 apply from: "../../gradle/java-version.gradle"
+ext.canonicalTranslationNamespace = 'core/plugins/flow-control-plugin/src/main/resources/resources/i18n'
+apply from: "../../gradle/canonical-plugin-translations.gradle"
 
 jar {
     manifest {

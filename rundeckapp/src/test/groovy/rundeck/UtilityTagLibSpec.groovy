@@ -17,7 +17,9 @@
 package rundeck
 
 import grails.testing.web.taglib.TagLibUnitTest
+import org.grails.plugins.codecs.JSONCodec
 import rundeck.codecs.HTMLAttributeCodec
+import rundeck.codecs.JavaScript2Codec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
@@ -28,6 +30,40 @@ import spock.lang.Unroll
  * Created by greg on 6/21/16.
  */
 class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityTagLib> {
+    /**
+     * Proves legacy JavaScript messages consume values already resolved by the
+     * application message source, so they need no separate translation adapter.
+     */
+    def "jsMessages emits canonical and legacy fallback values"() {
+        given:
+        mockCodec(HTMLAttributeCodec)
+        mockCodec(JSONCodec)
+        mockCodec(JavaScript2Codec)
+        messageSource.addMessages(
+                [
+                        'default.button.create.label': 'Create',
+                        'default.button.delete.label': 'Delete'
+                ],
+                request.locale
+        )
+
+        when:
+        String result = tagLib.jsMessages(
+                id: 'core-"messages',
+                codes: [
+                        'default.button.create.label',
+                        'default.button.delete.label'
+                ]
+        ).toString()
+
+        then:
+        result.contains('"default.button.create.label":"Create"')
+        result.contains('"default.button.delete.label":"Delete"')
+        result.contains('id="core-&#34;messages"')
+        !result.contains('id="core-"messages"')
+        result.contains('_loadMessages(')
+    }
+
     @Unroll
     def "text after"() {
 
