@@ -175,11 +175,6 @@ commands:
             - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
             - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-
             - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-
-      - restore_cache:
-          keys:
-            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
-            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-
-            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-
 
   # Save Gradle dependency state and npm's content-addressed download cache.
   save-build-cache:
@@ -190,11 +185,8 @@ commands:
             - ~/.gradle/wrapper
             - ~/.gradle/caches/modules-2
             - ~/.gradle/caches/jars-9
-          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
-      - save_cache:
-          paths:
             - ~/.npm/_cacache
-          key: cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
+          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
 
   ## Deps Installers quick references.
   # Install node
