@@ -202,6 +202,8 @@ allprojects {
     ext["spring-framework.version"] = springVersion
     // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
     ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
+    // micrometer-registry-prometheus must match its prometheus-metrics line (Boot's BOM pins an older one).
+    ext["prometheus-client.version"] = prometheusClientVersion
     ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
     ext["httpcore5.version"] = httpCore5Version             // CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)
     ext["httpclient5.version"] = httpClient5Version         // CVE-2026-64607 (connection pool exhaustion DoS)

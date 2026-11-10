@@ -16,6 +16,9 @@ import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogWriter
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
 import static org.junit.Assert.assertNotNull
 
 class ExecutionUtilServiceSpec extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest {
@@ -298,4 +301,77 @@ class ExecutionUtilServiceSpec extends Specification implements ServiceUnitTest<
             1 * loghandler.close()
     }
 
+    /**
+     * On Java 20+ Thread.stop() always throws, which used to escape this method and
+     * surface as a failure of the referencing workflow step, with the child thread orphaned.
+     * It has to abandon the thread and return instead.
+     */
+    def "runRefJobWithTimer abandons a thread that cannot be stopped, instead of throwing"() {
+        given: 'a referenced job thread that ignores the interrupt sent by abort()'
+            service.metricService = Mock(MetricService)
+            def thread = new InterruptIgnoringRefJobThread()
+            thread.daemon = true
+            thread.start()
+            thread.started.await(5, TimeUnit.SECONDS)
+
+        and: 'a stopped clock and a stop() that throws, as it does on Java 20+'
+            //join() returns at once so the 100 abort waves do not take 100 seconds, and stop()
+            //throws on every JDK, so this covers the fix even when the suite runs on Java 17.
+            //Both are stubbed here rather than in the production code: runRefJobWithTimer is
+            //dynamic Groovy, so these calls dispatch through the metaclass.
+            thread.metaClass.join = { long millis -> null }
+            thread.metaClass.stop = { -> throw new UnsupportedOperationException() }
+
+        when: 'it runs past its timeout and the abort attempts are exhausted'
+            def result = service.runRefJobWithTimer(thread, System.currentTimeMillis(), true, 0)
+
+        then: 'the call returns rather than propagating UnsupportedOperationException'
+            noExceptionThrown()
+
+        and: 'the step is reported as interrupted, after the aborts were actually attempted'
+            result.interrupt
+            thread.abortCount >= 100
+
+        and: 'the thread it had to abandon is counted, and is still running'
+            1 * service.metricService.markMeter(
+                'rundeck.services.ExecutionService',
+                'referencedJobAbandonedThreadMeter'
+            )
+            thread.isAlive()
+
+        cleanup:
+            thread.release = true
+    }
+
+    /**
+     * Stands in for the blocking plugin steps and uninterruptible IO this kill path exists to
+     * handle: it swallows the interrupt that abort() sends and keeps going.
+     */
+    static class InterruptIgnoringRefJobThread extends WorkflowExecutionServiceThread {
+        final CountDownLatch started = new CountDownLatch(1)
+        volatile boolean release = false
+        volatile int abortCount = 0
+
+        InterruptIgnoringRefJobThread() {
+            super(null, null, null, null, null)
+        }
+
+        @Override
+        void run() {
+            started.countDown()
+            while (!release) {
+                try {
+                    Thread.sleep(20)
+                } catch (InterruptedException ignored) {
+                    //swallowed on purpose
+                }
+            }
+        }
+
+        @Override
+        void abort() {
+            abortCount++
+            super.abort()
+        }
+    }
 }
