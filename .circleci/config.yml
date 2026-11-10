@@ -370,7 +370,6 @@ jobs:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
       - collect-gradle-tests
-      - save-build-cache
 
   # Run UI Tests
   test-gui:
@@ -575,7 +574,6 @@ jobs:
       - run-build-step:
           step-name: Publish war
           command: packaging_publish_war
-      - save-build-cache
 
   # Test packaging
   packaging-test:
@@ -606,7 +604,6 @@ jobs:
       - run-build-step:
           step-name: T Packages
           command: packaging_test_packages
-      - save-build-cache
       - store_artifacts:
           path: ~/workspace/packaging/packaging/build/distributions
 
