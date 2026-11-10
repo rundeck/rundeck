@@ -3156,7 +3156,8 @@ List of config values, each value contains:
         summary='List Resource Model Sources for a Project',
         description='''The response contains a set of `source` objects, each describes the `index`, the `type`, and 
 details about the `resources`. If the
-source had any error, that is included as `errors`.
+source had any error, that is included as `errors`. If the source reported more than one error,
+they are separated by newlines.
 
 Resources data includes any `description` provided by the source, whether it is `empty`, and
 whether it is `writeable`.  The `href` indicates the URL for `/project/{project}/source/{index}/resources`.
@@ -3547,7 +3548,8 @@ Since: v23''',
         summary='Get a Resource Model Source for a Project',
         description='''The response contains the `index`, the `type`, and 
 details about the `resources`. If the
-source had any error, that is included as `errors`.
+source had any error, that is included as `errors`. If the source reported more than one error,
+they are separated by newlines.
 
 Resources data includes any `description` provided by the source, whether it is `empty`, and
 whether it is `writeable`.  The `href` indicates the URL for `/project/{project}/source/{index}/resources`.
