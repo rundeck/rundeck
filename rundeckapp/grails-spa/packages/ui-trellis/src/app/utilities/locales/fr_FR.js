@@ -1098,11 +1098,11 @@ const messages = {
     "R\u00e9sultats tronqu\u00e9s. {0} r\u00e9sultats affich\u00e9s.",
   "options.label": "Options",
   "Workflow.stepErrorHandler.keepgoingOnSuccess.label":
-    "Continuez \u00e0 r\u00e9ussir.",
+    "Continuer si le gestionnaire d\u02bcerreurs r\u00e9ussit.",
   "Workflow.stepErrorHandler.keepgoingOnSuccess.description":
     "Si le flux de traitement keepgoing est false, cela permet au workflow de continuer lorsque le gestionnaire d\u02bcerreurs a r\u00e9ussi",
   "Workflow.stepErrorHandler.label.keep.going.on.success":
-    "continuer \u00e0 r\u00e9ussir",
+    "continuer si le gestionnaire r\u00e9ussit",
   "framework.service.WorkflowNodeStep.description":
     "Fonctionne une fois pour chaque n\u0153ud dans le flux de traitement.",
   "framework.service.WorkflowStep.description":
@@ -1315,7 +1315,7 @@ const messages = {
     },
     button: {
       cancel: "Annuler",
-      upload: "T\u00e9l\u00e9charger",
+      upload: "T\u00e9l\u00e9verser",
       uploadAnother:
         "T\u00e9l\u00e9verser un autre fichier de d\u00e9finition de traitement...",
     },
