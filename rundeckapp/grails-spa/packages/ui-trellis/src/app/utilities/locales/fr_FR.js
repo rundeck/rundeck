@@ -1010,7 +1010,7 @@ const messages = {
   "job.editor.preview.runbook": "Aper\u00e7u Readme",
   "job.editor.workflow.unsavedchanges.warning":
     "Certaines modifications apport\u00e9es au workflow ne sont pas enregistr\u00e9es.",
-  "choose.action.label": "Choisir &hellip;",
+  "choose.action.label": "Choisir \u2026",
   "scheduledExecution.groupPath.description":
     "Le groupe est un chemin s\u00e9par\u00e9 par /",
   more: "Plus...",
@@ -1068,7 +1068,7 @@ const messages = {
   "Workflow.property.keepgoing.false.description":
     "Arr\u00eatez \u00e0 l\u02bc\u00e9tape \u00e9chou\u00e9e.",
   "JobExec.property.nodeRankOrder.null.description":
-    "Maintenir la commande d\u00e9finie dans le traitement d\u00e9clench\u00e9",
+    "Maintenir l\u02bcordre des n\u0153uds d\u00e9fini dans le traitement d\u00e9clench\u00e9",
   "JobExec.nodeStep.title": "Ex\u00e9cuter en tant que",
   "JobExec.nodeStep.true.description":
     "Ex\u00e9cute pour chaque n\u0153ud et permet l\u02bcutilisation de variables de contexte de n\u0153ud en tant qu\u02bcarguments du traitement.",
@@ -1175,7 +1175,7 @@ const messages = {
   "Expand All": "D\u00e9velopper tout",
   "Global Log Filters": "Filtres de journal global",
   "No Options": "Aucune option",
-  "Save Filter": "Enregistrer le filtre &hellip;",
+  "Save Filter": "Enregistrer le filtre \u2026",
   "Selected Plugins will be enabled for this Job.":
     "Les plugins s\u00e9lectionn\u00e9s seront activ\u00e9s pour ce traitement.",
   "Workflow.property.strategy.label": "Strat\u00e9gie",
@@ -1332,7 +1332,7 @@ const messages = {
     jobs: "Traitement | Traitements",
     wasWere: {
       singular: " a \u00e9t\u00e9",
-      plural: "ont \u00e9t\u00e9",
+      plural: " ont \u00e9t\u00e9",
     },
     results: {
       error: {
