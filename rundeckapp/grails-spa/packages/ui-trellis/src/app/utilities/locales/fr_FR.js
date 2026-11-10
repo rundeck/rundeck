@@ -51,13 +51,13 @@ const messages = {
   },
   cron: {
     section: {
-      "0": "Secondes",
-      "1": "Minutes",
-      "2": "Heures",
-      "3": "Jour du mois",
-      "4": "Mois",
-      "5": "Jour de la semaine",
-      "6": "Ann\u00e9e",
+      0: "Secondes",
+      1: "Minutes",
+      2: "Heures",
+      3: "Jour du mois",
+      4: "Mois",
+      5: "Jour de la semaine",
+      6: "Ann\u00e9e",
     },
   },
   message_communityNews: "Nouvelles de la communaut\u00e9",
@@ -107,8 +107,7 @@ const messages = {
     "LOGGED OUT": "D\u00e9connect\u00e9",
   },
   message_userSummary: {
-    desc:
-      "Liste des profils utilisateurs qui se sont connect\u00e9s \u00e0 Rundeck.",
+    desc: "Liste des profils utilisateurs qui se sont connect\u00e9s \u00e0 Rundeck.",
   },
   message_webhookPageTitle: "Webhooks",
   message_webhookListTitle: "Webhooks",
@@ -193,10 +192,10 @@ const messages = {
   Referenced: "R\u00e9f\u00e9renc\u00e9",
   "job.has.been.deleted.0": "(Le traitement {0} a \u00e9t\u00e9 supprim\u00e9)",
   Filters: "Filtres",
-  "filter.delete.named.text": "Supprimer le filtre \"{0}\"...",
+  "filter.delete.named.text": 'Supprimer le filtre "{0}"...',
   "Delete Saved Filter": "Supprimer le filtre enregistr\u00e9",
   "filter.delete.confirm.text":
-    "\u00eates-vous s\u00fbr de vouloir supprimer le filtre enregistr\u00e9 nomm\u00e9 \"{0}\" ?",
+    '\u00eates-vous s\u00fbr de vouloir supprimer le filtre enregistr\u00e9 nomm\u00e9 "{0}" ?',
   "filter.save.name.prompt": "Nom:",
   "filter.save.validation.name.blank": "Le nom ne peut pas \u00eatre vide",
   "filter.save.button": "Enregistrer le filtre...",
@@ -315,7 +314,7 @@ const messages = {
   "scheduledExecution.property.logOutputThreshold.label":
     "Limite de sortie du journal",
   "scheduledExecution.property.logOutputThreshold.description":
-    "Entrez soit le nombre de lignes total maximum (par exemple \"100\"), le nombre maximum de lignes par n\u0153ud (\"100 / n\u0153ud\") ou la taille maximale du fichier journal (\"100MB\", \"100KB\", etc. \",\" MB \",\" KB \",\" B \"comme Giga- Mega-Kilo et octets.",
+    'Entrez soit le nombre de lignes total maximum (par exemple "100"), le nombre maximum de lignes par n\u0153ud ("100 / n\u0153ud") ou la taille maximale du fichier journal ("100MB", "100KB", etc. "," MB "," KB "," B "comme Giga- Mega-Kilo et octets.',
   "scheduledExecution.property.logOutputThreshold.placeholder":
     "Par exemple comme \u02bc100\u02bc, \u02bc100 / n\u0153ud\u02bcou \u02bc100MB\u02bc",
   "scheduledExecution.property.logOutputThresholdAction.description":
@@ -388,7 +387,7 @@ const messages = {
     "Activer l\u02bcex\u00e9cution?",
   "scheduledExecution.property.timezone.prompt": "Fuseau horaire",
   "scheduledExecution.property.timezone.description":
-    "Un fuseau horaire valide, soit une abr\u00e9viation telle que \"PST\", un nom complet tel que \"America / Los_Angeles\", ou un identifiant personnalis\u00e9 tel que \"GMT-8{':'} 00\".",
+    'Un fuseau horaire valide, soit une abr\u00e9viation telle que "PST", un nom complet tel que "America / Los_Angeles", ou un identifiant personnalis\u00e9 tel que "GMT-8{\':\'} 00".',
   "documentation.reference.cron.url":
     "https{':'}//www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html",
   "set.as.default.filter": "D\u00e9finir comme filtre par d\u00e9faut",
@@ -715,7 +714,7 @@ const messages = {
   "job.list.filter.save.modal.title": "Enregistrer le filtre",
   "job.filter.save.button.title": "Enregistrer en tant que filtre...",
   "job.list.filter.save.button": "Enregistrer le filtre",
-  "job.list.filter.delete.filter.link.text": "Supprimer le filtre \"{0}\"",
+  "job.list.filter.delete.filter.link.text": 'Supprimer le filtre "{0}"',
   "app.firstRun.title": "Bienvenue \u00e0 {0} {1}",
   "you.can.see.this.message.again.by.clicking.the":
     "Vous pouvez revoir ce message en cliquant sur le",
@@ -825,7 +824,7 @@ const messages = {
   "form.option.secureExposed.true.label":
     "Texte brut avec saisie du mot de passe",
   "form.option.valuesType.url.filter.description":
-    "Filtrez les r\u00e9sultats JSON \u00e0 l\u02bcaide d\u02bcun chemin de cl\u00e9. Par exemple \"$.key.path\"",
+    'Filtrez les r\u00e9sultats JSON \u00e0 l\u02bcaide d\u02bcun chemin de cl\u00e9. Par exemple "$.key.path"',
   "form.option.valuesType.url.authentication.tokenInformer.header.label":
     "En-t\u00eate",
   "form.option.defaultStoragePath.description":
@@ -865,7 +864,7 @@ const messages = {
   "Option.property.description.description":
     "La description sera affich\u00e9 avec Markdown.",
   "option.defaultValue.regexmismatch.message":
-    "La valeur par d\u00e9faut \"{0}\" ne correspond pas \u00e0 la regex: {1}",
+    'La valeur par d\u00e9faut "{0}" ne correspond pas \u00e0 la regex: {1}',
   "option.multivalued.secure-conflict.message":
     "L\u02bcentr\u00e9e s\u00e9curis\u00e9e ne peut pas \u00eatre utilis\u00e9e avec une entr\u00e9e \u00e0 valeurs multiples",
   "option.defaultValue.notallowed.message":
@@ -889,9 +888,9 @@ const messages = {
   "option.hidden.notallowed.message":
     "Les options masqu\u00e9es doivent avoir une valeur par d\u00e9faut ou un chemin de stockage.",
   "option.values.regexmismatch.message":
-    "La valeur autoris\u00e9e \"{0}\" ne correspond pas \u00e0 l\u02bcexpression r\u00e9guli\u00e8re : {1}",
+    'La valeur autoris\u00e9e "{0}" ne correspond pas \u00e0 l\u02bcexpression r\u00e9guli\u00e8re : {1}',
   "option.defaultValue.multivalued.notallowed.message":
-    "La valeur par d\u00e9faut contient une cha\u00eene qui ne figurait pas dans la liste des valeurs autoris\u00e9es et ces valeurs sont pr\u00e9d\u00e9fnies : \"{0}\". Remarque : les espaces sont importants.",
+    'La valeur par d\u00e9faut contient une cha\u00eene qui ne figurait pas dans la liste des valeurs autoris\u00e9es et ces valeurs sont pr\u00e9d\u00e9fnies : "{0}". Remarque : les espaces sont importants.',
   "Option.required.label": "Obligatoire",
   "Option.hidden.description":
     "Doit \u00eatre masqu\u00e9 sur la page d\u02bcex\u00e9cution du traitement",
