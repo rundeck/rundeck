@@ -173,9 +173,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
-            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
-            - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-gradle-cache-
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-
 
   # Save Gradle dependency state and npm's content-addressed download cache.
   save-build-cache:
@@ -186,7 +186,7 @@ commands:
             - ~/.gradle/wrapper
             - ~/.gradle/caches/modules-2  # Dependency metadata only
             - ~/.gradle/caches/jars-9     # Downloaded JARs only
-          key: cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
       - run:
           name: Generate npm cache key
           command: |
@@ -198,7 +198,7 @@ commands:
       - save_cache:
           paths:
             - ~/.npm/_cacache
-          key: cache-v4-{{ .Environment.BUILD_CACHE_VERSION }}-npm-{{ checksum ".npm-cache-key" }}
+          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-npm-{{ checksum ".npm-cache-key" }}
 
   ## Deps Installers quick references.
   # Install node
@@ -215,7 +215,7 @@ commands:
               > .npm-cache-key
       - restore_cache:
           keys:
-            - cache-v4-{{ .Environment.BUILD_CACHE_VERSION }}-npm-{{ checksum ".npm-cache-key" }}
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-npm-{{ checksum ".npm-cache-key" }}
       - node/install:
           use-nvm-cache: true
           nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
