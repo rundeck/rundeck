@@ -1684,11 +1684,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         password = defStoragePath //to be resolved later
                         exists=true
                     }else {
-                        if(keystore.hasPassword(defStoragePath)){
-                            password = keystore.readPassword(defStoragePath)
-                            exists=true
-                        }else{
-                            failMessage = "path not found"
+                        try {
+                            if(keystore.hasPassword(defStoragePath)){
+                                password = keystore.readPassword(defStoragePath)
+                                exists=true
+                            }else{
+                                failMessage = "path not found"
+                            }
+                        } catch (StorageException e) {
+                            throw e
+                        } catch (Exception e) {
+                            // Storage plugins (e.g. CyberArk) may throw unchecked errors such as NPE
+                            failMessage = "Key Storage plugin error (${e.class.simpleName}): ${e.message ?: 'no message'}"
+                            log.error("Error reading key storage path ${defStoragePath} for option '${it.name}'", e)
                         }
                     }
                     if(exists){
@@ -1706,10 +1714,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 } catch (StorageException e) {
                     failMessage = e.message
-                } catch (Exception e) {
-                    // Storage plugins (e.g. CyberArk) may throw unchecked errors such as NPE
-                    failMessage = "Key Storage plugin error (${e.class.simpleName}): ${e.message ?: 'no message'}"
-                    log.error("Error reading key storage path ${defStoragePath} for option '${it.name}'", e)
                 }
 
                 if(!exists){
