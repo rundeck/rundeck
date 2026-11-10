@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
+import com.dtolabs.rundeck.core.resources.DelegateResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
@@ -933,6 +934,51 @@ class ProjectNodeSupportSpec extends Specification {
 
         then:
         description == 'node source #3 (file) file-source[/tmp/nodes.yaml]'
+    }
+
+    /**
+     * The delegating source describes itself with its delegate, and a named class even when subclassed anonymously.
+     */
+    def "delegate source toString includes class and delegate"() {
+        given:
+        def delegate = Mock(ResourceModelSource) {
+            toString() >> 'inner-source'
+        }
+        def source = new DelegateResourceModelSource(delegate) {}
+
+        expect:
+        source.toString().startsWith(source.getClass().name + "{")
+        source.toString().endsWith('{delegate=inner-source}')
+    }
+
+    /**
+     * Log messages for a failing source carry the project name.
+     */
+    def "source context names the source and the project"() {
+        given:
+        def support = supportWithSources([:], [])
+        def source = Mock(ResourceModelSource) {
+            toString() >> 'src'
+        }
+
+        expect:
+        support.sourceContext(source) == "[src] in project [${loadProject}]".toString()
+    }
+
+    /**
+     * A source whose toString() throws must not break error handling in querySource.
+     */
+    def "source context survives a failing toString"() {
+        given:
+        def support = supportWithSources([:], [])
+        def source = new ResourceModelSource() {
+            INodeSet getNodes() { null }
+
+            String toString() { throw new IllegalStateException('boom') }
+        }
+
+        expect:
+        support.sourceContext(source).startsWith("[${source.getClass().name}] in project [")
     }
 
     /**

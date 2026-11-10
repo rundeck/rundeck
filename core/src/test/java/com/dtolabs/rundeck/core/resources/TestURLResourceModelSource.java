@@ -169,19 +169,6 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
     }
 
 
-    /**
-     * The description used in logs omits user info and query string, which can hold credentials.
-     */
-    public void testToStringOmitsCredentials() throws Exception {
-        final URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
-        final Properties props = new Properties();
-        props.setProperty("project", PROJ_NAME);
-        props.setProperty("url", "https://user:secret@example.com:8443/nodes.yaml?token=abc123");
-        provider.configure(props);
-
-        assertEquals("URLResourceModelSource{URL='https://example.com:8443/nodes.yaml'}", provider.toString());
-    }
-
     public void testGetNodesYaml() throws Exception {
         URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
         final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();

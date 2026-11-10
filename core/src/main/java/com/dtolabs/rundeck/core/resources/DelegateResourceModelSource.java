@@ -54,7 +54,7 @@ public abstract class DelegateResourceModelSource implements ResourceModelSource
      */
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{delegate=" + getDelegate() + '}';
+        return getClass().getName() + "{delegate=" + getDelegate() + '}';
     }
 
     @Override
