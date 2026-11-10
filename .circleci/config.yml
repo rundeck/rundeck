@@ -166,21 +166,31 @@ commands:
       - store_artifacts:
           path: ~/test-results/junit
 
-  # Restore npm's content-addressed download cache only. Gradle's cache is
-  # intentionally disabled until the dependency-resolution issue is resolved.
+  # Restore Gradle dependency state and npm's content-addressed download cache.
   restore-build-cache:
-    description: Restore npm cache
+    description: Restore Gradle and npm caches
     steps:
+      - restore_cache:
+          keys:
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-
+            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-
       - restore_cache:
           keys:
             - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-<<pipeline.number>>
             - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-{{ .Branch }}-
             - cache-v3-{{ .Environment.BUILD_CACHE_VERSION }}-npm-cache-
 
-  # Save npm's content-addressed download cache only.
+  # Save Gradle dependency state and npm's content-addressed download cache.
   save-build-cache:
-    description: Save npm cache
+    description: Save Gradle and npm caches
     steps:
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+            - ~/.gradle/caches/modules-2
+            - ~/.gradle/caches/jars-9
+          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
       - save_cache:
           paths:
             - ~/.npm/_cacache
@@ -191,9 +201,22 @@ commands:
   install-node:
     description: Install Node
     steps:
+      - restore_cache:
+          keys:
+            - cache-v1-{{ .Environment.BUILD_CACHE_VERSION }}-node-runtime-{{ checksum ".nvmrc" }}-{{ arch }}
+      - run:
+          name: Activate cached NVM
+          command: |
+            if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
+              echo 'export NVM_DIR="$HOME/.nvm"' >> "$BASH_ENV"
+              echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --no-use' >> "$BASH_ENV"
+            fi
       - node/install:
-          use-nvm-cache: true
-          nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
+          use-nvm-cache: false
+      - save_cache:
+          paths:
+            - ~/.nvm
+          key: cache-v1-{{ .Environment.BUILD_CACHE_VERSION }}-node-runtime-{{ checksum ".nvmrc" }}-{{ arch }}
 
   # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
