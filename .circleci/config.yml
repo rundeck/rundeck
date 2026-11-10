@@ -184,7 +184,6 @@ commands:
             - ~/.gradle/wrapper
             - ~/.gradle/caches/modules-2  # Dependency metadata only
             - ~/.gradle/caches/jars-9     # Downloaded JARs only
-            - ~/.npm/_cacache
           key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
 
   ## Deps Installers quick references.
@@ -195,6 +194,20 @@ commands:
       - node:
           with:
             node-version-file: .nvmrc
+
+  install-ui-trellis-packages:
+    description: Install ui-trellis dependencies
+    steps:
+      - node/install-packages:
+          with:
+            app-dir: rundeckapp/grails-spa/packages/ui-trellis
+
+  install-package-manager-packages:
+    description: Install legacy package manager dependencies
+    steps:
+      - node/install-packages:
+          with:
+            app-dir: rundeckapp/grails-app/assets/javascripts/_package-manager
 
   # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
@@ -295,6 +308,8 @@ jobs:
       - checkout
       - restore-build-cache
       - install-build-dependencies
+      - install-ui-trellis-packages
+      - install-package-manager-packages
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -366,6 +381,7 @@ jobs:
       - checkout
       - install-build-dependencies
       - restore-build-cache
+      - install-package-manager-packages
       - run-build-step:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
@@ -381,6 +397,7 @@ jobs:
       - setup_docker
       - checkout
       - install-node
+      - install-ui-trellis-packages
       - run-build-step:
           step-name: Run GUI Tests
           command: rundeck_gui_tests
