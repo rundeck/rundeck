@@ -302,7 +302,7 @@ class ExecutionUtilServiceSpec extends Specification implements ServiceUnitTest<
     }
 
     /**
-     * RUN-5150: on Java 20+ Thread.stop() always throws, which used to escape this method and
+     * On Java 20+ Thread.stop() always throws, which used to escape this method and
      * surface as a failure of the referencing workflow step, with the child thread orphaned.
      * It has to abandon the thread and return instead.
      */
