@@ -157,8 +157,6 @@ const messages = {
   "in.of": "dans",
   execution: "Ex\u00e9cution | Ex\u00e9cutions",
   "execution.count": "1 Ex\u00e9cution | {0} Ex\u00e9cutions",
-  "Bulk Delete Executions: R\u00e9sultats":
-    "Suppression en masse des ex\u00e9cutions: R\u00e9sultats",
   "Requesting bulk delete, please wait.":
     "Demande de suppression en masse, veuillez patienter.",
   "bulkresult.attempted.text":
@@ -286,7 +284,7 @@ const messages = {
   no: "Non",
   "node.access.not-runnable.message":
     "Vous n\u02bcavez pas acc\u00e8s \u00e0 l\u02bcex\u00e9cution de commandes sur ce n\u0153ud.",
-  "Node.count.vue": "Node | Nodes",
+  "Node.count.vue": "N\u0153uds | N\u0153ud | N\u0153uds",
   "node.filter": "Filtre de n\u0153ud",
   "node.filter.exclude": "Exclure le filtre",
   "node.metadata.os": "Syst\u00e8me d\u02bcexploitation",
