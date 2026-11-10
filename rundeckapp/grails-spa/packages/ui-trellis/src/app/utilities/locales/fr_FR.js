@@ -243,7 +243,7 @@ const messages = {
   "add.node.source": "Ajouter une nouvelle source de n\u0153ud",
   "nodes.title": "N\u0153uds",
   "project.edit.ResourceModelSource.explanation":
-    "Sources de n\u0153uds pour le projet. Les sources sont charg\u00e9es dans l'ordre d\u00e9fini, les sources ult\u00e9rieures rempla\u00e7ant les pr\u00e9c\u00e9dentes. (Vous pouvez utiliser {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
+    "Sources de n\u0153uds pour le projet. Les sources sont charg\u00e9es dans l\u02bcordre d\u00e9fini, les sources ult\u00e9rieures rempla\u00e7ant les pr\u00e9c\u00e9dentes. (Vous pouvez utiliser {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
   "acl.config.link.title":
     "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
   "acl.config.system.link.title":
@@ -509,7 +509,7 @@ const messages = {
   "node.changes.success":
     "Les modifications de n\u0153ud ont \u00e9t\u00e9 enregistr\u00e9es avec succ\u00e8s.",
   "node.changes.notsaved":
-    "Les modifications de n\u0153ud n'ont pas \u00e9t\u00e9 enregistr\u00e9es.",
+    "Les modifications de n\u0153ud n\u02bcont pas \u00e9t\u00e9 enregistr\u00e9es.",
   "node.remoteEdit.edit": "Modifier le n\u0153ud:",
   "node.remoteEdit.continue": "Continuer...",
   node: "N\u0153ud",
@@ -724,7 +724,7 @@ const messages = {
     "Contactez votre administrateur. (R\u00f4les de l\u02bcutilisateur : {0})",
   "page.home.loading.projects": "Chargement de projets",
   "app.firstRun.md":
-    "Merci d'\u00eatre abonn\u00e9 \u00e0 {0}.\n\n  \n\n\n* [{0} Portail d'assistance &raquo;](http://support.rundeck.com)\n\n* [{0} Documentation &raquo;]({1})",
+    "Merci d\u02bc\u00eatre abonn\u00e9 \u00e0 {0}.\n\n  \n\n\n* [{0} Portail d\u02bcassistance &raquo;](http://support.rundeck.com)\n\n* [{0} Documentation &raquo;]({1})",
   "page.home.section.project.title": "{0} Projet",
   "page.home.section.project.title.plural": "{0} Projets",
   "page.home.duration.in.the.last.day": "Au cours des derni\u00e8res 24 heures",
@@ -1049,7 +1049,7 @@ const messages = {
     "Si la t\u00e2che r\u00e9f\u00e9renc\u00e9e provient d\u02bcun autre projet, vous pouvez utiliser la liste de n\u0153uds de t\u00e2che r\u00e9f\u00e9renc\u00e9e au lieu des n\u0153uds du parent.",
   "override.node.filters": "Remplacer les filtres de n\u0153uds ?",
   "JobExec.property.nodeFilter.help.description":
-    "Entrez un filtre de n\u0153ud pour remplacer les n\u0153uds cibles du traitement d\u00e9clench\u00e9. Si vous entrez une nouvelle cha\u00eene de filtre, vous pouvez \u00e9galement modifier le nombre de threads et le comportement si le job \u00e9choue pour un n\u0153ud. Si le job r\u00e9f\u00e9renc\u00e9 appartient \u00e0 un autre projet, ce filtre n'utilisera que les n\u0153uds du projet parent.",
+    "Entrez un filtre de n\u0153ud pour remplacer les n\u0153uds cibles du traitement d\u00e9clench\u00e9. Si vous entrez une nouvelle cha\u00eene de filtre, vous pouvez \u00e9galement modifier le nombre de threads et le comportement si le job \u00e9choue pour un n\u0153ud. Si le job r\u00e9f\u00e9renc\u00e9 appartient \u00e0 un autre projet, ce filtre n\u02bcutilisera que les n\u0153uds du projet parent.",
   "scheduledExecution.property.nodeIntersect.label":
     "Intersection de n\u0153uds",
   "scheduledExecution.property.nodeIntersect.false":
