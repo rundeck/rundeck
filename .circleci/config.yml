@@ -381,6 +381,7 @@ jobs:
       - checkout
       - install-build-dependencies
       - restore-build-cache
+      - install-ui-trellis-packages
       - install-package-manager-packages
       - run-build-step:
           step-name: Run Gradle Tests
