@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource
+import com.dtolabs.rundeck.core.resources.DelegateResourceModelSource
 import com.dtolabs.rundeck.core.resources.ExceptionCatchingResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
@@ -943,6 +945,69 @@ class ProjectNodeSupportSpec extends Specification {
     }
 
     /**
+     * The delegating source describes itself with its delegate, and a named class even when subclassed anonymously.
+     */
+    def "delegate source toString includes class and delegate"() {
+        given:
+        def delegate = Mock(ResourceModelSource) {
+            toString() >> 'inner-source'
+        }
+        def source = new DelegateResourceModelSource(delegate) {}
+
+        expect:
+        source.toString().startsWith(source.getClass().name + "{")
+        source.toString().endsWith('{delegate=inner-source}')
+    }
+
+    /**
+     * Log messages for a failing source carry the project name.
+     */
+    def "source context names the project, index and type; detail names the delegate"() {
+        given:
+        def support = supportWithSources([:], [])
+        def delegate = Mock(ResourceModelSource) {
+            toString() >> 'inner'
+        }
+        def loaded = new ProjectNodeSupport.LoadedSource('Foo', 3, 'file', delegate)
+
+        expect:
+        support.sourceContext(loaded) == '[project=Foo source #3 (file)]'
+        ProjectNodeSupport.sourceDetail(loaded) == ' (source: inner)'
+    }
+
+    /**
+     * A source whose toString() throws must not break error handling in querySource.
+     */
+    def "source context survives a failing toString"() {
+        given:
+        def support = supportWithSources([:], [])
+        def source = new ResourceModelSource() {
+            INodeSet getNodes() { null }
+
+            String toString() { throw new IllegalStateException('boom') }
+        }
+
+        expect:
+        support.sourceContext(source) == "[${source.getClass().name}]".toString()
+    }
+
+    /**
+     * A delegate whose toString() throws an Error, e.g. NoClassDefFoundError, must not escape the log suffix.
+     */
+    def "source detail survives a delegate whose toString throws an Error"() {
+        given:
+        def delegate = new ResourceModelSource() {
+            INodeSet getNodes() { null }
+
+            String toString() { throw new NoClassDefFoundError('missing') }
+        }
+        def loaded = new ProjectNodeSupport.LoadedSource('Foo', 1, 'file', delegate)
+
+        expect:
+        ProjectNodeSupport.sourceDetail(loaded) == " (source: ${delegate.getClass().name})".toString()
+    }
+
+    /**
      * Capture log output of the named loggers, ProjectNodeSupport by default, at DEBUG and above while the closure runs
      *
      * @return captured lines, formatted as "LEVEL [thread] message"
@@ -1015,6 +1080,50 @@ class ProjectNodeSupportSpec extends Specification {
         loadThreads | parallel
         null        | false
         '2'         | true
+    }
+
+    /**
+     * End to end through querySource: a real file source with an unparseable YAML file logs an ERROR line naming
+     * the project, source index and type, followed by the file path of the underlying source.
+     */
+    def "failing file source logs project, source label and file path"() {
+        given:
+        def nodesFile = new File(directory, 'bad-log-nodes.yaml')
+        nodesFile.text = 'node1: [unclosed'
+        def fileSource = new FileResourceModelSource(framework)
+        fileSource.configure(
+                [project: PROJECT_NAME, file: nodesFile.absolutePath, format: 'resourceyaml'] as Properties
+        )
+        def props = new Properties()
+        props['resources.source.1.type'] = 'file'
+        props['resources.source.1.config.file'] = nodesFile.absolutePath
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> loadProject
+            getProperties() >> props
+            hasProperty(_) >> { String k -> props.containsKey(k) }
+            getProperty(_) >> { String k -> props.getProperty(k) }
+            getConfigLastModifiedTime() >> new Date()
+        }
+        def sourceService = Mock(ResourceModelSourceService) {
+            getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(fileSource)
+        }
+        def support = new ProjectNodeSupport(
+                File.createTempFile("ProjectNodeSupportSpec-varDir", "-tmp"),
+                config,
+                ResourceFormatGeneratorService.getInstanceForFramework(framework, framework),
+                sourceService
+        )
+
+        when:
+        def lines = captureLogs { support.getNodeSet() }
+
+        then:
+        def error = lines.find { it.contains("Cannot get nodes from [project=${loadProject} source #1 (file)]") }
+        error.startsWith('ERROR [')
+        and: "the YAML message spans lines, so the suffix ends the last line of the same entry"
+        lines.any { it.endsWith(" (source: ${fileSource})".toString()) }
+        fileSource.toString().contains("file=${nodesFile.absolutePath}".toString())
+        !lines.any { it.contains('LoadedSource@') }
     }
 
     /**

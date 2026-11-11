@@ -390,6 +390,40 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
+     * @param source object to describe
+     *
+     * @return its toString(), or its class name if that fails, so describing a source in a log message can
+     * never replace the original failure
+     */
+    private static String safeToString(final Object source) {
+        try {
+            return String.valueOf(source);
+        } catch (Throwable e) {
+            return source.getClass().getName();
+        }
+    }
+
+    /**
+     * @param nodesSource source
+     *
+     * @return the source description (project, index and type) in brackets, for log messages
+     */
+    static String sourceContext(final ResourceModelSource nodesSource) {
+        return "[" + safeToString(nodesSource) + "]";
+    }
+
+    /**
+     * @param nodesSource source
+     *
+     * @return the underlying source of a loaded source, e.g. the file path, as a log suffix; empty otherwise
+     */
+    static String sourceDetail(final ResourceModelSource nodesSource) {
+        return nodesSource instanceof LoadedSource
+               ? " (source: " + safeToString(((LoadedSource) nodesSource).getDelegate()) + ")"
+               : "";
+    }
+
+    /**
      * Query a single source, capturing any failure in the result
      *
      * @param nodesSource source
@@ -408,7 +442,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             long start = System.nanoTime();
             nodes = nodesSource.getNodes();
             if (null == nodes) {
-                logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
+                logger.warn("Empty nodes result from " + sourceContext(nodesSource));
             }
             //a caching source catches the failure, records it with StoreExceptionHandler and returns cached nodes
             final Throwable cacheFallback = cacheFailure.get();
@@ -431,24 +465,21 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             if (nodesSource instanceof ResourceModelSourceErrors errs) {
                 List<String> modelSourceErrors = errs.getModelSourceErrors();
                 if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
-                    logger.error("Some errors getting nodes from [" +
-                                 nodesSource.toString() +
-                                 "]: " +
-                                 modelSourceErrors);
+                    logger.error("Some errors getting nodes from " + sourceContext(nodesSource) + ": " + modelSourceErrors);
                     error = new ResourceModelSourceException(
                             //one error per line, so the node sources page shows each error on its own line
                             String.join("\n", modelSourceErrors)
                     );
                 }
             }
-        } catch (ResourceModelSourceException | RuntimeException e) {
-            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-            error = new ResourceModelSourceException(e.getMessage(), e);
         } catch (Throwable e) {
-            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-            error = new ResourceModelSourceException(e.getMessage());
+            final String message = "Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage()
+                                   + sourceDetail(nodesSource);
+            logger.error(message);
+            logger.debug(message, e);
+            error = e instanceof Exception
+                    ? new ResourceModelSourceException(e.getMessage(), (Exception) e)
+                    : new ResourceModelSourceException(e.getMessage());
         } finally {
             if (null == enclosingCacheFailure) {
                 CACHE_FAILURE.remove();

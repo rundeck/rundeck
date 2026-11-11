@@ -49,6 +49,14 @@ public abstract class DelegateResourceModelSource implements ResourceModelSource
         return delegate;
     }
 
+    /**
+     * @return description including the delegate source, so logs identify the underlying source
+     */
+    @Override
+    public String toString() {
+        return getClass().getName() + "{delegate=" + getDelegate() + '}';
+    }
+
     @Override
     public List<String> getModelSourceErrors() {
         if(getDelegate() instanceof ResourceModelSourceErrors){
