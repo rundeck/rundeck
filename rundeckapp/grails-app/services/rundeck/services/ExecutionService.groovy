@@ -4257,7 +4257,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext['user.name'] = jobcontext.username
 
         def secureOptionNodeDeferred = [:]
-        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,plainOpts,jobcontext, secureOptionNodeDeferred)
+        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,plainOpts,jobcontext, secureOptionNodeDeferred,
+                { String msg -> executionContext.getExecutionListener()?.log(com.dtolabs.rundeck.core.Constants.WARN_LEVEL, msg) })
 
         //validate the option values
         if(dovalidate){

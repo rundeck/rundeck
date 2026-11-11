@@ -778,6 +778,55 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         newCtxt.privateDataContext['option'] == ['test1': '']
     }
 
+    def "createJobReferenceContext writes an unreadable secure option default to the job log"() {
+        given:
+        def listener = Mock(com.dtolabs.rundeck.core.execution.ExecutionListener)
+        def context = ExecutionContextImpl.builder()
+                .threadCount(1)
+                .keepgoing(false)
+                .dataContext(['option': [:], 'secureOption': [:], 'job': ['execid': '123']])
+                .privateDataContext(['option': [:]])
+                .user('aUser')
+                .executionListener(listener)
+                .build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ),
+        )
+        se.addToOptions(new Option(
+                name: 'test1', enforced: false, required: false, secureInput: true, defaultStoragePath: 'keys/test1'
+        ))
+        null != se.save()
+
+        def tree = Mock(KeyStorageTree)
+        tree.hasPassword('keys/test1') >> { throw new NullPointerException('plugin boom') }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
+        }
+        service.fileUploadService = Mock(FileUploadService)
+        service.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> tree
+        }
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+        service.createJobReferenceContext(se, null, context, [] as String[], null, null, null, null, null, null, false, false, false, false)
+
+        then: "the job continues, and the failure is written to the job log as a warning"
+        noExceptionThrown()
+        1 * listener.log(com.dtolabs.rundeck.core.Constants.WARN_LEVEL, { String m ->
+            m.contains("Option 'test1'") && m.contains('keys/test1') && m.contains('plugin boom')
+        })
+    }
+
     def "createJobReferenceContext global vars"() {
         given:
         def context = ExecutionContextImpl.builder()
