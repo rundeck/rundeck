@@ -401,9 +401,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final File file = getResourceModelSourceFileCacheForType(ident);
         final ResourceModelSourceService nodesSourceService = resourceModelSourceService;
         final ResourceFormatGeneratorService resourceFormatGeneratorService = getResourceFormatGeneratorService();
-        final Properties fileSourceConfig = generateFileSourceConfigurationProperties(
-                file.getAbsolutePath(),
-                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, false, false
+        final Properties fileSourceConfig = FileResourceModelSource.enableCacheXmlEntityLimits(
+                generateFileSourceConfigurationProperties(
+                        file.getAbsolutePath(),
+                        ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, false, false
+                )
         );
         try {
             ResourceModelSource fileSource = nodesSourceService.getSourceForConfiguration("file", fileSourceConfig);

@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import java.io.*;
 import java.util.*;
@@ -52,11 +53,17 @@ import java.util.*;
  * @version $Revision$
  */
 public class ResourceXMLParser {
+    private static final String MAX_GENERAL_ENTITY_SIZE_LIMIT_PROPERTY =
+            "http://www.oracle.com/xml/jaxp/properties/maxGeneralEntitySizeLimit";
+    private static final String TOTAL_ENTITY_SIZE_LIMIT_PROPERTY =
+            "http://www.oracle.com/xml/jaxp/properties/totalEntitySizeLimit";
+
     static Logger log4j = LoggerFactory.getLogger(ResourceXMLParser.class.getName());
 
     private File file;
     private InputStream input;
     private Document doc;
+    private final EntityLimitPolicy entityLimitPolicy;
     private ResourceXMLReceiver receiver;
     public static final String DEFAULT_ENTITY_XPATH = NODE_ENTITY_TAG ;
     private String entityXpath = DEFAULT_ENTITY_XPATH;
@@ -67,15 +74,38 @@ public class ResourceXMLParser {
      * @param file     source file
      */
     public ResourceXMLParser(final File file) {
-        this.file = file;
+        this(file, null);
     }
+
+    /**
+     * Constructor for the ResourceXMLParser
+     *
+     * @param file              source file
+     * @param entityLimitPolicy optional finite entity-size limits
+     */
+    public ResourceXMLParser(final File file, final EntityLimitPolicy entityLimitPolicy) {
+        this.file = file;
+        this.entityLimitPolicy = entityLimitPolicy;
+    }
+
     /**
      * Constructor for the ResourceXMLParser
      *
      * @param input     source file
      */
     public ResourceXMLParser(final InputStream input) {
+        this(input, null);
+    }
+
+    /**
+     * Constructor for the ResourceXMLParser
+     *
+     * @param input             source stream
+     * @param entityLimitPolicy optional finite entity-size limits
+     */
+    public ResourceXMLParser(final InputStream input, final EntityLimitPolicy entityLimitPolicy) {
         this.input = input;
+        this.entityLimitPolicy = entityLimitPolicy;
     }
 
 
@@ -86,6 +116,7 @@ public class ResourceXMLParser {
      */
     public ResourceXMLParser(final Document doc) {
         this.doc = doc;
+        this.entityLimitPolicy = null;
     }
 
 
@@ -98,6 +129,7 @@ public class ResourceXMLParser {
     public void parse() throws ResourceXMLParserException, IOException {
         final EntityResolver resolver = createEntityResolver();
         final SAXReader reader = SAXReader.createDefault();
+        configureEntityLimits(reader);
         reader.setEntityResolver(resolver);
 
         try {
@@ -143,6 +175,28 @@ public class ResourceXMLParser {
         }
     }
 
+    /**
+     * Applies finite entity-size limits to a reader when a policy is configured.
+     *
+     * @param reader XML reader
+     *
+     * @throws ResourceXMLParserException if the reader cannot apply a requested limit
+     */
+    private void configureEntityLimits(final SAXReader reader) throws ResourceXMLParserException {
+        if (null == entityLimitPolicy) {
+            return;
+        }
+        try {
+            reader.setProperty(
+                    MAX_GENERAL_ENTITY_SIZE_LIMIT_PROPERTY,
+                    entityLimitPolicy.getMaxGeneralEntitySizeLimit()
+            );
+            reader.setProperty(TOTAL_ENTITY_SIZE_LIMIT_PROPERTY, entityLimitPolicy.getTotalEntitySizeLimit());
+        } catch (SAXException e) {
+            throw new ResourceXMLParserException("Unable to configure XML entity-size limits", e);
+        }
+    }
+
     public static EntityResolver createEntityResolver() {
         return new EntityResolver() {
             public InputSource resolveEntity(final String publicId, final String systemId) {
@@ -170,6 +224,45 @@ public class ResourceXMLParser {
                 return new InputSource(new StringReader(""));
             }
         };
+    }
+
+    /**
+     * Finite JAXP entity-size limits applied to a single XML reader.
+     */
+    public static final class EntityLimitPolicy {
+        private final int maxGeneralEntitySizeLimit;
+        private final int totalEntitySizeLimit;
+
+        /**
+         * Creates a finite entity-limit policy.
+         *
+         * @param maxGeneralEntitySizeLimit maximum size of a general entity
+         * @param totalEntitySizeLimit      maximum combined entity size
+         */
+        public EntityLimitPolicy(final int maxGeneralEntitySizeLimit, final int totalEntitySizeLimit) {
+            if (maxGeneralEntitySizeLimit <= 0) {
+                throw new IllegalArgumentException("maxGeneralEntitySizeLimit must be greater than zero");
+            }
+            if (totalEntitySizeLimit <= 0) {
+                throw new IllegalArgumentException("totalEntitySizeLimit must be greater than zero");
+            }
+            this.maxGeneralEntitySizeLimit = maxGeneralEntitySizeLimit;
+            this.totalEntitySizeLimit = totalEntitySizeLimit;
+        }
+
+        /**
+         * @return maximum size of a general entity
+         */
+        public int getMaxGeneralEntitySizeLimit() {
+            return maxGeneralEntitySizeLimit;
+        }
+
+        /**
+         * @return maximum combined entity size
+         */
+        public int getTotalEntitySizeLimit() {
+            return totalEntitySizeLimit;
+        }
     }
 
     /**

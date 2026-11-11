@@ -36,6 +36,21 @@ class ResourceXMLParserSpec extends Specification {
         legitimateDtdFile = new File("src/test/resources/com/dtolabs/shared/resources/test-resources-legitimate-dtd.xml")
     }
 
+    def "entity limit policy requires finite positive values"() {
+        when:
+        new ResourceXMLParser.EntityLimitPolicy(maxGeneralLimit, totalLimit)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        maxGeneralLimit | totalLimit
+        0               | 1
+        -1              | 1
+        1               | 0
+        1               | -1
+    }
+
     ResourceXMLReceiver collectingReceiver(final List<ResourceXMLParser.Entity> items, final boolean continueParsing = true) {
         new ResourceXMLReceiver() {
             @Override
