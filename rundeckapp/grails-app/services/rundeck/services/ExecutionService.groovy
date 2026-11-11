@@ -1358,7 +1358,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
                 ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
-                        args, jobcontext, secureOptionNodeDeferred)
+                        args, jobcontext, secureOptionNodeDeferred, { String msg -> loghandler.logWarn(msg) })
             }
             String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
@@ -1643,6 +1643,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param secureOptsExposed exposed secure option values
      * @param secureOpts private secure option values
      * @param authContext auth context
+     * @param jobLogWarning optional callback that receives a message for each option whose default value could not
+     *                      be loaded from key storage and was not required to fail the execution, so that it can
+     *                      be written to the job log
      */
     void loadSecureOptionStorageDefaults(
             ScheduledExecution scheduledExecution,
@@ -1652,7 +1655,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean failIfMissingRequired=false,
             Map<String, String> args = null,
             Map<String, String> job = null,
-            Map secureOptionNodeDeferred = null
+            Map secureOptionNodeDeferred = null,
+            Closure jobLogWarning = null
     )
     {
         def found = scheduledExecution.options?.findAll {
@@ -1723,10 +1727,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                         "path: ${defStoragePath}: ${failMessage}"
                         )
                     } else {
-                        log.warn(
-                                "Option '${it.name}' default value could not be loaded from key storage " +
-                                        "path: ${defStoragePath}: ${failMessage}"
-                        )
+                        String warning = "Option '${it.name}' default value could not be loaded from key storage " +
+                                "path: ${defStoragePath}: ${failMessage}"
+                        log.warn(warning)
+                        jobLogWarning?.call(warning)
                     }
                 }
             }

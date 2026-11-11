@@ -2840,12 +2840,20 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         when: "failIfMissingRequired is false"
         Map secureOpts = [:]
-        service.loadSecureOptionStorageDefaults(job, [:], secureOpts, authContext, false)
+        List<String> jobLogWarnings = []
+        service.loadSecureOptionStorageDefaults(
+                job, [:], secureOpts, authContext, false, null, null, null, { String msg -> jobLogWarnings << msg }
+        )
 
-        then: "the failing option is left unset and the other default still loads"
+        then: "the failing option is left unset, the other default still loads, and the failure goes to the job log"
         noExceptionThrown()
         !secureOpts.containsKey('opt1')
         secureOpts['opt2'] == 'value2'
+        jobLogWarnings.size() == 1
+        jobLogWarnings[0].contains("Option 'opt1'")
+        jobLogWarnings[0].contains('keys/opt1')
+        jobLogWarnings[0].contains('Key Storage plugin error (NullPointerException)')
+        jobLogWarnings[0].contains(expectedDetail)
 
         when: "failIfMissingRequired is true"
         service.loadSecureOptionStorageDefaults(job, [:], [:], authContext, true)
