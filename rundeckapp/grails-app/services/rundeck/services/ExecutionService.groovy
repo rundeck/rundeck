@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -4658,7 +4659,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Execute a subworkflow from the Step (only for Workflow Steps)
      * @param executionContext the execution context
      * @param runnerExecutionItem the runner execution item containing the subworkflow
-     * @return StepExecutionResult
+     * @return StepExecutionResult with nested workflow output copied to the parent context
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     private def runSubworkflowExecutionItem(
@@ -4702,6 +4703,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 return executionUtilService.runRefJobWithTimer(thread, startTime, false, 0)
             }
 
+            copySubworkflowOutput(executionContext, wresult.result)
+
             // Process result after the workflow completes
             if (!wresult.result || !wresult.result.success || wresult.interrupt) {
                 String errors = ""
@@ -4723,6 +4726,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionContext.getExecutionListener().log(0, msg)
             log.error(msg, e)
             throw new StepException(msg,StepFailureReason.Unknown)
+        }
+    }
+
+    /**
+     * Copies output produced by a nested workflow into the parent step output context.
+     *
+     * @param executionContext parent step execution context
+     * @param workflowResult nested workflow result
+     */
+    private static void copySubworkflowOutput(
+            StepExecutionContext executionContext,
+            Object workflowResult
+    ) {
+        if (!(workflowResult instanceof WorkflowExecutionResult) || !executionContext.outputContext) {
+            return
+        }
+        DataContext aggregateData = workflowResult.sharedContext?.getData(ContextView.global())
+        aggregateData?.getData()?.each { String group, Map<String, String> values ->
+            executionContext.outputContext.addOutput(group, values)
         }
     }
 
