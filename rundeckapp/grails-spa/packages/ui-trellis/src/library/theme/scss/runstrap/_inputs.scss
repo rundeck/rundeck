@@ -159,10 +159,12 @@
       color: var(--red-300);
     }
   }
+  // RUN-4968: --warning-color is orange-500 in both themes, which reads as brown on the
+  // dark background (e.g. the ACL rule "Actions" label). Lighten the text dark-only.
   .has-warning {
     .form-control-feedback,
     .control-label {
-      color: var(--warning-color);
+      color: var(--orange-300);
     }
     .form-control,
     .form-control:focus {
@@ -170,8 +172,9 @@
       @include box-shadow(none);
     }
   }
+  // RUN-4968: same red-500 contrast gap as .control-label above (e.g. "Policy cannot be blank").
   .has-error .help-block {
-    color: var(--danger-color);
+    color: var(--red-300);
   }
   .has-success .help-block {
     color: var(--success-color);
