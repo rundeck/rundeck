@@ -72,9 +72,9 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "bcprov-jdk18on shares the bouncyCastleVersion property with bcpkix/bcutil/bcmail/bctls-jdk18on (git-plugin, license-cli, rundeckpro-license, etc.), and those siblings don't always cut a patch release together — 1.85.2 was published for bcprov-jdk18on alone, which broke git-plugin's bcpkix-jdk18on resolution when Renovate bumped the shared property (PR #4922). Needs its own groupName, not just dependencyDashboardApproval: without one it stayed lumped into the 'gradle minor/patch dependencies' group below and rode along anyway (re-broke #4922 a second time). Gate on Dependency Dashboard approval rather than disabling outright, so this keeps surfacing instead of being silently forgotten; before approving, confirm bcpkix/bcutil/bcmail/bctls-jdk18on have all published the same version on Maven Central.",
-      "matchPackageNames": ["org.bouncycastle:bcprov-jdk18on"],
-      "groupName": "bouncy castle bcprov (manual review - patch cadence mismatch with siblings)",
+      "description": "Matches the whole org.bouncycastle namespace, not just bcprov-jdk18on: bctls-jdk18on 1.86.2 was published alone and bumped the shared property through the gradle minor/patch group (rundeckpro#5221). bcprov-jdk18on shares the bouncyCastleVersion property with bcpkix/bcutil/bcmail/bctls-jdk18on (git-plugin, license-cli, rundeckpro-license, etc.), and those siblings don't always cut a patch release together — 1.85.2 was published for bcprov-jdk18on alone, which broke git-plugin's bcpkix-jdk18on resolution when Renovate bumped the shared property (PR #4922). Needs its own groupName, not just dependencyDashboardApproval: without one it stayed lumped into the 'gradle minor/patch dependencies' group below and rode along anyway (re-broke #4922 a second time). Gate on Dependency Dashboard approval rather than disabling outright, so this keeps surfacing instead of being silently forgotten; before approving, confirm bcpkix/bcutil/bcmail/bctls-jdk18on have all published the same version on Maven Central.",
+      "matchPackageNames": ["/^org\\.bouncycastle:/"],
+      "groupName": "bouncy castle (manual review - patch cadence mismatch across siblings)",
       "dependencyDashboardApproval": true
     },
     {
