@@ -125,6 +125,20 @@ export default defineComponent({
     text-transform: uppercase;
   }
 }
+
+// RUN-4968: .repo-header is a static light tan pill with no CSS vars at all, so the
+// OFFICIAL/PRIVATE REPOSITORY heading kept its light-mode colors in dark mode and
+// read as too-light/low-contrast against the dark page. Re-pair with theme-aware
+// colors in dark only; light mode is unchanged.
+[data-color-theme="dark"] .repo-header {
+  background: var(--background-color-lvl2);
+  color: var(--font-color);
+
+  a {
+    color: var(--font-color);
+  }
+}
+
 .repo-meta {
   // padding-left: 1em;
   margin-bottom: 1em;

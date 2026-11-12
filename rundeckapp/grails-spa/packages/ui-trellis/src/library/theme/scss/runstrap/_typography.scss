@@ -240,6 +240,35 @@ a.text-danger:hover,
   // color: lighten(var(--danger-states-color), 25%);
 }
 
+// RUN-4968: .text-primary/.text-warning/.text-danger read CSS vars that keep the
+// same hex in dark mode (--primary-color, --warning-color) or land on a shade
+// still too close to the dark --background-color (--danger-states-color is
+// red-400 in dark), so these labels miss WCAG AA against the dark background
+// (e.g. ACL rule "Actions" text-warning, Node Wizard/ad-hoc node popup
+// text-primary). Lighten dark-only; hue/semantics are unchanged.
+*[data-color-theme="dark"] {
+  .text-primary,
+  .text-primary:hover,
+  .text-primary:focus,
+  a.text-primary {
+    color: var(--blue-200);
+  }
+
+  .text-warning,
+  .text-warning:hover,
+  .text-warning:focus,
+  a.text-warning {
+    color: var(--orange-300);
+  }
+
+  .text-danger,
+  .text-danger:hover,
+  .text-danger:focus,
+  a.text-danger {
+    color: var(--red-200);
+  }
+}
+
 .glyphicon {
   line-height: 1;
 }
