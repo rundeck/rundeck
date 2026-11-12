@@ -51,6 +51,8 @@ import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.providers.JobExecutionResult
+import org.rundeck.app.data.providers.JobStatsAccumulator
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -3555,11 +3557,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def dateCompleted = new Date()
         def mockConfigService = Mock(ConfigurationService)
         mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
-        service.jobStatsDataProvider = new GormJobStatsDataProvider()
-        service.jobStatsDataProvider.configurationService = mockConfigService
+        def provider = new GormJobStatsDataProvider()
+        provider.configurationService = mockConfigService
+        service.jobStatsDataProvider = provider
+        service.jobStatsAccumulator = new JobStatsAccumulator(jobStatsDataProvider: provider)
 
         when: "updateScheduledExecStatistics is called with failed status"
         def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, 'failed', dateCompleted)
+        service.jobStatsAccumulator.flush()
 
         then: "stats are collected"
         result == true
@@ -3573,14 +3578,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def dateCompleted = new Date()
         def mockConfigService = Mock(ConfigurationService)
         mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
-        service.jobStatsDataProvider = new GormJobStatsDataProvider()
-        service.jobStatsDataProvider.configurationService = mockConfigService
+        def provider = new GormJobStatsDataProvider()
+        provider.configurationService = mockConfigService
+        service.jobStatsDataProvider = provider
+        service.jobStatsAccumulator = new JobStatsAccumulator(jobStatsDataProvider: provider)
 
         when: "multiple executions with different statuses are tracked"
         service.updateScheduledExecStatistics(jobUuid, 1L, 1000L, 'succeeded', dateCompleted)
         service.updateScheduledExecStatistics(jobUuid, 2L, 2000L, 'failed', dateCompleted)
         service.updateScheduledExecStatistics(jobUuid, 3L, 3000L, 'aborted', dateCompleted)
         service.updateScheduledExecStatistics(jobUuid, 4L, 4000L, 'timedout', dateCompleted)
+        service.jobStatsAccumulator.flush()
 
         then: "all executions are tracked"
         def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
@@ -7329,14 +7337,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             def executionTime = 5000L
             def status = "succeeded"
             def dateCompleted = new Date()
-            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
-            service.jobStatsDataProvider = mockJobStatsDataProvider
+            def accumulator = Mock(JobStatsAccumulator)
+            service.jobStatsAccumulator = accumulator
 
         when: "updateScheduledExecStatistics is called"
             def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, status, dateCompleted)
 
-        then: "jobStatsDataProvider is called with correct parameters"
-            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted) >> true
+        then: "the execution is queued for the next flush"
+            1 * accumulator.add(jobUuid, { JobExecutionResult it ->
+                it.executionId == executionId && it.time == executionTime && it.status == status && it.dateCompleted == dateCompleted
+            })
             result == true
     }
 
@@ -7346,14 +7356,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             def executionId = 456L
             def executionTime = 3000L
             def dateCompleted = new Date()
-            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
-            service.jobStatsDataProvider = mockJobStatsDataProvider
+            def accumulator = Mock(JobStatsAccumulator)
+            service.jobStatsAccumulator = accumulator
 
         when: "updateScheduledExecStatistics is called with failed status"
             def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, "failed", dateCompleted)
 
-        then: "status and dateCompleted are passed correctly"
-            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, "failed", dateCompleted) >> true
+        then: "status and dateCompleted are queued"
+            1 * accumulator.add(jobUuid, { JobExecutionResult it ->
+                it.executionId == executionId && it.time == executionTime && it.status == "failed" && it.dateCompleted == dateCompleted
+            })
             result == true
     }
 

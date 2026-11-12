@@ -432,6 +432,89 @@ class GormJobStatsDataProviderSpec extends Specification implements DataTest {
             updatedContentMap.dailyMetrics[today].timedout == 1
     }
 
+    def "updateJobStats folds a list of executions in order and saves once"() {
+        given: "several completions of one job, including the rolling-10 boundary"
+            def jobUuid = UUID.randomUUID().toString()
+            def calendar = Calendar.getInstance()
+            calendar.set(Calendar.HOUR_OF_DAY, 10)
+            def hour10 = calendar.time
+            calendar.set(Calendar.HOUR_OF_DAY, 14)
+            def hour14 = calendar.time
+
+            def executions = (1..9).collect { i ->
+                new JobExecutionResult(i as Long, 1000L * i, "succeeded", hour10)
+            }
+            executions << new JobExecutionResult(10L, 5000L, "failed", hour14)
+            executions << new JobExecutionResult(11L, 4000L, "succeeded", hour14)
+            executions << new JobExecutionResult(12L, 9000L, "timedout", hour10)
+
+        when: "the whole list is applied in one call"
+            def result = provider.updateJobStats(jobUuid, executions)
+
+        then: "rolling-10 counts only successes and daily metrics count every status"
+            result == true
+            def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+            def contentMap = stats.getContentMap()
+            // 9 successes sum to 45000 with execCount 9. The next success still fits under 10,
+            // so it is added (49000) and only the 11th success would pop the average.
+            contentMap.execCount == 10
+            contentMap.totalTime == 49000
+            contentMap.refExecCount == 0
+
+            def today = LocalDate.now().toString()
+            def todayMetrics = contentMap.dailyMetrics[today]
+            todayMetrics.total == 12
+            todayMetrics.succeeded == 10
+            todayMetrics.failed == 1
+            todayMetrics.timedout == 1
+            todayMetrics.aborted == 0
+            todayMetrics.duration == 45000 + 5000 + 4000 + 9000
+            todayMetrics.hourly[10].succeeded == 9
+            todayMetrics.hourly[10].timedout == 1
+            todayMetrics.hourly[10].total == 10
+            todayMetrics.hourly[14].failed == 1
+            todayMetrics.hourly[14].succeeded == 1
+            todayMetrics.hourly[14].total == 2
+    }
+
+    def "updateJobStats list continues an existing rolling window"() {
+        given: "a job that already has 9 successful executions"
+            def jobUuid = UUID.randomUUID().toString()
+            def stats = new ScheduledExecutionStats(
+                jobUuid: jobUuid,
+                contentMap: [execCount: 9, totalTime: 9000, refExecCount: 2]
+            )
+            stats.save(flush: true)
+            def dateCompleted = new Date()
+
+        when: "three more successes are folded together"
+            def result = provider.updateJobStats(jobUuid, [
+                new JobExecutionResult(1L, 2000L, "succeeded", dateCompleted),
+                new JobExecutionResult(2L, 2000L, "succeeded", dateCompleted),
+                new JobExecutionResult(3L, 2000L, "succeeded", dateCompleted)
+            ])
+
+        then: "the window advances the same way as three separate saves"
+            result == true
+            def contentMap = ScheduledExecutionStats.findByJobUuid(jobUuid).getContentMap()
+            // 9000+2000 = 11000 (count 10); pop 1100 -> 11900; pop 1190 -> 12710
+            contentMap.execCount == 10
+            contentMap.totalTime == 12710
+            contentMap.refExecCount == 2
+    }
+
+    def "updateJobStats list does nothing when there are no executions"() {
+        given: "a job uuid with no stats yet"
+            def jobUuid = UUID.randomUUID().toString()
+
+        when: "an empty list is applied"
+            def result = provider.updateJobStats(jobUuid, [])
+
+        then: "no row is created"
+            result == true
+            ScheduledExecutionStats.findByJobUuid(jobUuid) == null
+    }
+
     def "updateJobStats collects daily metrics when feature flag is enabled"() {
         given: "feature flag enabled (default in setup)"
             def jobUuid = UUID.randomUUID().toString()

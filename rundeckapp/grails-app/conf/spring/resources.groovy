@@ -130,6 +130,7 @@ import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
 import org.rundeck.app.data.providers.GormExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.providers.JobStatsAccumulator
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
@@ -997,6 +998,15 @@ beans={
     pluginMetaDataProvider(GormPluginMetaDataProvider)
     referencedExecutionDataProvider(GormReferencedExecutionDataProvider)
     jobStatsDataProvider(GormJobStatsDataProvider)
+    jobStatsTaskScheduler(ThreadPoolTaskScheduler) {
+        threadNamePrefix = "JobStatsFlush"
+        poolSize = 1
+    }
+    jobStatsAccumulator(JobStatsAccumulator) {
+        jobStatsDataProvider = ref('jobStatsDataProvider')
+        taskScheduler = ref('jobStatsTaskScheduler')
+        flushIntervalMillis = application.config.getProperty("rundeck.execution.stats.flushInterval", Long.class, 5000L)
+    }
     logFileStorageRequestProvider(GormLogFileStorageRequestProvider)
     storedEventProvider(GormStoredEventProvider)
 

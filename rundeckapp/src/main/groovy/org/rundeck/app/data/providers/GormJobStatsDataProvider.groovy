@@ -151,6 +151,144 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
         return success
     }
 
+    /**
+     * Folds every execution of one job into the stats map, then persists that row once.
+     * The list order is the replay order of the rolling average.
+     */
+    Boolean updateJobStats(String jobUuid, List<JobExecutionResult> executions) {
+        def pending = executions?.findAll { it != null }
+        if (!pending) {
+            return true
+        }
+        def success = false
+        def executionIds = pending.collect { it.executionId }
+        try {
+            ScheduledExecutionStats.withTransaction {
+                def stats = getOrCreate(jobUuid)
+                def statsMap = stats.getContentMap()
+
+                def dailyMetricsEnabled = configurationService.getBoolean("executionDailyMetrics.enabled", false)
+                log.debug("[METRICS-API][RUN-3768] Feature flag check: configurationService.getBoolean('executionDailyMetrics.enabled', false) = ${dailyMetricsEnabled}")
+                if (!dailyMetricsEnabled) {
+                    log.debug("Daily metrics collection disabled for ${jobUuid} (feature flag: rundeck.executionDailyMetrics.enabled=false)")
+                }
+
+                pending.each { JobExecutionResult execution ->
+                    applyExecution(statsMap, execution.time, execution.status, execution.dateCompleted, dailyMetricsEnabled)
+                }
+
+                stats.setContentMap(statsMap)
+
+                if (stats.validate()) {
+                    if (stats.save(flush: true)) {
+                        log.debug("Updated job stats for ${jobUuid} from executions ${executionIds}")
+                    } else {
+                        stats.errors.allErrors.each { log.warn(it.defaultMessage) }
+                        log.warn("failed saving execution to history")
+                    }
+                    success = true
+                }
+            }
+        } catch (org.springframework.dao.ConcurrencyFailureException e) {
+            log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${executionIds}")
+        } catch (StaleObjectStateException e) {
+            log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${executionIds}")
+        } catch (DuplicateKeyException ve) {
+            log.warn("Caught DuplicateKeyException for migrated stats, will retry updateScheduledExecStatistics for ${executionIds}")
+        }
+        return success
+    }
+
+    /**
+     * Applies one execution to an in-memory stats map. Does not touch the database.
+     */
+    private void applyExecution(Map statsMap, long time, String status, Date dateCompleted, boolean dailyMetricsEnabled) {
+        // === EXISTING LOGIC (Rolling-10 for UI) - Only for successful executions ===
+        if (status == 'succeeded') {
+            if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
+                statsMap.execCount = 1
+                statsMap.totalTime = time
+            } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
+                statsMap.execCount++
+                statsMap.totalTime += time
+            } else if (statsMap.execCount >= 10) {
+                def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
+                statsMap.totalTime -= popTime
+                statsMap.totalTime += time
+            }
+        }
+
+        // === NEW LOGIC (Date-keyed daily metrics; 90-day retention handled in getMetricsFromStats()) - RUN-3768 ===
+        // Feature flag: rundeck.executionDailyMetrics.enabled
+        if (dailyMetricsEnabled) {
+            def today = LocalDate.now().toString()
+            def dailyMetrics = statsMap.dailyMetrics ?: [:]
+            def todayMetrics = dailyMetrics[today] ?: [
+                total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0,
+                duration: 0,
+                hourly: (0..23).collect { [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0] }
+            ]
+
+            // Increment today's metrics
+            todayMetrics.total++
+
+            switch(status) {
+                case 'succeeded':
+                    todayMetrics.succeeded++
+                    break
+                case 'failed':
+                case 'failed-with-retry':
+                    todayMetrics.failed++
+                    break
+                case 'aborted':
+                    todayMetrics.aborted++
+                    break
+                case 'timedout':
+                    todayMetrics.timedout++
+                    break
+            }
+            todayMetrics.duration += time
+
+            // Extract hour from execution completion time and update hourly breakdown (RUN-3768: status per hour)
+            if (dateCompleted) {
+                def hourOfDay = dateCompleted.toInstant()
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .getHour()
+                def hourlyList = todayMetrics.hourly as List
+                def hourMetrics = hourlyList[hourOfDay] ?: [total: 0, succeeded: 0, failed: 0, aborted: 0, timedout: 0]
+
+                // Increment hour's total
+                hourMetrics.total++
+
+                // Increment hour's status count
+                switch(status) {
+                    case 'succeeded':
+                        hourMetrics.succeeded++
+                        break
+                    case 'failed':
+                    case 'failed-with-retry':
+                        hourMetrics.failed++
+                        break
+                    case 'aborted':
+                        hourMetrics.aborted++
+                        break
+                    case 'timedout':
+                        hourMetrics.timedout++
+                        break
+                }
+
+                hourlyList[hourOfDay] = hourMetrics
+                todayMetrics.hourly = hourlyList
+            }
+
+            // Save back to dailyMetrics
+            dailyMetrics[today] = todayMetrics
+            statsMap.dailyMetrics = dailyMetrics
+
+            log.debug("Updated daily metrics for execution status=${status}: today=${today}, total=${todayMetrics.total}")
+        }
+    }
+
     @Override
     Boolean updateJobRefStats(String jobUuid, long time) {
         def success = false
@@ -234,5 +372,19 @@ class GormJobStatsDataProvider implements JobStatsDataProvider{
             stats.save()
         }
         return stats
+    }
+}
+
+class JobExecutionResult {
+    Long executionId
+    long time
+    String status
+    Date dateCompleted
+
+    JobExecutionResult(Long executionId, long time, String status, Date dateCompleted) {
+        this.executionId = executionId
+        this.time = time
+        this.status = status
+        this.dateCompleted = dateCompleted
     }
 }

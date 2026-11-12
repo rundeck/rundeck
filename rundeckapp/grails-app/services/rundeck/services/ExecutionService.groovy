@@ -98,6 +98,8 @@ import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
+import org.rundeck.app.data.providers.JobExecutionResult
+import org.rundeck.app.data.providers.JobStatsAccumulator
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
@@ -196,6 +198,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ExecReportDataProvider execReportDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
+    JobStatsAccumulator jobStatsAccumulator
 
     // Configuration keys for execution count cache and optimizations
     static final String EXECUTION_COUNT_CACHE_ENABLED = 'api.executionQueryConfig.countCache.enabled'
@@ -3797,16 +3800,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Update a scheduledExecution statistics with a successful execution duration
+     * Queues a completed execution so its job stats are saved by the next flush.
      * @param jobUuid
      * @param eId
-     * @param time
-     * @param execution
-     * @return
+     * @param time duration in milliseconds
+     * @param status execution status
+     * @param dateCompleted
+     * @return true when the execution was queued
      */
     @NotTransactional
     def updateScheduledExecStatistics(String jobUuid, eId, long time, String status, Date dateCompleted) {
-        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time, status, dateCompleted)
+        jobStatsAccumulator.add(jobUuid, new JobExecutionResult(eId as Long, time, status, dateCompleted))
+        return true
     }
 
     /**
