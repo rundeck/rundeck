@@ -135,6 +135,7 @@ export default defineComponent({
 }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles teleported PrimeVue Dialog -->
 <style lang="scss">
 // PrimeVue's own dark preset is gated behind a ".dark" class the app never
 // sets (we use the "data-color-theme" attribute instead), so the Dialog
