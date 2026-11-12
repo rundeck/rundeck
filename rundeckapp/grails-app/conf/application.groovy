@@ -135,7 +135,10 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/health',         access: ['permitAll']],
         [pattern: '/actuator/**',    access: ['permitAll']],
         [pattern: '/actuator/health/**',    access: ['permitAll']],
-        [pattern: '/monitoring/**',  access: ['permitAll']], // Spring Boot Actuator endpoints
+        // Probes stay anonymous. Metrics, prometheus, info, and threaddump require a session.
+        [pattern: '/monitoring/health',     access: ['permitAll']],
+        [pattern: '/monitoring/health/**',  access: ['permitAll']],
+        [pattern: '/monitoring/**',         access: ['IS_AUTHENTICATED_REMEMBERED']],
         [pattern: '/.well-known/**', access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']] // LAST: Catch-all
 ]

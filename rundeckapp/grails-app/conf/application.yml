@@ -278,8 +278,9 @@ rundeck:
                     - /actuator/health
                     - /actuator/health/liveness
                     - /actuator/health/readiness
-                    - /monitoring
-                    - /monitoring/**
+                    # Prefix match: /monitoring/health, /health/readiness, /health/liveness.
+                    # Do not list /monitoring here; that prefix would exempt metrics and threaddump.
+                    - /monitoring/health
                     - /metrics
                     - /metrics/**
                     - /.well-known

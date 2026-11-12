@@ -1,5 +1,7 @@
 package org.rundeck.tests.functional.api.system
 
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
@@ -73,6 +75,40 @@ class MetricsSpec extends BaseContainer {
                 body.readLines().size() > 10
                 // Thread dump should contain thread info
                 body.contains("Thread")
+            }
+    }
+
+    def "anonymous clients cannot read monitoring data endpoints"() {
+        given:
+            def anonymous = new OkHttpClient.Builder()
+                .followRedirects(false)
+                .followSslRedirects(false)
+                .build()
+        expect:
+            ['/monitoring/prometheus', '/monitoring/metrics', '/monitoring/threaddump', '/monitoring/info'].each { path ->
+                try (def response = anonymous.newCall(
+                    new Request.Builder().url("${client.baseUrl}${path}").get().build()
+                ).execute()) {
+                    assert response.code() in [302, 401, 403]
+                }
+            }
+    }
+
+    def "anonymous clients can still read health and readiness"() {
+        given:
+            def anonymous = new OkHttpClient.Builder()
+                .followRedirects(false)
+                .followSslRedirects(false)
+                .build()
+        expect:
+            ['/monitoring/health', '/monitoring/health/readiness'].each { path ->
+                try (def response = anonymous.newCall(
+                    new Request.Builder().url("${client.baseUrl}${path}").get().build()
+                ).execute()) {
+                    def body = response.body().string()
+                    assert response.code() == 200
+                    assert body.contains('UP')
+                }
             }
     }
 
