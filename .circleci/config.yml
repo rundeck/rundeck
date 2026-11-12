@@ -73,7 +73,7 @@ slack-fail-post-step: &slack-fail-post-step
 
 executors:
 
-  # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
+  # cimg/openjdk:17.0.21 built 2026-10-26 from Temurin 17.0.21+9 (eMudhra roots removed from cacerts).
   docker-builder:
     docker:
       - image: cimg/openjdk:17.0.21@sha256:5e03ff3d2e6f863cdb37c51b4fa8a34e2519392d914ccd324b1d5efb23970420
@@ -81,6 +81,17 @@ executors:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
       # automatically upgraded to medium.
+      resource_class:
+        type: string
+        default: small
+    resource_class: << parameters.resource_class >>
+
+  # Host JDK 25 for the scheduled JRE 17 test workflow. Same publish as 17.0.21:
+  # Temurin 25.0.5+8, which drops the eMudhra signing roots. No apt install.
+  docker-builder-25:
+    docker:
+      - image: cimg/openjdk:25.0.5@sha256:914115543960af0c61ed0837a30c5af4d6ff1e2148e7699bdb882799a32ac72d
+    parameters:
       resource_class:
         type: string
         default: small
@@ -197,19 +208,19 @@ commands:
           use-nvm-cache: true
           nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
 
-  # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
+  # Use the JDK from the executor image, or the copy the Build job persisted to the workspace.
   install-java-jdk:
     description: Ensure JDK 17 is available
     steps:
       - run-build-step:
-          step-name: Install Java JDK
+          step-name: Use Java JDK 17
           command: dependencies_install_zulu17jdk
 
   install-java-jdk-25:
-    description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
+    description: Use the JDK 25 shipped on docker-builder-25
     steps:
       - run-build-step:
-          step-name: Install Java JDK 25
+          step-name: Use Java JDK 25
           command: dependencies_install_zulu25jdk
 
   ## Dependency groups
@@ -615,9 +626,13 @@ jobs:
   test-docker:
     <<: *job-defaults
     executor:
-      name: docker-builder
+      name: << parameters.jdk_executor >>
 
     parameters:
+      jdk_executor:
+        description: docker-builder for host JDK 17, docker-builder-25 for host JDK 25
+        type: string
+        default: docker-builder
       command:
         description: Command that will execute the docker tests
         type: string
@@ -1059,12 +1074,14 @@ workflows:
           name: T Integration SSL (host JDK 25, image JRE 17)
           command: bash test/run-docker-ssl-tests.sh
           host_jdk_for_tests: "25"
+          jdk_executor: docker-builder-25
           <<: *require-build-jre-17
       - test-docker:
           name: T Integration Ansible (host JDK 25, image JRE 17)
           command: bash test/run-docker-ansible-tests.sh
           pull_ansible_image: true
           host_jdk_for_tests: "25"
+          jdk_executor: docker-builder-25
           <<: *require-build-jre-17
       - test-machine:
           name: T Integration LDAP (host JDK 25, image JRE 17)
@@ -1080,6 +1097,7 @@ workflows:
           name: T Integration PAM (host JDK 25, image JRE 17)
           command: bash test/run-docker-pam-tests.sh
           host_jdk_for_tests: "25"
+          jdk_executor: docker-builder-25
           <<: *require-build-jre-17
       # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
