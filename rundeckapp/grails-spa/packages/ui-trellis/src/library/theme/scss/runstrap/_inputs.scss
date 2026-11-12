@@ -156,7 +156,7 @@
   .has-error {
     .form-control-feedback,
     .control-label {
-      color: var(--red-300);
+      color: var(--red-200);
     }
   }
   // RUN-4968: --warning-color is orange-500 in both themes, which reads as brown on the
@@ -174,7 +174,7 @@
   }
   // RUN-4968: same red-500 contrast gap as .control-label above (e.g. "Policy cannot be blank").
   .has-error .help-block {
-    color: var(--red-300);
+    color: var(--red-200);
   }
   .has-success .help-block {
     color: var(--success-color);
