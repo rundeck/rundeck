@@ -288,4 +288,18 @@ export default defineComponent({
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+*[data-color-theme="dark"] {
+  .pt-entity-autocomplete__error {
+    color: #e55b5b;
+  }
+
+  .p-autocomplete-option .entity-autocomplete-option-name {
+    color: var(--white, #fff);
+  }
+
+  .p-autocomplete-option .entity-autocomplete-option-secondary {
+    color: var(--grey-200);
+  }
+}
 </style>

@@ -417,6 +417,10 @@ export default defineComponent({
   }
 }
 
+*[data-color-theme="dark"] .settings-toggle__switch {
+  background-color: var(--background-color-lvl3);
+}
+
 .settings-panel__features {
   margin-bottom: var(--spacing-4, 16px);
 }
