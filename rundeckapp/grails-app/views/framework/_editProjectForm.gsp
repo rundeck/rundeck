@@ -155,6 +155,13 @@
                 <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
             </g:if>
         </div>
+        <div class="form-group">
+            <label for="minimumtokeepperjob">
+                <g:message code="execution.history.cleanup.retention.perJob" default="Minimum executions to keep per job. Default: 0 (disabled)"/>
+            </label>
+            <g:field name="minimumtokeepperjob" type="number" size="50" min="0" value="${minimumExecutionToKeepPerJob}" class="form-control"/>
+            <span class="help-block"><g:message code="execution.history.cleanup.retention.perJob.help" default="Keeps the most recent completed executions of each job, including deleted jobs, even when they are older than the days to keep. Ad hoc executions are only covered by the project-wide minimum."/></span>
+        </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
                 <g:if test="${enableCleanHistory}">

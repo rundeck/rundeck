@@ -1,6 +1,7 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import groovy.transform.CompileStatic
 import org.apache.commons.io.FileUtils
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
@@ -35,11 +36,13 @@ class ExecutionsCleanUp implements InterruptableJob {
         String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
         String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
         String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
+        String executionsToKeepPerJob = context.jobDetail.jobDataMap.get('executionsToKeepPerJob')
 
         logger.info("Cleaner parameters: Project name: ${project}")
         logger.info("Max days to keep: ${maxDaysToKeep}")
         logger.info("Minimum executions to keep: ${minimumExecutionToKeep}")
         logger.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
+        logger.info("Executions to keep per job: ${executionsToKeepPerJob ?: '0 (disabled)'}")
 
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
         FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
@@ -50,7 +53,8 @@ class ExecutionsCleanUp implements InterruptableJob {
             List execIdsToExclude = searchExecutions(frameworkService, executionService, jobSchedulerService, project,
                     maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
                     minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
-                    maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
+                    maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500,
+                    executionsToKeepPerJob ? Integer.parseInt(executionsToKeepPerJob) : 0)
             logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
             deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService, referencedExecutionDataProvider, reportService)
         }
@@ -146,24 +150,27 @@ class ExecutionsCleanUp implements InterruptableJob {
         return result
     }
 
+    /**
+     * Find the ids of the executions to delete in a project.
+     *
+     * @param project project name
+     * @param maxDaysToKeep executions completed more than this many days ago are candidates for deletion
+     * @param minimumExecutionToKeep minimum number of executions to keep in the whole project, 0 to disable
+     * @param maximumDeletionSize maximum number of execution ids to return
+     * @param executionsToKeepPerJob number of most recent completed executions to keep for each job, 0 to disable.
+     *        See {@link #findCandidateExecutionsKeepingPerJob}
+     * @return execution ids to delete
+     */
     private List<Long> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, JobSchedulerService jobSchedulerService, String project, Integer maxDaysToKeep,
-                                             Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500){
+                                             Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500,
+                                             Integer executionsToKeepPerJob = 0){
         List collectedExecutions= []
 
         logger.info("Searching All Executions")
 
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", null)
 
-        List<Long> jobList = Execution.executeQuery(
-            """select e.id from Execution e 
-               where e.project = :project 
-               and e.dateCompleted <= :endDate""",
-            [
-                project: project,
-                endDate: endDate
-            ],
-            [max: maximumDeletionSize]
-        )
+        List<Long> jobList = findCandidateExecutions(project, endDate, maximumDeletionSize, executionsToKeepPerJob ?: 0)
 
         if(null != jobList && 0 != jobList.size()) {
             List result = jobList
@@ -216,6 +223,138 @@ class ExecutionsCleanUp implements InterruptableJob {
             logger.info("No executions to delete")
         }
         return collectedExecutions
+    }
+
+    /**
+     * Find the ids of executions completed on or before the end date, up to the maximum deletion size.
+     *
+     * @param project project name
+     * @param endDate executions completed on or before this date are candidates
+     * @param maximumDeletionSize maximum number of ids to return
+     * @param executionsToKeepPerJob number of most recent completed executions to keep for each job, 0 to disable
+     * @return candidate execution ids
+     */
+    @CompileStatic
+    private List<Long> findCandidateExecutions(
+        String project,
+        Date endDate,
+        int maximumDeletionSize,
+        int executionsToKeepPerJob
+    ) {
+        if (executionsToKeepPerJob > 0) {
+            return findCandidateExecutionsKeepingPerJob(project, endDate, maximumDeletionSize, executionsToKeepPerJob)
+        }
+        return (List<Long>) Execution.executeQuery(
+            """select e.id from Execution e 
+               where e.project = :project 
+               and e.dateCompleted <= :endDate""",
+            [
+                project: project,
+                endDate: endDate
+            ],
+            [max: maximumDeletionSize]
+        )
+    }
+
+    /**
+     * Find candidate execution ids while keeping the most recent completed executions of each job.
+     * <p>
+     * Executions are grouped by {@code jobUuid}, which is kept when a job is deleted, so the executions of a
+     * deleted job are protected too. Executions without a {@code jobUuid} (ad hoc commands) have no job, so only
+     * the project-wide minimum applies to them.
+     * </p>
+     * <p>
+     * "Most recent" means ordered by {@code dateCompleted}, then by {@code id} to break ties. Running executions
+     * are not counted. The protected executions are excluded in the queries, not filtered after a limited fetch,
+     * so a batch full of protected executions cannot stop the cleanup. Every query filters on the job uuid and
+     * project, so it can use the {@code (job_uuid, project, date_completed)} index.
+     * </p>
+     *
+     * @param project project name
+     * @param endDate executions completed on or before this date are candidates
+     * @param maximumDeletionSize maximum number of ids to return
+     * @param executionsToKeepPerJob number of most recent completed executions to keep for each job, must be &gt; 0
+     * @return candidate execution ids
+     */
+    @CompileStatic
+    private List<Long> findCandidateExecutionsKeepingPerJob(
+        String project,
+        Date endDate,
+        int maximumDeletionSize,
+        int executionsToKeepPerJob
+    ) {
+        List<Long> candidates = []
+        candidates.addAll((List<Long>) Execution.executeQuery(
+            """select e.id from Execution e
+               where e.project = :project
+               and e.dateCompleted <= :endDate
+               and e.jobUuid is null""",
+            [project: project, endDate: endDate],
+            [max: maximumDeletionSize]
+        ))
+        if (candidates.size() >= maximumDeletionSize) {
+            return candidates
+        }
+        List<String> jobUuids = (List<String>) Execution.executeQuery(
+            """select distinct e.jobUuid from Execution e
+               where e.project = :project
+               and e.dateCompleted <= :endDate
+               and e.jobUuid is not null""",
+            [project: project, endDate: endDate]
+        )
+        logger.info("found ${jobUuids.size()} jobs with executions older than the retention period")
+        for (String jobUuid : jobUuids) {
+            int remaining = maximumDeletionSize - candidates.size()
+            if (remaining <= 0 || wasInterrupted) {
+                break
+            }
+            candidates.addAll(findJobCandidateExecutions(project, jobUuid, endDate, executionsToKeepPerJob, remaining))
+        }
+        return candidates
+    }
+
+    /**
+     * Find candidate execution ids of one job, excluding its most recent completed executions.
+     *
+     * @param project project name
+     * @param jobUuid job uuid
+     * @param endDate executions completed on or before this date are candidates
+     * @param executionsToKeep number of most recent completed executions to keep, must be &gt; 0
+     * @param max maximum number of ids to return
+     * @return candidate execution ids, empty if the job has no more than {@code executionsToKeep} completed executions
+     */
+    @CompileStatic
+    private List<Long> findJobCandidateExecutions(
+        String project,
+        String jobUuid,
+        Date endDate,
+        int executionsToKeep,
+        int max
+    ) {
+        //the oldest execution that is kept: the Nth most recent completed execution of the job
+        List cutoff = Execution.executeQuery(
+            """select e.dateCompleted, e.id from Execution e
+               where e.jobUuid = :jobUuid
+               and e.project = :project
+               and e.dateCompleted is not null
+               order by e.dateCompleted desc, e.id desc""",
+            [jobUuid: jobUuid, project: project],
+            [offset: executionsToKeep - 1, max: 1]
+        )
+        if (!cutoff) {
+            return []
+        }
+        Object[] row = (Object[]) cutoff[0]
+        return (List<Long>) Execution.executeQuery(
+            """select e.id from Execution e
+               where e.jobUuid = :jobUuid
+               and e.project = :project
+               and e.dateCompleted <= :endDate
+               and (e.dateCompleted < :cutoffDate
+                    or (e.dateCompleted = :cutoffDate and e.id < :cutoffId))""",
+            [jobUuid: jobUuid, project: project, endDate: endDate, cutoffDate: (Date) row[0], cutoffId: (Long) row[1]],
+            [max: max]
+        )
     }
 
     private int totalAllExecutions(String project){

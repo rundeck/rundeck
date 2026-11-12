@@ -12,6 +12,10 @@ class ExecutionCleanerConfigImpl implements ExecutionCleanerConfig {
     String cronExpression
     int minimumExecutionToKeep
     int maximumDeletionSize
+    /**
+     * Number of most recent completed executions to keep for each job, 0 to disable
+     */
+    int executionsToKeepPerJob
 
     /**
      * Build with a closure
@@ -47,6 +51,15 @@ class ExecutionCleanerConfigImpl implements ExecutionCleanerConfig {
 
         Builder maximumDeletionSize(int val) {
             impl.maximumDeletionSize = val
+            return this
+        }
+
+        /**
+         * @param val number of most recent completed executions to keep for each job, 0 to disable
+         * @return this builder
+         */
+        Builder executionsToKeepPerJob(int val) {
+            impl.executionsToKeepPerJob = val
             return this
         }
 

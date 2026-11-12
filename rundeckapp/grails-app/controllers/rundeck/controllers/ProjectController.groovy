@@ -964,6 +964,9 @@ Authorization required: `create` for resource type `project`
                         minimumExecutionToKeep(
                             FrameworkService.tryParseInt(config["${propsPrefix}.retention.minimum"]).orElse(0)
                         )
+                        executionsToKeepPerJob(
+                            FrameworkService.tryParseInt(config["${propsPrefix}.retention.perJob"]).orElse(0)
+                        )
                         maximumDeletionSize(
                             FrameworkService.tryParseInt(config["${propsPrefix}.batch"]).orElse(500)
                         )
@@ -1167,6 +1170,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             "project.execution.history.cleanup.enabled": "true",
             "project.execution.history.cleanup.retention.days": "60",
             "project.execution.history.cleanup.retention.minimum": "50",
+            "project.execution.history.cleanup.retention.perJob": "0",
             "project.execution.history.cleanup.batch": "500",
             "project.execution.history.cleanup.schedule": "0 0 0 1/1 * ? *",
             "project.jobs.gui.groupExpandLevel": "1",
