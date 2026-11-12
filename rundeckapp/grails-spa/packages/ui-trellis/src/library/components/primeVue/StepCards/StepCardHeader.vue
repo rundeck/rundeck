@@ -332,6 +332,11 @@ export default defineComponent({
     color: var(--white, #fff);
   }
 
+  .tag-workflow {
+    background-color: var(--grey-600);
+    color: var(--white, #fff);
+  }
+
   .p-button-secondary {
     background: var(--grey-900);
     border: 1px solid var(--grey-300);
