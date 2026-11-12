@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.jobs.*
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
+import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import spock.lang.Specification
 
@@ -66,6 +67,32 @@ class JobLifecycleComponentServiceSpec extends Specification{
         result[0].name == "newTestOption"
         result[1].name == "newTestOption2"
 
+    }
+
+    def "merge persist event keeps job execution settings"(){
+        given:
+        def event = JobPersistEventImpl.builder()
+                .jobName('job1')
+                .projectName('proj1')
+                .options(new TreeSet<JobOption>())
+                .timeout('2h')
+                .retry('3')
+                .nodeThreadcount('4')
+                .multipleExecutions(true)
+                .maxMultipleExecutions('5')
+                .build()
+
+        when:
+        JobPersistEvent result = JobLifecycleComponentService.mergeEvent(new JobLifecycleStatusImplTest(), event)
+
+        then:
+        result.jobName == 'job1'
+        result.options*.name == ['newTestOption', 'newTestOption2']
+        result.timeout == '2h'
+        result.retry == '3'
+        result.nodeThreadcount == '4'
+        result.multipleExecutions
+        result.maxMultipleExecutions == '5'
     }
 
     def "merge options with new values, with no replace"(){
