@@ -5,7 +5,11 @@ import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import org.rundeck.app.AppConstants
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.logging.LogEventControl
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
+import com.dtolabs.rundeck.server.plugins.logging.KeyValueDataLogFilterPlugin
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -31,6 +35,7 @@ import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput
+import com.dtolabs.rundeck.core.execution.workflow.NodeFirstWorkflowExecutor
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
@@ -771,6 +776,55 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         newCtxt.dataContext['secureOption'] == ['test2': '']
         newCtxt.dataContext['option'] == ['test2': '']
         newCtxt.privateDataContext['option'] == ['test1': '']
+    }
+
+    def "createJobReferenceContext writes an unreadable secure option default to the job log"() {
+        given:
+        def listener = Mock(com.dtolabs.rundeck.core.execution.ExecutionListener)
+        def context = ExecutionContextImpl.builder()
+                .threadCount(1)
+                .keepgoing(false)
+                .dataContext(['option': [:], 'secureOption': [:], 'job': ['execid': '123']])
+                .privateDataContext(['option': [:]])
+                .user('aUser')
+                .executionListener(listener)
+                .build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ),
+        )
+        se.addToOptions(new Option(
+                name: 'test1', enforced: false, required: false, secureInput: true, defaultStoragePath: 'keys/test1'
+        ))
+        null != se.save()
+
+        def tree = Mock(KeyStorageTree)
+        tree.hasPassword('keys/test1') >> { throw new NullPointerException('plugin boom') }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
+        }
+        service.fileUploadService = Mock(FileUploadService)
+        service.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> tree
+        }
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+        service.createJobReferenceContext(se, null, context, [] as String[], null, null, null, null, null, null, false, false, false, false)
+
+        then: "the job continues, and the failure is written to the job log as a warning"
+        noExceptionThrown()
+        1 * listener.log(com.dtolabs.rundeck.core.Constants.WARN_LEVEL, { String m ->
+            m.contains("Option 'test1'") && m.contains('keys/test1') && m.contains('plugin boom')
+        })
     }
 
     def "createJobReferenceContext global vars"() {
@@ -2763,6 +2817,109 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         'keys/test/password' | false           | true
         'keys/test/password' | true            | false
 
+    }
+
+    def "can read storage password with unchecked plugin error"() {
+        given:
+        AuthContext context = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+        def tree = Mock(KeyStorageTree)
+        service.storageService.storageTreeWithContext(context) >> tree
+        tree.hasPassword(path) >> { throw plugError }
+
+        when: "failIfMissing is false"
+        def result = service.canReadStoragePassword(context, path, false)
+
+        then: "the error is treated as not readable"
+        !result
+
+        when: "failIfMissing is true"
+        service.canReadStoragePassword(context, path, true)
+
+        then: "the exception names the path and the plugin error, and keeps the cause"
+        ExecutionServiceException e = thrown()
+        e.message.contains(path)
+        e.message.contains('Key Storage plugin error (NullPointerException)')
+        e.message.contains(expectedDetail)
+        e.cause.is(plugError)
+
+        where:
+        path                 | plugError                              | expectedDetail
+        'keys/test/password' | new NullPointerException('plugin boom') | 'plugin boom'
+        'keys/test/password' | new NullPointerException()              | 'no message'
+    }
+
+    def "loadSecureOptionStorageDefaults unchecked plugin error from #failingCall"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocRemoteString: 'test buddy')]
+                ),
+                options: [
+                        new Option(
+                                name: 'opt1',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/opt1',
+                                required: true
+                        ),
+                        new Option(
+                                name: 'opt2',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/opt2',
+                                required: false
+                        )
+                ]
+        )
+        def authContext = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+        def tree = Mock(KeyStorageTree)
+        service.storageService.storageTreeWithContext(authContext) >> tree
+        tree.hasPassword('keys/opt2') >> true
+        tree.readPassword('keys/opt2') >> 'value2'.bytes
+        if (failingCall == 'hasPassword') {
+            tree.hasPassword('keys/opt1') >> { throw plugError }
+        } else {
+            tree.hasPassword('keys/opt1') >> true
+            tree.readPassword('keys/opt1') >> { throw plugError }
+        }
+
+        when: "failIfMissingRequired is false"
+        Map secureOpts = [:]
+        List<String> jobLogWarnings = []
+        service.loadSecureOptionStorageDefaults(
+                job, [:], secureOpts, authContext, false, null, null, null, { String msg -> jobLogWarnings << msg }
+        )
+
+        then: "the failing option is left unset, the other default still loads, and the failure goes to the job log"
+        noExceptionThrown()
+        !secureOpts.containsKey('opt1')
+        secureOpts['opt2'] == 'value2'
+        jobLogWarnings.size() == 1
+        jobLogWarnings[0].contains("Option 'opt1'")
+        jobLogWarnings[0].contains('keys/opt1')
+        jobLogWarnings[0].contains('Key Storage plugin error (NullPointerException)')
+        jobLogWarnings[0].contains(expectedDetail)
+
+        when: "failIfMissingRequired is true"
+        service.loadSecureOptionStorageDefaults(job, [:], [:], authContext, true)
+
+        then: "the required option fails with its name, the path and the plugin error"
+        ExecutionServiceException e = thrown()
+        e.message.contains("Required option 'opt1'")
+        e.message.contains('keys/opt1')
+        e.message.contains('Key Storage plugin error (NullPointerException)')
+        e.message.contains(expectedDetail)
+
+        where:
+        failingCall   | plugError                               | expectedDetail
+        'hasPassword' | new NullPointerException('plugin boom') | 'plugin boom'
+        'hasPassword' | new NullPointerException()              | 'no message'
+        'readPassword' | new NullPointerException('plugin boom') | 'plugin boom'
+        'readPassword' | new NullPointerException()              | 'no message'
     }
 
     def "list now running project"() {
@@ -8174,6 +8331,98 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then: "it returns a success result"
         result instanceof StepExecutionResultImpl
         result.success
+    }
+
+    def "runSubworkflowExecutionItem maps the latest nested Key/Value data to the parent step when success is #success"() {
+        given: "a subworkflow with an earlier step value and a later aggregate Key/Value capture"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+        def nestedOutput = new DataOutput(ContextView.global())
+        nestedOutput.addOutput(
+                ContextView.step(3),
+                'data',
+                ['rba-mark': 'RBA_MARK node=earlier ts=5122']
+        )
+        def filter = new KeyValueDataLogFilterPlugin(
+                regex: '.*(RBA_MARK\\s+.*?ts=\\d+).*',
+                name: 'rba-mark',
+                logData: false,
+                invalidKeyPattern: null
+        )
+        def filterContext = Mock(PluginLoggingContext) {
+            getOutputContext() >> nestedOutput
+        }
+        def event = Mock(LogEventControl) {
+            getMessage() >> 'runner output: RBA_MARK node=test ts=5122'
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+        filter.init(filterContext)
+        filter.handleEvent(filterContext, event)
+        filter.complete(filterContext)
+        nestedOutput.addOutput(ContextView.step(7), 'result', [status: 'captured'])
+        def stepFailures = success
+                ? [:]
+                : [1: new StepExecutionResultImpl(null, StepFailureReason.PluginFailed, 'nested failed')]
+        def nestedResult = Mock(WorkflowExecutionResult) {
+            isSuccess() >> success
+            getSharedContext() >> nestedOutput.sharedContext
+            getStepFailures() >> stepFailures
+        }
+        def workflowResult = [result: nestedResult, interrupt: false]
+
+        and: "a parent context with an output context"
+        def framework = Mock(Framework) {
+            getWorkflowExecutionService() >> Mock(WorkflowExecutionService)
+        }
+        def parentOutput = new DataOutput(ContextView.step(3))
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> Mock(ExecutionListener)
+            getOutputContext() >> parentOutput
+        }
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                workflowResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> workflowResult
+        }
+
+        when:
+        def result = service.runSubworkflowExecutionItem(
+                context,
+                runnerItem,
+                { FailureReason reason, String msg -> new StepExecutionResultImpl(null, reason, msg) },
+                { new StepExecutionResultImpl() }
+        )
+        def combinedResultData = new WFSharedContext()
+        new NodeFirstWorkflowExecutor(Mock(IFramework)).combineResultData(
+                3,
+                parentOutput,
+                combinedResultData,
+                result
+        )
+
+        then:
+        result.success == success
+        parentOutput.sharedContext.getData(ContextView.global()) == null
+        parentOutput.sharedContext.getData(ContextView.step(3)).getData() == [
+                data: ['rba-mark': 'RBA_MARK node=test ts=5122']
+        ]
+        parentOutput.sharedContext.getData(ContextView.step(7)) == null
+        combinedResultData.getData(ContextView.global()).getData() == [
+                data: ['rba-mark': 'RBA_MARK node=test ts=5122']
+        ]
+
+        where:
+        success << [true, false]
     }
 
 

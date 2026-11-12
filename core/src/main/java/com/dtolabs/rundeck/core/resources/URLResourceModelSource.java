@@ -322,10 +322,17 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
         }
     }
 
+    /**
+     * @return description with the URL's protocol, host, port and path only; the user info and query string
+     * can hold credentials and must not reach logs
+     */
     @Override
     public String toString() {
+        final URL url = configuration.nodesUrl;
+        final String safeUrl = null == url ? null : url.getProtocol() + "://" + url.getHost()
+                                                    + (url.getPort() < 0 ? "" : ":" + url.getPort()) + url.getPath();
         return "URLResourceModelSource{" +
-               "URL='" + configuration.nodesUrl + '\'' +
+               "URL='" + safeUrl + '\'' +
                '}';
     }
 }

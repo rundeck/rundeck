@@ -1,11 +1,27 @@
 package com.dtolabs.rundeck.core.execution.script
 
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import spock.lang.Specification
 
 import static com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle.UNIX
 import static com.dtolabs.rundeck.core.execution.script.ScriptfileUtils.LineEndingStyle.WINDOWS
 
 class ScriptfileUtilsSpec extends Specification {
+    def "line ending style for #family is #expected"() {
+        given:
+            def node = new NodeEntryImpl("test")
+            node.osFamily = family
+        expect:
+            ScriptfileUtils.lineEndingStyleForNode(node) == expected
+        where:
+            family   | expected
+            'Linux'  | UNIX
+            'linux'  | UNIX
+            'LINUX'  | UNIX
+            'cygwin' | UNIX
+            'Cygwin' | UNIX
+    }
+
     def "writeScriptFile inputs"() {
         given:
             def file = File.createTempFile("test", ".sh")

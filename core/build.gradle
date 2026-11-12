@@ -108,6 +108,9 @@ dependencies {
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
+    //log4j2 binding for tests that capture slf4j log output
+    testImplementation "org.apache.logging.log4j:log4j-core:${project.'log4j2.version'}"
+    testRuntimeOnly "org.apache.logging.log4j:log4j-slf4j2-impl:${project.'log4j2.version'}"
     testImplementation "com.squareup.retrofit2:retrofit-mock:3.0.0"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "cglib:cglib-nodep:${cglibNoDepVersion}"
