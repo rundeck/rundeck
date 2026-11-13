@@ -108,14 +108,20 @@ def stopAllWorkers = { String trigger ->
 }
 
 gradle.taskGraph.afterTask { Task task ->
+    // Expire all idle workers, not just `-Dbase.dir=` Grails tasks: DaemonGroovyCompiler also keys
+    // worker compatibility on each module's Groovy/AST ClassLoaderStructure (VisitableURLClassLoader$Spec),
+    // so non-Grails subprojects also accumulate non-reusable idle workers during check/compileTestGroovy.
     if (task instanceof GroovyCompile && task.didWork) {
         expireIdleWorkers(task.path)
     }
 }
 
 gradle.taskGraph.beforeTask { Task task ->
+    // Use idle-only expiration (rather than stopAllWorkers) so any unrelated parallel task still
+    // compiling when bootRun starts keeps its active worker intact, while all completed compile
+    // workers (both SESSION Groovy and DAEMON Java) in idleClients are reclaimed.
     if (task.name == 'bootRun') {
-        stopAllWorkers("beforeTask ${task.path}")
+        expireIdleWorkers("beforeTask ${task.path}")
     }
 }
 
