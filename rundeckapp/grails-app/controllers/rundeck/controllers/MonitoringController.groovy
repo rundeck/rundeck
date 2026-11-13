@@ -1,211 +1,141 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.config.Features
 import grails.converters.JSON
-import io.micrometer.core.instrument.MeterRegistry
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
+import org.rundeck.core.auth.AuthConstants
+import rundeck.services.MonitoringEndpointService
+import rundeck.services.feature.FeatureService
+
+import javax.security.auth.Subject
 
 /**
- * Controller wrapper for monitoring endpoints at /monitoring/*.
- * 
- * Provides config-based enable/disable control for monitoring endpoints.
- * Uses the same pattern as LegacyMetricsController - simple and proven.
- * 
- * Default: enabled=true (monitoring endpoints ON)
- * Can be disabled: rundeck.metrics.monitoring.enabled=false
- * 
- * When enabled, calls Spring Boot Actuator beans (MeterRegistry, PrometheusMeterRegistry) directly.
- * When disabled, returns 404 with helpful message.
+ * Web endpoints at {@code /monitoring/*}.
+ *
+ * Health and readiness stay anonymous so Kubernetes probes can call them.
+ * Metrics, Prometheus, info, and the thread dump are anonymous unless
+ * {@code rundeck.feature.monitoringAuth.enabled} is true. Then they require
+ * system read or admin, the same check as {@code /api/{version}/monitoring/*}.
+ *
+ * Disable every endpoint with {@code rundeck.metrics.monitoring.enabled=false}.
  */
 class MonitoringController {
-    
-    @Autowired
-    ApplicationContext applicationContext
-    
+
+    private static final Set<String> AUTH_GATED_ENDPOINTS = ['metrics', 'prometheus', 'info', 'threaddump'] as Set
+
+    MonitoringEndpointService monitoringEndpointService
+    FeatureService featureService
+    def rundeckAuthContextProcessor
+
     /**
-     * /monitoring/metrics - List of available metrics
+     * {@code /monitoring/metrics} — metric names.
+     * Anonymous unless {@code rundeck.feature.monitoringAuth.enabled} is true.
      */
     def metrics() {
-        log.debug("MonitoringController.metrics() - checking config")
-        
-        if (!isMonitoringEnabled()) {
-            log.info("Monitoring endpoint /monitoring/metrics accessed but disabled via config")
-            renderDisabled('metrics')
-            return
-        }
-        
-        try {
-            MeterRegistry meterRegistry = applicationContext.getBean(MeterRegistry)
-            def metricNames = meterRegistry.meters.collect { it.id.name }.unique().sort()
-            log.debug("Returning ${metricNames.size()} metric names")
-            
-            render([names: metricNames] as JSON)
-        } catch (Exception e) {
-            log.error("Error getting metrics: ${e.message}", e)
-            response.status = 500
-            render([error: "Failed to get metrics: ${e.message}"] as JSON)
-        }
+        renderEndpoint('metrics')
     }
-    
+
     /**
-     * /monitoring/prometheus - Prometheus scrape format
+     * {@code /monitoring/prometheus} — Prometheus scrape.
+     * Anonymous unless {@code rundeck.feature.monitoringAuth.enabled} is true.
      */
     def prometheus() {
-        log.debug("MonitoringController.prometheus() - checking config")
-        
-        if (!isMonitoringEnabled()) {
-            log.info("Monitoring endpoint /monitoring/prometheus accessed but disabled via config")
-            renderDisabled('prometheus')
-            return
-        }
-        
-        try {
-            // Get Prometheus registry bean by name (avoids classloader issues)
-            // Spring Boot auto-configures this bean when micrometer-registry-prometheus is on the classpath
-            def promRegistry = applicationContext.getBean('prometheusMeterRegistry')
-            def scrapeOutput = promRegistry.scrape()
-            log.debug("Returning Prometheus scrape output (${scrapeOutput.length()} bytes)")
-            
-            response.contentType = 'text/plain; version=0.0.4'
-            response.characterEncoding = 'UTF-8'
-            render scrapeOutput
-        } catch (org.springframework.beans.factory.NoSuchBeanDefinitionException e) {
-            log.error("Prometheus registry bean not found - Spring Boot may not have auto-configured it: ${e.message}")
-            response.status = 503
-            render([error: "Prometheus metrics not available - bean not configured"] as JSON)
-        } catch (Exception e) {
-            log.error("Error getting Prometheus metrics: ${e.message}", e)
-            response.status = 503
-            render([error: "Prometheus metrics not available: ${e.message}"] as JSON)
-        }
+        renderEndpoint('prometheus')
     }
-    
+
     /**
-     * /monitoring/health - Simple health check
+     * {@code /monitoring/health} — anonymous liveness body.
      */
     def health() {
-        log.debug("MonitoringController.health() - checking config")
-        
-        if (!isMonitoringEnabled()) {
-            log.info("Monitoring endpoint /monitoring/health accessed but disabled via config")
-            renderDisabled('health')
-            return
-        }
-        
-        render([status: 'UP'] as JSON)
+        renderEndpoint('health')
     }
-    
+
     /**
-     * /monitoring/health/readiness - Readiness probe for Kubernetes/test framework
-     * Returns readiness state from Spring Boot AvailabilityState
+     * {@code /monitoring/health/readiness} — anonymous readiness probe.
      */
     def readiness() {
-        log.debug("MonitoringController.readiness() - checking config")
-        
-        if (!isMonitoringEnabled()) {
-            log.info("Monitoring endpoint /monitoring/health/readiness accessed but disabled via config")
+        if (!monitoringEndpointService.monitoringEnabled) {
+            log.info('Monitoring endpoint /monitoring/health/readiness accessed but disabled via config')
             renderDisabled('health/readiness')
             return
         }
-        
-        try {
-            // Get ReadinessState from Spring Boot AvailabilityState
-            // This is set by RundeckReadinessHealthIndicatorService when rundeck.bootstrap fires
-            def readinessState = org.springframework.boot.availability.ReadinessState.ACCEPTING_TRAFFIC
-            def applicationAvailability = applicationContext.getBean(org.springframework.boot.availability.ApplicationAvailability)
-            def currentReadiness = applicationAvailability.getReadinessState()
-            
-            if (currentReadiness == readinessState) {
-                render([status: 'UP'] as JSON)
-            } else {
-                response.status = 503
-                render([status: 'DOWN', readiness: currentReadiness.toString()] as JSON)
-            }
-        } catch (Exception e) {
-            // If ApplicationAvailability bean not available, assume ready (backward compatibility)
-            log.debug("ApplicationAvailability bean not available, assuming ready: ${e.message}")
-            render([status: 'UP'] as JSON)
-        }
+        renderPayload(monitoringEndpointService.readinessPayload())
     }
-    
+
     /**
-     * /monitoring/info - Application information
+     * {@code /monitoring/info} — application name and version.
+     * Anonymous unless {@code rundeck.feature.monitoringAuth.enabled} is true.
      */
     def info() {
-        log.debug("MonitoringController.info() - checking config")
-        
-        if (!isMonitoringEnabled()) {
-            log.info("Monitoring endpoint /monitoring/info accessed but disabled via config")
-            renderDisabled('info')
-            return
-        }
-        
-        render([
-            app: [
-                name: grailsApplication.config.getProperty('info.app.name', String, 'rundeck'),
-                version: grailsApplication.config.getProperty('info.app.version', String, 'unknown')
-            ]
-        ] as JSON)
+        renderEndpoint('info')
     }
-    
+
     /**
-     * /monitoring/threaddump - Thread dump in text format
+     * {@code /monitoring/threaddump} — JVM thread dump.
+     * Anonymous unless {@code rundeck.feature.monitoringAuth.enabled} is true.
      */
     def threaddump() {
-        log.debug("MonitoringController.threaddump() - checking config")
-        
-        if (!isMonitoringEnabled()) {
-            log.info("Monitoring endpoint /monitoring/threaddump accessed but disabled via config")
-            renderDisabled('threaddump')
+        renderEndpoint('threaddump')
+    }
+
+    /**
+     * Render one monitoring endpoint, or the disabled response when monitoring is off.
+     * Data endpoints check {@code monitoringAuth} before rendering.
+     */
+    private void renderEndpoint(String endpoint) {
+        log.debug("MonitoringController.${endpoint}() - checking config")
+        if (AUTH_GATED_ENDPOINTS.contains(endpoint) && !allowDataEndpoint()) {
             return
         }
-        
-        try {
-            // Get thread dump from JVM
-            def threadMXBean = java.lang.management.ManagementFactory.getThreadMXBean()
-            def threads = threadMXBean.dumpAllThreads(true, true)
-            
-            def output = new StringBuilder()
-            threads.each { threadInfo ->
-                output.append(threadInfo.toString()).append("\n\n")
-            }
-            
-            log.debug("Returning thread dump (${threads.length} threads)")
-            
-            response.contentType = 'text/plain;charset=UTF-8'
-            response.characterEncoding = 'UTF-8'
-            render output.toString()
-        } catch (Exception e) {
-            log.error("Error getting thread dump: ${e.message}", e)
-            response.status = 500
-            render([error: "Failed to retrieve thread dump: ${e.message}"] as JSON)
+        if (!monitoringEndpointService.monitoringEnabled) {
+            log.info("Monitoring endpoint /monitoring/${endpoint} accessed but disabled via config")
+            renderDisabled(endpoint)
+            return
         }
+        renderPayload(monitoringEndpointService.payloadFor(endpoint))
     }
-    
+
     /**
-     * Check if monitoring endpoints are enabled via config.
-     * Same pattern as LegacyMetricsController - reads from grailsApplication.config.
+     * @return true when the caller may read a data endpoint
      */
-    private boolean isMonitoringEnabled() {
-        grailsApplication.config.getProperty(
-            'rundeck.metrics.monitoring.enabled',
-            Boolean,
-            true  // Default: ON
+    private boolean allowDataEndpoint() {
+        if (!featureService.featurePresent(Features.MONITORING_AUTH, false)) {
+            return true
+        }
+        def subject = session?.subject
+        if (!(subject instanceof Subject)) {
+            redirect(controller: 'user', action: 'login')
+            return false
+        }
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(subject)
+        boolean allowed = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
         )
+        if (!allowed) {
+            response.status = 403
+            render([error: 'Not authorized'] as JSON)
+            return false
+        }
+        return true
     }
-    
+
+    private void renderPayload(MonitoringEndpointService.Payload payload) {
+        response.status = payload.status
+        render(text: payload.body, contentType: payload.contentType, encoding: 'UTF-8')
+    }
+
     /**
-     * Render 404 with helpful message when monitoring is disabled.
-     * Same pattern as LegacyMetricsController.
+     * Render 404 when monitoring is disabled.
      */
     private void renderDisabled(String endpoint) {
         response.status = 404
         render([
-            error: 'Monitoring endpoints are disabled',
+            error   : 'Monitoring endpoints are disabled',
             endpoint: endpoint,
-            enable: 'Set rundeck.metrics.monitoring.enabled=true to re-enable',
+            enable  : 'Set rundeck.metrics.monitoring.enabled=true to re-enable',
             location: 'rundeck-config.properties or System Config'
         ] as JSON)
     }
 }
-

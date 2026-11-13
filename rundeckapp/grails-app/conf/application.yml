@@ -380,6 +380,10 @@ rundeck:
             enabled: true
         fileUploadPlugin:
             enabled: true
+        # Off by default so in-cluster scrapes of /monitoring/prometheus keep working.
+        # Set rundeck.feature.monitoringAuth.enabled=true to require system read or admin.
+        monitoringAuth:
+            enabled: false
         vueKeyStorage:
             enabled: true
     health:

@@ -135,7 +135,8 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/health',         access: ['permitAll']],
         [pattern: '/actuator/**',    access: ['permitAll']],
         [pattern: '/actuator/health/**',    access: ['permitAll']],
-        [pattern: '/monitoring/**',  access: ['permitAll']], // Spring Boot Actuator endpoints
+        // Anonymous by default. rundeck.feature.monitoringAuth.enabled locks data paths in MonitoringController.
+        [pattern: '/monitoring/**',  access: ['permitAll']],
         [pattern: '/.well-known/**', access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']] // LAST: Catch-all
 ]
