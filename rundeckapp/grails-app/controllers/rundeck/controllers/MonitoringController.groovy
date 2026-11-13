@@ -111,7 +111,7 @@ class MonitoringController {
         boolean allowed = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
             authContext,
             AuthConstants.RESOURCE_TYPE_SYSTEM,
-            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
         )
         if (!allowed) {
             response.status = 403
