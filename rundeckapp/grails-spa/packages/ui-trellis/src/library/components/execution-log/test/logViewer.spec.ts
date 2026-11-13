@@ -2,6 +2,7 @@ import { shallowMount, VueWrapper, flushPromises } from "@vue/test-utils";
 import { nextTick } from "vue";
 import LogViewer from "../logViewer.vue";
 import { EventBus } from "../../../utilities/vueEventBus";
+import { mockStatsEntries } from "./mocks/logViewerEntries";
 
 // Mock the CancelToken
 jest.mock("@esfx/canceltoken", () => ({
@@ -39,8 +40,25 @@ const findEventHandler = (eventBus: { on: jest.Mock }, eventName: string) => {
   return call ? call[1] : undefined;
 };
 
+interface MountOptions {
+  props?: Record<string, unknown>;
+}
+
+/** Shape of the execution output store entry the viewer reads from */
+interface MockViewer {
+  init: jest.Mock;
+  getOutput: jest.Mock;
+  getEntriesFiltered: jest.Mock;
+  entries: Array<{ node: string; log: string }>;
+  completed: boolean;
+  execCompleted: boolean;
+  error?: string;
+  size?: number;
+  offset?: number;
+}
+
 // Setup function to mount the component with given props
-const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
+const createWrapper = (options: MountOptions = {}): VueWrapper<any> => {
   return shallowMount(LogViewer, {
     props: {
       executionId: "test-exec-123",
@@ -50,12 +68,9 @@ const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
       theme: "dark",
       maxLogSize: 3145728,
       useUserSettings: false,
-      ...props,
+      ...options.props,
     },
     global: {
-      mocks: {
-        $t: (key: string) => key,
-      },
       stubs: {
         RdDrawer: {
           template: "<div><slot></slot></div>",
@@ -67,7 +82,7 @@ const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
         LogNodeChunk: {
           name: "LogNodeChunk",
           props: ["entries"],
-          emits: ["line-select", "jumped", "follow-change"],
+          emits: ["line-select", "jumped", "follow-change", "content-size"],
           template: `
             <div data-testid="log-node-chunk">
               <div
@@ -81,14 +96,13 @@ const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
           `,
         },
       },
-      ...options,
     },
   });
 };
 
 describe("LogViewer", () => {
   let mockEventBus: typeof EventBus;
-  let mockViewer: any;
+  let mockViewer: MockViewer;
 
   beforeEach(() => {
     // Initialize mock
@@ -105,7 +119,9 @@ describe("LogViewer", () => {
     } as unknown as typeof EventBus;
 
     // Mock window._rundeck
-    (window as any)._rundeck = {
+    (
+      window as unknown as { _rundeck: { eventBus: typeof EventBus } }
+    )._rundeck = {
       eventBus: mockEventBus,
     };
 
@@ -113,6 +129,7 @@ describe("LogViewer", () => {
     mockViewer = {
       init: jest.fn().mockResolvedValue(undefined),
       getOutput: jest.fn().mockResolvedValue({}),
+      getEntriesFiltered: jest.fn().mockReturnValue([]),
       entries: [],
       completed: true,
       execCompleted: true,
@@ -127,19 +144,21 @@ describe("LogViewer", () => {
 
   describe("Toolbar Visibility", () => {
     it("renders toolbar when showSettings is true", () => {
-      const wrapper = createWrapper({ showSettings: true });
+      const wrapper = createWrapper({ props: { showSettings: true } });
       expect(findByTestId(wrapper, "log-viewer-toolbar").exists()).toBe(true);
     });
 
     it("does not render toolbar when showSettings is false", () => {
-      const wrapper = createWrapper({ showSettings: false });
+      const wrapper = createWrapper({ props: { showSettings: false } });
       expect(findByTestId(wrapper, "log-viewer-toolbar").exists()).toBe(false);
     });
   });
 
   describe("Theme Styling", () => {
     it("applies theme class from config", () => {
-      const wrapper = createWrapper({ config: { theme: "light" } as any });
+      const wrapper = createWrapper({
+        props: { config: { theme: "light" } },
+      });
       const logViewer = findByTestId(wrapper, "log-viewer");
       expect(logViewer.classes()).toContain("execution-log--light");
     });
@@ -175,7 +194,7 @@ describe("LogViewer", () => {
     it("displays whale emoji warning when log exceeds maxLogSize", async () => {
       mockViewer.size = 4000000;
       mockViewer.execCompleted = true;
-      const wrapper = createWrapper({ maxLogSize: 3145728 });
+      const wrapper = createWrapper({ props: { maxLogSize: 3145728 } });
       await flushPromises();
 
       const warning = findByTestId(wrapper, "log-viewer-oversize-warning");
@@ -188,7 +207,7 @@ describe("LogViewer", () => {
   describe("User Interactions", () => {
     describe("Settings Drawer", () => {
       it("opens settings drawer when user clicks Settings button", async () => {
-        const wrapper = createWrapper({ showSettings: true });
+        const wrapper = createWrapper({ props: { showSettings: true } });
         const settingsBtn = findByTestId(wrapper, "log-viewer-settings-btn");
 
         await settingsBtn.trigger("click");
@@ -201,8 +220,10 @@ describe("LogViewer", () => {
 
       it("changes theme class when user changes theme dropdown", async () => {
         const wrapper = createWrapper({
-          showSettings: true,
-          useUserSettings: true,
+          props: {
+            showSettings: true,
+            useUserSettings: true,
+          },
         });
         const themeSelect = findByTestId(wrapper, "log-viewer-theme-select");
 
@@ -215,7 +236,7 @@ describe("LogViewer", () => {
       });
 
       it("toggles stats visibility when user clicks Display Stats checkbox", async () => {
-        const wrapper = createWrapper({ showSettings: true });
+        const wrapper = createWrapper({ props: { showSettings: true } });
         const statsCheckbox = findByTestId(
           wrapper,
           "log-viewer-stats-checkbox",
@@ -235,14 +256,19 @@ describe("LogViewer", () => {
       it("persists settings to localStorage when drawer is open and settings change", async () => {
         const setItemSpy = jest.spyOn(Storage.prototype, "setItem");
         const wrapper = createWrapper({
-          showSettings: true,
-          useUserSettings: true,
+          props: {
+            showSettings: true,
+            useUserSettings: true,
+          },
         });
 
         await findByTestId(wrapper, "log-viewer-settings-btn").trigger("click");
         await nextTick();
 
-        const gutterCheckbox = wrapper.find("#logview_gutter");
+        const gutterCheckbox = findByTestId(
+          wrapper,
+          "log-viewer-gutter-checkbox",
+        );
         await gutterCheckbox.setValue(false);
         await nextTick();
 
@@ -258,7 +284,9 @@ describe("LogViewer", () => {
     describe("Follow Button", () => {
       it("shows eye icon when follow is enabled and toggles to eye-slash when clicked", async () => {
         mockViewer.execCompleted = false;
-        const wrapper = createWrapper({ showSettings: true, follow: true });
+        const wrapper = createWrapper({
+          props: { showSettings: true, follow: true },
+        });
         await flushPromises();
         const followIcon = findByTestId(wrapper, "log-viewer-follow-icon");
 
@@ -273,7 +301,9 @@ describe("LogViewer", () => {
       });
 
       it("shows eye-slash icon when follow is disabled and toggles to eye when clicked", async () => {
-        const wrapper = createWrapper({ showSettings: true, follow: false });
+        const wrapper = createWrapper({
+          props: { showSettings: true, follow: false },
+        });
         await flushPromises();
         const followIcon = findByTestId(wrapper, "log-viewer-follow-icon");
 
@@ -290,17 +320,15 @@ describe("LogViewer", () => {
 
     describe("Stats Content", () => {
       it("displays follow status, line count, size, and total time with correct formatting", async () => {
-        mockViewer.entries = [
-          { node: "node1", log: "line 1" },
-          { node: "node1", log: "line 2" },
-          { node: "node2", log: "line 3" },
-        ];
+        mockViewer.entries = mockStatsEntries;
         mockViewer.offset = 56789;
         mockViewer.execCompleted = false;
 
         const wrapper = createWrapper({
-          showSettings: true,
-          config: { stats: true } as any,
+          props: {
+            showSettings: true,
+            config: { stats: true },
+          },
         });
         await flushPromises();
 
@@ -322,8 +350,10 @@ describe("LogViewer", () => {
         mockViewer.execCompleted = false;
 
         const wrapper = createWrapper({
-          showSettings: true,
-          config: { stats: true } as any,
+          props: {
+            showSettings: true,
+            config: { stats: true },
+          },
         });
         await flushPromises();
 
@@ -337,7 +367,7 @@ describe("LogViewer", () => {
       it("displays progress bar when execution is not completed", async () => {
         mockViewer.execCompleted = false;
         mockViewer.completed = false;
-        const wrapper = createWrapper({ showSettings: true });
+        const wrapper = createWrapper({ props: { showSettings: true } });
         await flushPromises();
 
         expect(findByTestId(wrapper, "log-viewer-progress-bar").exists()).toBe(
@@ -348,7 +378,7 @@ describe("LogViewer", () => {
       it("hides progress bar when execution is completed", async () => {
         mockViewer.execCompleted = true;
         mockViewer.completed = true;
-        const wrapper = createWrapper({ showSettings: true });
+        const wrapper = createWrapper({ props: { showSettings: true } });
         await flushPromises();
 
         expect(findByTestId(wrapper, "log-viewer-progress-bar").exists()).toBe(
@@ -381,16 +411,68 @@ describe("LogViewer", () => {
     });
   });
 
+  describe("Node view height", () => {
+    it("bounds the scroller at 600px before the log content is measured", async () => {
+      const wrapper = createWrapper({ props: { node: "node1" } });
+      await flushPromises();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toContain("height: 600px");
+    });
+
+    it("sizes the scroller to the log content when it is shorter than 600px", async () => {
+      const wrapper = createWrapper({ props: { node: "node1" } });
+      await flushPromises();
+
+      await wrapper
+        .findComponent({ name: "LogNodeChunk" })
+        .vm.$emit("content-size", 120);
+      await nextTick();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toContain("height: 120px");
+    });
+
+    it("caps the scroller at 600px when the log content is taller", async () => {
+      const wrapper = createWrapper({ props: { node: "node1" } });
+      await flushPromises();
+
+      await wrapper
+        .findComponent({ name: "LogNodeChunk" })
+        .vm.$emit("content-size", 5000);
+      await nextTick();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toContain("height: 600px");
+    });
+
+    it("does not set a scroller height outside the node view", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+
+      await wrapper
+        .findComponent({ name: "LogNodeChunk" })
+        .vm.$emit("content-size", 120);
+      await nextTick();
+
+      expect(
+        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
+      ).toBeUndefined();
+    });
+  });
+
   describe("Hide incomplete nodes", () => {
     it("renders hide incomplete checkbox in settings and keeps it disabled until it applies", async () => {
-      const wrapper = createWrapper({ showSettings: true });
+      const wrapper = createWrapper({ props: { showSettings: true } });
       await flushPromises();
 
       const checkbox = findByTestId(
         wrapper,
         "log-viewer-hide-incomplete-checkbox",
       );
-      expect(checkbox.exists()).toBe(true);
       expect(checkbox.attributes("disabled")).toBeDefined();
     });
 
@@ -399,7 +481,7 @@ describe("LogViewer", () => {
         { node: "runner", log: "skipped" },
         { node: "localhost", log: "ok" },
       ];
-      const wrapper = createWrapper({ showSettings: true });
+      const wrapper = createWrapper({ props: { showSettings: true } });
       await flushPromises();
 
       const stateHandler = findEventHandler(
@@ -422,7 +504,7 @@ describe("LogViewer", () => {
     });
 
     it("emits toggle when user checks hide incomplete nodes", async () => {
-      const wrapper = createWrapper({ showSettings: true });
+      const wrapper = createWrapper({ props: { showSettings: true } });
       await flushPromises();
 
       const stateHandler = findEventHandler(
