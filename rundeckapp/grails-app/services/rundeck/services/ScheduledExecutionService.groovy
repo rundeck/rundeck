@@ -4749,16 +4749,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return item
     }
 
+    /**
+     * Run the Job Lifecycle plugins' before save handlers for a job.
+     *
+     * @param scheduledExecution job being saved
+     * @param authContext auth context of the user saving the job
+     * @return map with success and scheduledExecution, and error when a plugin throws an error
+     */
     def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){
         INodeSet nodeSet = getNodes(scheduledExecution, scheduledExecution.asFilter())
-        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
-                scheduledExecution.jobName,
-                scheduledExecution.project,
-                scheduledExecution.jobOptionsSet(),
-                nodeSet,
-                authContext.getUsername(),
-                scheduledExecution?.filter
-        )
+        JobPersistEventImpl jobPersistEvent = JobPersistEventImpl.builder()
+                .jobName(scheduledExecution.jobName)
+                .projectName(scheduledExecution.project)
+                .options(scheduledExecution.jobOptionsSet())
+                .nodes(nodeSet)
+                .userName(authContext.getUsername())
+                .nodeFilter(scheduledExecution?.filter)
+                .timeout(scheduledExecution.timeout)
+                .retry(scheduledExecution.retry)
+                .nodeThreadcount(scheduledExecution.doNodedispatch ? scheduledExecution.rawThreadCountValue() : null)
+                .multipleExecutions(scheduledExecution.multipleExecutions)
+                .maxMultipleExecutions(scheduledExecution.maxMultipleExecutions)
+                .build()
         def jobEventStatus
         try {
             jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution.project, jobPersistEvent)
