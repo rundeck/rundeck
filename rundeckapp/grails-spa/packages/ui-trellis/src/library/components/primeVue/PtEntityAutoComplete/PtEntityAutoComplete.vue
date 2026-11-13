@@ -8,39 +8,100 @@
     >
       {{ label }}
     </label>
-    <AutoComplete
-      ref="autoInput"
-      :model-value="value"
-      :suggestions="visibleSuggestions"
-      :option-label="optionLabel"
-      :name="name"
-      :input-id="inputId"
-      :placeholder="placeholder"
-      :invalid="invalid"
-      :delay="delay"
-      :auto-option-focus="true"
-      :complete-on-focus="minChars === 0 && !readOnly"
-      :show-empty-message="false"
-      :pt="inputPassThrough"
-      @update:model-value="onValueUpdate"
-      @complete="onComplete"
-      @option-select="onOptionSelect"
-      @keydown.enter.prevent
+    <p
+      v-if="helpText || $slots.help"
+      class="text-body--sm pt-entity-autocomplete__help"
+      data-testid="pt-entity-autocomplete-help"
     >
-      <template #option="slotProps">
-        <div class="entity-autocomplete-option-content">
-          <span class="entity-autocomplete-option-name">
-            {{ labelOf(slotProps.option) }}
-          </span>
-          <span
-            v-if="secondaryOf(slotProps.option)"
-            class="entity-autocomplete-option-secondary"
-          >
-            {{ secondaryOf(slotProps.option) }}
-          </span>
-        </div>
-      </template>
-    </AutoComplete>
+      <slot name="help">{{ helpText }}</slot>
+    </p>
+    <div
+      class="pt-entity-autocomplete__field"
+      :class="{ 'pt-entity-autocomplete__field--icon': leftIcon }"
+    >
+      <i
+        v-if="leftIcon"
+        :class="leftIcon"
+        aria-hidden="true"
+        data-testid="pt-entity-autocomplete-icon"
+      ></i>
+      <AutoComplete
+        ref="autoInput"
+        :model-value="inputValue"
+        :suggestions="visibleSuggestions"
+        :option-label="optionLabel"
+        :option-disabled="optionDisabled"
+        :name="name"
+        :input-id="inputId"
+        :placeholder="placeholder"
+        :invalid="invalid"
+        :delay="delay"
+        :auto-option-focus="true"
+        :complete-on-focus="minChars === 0 && !readOnly"
+        :show-empty-message="false"
+        :pt="inputPassThrough"
+        @update:model-value="onValueUpdate"
+        @complete="onComplete"
+        @option-select="onOptionSelect"
+        @keydown.enter.prevent
+      >
+        <template #option="slotProps">
+          <slot
+            v-if="$slots.option"
+            name="option"
+            v-bind="slotProps"
+            :query="inputValue"
+            :selected="isSelected(slotProps.option)"
+            :toggle="() => toggleOption(slotProps.option)"
+          />
+          <div v-else class="entity-autocomplete-option-content">
+            <span class="entity-autocomplete-option-name">
+              {{ labelOf(slotProps.option) }}
+            </span>
+            <span
+              v-if="secondaryOf(slotProps.option)"
+              class="entity-autocomplete-option-secondary"
+            >
+              {{ secondaryOf(slotProps.option) }}
+            </span>
+          </div>
+        </template>
+        <template v-if="$slots.header" #header>
+          <slot name="header" />
+        </template>
+        <template v-if="$slots.footer" #footer>
+          <slot name="footer" />
+        </template>
+        <template v-if="$slots.empty" #empty>
+          <slot name="empty" />
+        </template>
+        <template v-if="$slots.loader" #loader="slotProps">
+          <slot name="loader" v-bind="slotProps" />
+        </template>
+        <template v-if="$slots.content" #content="slotProps">
+          <slot name="content" v-bind="slotProps" />
+        </template>
+        <template v-if="$slots.optiongroup" #optiongroup="slotProps">
+          <slot name="optiongroup" v-bind="slotProps" />
+        </template>
+        <template v-if="$slots.dropdownicon" #dropdownicon>
+          <slot name="dropdownicon" />
+        </template>
+        <template v-if="$slots.dropdown" #dropdown="slotProps">
+          <slot name="dropdown" v-bind="slotProps" />
+        </template>
+        <template v-if="$slots.clearicon" #clearicon="slotProps">
+          <slot name="clearicon" v-bind="slotProps" />
+        </template>
+      </AutoComplete>
+    </div>
+    <slot
+      v-if="multiple && selectedValues.length > 0"
+      name="selected-items"
+      :items="selectedValues"
+      :label="labelOf"
+      :remove="removeOption"
+    />
     <p
       v-if="invalid && errorText"
       class="text-body--sm pt-entity-autocomplete__error"
@@ -57,7 +118,10 @@ import AutoComplete, {
   AutoCompleteCompleteEvent,
   AutoCompleteOptionSelectEvent,
 } from "primevue/autocomplete";
-import type { EntitySuggestion } from "./PtEntityAutoCompleteTypes";
+import type {
+  EntityFieldResolver,
+  EntitySuggestion,
+} from "./PtEntityAutoCompleteTypes";
 
 /**
  * Autocomplete over a list of entities (as opposed to context variables, which
@@ -72,13 +136,17 @@ import type { EntitySuggestion } from "./PtEntityAutoCompleteTypes";
  * with the current query (debounced by `delay`) and its result becomes the
  * suggestion list. Responses that arrive out of order are discarded, so only
  * the newest query is ever shown.
+ *
+ * Multiple selection is opt-in. In that mode the model contains selected
+ * entity objects while the typed query remains internal, and consumers can
+ * render both checkbox rows and selected items through scoped slots.
  */
 export default defineComponent({
   name: "PtEntityAutoComplete",
   components: { AutoComplete },
   props: {
     modelValue: {
-      type: String,
+      type: [String, Array] as PropType<string | EntitySuggestion[]>,
       required: true,
     },
     /** Called with the current query to load suggestions. */
@@ -90,13 +158,33 @@ export default defineComponent({
     },
     /** Key holding the text shown in the input and the option row. */
     optionLabel: {
-      type: String,
+      type: [String, Function] as PropType<EntityFieldResolver<string>>,
       default: "name",
     },
     /** Optional key holding a dimmed secondary line on the option row. */
     optionSecondary: {
+      type: [String, Function] as PropType<EntityFieldResolver<string>>,
+      default: "",
+    },
+    /** Property or resolver identifying an option across refreshed results. */
+    dataKey: {
       type: String,
       default: "",
+    },
+    /** Property or resolver indicating that an option cannot be selected. */
+    optionDisabled: {
+      type: [String, Function] as PropType<EntityFieldResolver<boolean>>,
+      default: "disabled",
+    },
+    /** Enables an object-array model and reusable checkbox-style result rows. */
+    multiple: {
+      type: Boolean,
+      default: false,
+    },
+    /** Reopens the suggestions after native keyboard or row selection. */
+    keepOpenOnSelect: {
+      type: Boolean,
+      default: false,
     },
     /** Minimum characters before suggestions load; 0 also opens on focus. */
     minChars: {
@@ -125,6 +213,14 @@ export default defineComponent({
       type: String,
       default: undefined,
     },
+    helpText: {
+      type: String,
+      default: undefined,
+    },
+    leftIcon: {
+      type: String,
+      default: undefined,
+    },
     placeholder: {
       type: String,
       default: "",
@@ -142,16 +238,30 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["update:modelValue", "select"],
+  emits: ["update:modelValue", "select", "unselect"],
   data() {
     return {
-      value: this.modelValue as string,
+      value: (typeof this.modelValue === "string"
+        ? this.modelValue
+        : "") as string,
+      queryValue: "",
       items: [] as EntitySuggestion[],
       /** Sequence of the most recently issued search, to drop stale results. */
       requestSeq: 0,
+      reopenTimer: null as ReturnType<typeof setTimeout> | null,
     };
   },
   computed: {
+    /** Text model handed to PrimeVue; selections remain a separate array. */
+    inputValue(): string {
+      return this.multiple ? this.queryValue : this.value;
+    },
+    /** Selected entity objects when multiple mode is enabled. */
+    selectedValues(): EntitySuggestion[] {
+      return this.multiple && Array.isArray(this.modelValue)
+        ? this.modelValue
+        : [];
+    },
     /**
      * Suggestions handed to PrimeVue, or `undefined` when there are none.
      *
@@ -183,14 +293,31 @@ export default defineComponent({
     },
   },
   watch: {
-    modelValue(newVal: string) {
-      this.value = newVal;
+    modelValue(newVal: string | EntitySuggestion[]) {
+      if (!this.multiple && typeof newVal === "string") {
+        this.value = newVal;
+      }
     },
   },
+  beforeUnmount() {
+    if (this.reopenTimer) {
+      clearTimeout(this.reopenTimer);
+    }
+  },
   methods: {
+    /** Resolves a string or boolean field from an entity suggestion. */
+    resolve<T>(
+      option: EntitySuggestion,
+      field: EntityFieldResolver<T>,
+    ): T | undefined {
+      if (typeof field === "function") {
+        return field(option);
+      }
+      return option?.[field] as T | undefined;
+    },
     /** Text shown for a suggestion, per `optionLabel`. */
     labelOf(option: EntitySuggestion): string {
-      return String(option?.[this.optionLabel] ?? "");
+      return String(this.resolve(option, this.optionLabel) ?? "");
     },
 
     /** Secondary text for a suggestion, or empty when not configured. */
@@ -198,7 +325,7 @@ export default defineComponent({
       if (!this.optionSecondary) {
         return "";
       }
-      return String(option?.[this.optionSecondary] ?? "");
+      return String(this.resolve(option, this.optionSecondary) ?? "");
     },
 
     /**
@@ -206,12 +333,28 @@ export default defineComponent({
      * back to a string so the caller's v-model stays a plain value.
      */
     onValueUpdate(val: string | EntitySuggestion): void {
+      if (this.multiple) {
+        if (typeof val === "string" || val == null) {
+          this.queryValue = (val as string) ?? "";
+        } else {
+          this.restoreQueryValue();
+        }
+        return;
+      }
       const text =
         typeof val === "string" || val == null
           ? ((val as string) ?? "")
           : this.labelOf(val);
       this.value = text;
       this.$emit("update:modelValue", text);
+    },
+
+    /** Restores the typed query inside PrimeVue after a native option selection. */
+    restoreQueryValue(): void {
+      (
+        this.$refs.autoInput as
+          { writeValue?: (value: string) => void } | undefined
+      )?.writeValue?.(this.queryValue);
     },
 
     /** Load suggestions for the typed query, ignoring out-of-order results. */
@@ -239,7 +382,79 @@ export default defineComponent({
 
     /** Re-emit the picked entity so the caller can read every field of it. */
     onOptionSelect(event: AutoCompleteOptionSelectEvent): void {
-      this.$emit("select", event.value);
+      const option = event.value as EntitySuggestion;
+      if (!this.multiple) {
+        this.$emit("select", option);
+        return;
+      }
+      this.toggleOption(option);
+      if (this.keepOpenOnSelect) {
+        this.scheduleReopen();
+      }
+    },
+
+    /** Whether an option is selected, using dataKey when supplied. */
+    isSelected(option: EntitySuggestion): boolean {
+      return this.selectedValues.some(
+        (selected) => this.identityOf(selected) === this.identityOf(option),
+      );
+    },
+
+    /** Adds or removes one option from the multiple-selection model. */
+    toggleOption(option: EntitySuggestion): void {
+      if (this.readOnly || !this.multiple || this.isOptionDisabled(option)) {
+        return;
+      }
+      if (this.isSelected(option)) {
+        this.removeOption(option);
+        return;
+      }
+      this.$emit("update:modelValue", [...this.selectedValues, option]);
+      this.$emit("select", option);
+    },
+
+    /** Removes an option from the multiple-selection model. */
+    removeOption(option: EntitySuggestion): void {
+      if (this.readOnly) {
+        return;
+      }
+      const identity = this.identityOf(option);
+      const selected = this.selectedValues.find(
+        (item) => this.identityOf(item) === identity,
+      );
+      if (!selected) {
+        return;
+      }
+      this.$emit(
+        "update:modelValue",
+        this.selectedValues.filter(
+          (item) => this.identityOf(item) !== identity,
+        ),
+      );
+      this.$emit("unselect", selected);
+    },
+
+    /** Stable identity for selection across asynchronous result refreshes. */
+    identityOf(option: EntitySuggestion): unknown {
+      return this.dataKey ? option?.[this.dataKey] : option;
+    },
+
+    /** Whether the configured disabled field marks an option unavailable. */
+    isOptionDisabled(option: EntitySuggestion): boolean {
+      return Boolean(this.resolve(option, this.optionDisabled));
+    },
+
+    /** Reopens the PrimeVue panel after its native select handler closes it. */
+    scheduleReopen(): void {
+      if (this.reopenTimer) {
+        clearTimeout(this.reopenTimer);
+      }
+      void this.$nextTick(() => {
+        this.reopenTimer = setTimeout(() => {
+          this.reopenTimer = null;
+          (this.$refs.autoInput as { show?: () => void } | undefined)?.show?.();
+        }, 0);
+      });
     },
   },
 });
@@ -255,6 +470,34 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+
+.pt-entity-autocomplete__help {
+  margin: 0 0 var(--sizes-1);
+  color: var(--colors-gray-800);
+}
+
+.pt-entity-autocomplete__field {
+  position: relative;
+  width: 100%;
+
+  > .p-autocomplete {
+    width: 100%;
+  }
+
+  > i {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: var(--sizes-3);
+    color: var(--colors-gray-600);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  &--icon .p-autocomplete-input {
+    padding-left: var(--sizes-8);
+  }
 }
 
 .pt-entity-autocomplete__error {

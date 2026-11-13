@@ -1,0 +1,43 @@
+import {
+  Meta,
+  Subtitle,
+  Title,
+  Canvas,
+  Controls,
+  Description,
+  Stories,
+} from "@storybook/blocks";
+import * as PtCheckboxStories from "./PtCheckbox.stories";
+
+<Meta of={PtCheckboxStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on PrimeVue](https://primevue.org/checkbox/)
+
+## Import
+
+```ts
+import PtCheckbox from "@rundeck/ui-trellis/src/library/components/primeVue/PtCheckbox/PtCheckbox.vue";
+```
+
+## Playground
+
+<Canvas of={PtCheckboxStories.Playground} sourceState="shown" />
+<Controls of={PtCheckboxStories.Playground} />
+
+## Usage
+
+`PtCheckbox` is the bare checkbox control. Associate it with an external
+`label` through `inputId`; item-level label, description, icon, and layout
+belong to the consuming feature.
+
+<Description of={PtCheckboxStories} />
+
+<Stories title="" includePrimary={false} />
+
+## Accessibility
+
+Provide either an associated `label`, `ariaLabel`, or `ariaLabelledby`.
+PrimeVue supplies the hidden native checkbox and standard Space-key behavior.
