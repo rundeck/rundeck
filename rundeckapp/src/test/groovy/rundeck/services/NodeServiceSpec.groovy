@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
@@ -298,10 +299,12 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
                 _ * getSourceForConfiguration('file', {args->
-                    args['file']=='/tmp/test.xml'
+                    args['file']=='/tmp/test.xml' &&
+                    !FileResourceModelSource.hasCacheXmlEntityLimits(args)
                 }) >> modelSource
                 _ * getSourceForConfiguration('file', {args->
-                    args['file']!='/tmp/test.xml'
+                    args['file']!='/tmp/test.xml' &&
+                    FileResourceModelSource.hasCacheXmlEntityLimits(args)
                 }) >> cacheModelsource
             }
             getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){

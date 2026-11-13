@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.utils.Streams;
+import com.dtolabs.shared.resources.ResourceXMLParser;
 
 import java.io.*;
 import java.util.List;
@@ -47,7 +48,48 @@ import static com.dtolabs.rundeck.plugins.util.DescriptionBuilder.buildDescripti
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class FileResourceModelSource extends BaseFileResourceModelSource implements Configurable {
+    /** Finite cache limit for general and total XML entity sizes. */
+    private static final int CACHE_XML_ENTITY_SIZE_LIMIT = 50_000_000;
+    /** Finite cache limit preserving the pre-Java 24 element attribute default. */
+    private static final int CACHE_XML_ELEMENT_ATTRIBUTE_LIMIT = 10_000;
+    /** Per-reader XML limits used only for Rundeck-managed node caches. */
+    private static final ResourceXMLParser.EntityLimitPolicy CACHE_XML_ENTITY_LIMIT_POLICY =
+            new ResourceXMLParser.EntityLimitPolicy(
+                    CACHE_XML_ENTITY_SIZE_LIMIT,
+                    CACHE_XML_ENTITY_SIZE_LIMIT,
+                    CACHE_XML_ELEMENT_ATTRIBUTE_LIMIT
+            );
+
+    /** Marker type that cannot be reconstructed from serialized project properties. */
+    private static final class CacheXmlEntityLimitProperties extends Properties {
+        private CacheXmlEntityLimitProperties(final Properties properties) {
+            putAll(properties);
+        }
+    }
+
     private Configuration configuration;
+
+    /**
+     * Marks configuration created internally for a Rundeck-managed node cache.
+     *
+     * @param properties file source configuration
+     *
+     * @return cache-specific configuration
+     */
+    public static Properties enableCacheXmlEntityLimits(final Properties properties) {
+        return new CacheXmlEntityLimitProperties(properties);
+    }
+
+    /**
+     * Tests whether configuration was marked internally for a Rundeck-managed node cache.
+     *
+     * @param properties file source configuration
+     *
+     * @return true when cache-specific XML limits are enabled
+     */
+    public static boolean hasCacheXmlEntityLimits(final Properties properties) {
+        return properties instanceof CacheXmlEntityLimitProperties;
+    }
 
     FileResourceModelSource(final Framework framework) {
         super(framework);
@@ -177,6 +219,22 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
     @Override
     protected String getResourceFormat() {
         return configuration.format;
+    }
+
+    /**
+     * Returns a cache-specific XML parser when finite cache entity limits are enabled.
+     *
+     * @return parser for the configured resource format
+     *
+     * @throws ResourceModelSourceException if the parser cannot be loaded
+     */
+    @Override
+    protected ResourceFormatParser getResourceFormatParser() throws ResourceModelSourceException {
+        if (configuration.cacheXmlEntityLimitsEnabled
+                && ResourceXMLFormatParser.SERVICE_PROVIDER_TYPE.equals(configuration.format)) {
+            return new ResourceXMLFormatParser(CACHE_XML_ENTITY_LIMIT_POLICY);
+        }
+        return super.getResourceFormatParser();
     }
 
     @Override
@@ -403,6 +461,8 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
         boolean requireFileExists;
         final Properties configuration;
         boolean writeable;
+        /** Whether this source reads a Rundeck-managed XML cache. */
+        boolean cacheXmlEntityLimitsEnabled;
 
         Configuration() {
             configuration = new Properties();
@@ -413,6 +473,7 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
                 throw new NullPointerException("configuration");
             }
             this.configuration = configuration;
+            this.cacheXmlEntityLimitsEnabled = hasCacheXmlEntityLimits(configuration);
             configure();
         }
 
