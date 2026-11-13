@@ -306,10 +306,10 @@ jobs:
       - setup_docker:
           docker_layer_caching: true
       - checkout
-      - restore-build-cache
       - install-build-dependencies
       - install-ui-trellis-packages
       - install-package-manager-packages
+      - restore-build-cache
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -380,9 +380,9 @@ jobs:
       - setup_docker
       - checkout
       - install-build-dependencies
-      - restore-build-cache
       - install-ui-trellis-packages
       - install-package-manager-packages
+      - restore-build-cache
       - run-build-step:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
