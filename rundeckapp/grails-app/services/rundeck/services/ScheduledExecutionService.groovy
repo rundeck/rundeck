@@ -4606,14 +4606,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     validationerrors << "Item: ${i} has no 'value' entry".toString()
                 }
                 normalized << withTextNameAndValue(item)
-            } else if (entry instanceof String || entry instanceof Number || entry instanceof Boolean) {
-                String text = entry.toString()
+            } else if (isScalarOptionValue(entry)) {
+                // String.valueOf(Object), not entry.toString(): under @CompileStatic, Groovy 5 narrows
+                // entry after an instanceof chain joined by || to the last type tested (Boolean) and
+                // casts to it, so a String entry failed with a ClassCastException.
+                String text = String.valueOf(entry)
                 normalized << [name: text, value: text]
             } else {
                 validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}".toString()
             }
         }
         return normalized
+    }
+
+    /**
+     * Whether a remote option list entry is a scalar (String, Number or Boolean) that becomes
+     * a [name: s, value: s] entry. Kept as a separate check so the caller's {@code entry} is not
+     * flow-typed by the instanceof chain.
+     * @param entry the remote option list entry
+     * @return true for a String, Number or Boolean entry
+     */
+    @CompileStatic
+    private static boolean isScalarOptionValue(Object entry) {
+        return entry instanceof String || entry instanceof Number || entry instanceof Boolean
     }
 
     /**
