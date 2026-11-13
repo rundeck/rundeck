@@ -1,0 +1,128 @@
+import org.gradle.api.Task
+import org.gradle.api.tasks.compile.GroovyCompile
+
+/**
+ * Gradle Compiler Worker Reaper
+ *
+ * Grails 7 injects a unique `-Dbase.dir=<subproject>` JVM flag (plus per-plugin AST classpaths)
+ * into every Grails subproject's GroovyCompile forkOptions. Because Gradle pools compiler worker
+ * daemons by exact JVM startup flags and classpath, each subproject spawns a single-use
+ * GradleWorkerMain JVM (KeepAliveMode.SESSION) that can never be reused by subsequent subprojects
+ * and otherwise remains resident in RAM until the Gradle invocation exits (or forever during bootRun).
+ *
+ * Safeguards:
+ * 1. Idempotent across init scripts and composite/submodule builds via extraProperties guard.
+ * 2. Skips registration when Gradle Configuration Cache is requested.
+ * 3. Resolves internal Gradle worker classes reflectively (zero static internal imports) so future
+ *    Gradle 9/10 internal package changes degrade cleanly to a harmless no-op.
+ * 4. Uses TaskExecutionGraph listeners rather than task.doLast so @CacheableTask / --build-cache
+ *    cache keys and FROM-CACHE hits remain 100% intact.
+ */
+if (gradle.extensions.extraProperties.has('rundeckCompilerWorkerReaperInstalled')) {
+    logger.debug('[compiler-worker-reaper] Already installed in this Gradle build; skipping duplicate registration.')
+    return
+}
+gradle.extensions.extraProperties.set('rundeckCompilerWorkerReaperInstalled', true)
+
+boolean isConfigurationCacheActive = false
+try {
+    def sp = gradle.startParameter
+    if (sp.respondsTo('isConfigurationCacheRequested')) {
+        isConfigurationCacheActive = Boolean.TRUE == sp.isConfigurationCacheRequested()
+    } else if (sp.hasProperty('configurationCache')) {
+        def ccProp = sp.configurationCache
+        isConfigurationCacheActive = Boolean.TRUE == (ccProp.respondsTo('get') ? ccProp.get() : ccProp)
+    }
+} catch (Throwable ignored) {
+    isConfigurationCacheActive = false
+}
+
+if (isConfigurationCacheActive) {
+    logger.debug('[compiler-worker-reaper] Configuration cache requested; skipping hook registration.')
+    return
+}
+
+def resolveInternalClass = { String className ->
+    for (ClassLoader cl : [getClass().classLoader, GroovyCompile.classLoader, gradle.class.classLoader]) {
+        if (cl == null) {
+            continue
+        }
+        try {
+            return Class.forName(className, false, cl)
+        } catch (Throwable ignored) {
+        }
+    }
+    return null
+}
+
+Class<?> clientsManagerClass = null
+Class<?> expirationClass = null
+def expirationCtor = null
+def attemptToReleaseMethod = null
+def stopAllWorkersMethod = null
+
+try {
+    clientsManagerClass = resolveInternalClass('org.gradle.workers.internal.WorkerDaemonClientsManager')
+    expirationClass = resolveInternalClass('org.gradle.workers.internal.WorkerDaemonExpiration')
+    if (clientsManagerClass != null && expirationClass != null) {
+        expirationCtor = expirationClass.getConstructor(clientsManagerClass, long.class)
+        attemptToReleaseMethod = expirationClass.getMethod('attemptToRelease', long.class)
+        stopAllWorkersMethod = clientsManagerClass.getMethod('stopAllWorkers')
+    }
+} catch (Throwable t) {
+    logger.debug('[compiler-worker-reaper] Gradle internal worker classes unavailable ({}); reaper disabled.', t.toString())
+    return
+}
+
+if (clientsManagerClass == null || expirationClass == null || expirationCtor == null ||
+        attemptToReleaseMethod == null || stopAllWorkersMethod == null) {
+    logger.debug('[compiler-worker-reaper] Gradle internal worker APIs not found; reaper disabled.')
+    return
+}
+
+def expireIdleWorkers = { String trigger ->
+    try {
+        def mgr = gradle.services.get(clientsManagerClass)
+        def expiration = expirationCtor.newInstance(mgr, -1L)
+        long releasedBytes = (attemptToReleaseMethod.invoke(expiration, Long.MAX_VALUE) as Number).longValue()
+        if (logger.isDebugEnabled()) {
+            logger.debug(
+                '[compiler-worker-reaper] Expired idle compiler workers after {} (released ~{} MiB)',
+                trigger,
+                releasedBytes.intdiv(1024L * 1024L)
+            )
+        }
+    } catch (Throwable t) {
+        logger.debug('[compiler-worker-reaper] Unable to expire idle workers after {}: {}', trigger, t.toString())
+    }
+}
+
+def stopAllWorkers = { String trigger ->
+    try {
+        def mgr = gradle.services.get(clientsManagerClass)
+        stopAllWorkersMethod.invoke(mgr)
+        logger.debug('[compiler-worker-reaper] Stopped all compiler workers ({})', trigger)
+    } catch (Throwable t) {
+        logger.debug('[compiler-worker-reaper] Unable to stop compiler workers ({}): {}', trigger, t.toString())
+    }
+}
+
+gradle.taskGraph.afterTask { Task task ->
+    if (task instanceof GroovyCompile && task.didWork) {
+        expireIdleWorkers(task.path)
+    }
+}
+
+gradle.taskGraph.beforeTask { Task task ->
+    if (task.name == 'bootRun') {
+        stopAllWorkers("beforeTask ${task.path}")
+    }
+}
+
+if (gradle.respondsTo('buildFinished')) {
+    gradle.buildFinished {
+        stopAllWorkers('buildFinished')
+    }
+}
+
+logger.debug('[compiler-worker-reaper] Installed Gradle compiler worker reaper hooks.')

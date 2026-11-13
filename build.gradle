@@ -71,6 +71,8 @@ apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
 apply plugin: 'codenarc'
 
+apply from: "${rootDir}/gradle/compiler-worker-reaper.gradle"
+
 /**
  * Deterministic cyclomatic complexity check (informative only).
  * Run: ./gradlew codenarcComplexity — report in build/reports/codenarc/complexity.html
