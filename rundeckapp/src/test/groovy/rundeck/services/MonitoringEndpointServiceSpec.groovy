@@ -1,5 +1,6 @@
 package rundeck.services
 
+import grails.core.GrailsApplication
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
@@ -41,6 +42,23 @@ class MonitoringEndpointServiceSpec extends Specification {
             payload.status == 200
             payload.contentType == MonitoringEndpointService.JSON
             payload.body.contains('"names"')
+            payload.body.contains('jvm.memory.used')
+    }
+
+    def "metrics uses grailsApplication mainContext when applicationContext was not injected"() {
+        given:
+            MeterRegistry registry = new SimpleMeterRegistry()
+            registry.counter('jvm.memory.used')
+            ApplicationContext mainContext = Mock(ApplicationContext)
+            mainContext.getBean(MeterRegistry) >> registry
+            GrailsApplication grailsApplication = Mock(GrailsApplication)
+            grailsApplication.getMainContext() >> mainContext
+            service.applicationContext = null
+            service.grailsApplication = grailsApplication
+        when:
+            MonitoringEndpointService.Payload payload = service.metricsPayload()
+        then:
+            payload.status == 200
             payload.body.contains('jvm.memory.used')
     }
 

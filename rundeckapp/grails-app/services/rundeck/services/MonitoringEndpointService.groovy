@@ -26,6 +26,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.boot.availability.ApplicationAvailability
 import org.springframework.boot.availability.ReadinessState
 import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
@@ -36,7 +37,7 @@ import java.lang.management.ThreadInfo
  * Callers enforce authentication. This service only reads metrics and formats the response.
  */
 @GrailsCompileStatic
-class MonitoringEndpointService {
+class MonitoringEndpointService implements ApplicationContextAware {
 
     static transactional = false
 
@@ -49,6 +50,19 @@ class MonitoringEndpointService {
     ApplicationContext applicationContext
     GrailsApplication grailsApplication
     ConfigurationService configurationService
+
+    /**
+     * Spring context used to look up Micrometer beans.
+     * Grails does not inject {@code applicationContext} unless the service implements
+     * {@link ApplicationContextAware}. If that still did not run, use the context Grails
+     * already attached to {@code grailsApplication}, which is what {@code /monitoring/info} uses.
+     */
+    private ApplicationContext beanContext() {
+        if (applicationContext != null) {
+            return applicationContext
+        }
+        grailsApplication.mainContext
+    }
 
     /**
      * Whether {@code rundeck.metrics.monitoring.enabled} is on. Defaults to true.
@@ -83,7 +97,7 @@ class MonitoringEndpointService {
      */
     Payload metricsPayload() {
         try {
-            MeterRegistry meterRegistry = applicationContext.getBean(MeterRegistry)
+            MeterRegistry meterRegistry = beanContext().getBean(MeterRegistry)
             List<String> metricNames = new ArrayList<String>()
             for (Meter meter : meterRegistry.meters) {
                 String name = meter.id.name
@@ -105,7 +119,7 @@ class MonitoringEndpointService {
     @CompileDynamic
     Payload prometheusPayload() {
         try {
-            def promRegistry = applicationContext.getBean('prometheusMeterRegistry')
+            def promRegistry = beanContext().getBean('prometheusMeterRegistry')
             String scrapeOutput = promRegistry.scrape() as String
             log.debug("Returning Prometheus scrape output (${scrapeOutput.length()} bytes)")
             return new Payload(status: 200, contentType: PROMETHEUS, body: scrapeOutput)
@@ -130,7 +144,7 @@ class MonitoringEndpointService {
      */
     Payload readinessPayload() {
         try {
-            ApplicationAvailability applicationAvailability = applicationContext.getBean(ApplicationAvailability)
+            ApplicationAvailability applicationAvailability = beanContext().getBean(ApplicationAvailability)
             ReadinessState currentReadiness = applicationAvailability.getReadinessState()
             if (currentReadiness == ReadinessState.ACCEPTING_TRAFFIC) {
                 return jsonPayload(200, [status: 'UP'])
