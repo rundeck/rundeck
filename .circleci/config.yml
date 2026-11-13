@@ -300,18 +300,26 @@ jobs:
           step-name: Build War
           command: rundeck_war_build
       - run-build-step:
-          step-name: Build And Push Docker Images
-          command: |
-            rundeck_docker_build << parameters.jreVersion >>
-            rundeck_docker_push << parameters.jreVersion >>
+          step-name: Build Docker Images
+          command: rundeck_docker_build << parameters.jreVersion >>
+      - run-build-step:
+          step-name: Assert revoked CA roots are absent
+          command: rundeck_assert_no_revoked_ca_roots "${DOCKER_REPO}:latest"
+      - run-build-step:
+          step-name: Push Docker Images
+          command: rundeck_docker_push << parameters.jreVersion >>
       - when:
           condition: << parameters.jre25Publish >>
           steps:
             - run-build-step:
-                step-name: Build And Push Docker Images (JRE 25)
-                command: |
-                  rundeck_docker_build openjdk-25-jre-headless
-                  rundeck_docker_push openjdk-25-jre-headless
+                step-name: Build Docker Images (JRE 25)
+                command: rundeck_docker_build openjdk-25-jre-headless
+            - run-build-step:
+                step-name: Assert revoked CA roots are absent (JRE 25)
+                command: rundeck_assert_no_revoked_ca_roots "${DOCKER_REPO}:latest"
+            - run-build-step:
+                step-name: Push Docker Images (JRE 25)
+                command: rundeck_docker_push openjdk-25-jre-headless
       # Test images (rdtest, rundeckansible, functional-test oss) are built once per pipeline here
       # and pulled by the test jobs instead of running apt on every job. Skipped in the tag-only
       # release build, which has no downstream test jobs.
@@ -329,7 +337,9 @@ jobs:
                       command: rundeck_test_images_build_push openjdk-25-jre-headless
       - run-build-step:
           step-name: Test CI Scripts
-          command: bash scripts/circleci/test/apt-get-retry-test.sh
+          command: |
+            bash scripts/circleci/test/apt-get-retry-test.sh
+            bash scripts/circleci/test/revoked-ca-roots-test.sh
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
@@ -519,6 +529,9 @@ jobs:
       - run-build-step:
           step-name: Build Docker Images
           command: rundeck_docker_build << parameters.jreVersion >>
+      - run-build-step:
+          step-name: Assert revoked CA roots are absent
+          command: rundeck_assert_no_revoked_ca_roots "${DOCKER_REPO}:latest"
       - run-build-step:
           step-name: Publish Docker Images
           command: rundeck_docker_publish

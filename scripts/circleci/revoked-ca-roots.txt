@@ -1,0 +1,7 @@
+# SHA-256 fingerprints of CA roots that must not be in a published image.
+# One fingerprint per line. Blank lines and lines starting with # are ignored.
+# Colons and spaces are ignored. Adding a root is a new line; no code change.
+#
+# emSign ECC Root CA - G3
+# Distrusted after the eMudhra intermediate CA compromise (RUN-5117).
+86:A1:EC:BA:08:9C:4A:8D:3B:BE:27:34:C6:12:BA:34:1D:81:3E:04:3C:F9:E8:A8:62:CD:5C:57:A3:6B:BE:6B

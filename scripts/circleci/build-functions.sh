@@ -59,6 +59,13 @@ rundeck_docker_build() {
 
 }
 
+# Fail the job when the image still trusts a CA root listed in revoked-ca-roots.txt.
+# Checks the OS bundle and the JVM keystore inside the image, before that image is pushed.
+rundeck_assert_no_revoked_ca_roots() {
+    local image="${1:?image reference required}"
+    bash "${RUNDECK_CORE_DIR}/scripts/circleci/assert-revoked-ca-roots.sh" "$image"
+}
+
 rundeck_docker_push() {
     local jreVersion=${1}
     local TAG_SUFFIX=""
