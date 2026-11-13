@@ -29,6 +29,7 @@ import spock.lang.Specification
 class FileResourceModelSourceSpec extends Specification {
     private static final String MAX_GENERAL_ENTITY_SIZE_LIMIT = 'jdk.xml.maxGeneralEntitySizeLimit'
     private static final String TOTAL_ENTITY_SIZE_LIMIT = 'jdk.xml.totalEntitySizeLimit'
+    private static final String ELEMENT_ATTRIBUTE_LIMIT = 'jdk.xml.elementAttributeLimit'
 
     def "cache XML reads escaped values larger than Java 25 entity limits"() {
         given:
@@ -127,6 +128,46 @@ class FileResourceModelSourceSpec extends Specification {
         resourceFile.delete()
     }
 
+    def "cache XML reads nodes larger than the Java 25 attribute limit"() {
+        given:
+        File cacheFile = createAttributeHeavyResourceFile('rundeck-node-cache-attributes')
+        FileResourceModelSource source = createFileSource(cacheFile, true)
+        String previousElementAttributeLimit = System.getProperty(ELEMENT_ATTRIBUTE_LIMIT)
+        System.setProperty(ELEMENT_ATTRIBUTE_LIMIT, '200')
+
+        when:
+        def node = source.getNodes().getNode('node1')
+
+        then:
+        (1..250).every { index ->
+            node.getAttribute("attribute${index}") == "value${index}"
+        }
+        System.getProperty(ELEMENT_ATTRIBUTE_LIMIT) == '200'
+
+        cleanup:
+        restoreSystemProperty(ELEMENT_ATTRIBUTE_LIMIT, previousElementAttributeLimit)
+        cacheFile.delete()
+    }
+
+    def "normal resource XML retains the inherited Java 25 attribute limit"() {
+        given:
+        File resourceFile = createAttributeHeavyResourceFile('rundeck-node-source-attributes')
+        FileResourceModelSource source = createFileSource(resourceFile, false)
+        String previousElementAttributeLimit = System.getProperty(ELEMENT_ATTRIBUTE_LIMIT)
+        System.setProperty(ELEMENT_ATTRIBUTE_LIMIT, '200')
+
+        when:
+        source.getNodes()
+
+        then:
+        thrown(ResourceModelSourceException)
+        System.getProperty(ELEMENT_ATTRIBUTE_LIMIT) == '200'
+
+        cleanup:
+        restoreSystemProperty(ELEMENT_ATTRIBUTE_LIMIT, previousElementAttributeLimit)
+        resourceFile.delete()
+    }
+
     def "cache XML entity limits preserve external entity protection"() {
         given:
         File secretFile = File.createTempFile('rundeck-node-cache-secret', '.txt')
@@ -180,6 +221,43 @@ class FileResourceModelSourceSpec extends Specification {
         cleanup:
         cacheFile.delete()
         secretFile.delete()
+    }
+
+    private FileResourceModelSource createFileSource(final File file, final boolean cacheLimits) {
+        ResourceFormatParserService parserService = Mock(ResourceFormatParserService) {
+            getParserForFormat(ResourceXMLFormatParser.SERVICE_PROVIDER_TYPE) >> new ResourceXMLFormatParser()
+        }
+        Framework framework = Mock(Framework) {
+            getResourceFormatParserService() >> parserService
+        }
+        Properties properties = new Properties()
+        properties.setProperty(FileResourceModelSource.Configuration.PROJECT, 'test-project')
+        properties.setProperty(FileResourceModelSource.Configuration.FILE, file.absolutePath)
+        properties.setProperty(
+            FileResourceModelSource.Configuration.FORMAT,
+            ResourceXMLFormatParser.SERVICE_PROVIDER_TYPE
+        )
+        if (cacheLimits) {
+            properties = FileResourceModelSource.enableCacheXmlEntityLimits(properties)
+        }
+        FileResourceModelSource source = new FileResourceModelSource(framework)
+        source.configure(properties)
+        source
+    }
+
+    private static File createAttributeHeavyResourceFile(final String prefix) {
+        File resourceFile = File.createTempFile(prefix, '.xml')
+        resourceFile.deleteOnExit()
+        ResourceXMLParser.Entity entity = new ResourceXMLParser.Entity()
+        entity.setName('node1')
+        entity.setResourceType('node')
+        (1..250).each { index ->
+            entity.setProperty("attribute${index}", "value${index}")
+        }
+        ResourceXMLGenerator generator = new ResourceXMLGenerator(resourceFile)
+        generator.addEntity(entity)
+        generator.generate()
+        resourceFile
     }
 
     private static void restoreSystemProperty(final String name, final String value) {

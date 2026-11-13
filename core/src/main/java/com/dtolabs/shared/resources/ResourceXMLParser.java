@@ -57,6 +57,8 @@ public class ResourceXMLParser {
             "http://www.oracle.com/xml/jaxp/properties/maxGeneralEntitySizeLimit";
     private static final String TOTAL_ENTITY_SIZE_LIMIT_PROPERTY =
             "http://www.oracle.com/xml/jaxp/properties/totalEntitySizeLimit";
+    private static final String ELEMENT_ATTRIBUTE_LIMIT_PROPERTY =
+            "http://www.oracle.com/xml/jaxp/properties/elementAttributeLimit";
 
     static Logger log4j = LoggerFactory.getLogger(ResourceXMLParser.class.getName());
 
@@ -187,13 +189,51 @@ public class ResourceXMLParser {
             return;
         }
         try {
-            reader.setProperty(
+            raiseEntityLimit(
+                    reader,
                     MAX_GENERAL_ENTITY_SIZE_LIMIT_PROPERTY,
                     entityLimitPolicy.getMaxGeneralEntitySizeLimit()
             );
-            reader.setProperty(TOTAL_ENTITY_SIZE_LIMIT_PROPERTY, entityLimitPolicy.getTotalEntitySizeLimit());
+            raiseEntityLimit(
+                    reader,
+                    TOTAL_ENTITY_SIZE_LIMIT_PROPERTY,
+                    entityLimitPolicy.getTotalEntitySizeLimit()
+            );
+            if (null != entityLimitPolicy.getElementAttributeLimit()) {
+                raiseEntityLimit(
+                        reader,
+                        ELEMENT_ATTRIBUTE_LIMIT_PROPERTY,
+                        entityLimitPolicy.getElementAttributeLimit()
+                );
+            }
         } catch (SAXException e) {
             throw new ResourceXMLParserException("Unable to configure XML entity-size limits", e);
+        }
+    }
+
+    /**
+     * Raises a finite reader limit without reducing an inherited larger or unlimited value.
+     *
+     * @param reader      XML reader
+     * @param property    JAXP property URI
+     * @param policyLimit finite policy limit
+     *
+     * @throws SAXException if the reader cannot report or apply the limit
+     */
+    private void raiseEntityLimit(
+            final SAXReader reader,
+            final String property,
+            final int policyLimit
+    ) throws SAXException {
+        final Object inheritedValue = reader.getXMLReader().getProperty(property);
+        final long inheritedLimit;
+        try {
+            inheritedLimit = Long.parseLong(String.valueOf(inheritedValue));
+        } catch (NumberFormatException e) {
+            throw new SAXException("Unable to read XML limit property: " + property, e);
+        }
+        if (inheritedLimit > 0 && inheritedLimit < policyLimit) {
+            reader.setProperty(property, policyLimit);
         }
     }
 
@@ -232,6 +272,7 @@ public class ResourceXMLParser {
     public static final class EntityLimitPolicy {
         private final int maxGeneralEntitySizeLimit;
         private final int totalEntitySizeLimit;
+        private final Integer elementAttributeLimit;
 
         /**
          * Creates a finite entity-limit policy.
@@ -240,14 +281,41 @@ public class ResourceXMLParser {
          * @param totalEntitySizeLimit      maximum combined entity size
          */
         public EntityLimitPolicy(final int maxGeneralEntitySizeLimit, final int totalEntitySizeLimit) {
+            this(maxGeneralEntitySizeLimit, totalEntitySizeLimit, null);
+        }
+
+        /**
+         * Creates a finite entity-limit policy.
+         *
+         * @param maxGeneralEntitySizeLimit maximum size of a general entity
+         * @param totalEntitySizeLimit      maximum combined entity size
+         * @param elementAttributeLimit     maximum attributes on an element
+         */
+        public EntityLimitPolicy(
+                final int maxGeneralEntitySizeLimit,
+                final int totalEntitySizeLimit,
+                final int elementAttributeLimit
+        ) {
+            this(maxGeneralEntitySizeLimit, totalEntitySizeLimit, Integer.valueOf(elementAttributeLimit));
+        }
+
+        private EntityLimitPolicy(
+                final int maxGeneralEntitySizeLimit,
+                final int totalEntitySizeLimit,
+                final Integer elementAttributeLimit
+        ) {
             if (maxGeneralEntitySizeLimit <= 0) {
                 throw new IllegalArgumentException("maxGeneralEntitySizeLimit must be greater than zero");
             }
             if (totalEntitySizeLimit <= 0) {
                 throw new IllegalArgumentException("totalEntitySizeLimit must be greater than zero");
             }
+            if (null != elementAttributeLimit && elementAttributeLimit <= 0) {
+                throw new IllegalArgumentException("elementAttributeLimit must be greater than zero");
+            }
             this.maxGeneralEntitySizeLimit = maxGeneralEntitySizeLimit;
             this.totalEntitySizeLimit = totalEntitySizeLimit;
+            this.elementAttributeLimit = elementAttributeLimit;
         }
 
         /**
@@ -262,6 +330,13 @@ public class ResourceXMLParser {
          */
         public int getTotalEntitySizeLimit() {
             return totalEntitySizeLimit;
+        }
+
+        /**
+         * @return maximum attributes on an element, or null when unchanged
+         */
+        public Integer getElementAttributeLimit() {
+            return elementAttributeLimit;
         }
     }
 

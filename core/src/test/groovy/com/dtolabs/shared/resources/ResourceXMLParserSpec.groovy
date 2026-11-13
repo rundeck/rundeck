@@ -23,6 +23,8 @@ import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ResourceXMLParserSpec extends Specification {
+    private static final String MAX_GENERAL_ENTITY_SIZE_LIMIT = 'jdk.xml.maxGeneralEntitySizeLimit'
+    private static final String TOTAL_ENTITY_SIZE_LIMIT = 'jdk.xml.totalEntitySizeLimit'
 
     File dnefile1
     File testfile1
@@ -38,17 +40,44 @@ class ResourceXMLParserSpec extends Specification {
 
     def "entity limit policy requires finite positive values"() {
         when:
-        new ResourceXMLParser.EntityLimitPolicy(maxGeneralLimit, totalLimit)
+        new ResourceXMLParser.EntityLimitPolicy(maxGeneralLimit, totalLimit, attributeLimit)
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        maxGeneralLimit | totalLimit
-        0               | 1
-        -1              | 1
-        1               | 0
-        1               | -1
+        maxGeneralLimit | totalLimit | attributeLimit
+        0               | 1          | 1
+        -1              | 1          | 1
+        1               | 0          | 1
+        1               | -1         | 1
+        1               | 1          | 0
+        1               | 1          | -1
+    }
+
+    def "entity limit policy never lowers inherited unlimited limits"() {
+        given:
+        String xml = '<project><node name="node1" description="&amp;&amp;"/></project>'
+        String previousMaxGeneralLimit = System.getProperty(MAX_GENERAL_ENTITY_SIZE_LIMIT)
+        String previousTotalLimit = System.getProperty(TOTAL_ENTITY_SIZE_LIMIT)
+        System.setProperty(MAX_GENERAL_ENTITY_SIZE_LIMIT, '0')
+        System.setProperty(TOTAL_ENTITY_SIZE_LIMIT, '0')
+        def parser = new ResourceXMLParser(
+            new ByteArrayInputStream(xml.getBytes('UTF-8')),
+            new ResourceXMLParser.EntityLimitPolicy(1, 1)
+        )
+
+        when:
+        parser.parse()
+
+        then:
+        noExceptionThrown()
+        System.getProperty(MAX_GENERAL_ENTITY_SIZE_LIMIT) == '0'
+        System.getProperty(TOTAL_ENTITY_SIZE_LIMIT) == '0'
+
+        cleanup:
+        restoreSystemProperty(MAX_GENERAL_ENTITY_SIZE_LIMIT, previousMaxGeneralLimit)
+        restoreSystemProperty(TOTAL_ENTITY_SIZE_LIMIT, previousTotalLimit)
     }
 
     ResourceXMLReceiver collectingReceiver(final List<ResourceXMLParser.Entity> items, final boolean continueParsing = true) {
@@ -322,5 +351,13 @@ class ResourceXMLParserSpec extends Specification {
 
         then:
         thrown(ResourceXMLParserException)
+    }
+
+    private static void restoreSystemProperty(final String name, final String value) {
+        if (value == null) {
+            System.clearProperty(name)
+        } else {
+            System.setProperty(name, value)
+        }
     }
 }

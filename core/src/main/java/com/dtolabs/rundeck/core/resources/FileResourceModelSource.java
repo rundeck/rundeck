@@ -48,13 +48,19 @@ import static com.dtolabs.rundeck.plugins.util.DescriptionBuilder.buildDescripti
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class FileResourceModelSource extends BaseFileResourceModelSource implements Configurable {
+    /** Finite cache limit for general and total XML entity sizes. */
     private static final int CACHE_XML_ENTITY_SIZE_LIMIT = 50_000_000;
+    /** Finite cache limit preserving the pre-Java 24 element attribute default. */
+    private static final int CACHE_XML_ELEMENT_ATTRIBUTE_LIMIT = 10_000;
+    /** Per-reader XML limits used only for Rundeck-managed node caches. */
     private static final ResourceXMLParser.EntityLimitPolicy CACHE_XML_ENTITY_LIMIT_POLICY =
             new ResourceXMLParser.EntityLimitPolicy(
                     CACHE_XML_ENTITY_SIZE_LIMIT,
-                    CACHE_XML_ENTITY_SIZE_LIMIT
+                    CACHE_XML_ENTITY_SIZE_LIMIT,
+                    CACHE_XML_ELEMENT_ATTRIBUTE_LIMIT
             );
 
+    /** Marker type that cannot be reconstructed from serialized project properties. */
     private static final class CacheXmlEntityLimitProperties extends Properties {
         private CacheXmlEntityLimitProperties(final Properties properties) {
             putAll(properties);
@@ -455,6 +461,7 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
         boolean requireFileExists;
         final Properties configuration;
         boolean writeable;
+        /** Whether this source reads a Rundeck-managed XML cache. */
         boolean cacheXmlEntityLimitsEnabled;
 
         Configuration() {
