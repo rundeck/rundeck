@@ -1,4 +1,5 @@
 import org.gradle.api.Task
+import org.gradle.api.configuration.BuildFeatures
 import org.gradle.api.tasks.compile.GroovyCompile
 
 /**
@@ -26,13 +27,7 @@ gradle.extensions.extraProperties.set('rundeckCompilerWorkerReaperInstalled', tr
 
 boolean isConfigurationCacheActive = false
 try {
-    def sp = gradle.startParameter
-    if (sp.respondsTo('isConfigurationCacheRequested')) {
-        isConfigurationCacheActive = Boolean.TRUE == sp.isConfigurationCacheRequested()
-    } else if (sp.hasProperty('configurationCache')) {
-        def ccProp = sp.configurationCache
-        isConfigurationCacheActive = Boolean.TRUE == (ccProp.respondsTo('get') ? ccProp.get() : ccProp)
-    }
+    isConfigurationCacheActive = gradle.services.get(BuildFeatures).configurationCache.requested.getOrElse(false)
 } catch (Throwable ignored) {
     isConfigurationCacheActive = false
 }
