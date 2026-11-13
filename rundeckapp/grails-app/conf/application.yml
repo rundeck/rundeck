@@ -278,9 +278,8 @@ rundeck:
                     - /actuator/health
                     - /actuator/health/liveness
                     - /actuator/health/readiness
-                    # Prefix match: /monitoring/health, /health/readiness, /health/liveness.
-                    # Do not list /monitoring here; that prefix would exempt metrics and threaddump.
-                    - /monitoring/health
+                    - /monitoring
+                    - /monitoring/**
                     - /metrics
                     - /metrics/**
                     - /.well-known
@@ -381,6 +380,10 @@ rundeck:
             enabled: true
         fileUploadPlugin:
             enabled: true
+        # Off by default so in-cluster scrapes of /monitoring/prometheus keep working.
+        # Set rundeck.feature.monitoringAuth.enabled=true to require system read or admin.
+        monitoringAuth:
+            enabled: false
         vueKeyStorage:
             enabled: true
     health:

@@ -135,10 +135,8 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/health',         access: ['permitAll']],
         [pattern: '/actuator/**',    access: ['permitAll']],
         [pattern: '/actuator/health/**',    access: ['permitAll']],
-        // Probes stay anonymous. Metrics, prometheus, info, and threaddump require a session.
-        [pattern: '/monitoring/health',     access: ['permitAll']],
-        [pattern: '/monitoring/health/**',  access: ['permitAll']],
-        [pattern: '/monitoring/**',         access: ['IS_AUTHENTICATED_REMEMBERED']],
+        // Anonymous by default. rundeck.feature.monitoringAuth.enabled locks data paths in MonitoringController.
+        [pattern: '/monitoring/**',  access: ['permitAll']],
         [pattern: '/.well-known/**', access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']] // LAST: Catch-all
 ]

@@ -78,7 +78,7 @@ class MetricsSpec extends BaseContainer {
             }
     }
 
-    def "anonymous clients cannot read monitoring data endpoints"() {
+    def "anonymous clients can read monitoring data endpoints when monitoringAuth is off"() {
         given:
             def anonymous = new OkHttpClient.Builder()
                 .followRedirects(false)
@@ -89,7 +89,7 @@ class MetricsSpec extends BaseContainer {
                 try (def response = anonymous.newCall(
                     new Request.Builder().url("${client.baseUrl}${path}").get().build()
                 ).execute()) {
-                    assert response.code() in [302, 401, 403]
+                    assert response.code() == 200
                 }
             }
     }

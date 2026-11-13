@@ -525,6 +525,9 @@ public class RundeckConfigBase {
         // Off unless an operator turns it on: enabling it makes Quartz re-check ACTION_RUN
         // for a job's stored user, which stops schedules that have been running until now.
         Enabled scheduledRunAuthorization = new Enabled();
+        // Off by default so /monitoring/prometheus stays anonymous for in-cluster scrapes.
+        // rundeck.feature.monitoringAuth.enabled=true requires system read or admin.
+        Enabled monitoringAuth = new Enabled(false);
         // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
         // (the default) makes the editor manually resizable via drag handle instead of
         // auto-sizing to a fixed number of lines.

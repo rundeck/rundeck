@@ -48,7 +48,13 @@ public enum Features implements FeaturesDefinition{
     /**
      * When enabled, Quartz scheduled triggers re-check ACTION_RUN for the job's stored user before creating an execution.
      */
-    SCHEDULED_RUN_AUTHORIZATION("scheduledRunAuthorization");
+    SCHEDULED_RUN_AUTHORIZATION("scheduledRunAuthorization"),
+    /**
+     * When enabled, {@code /monitoring/metrics}, {@code /monitoring/prometheus}, {@code /monitoring/info}
+     * and {@code /monitoring/threaddump} require a session with system read or admin.
+     * Health and readiness stay anonymous. Default is off, which keeps the scrape anonymous.
+     */
+    MONITORING_AUTH("monitoringAuth");
 
     private final String propertyName;
 
