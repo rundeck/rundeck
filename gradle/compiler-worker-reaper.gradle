@@ -1,14 +1,22 @@
 import org.gradle.api.Task
+import org.gradle.api.Transformer
 import org.gradle.api.tasks.compile.GroovyCompile
 
 /**
  * Gradle Compiler Worker Reaper
  *
- * Grails 7 injects a unique `-Dbase.dir=<subproject>` JVM flag (plus per-plugin AST classpaths)
- * into every Grails subproject's GroovyCompile forkOptions. Because Gradle pools compiler worker
- * daemons by exact JVM startup flags and classpath, each subproject spawns a single-use
- * GradleWorkerMain JVM (KeepAliveMode.SESSION) that can never be reused by subsequent subprojects
- * and otherwise remains resident in RAM until the Gradle invocation exits (or forever during bootRun).
+ * Grails 7 injects a unique `-Dbase.dir=<subproject>` JVM flag (and OpenAPI spec tasks inject
+ * `-Dmicronaut.openapi.target.file=...`) into every Grails subproject's GroovyCompile forkOptions.
+ * Because Gradle pools compiler worker daemons by exact JVM startup flags and classpath, each
+ * Grails subproject spawns a single-use GradleWorkerMain JVM (KeepAliveMode.SESSION) that can
+ * never be reused by subsequent subprojects and otherwise stays resident in RAM until the Gradle
+ * invocation exits (or forever during bootRun).
+ *
+ * By contrast, plain non-Grails Groovy/Java subprojects (~34 step plugins in rundeckpro) share
+ * identical forkOptions and reuse a small warm pool of JIT-compiled worker daemons across the
+ * entire build. During compilation (`afterTask`), we therefore surgically stop ONLY idle single-use
+ * workers carrying subproject-pinned JVM flags (`-Dbase.dir=`, `-Dmicronaut.openapi.*`), keeping
+ * reusable plain-Groovy and Java compiler workers warm and fast until `bootRun` or `buildFinished`.
  *
  * Safeguards:
  * 1. Idempotent across init scripts and composite/submodule builds via extraProperties guard.
@@ -56,17 +64,14 @@ def resolveInternalClass = { String className ->
 }
 
 Class<?> clientsManagerClass = null
-Class<?> expirationClass = null
-def expirationCtor = null
-def attemptToReleaseMethod = null
+def selectIdleClientsMethod = null
 def stopAllWorkersMethod = null
 
 try {
     clientsManagerClass = resolveInternalClass('org.gradle.workers.internal.WorkerDaemonClientsManager')
-    expirationClass = resolveInternalClass('org.gradle.workers.internal.WorkerDaemonExpiration')
-    if (clientsManagerClass != null && expirationClass != null) {
-        expirationCtor = expirationClass.getConstructor(clientsManagerClass, long.class)
-        attemptToReleaseMethod = expirationClass.getMethod('attemptToRelease', long.class)
+    if (clientsManagerClass != null) {
+        selectIdleClientsMethod = clientsManagerClass.getDeclaredMethod('selectIdleClientsToStop', Transformer)
+        selectIdleClientsMethod.accessible = true
         stopAllWorkersMethod = clientsManagerClass.getMethod('stopAllWorkers')
     }
 } catch (Throwable t) {
@@ -74,26 +79,47 @@ try {
     return
 }
 
-if (clientsManagerClass == null || expirationClass == null || expirationCtor == null ||
-        attemptToReleaseMethod == null || stopAllWorkersMethod == null) {
+if (clientsManagerClass == null || selectIdleClientsMethod == null || stopAllWorkersMethod == null) {
     logger.debug('[compiler-worker-reaper] Gradle internal worker APIs not found; reaper disabled.')
     return
 }
 
-def expireIdleWorkers = { String trigger ->
+def isSingleUseSubprojectWorker = { Object client ->
+    try {
+        def getForkOpts = client.getClass().getDeclaredMethod('getForkOptions')
+        getForkOpts.accessible = true
+        def forkOpts = getForkOpts.invoke(client)
+        def jvmOpts = forkOpts.getClass().getMethod('getJvmOptions').invoke(forkOpts)
+        Collection<?> allArgs = (Collection<?>) jvmOpts.getClass().getMethod('getAllJvmArgs').invoke(jvmOpts)
+        return allArgs != null && allArgs.any { Object arg ->
+            String s = String.valueOf(arg)
+            s.startsWith('-Dbase.dir=') ||
+                s.startsWith('-Dmicronaut.openapi.target.file=') ||
+                s.startsWith('-Dmicronaut.openapi.additional.files=')
+        }
+    } catch (Throwable ignored) {
+        return false
+    }
+}
+
+def expireSingleUseIdleWorkers = { String trigger ->
     try {
         def mgr = gradle.services.get(clientsManagerClass)
-        def expiration = expirationCtor.newInstance(mgr, -1L)
-        long releasedBytes = (attemptToReleaseMethod.invoke(expiration, Long.MAX_VALUE) as Number).longValue()
-        if (logger.isDebugEnabled()) {
+        int stoppedCount = 0
+        selectIdleClientsMethod.invoke(mgr, ({ List<?> idleClients ->
+            List<?> victims = idleClients.findAll { Object client -> isSingleUseSubprojectWorker(client) }
+            stoppedCount = victims.size()
+            return victims
+        } as Transformer))
+        if (stoppedCount > 0 && logger.isDebugEnabled()) {
             logger.debug(
-                '[compiler-worker-reaper] Expired idle compiler workers after {} (released ~{} MiB)',
-                trigger,
-                releasedBytes.intdiv(1024L * 1024L)
+                '[compiler-worker-reaper] Stopped {} single-use Grails compiler worker(s) after {}',
+                stoppedCount,
+                trigger
             )
         }
     } catch (Throwable t) {
-        logger.debug('[compiler-worker-reaper] Unable to expire idle workers after {}: {}', trigger, t.toString())
+        logger.debug('[compiler-worker-reaper] Unable to expire single-use workers after {}: {}', trigger, t.toString())
     }
 }
 
@@ -109,7 +135,20 @@ def stopAllWorkers = { String trigger ->
 
 gradle.taskGraph.afterTask { Task task ->
     if (task instanceof GroovyCompile && task.didWork) {
-        expireIdleWorkers(task.path)
+        boolean isPinnedTask = false
+        try {
+            isPinnedTask = task.groovyOptions?.forkOptions?.allJvmArgs?.any { Object arg ->
+                String s = String.valueOf(arg)
+                s.startsWith('-Dbase.dir=') ||
+                    s.startsWith('-Dmicronaut.openapi.target.file=') ||
+                    s.startsWith('-Dmicronaut.openapi.additional.files=')
+            } ?: false
+        } catch (Throwable ignored) {
+            isPinnedTask = true
+        }
+        if (isPinnedTask) {
+            expireSingleUseIdleWorkers(task.path)
+        }
     }
 }
 
@@ -125,4 +164,4 @@ if (gradle.respondsTo('buildFinished')) {
     }
 }
 
-logger.debug('[compiler-worker-reaper] Installed Gradle compiler worker reaper hooks.')
+logger.debug('[compiler-worker-reaper] Installed surgical Gradle compiler worker reaper hooks.')
