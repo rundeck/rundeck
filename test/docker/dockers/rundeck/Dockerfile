@@ -1,4 +1,4 @@
-FROM ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
+FROM ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
 
 ARG CLI_VERS
 
@@ -26,7 +26,7 @@ RUN apt-get -y update && \
         zip \
         file \
         apt-transport-https \
-        openjdk-17-jdk \
+        openjdk-25-jdk \
         dos2unix
 
 RUN curl -s https://packagecloud.io/install/repositories/pagerduty/rundeck/script.deb.sh | os=any dist=any bash \

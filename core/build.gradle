@@ -33,7 +33,9 @@ apply plugin: 'java-library'
 
 description = 'The Rundeck Core API project'
 
-archivesBaseName = 'rundeck-core'
+// Gradle 9 removed the project-level archivesBaseName (BasePluginConvention); it now lives on the
+// base extension as a Property. Value is unchanged, so published artifact names are unaffected.
+base { archivesName = 'rundeck-core' }
 defaultTasks 'clean'
 apply plugin: "groovy"
 

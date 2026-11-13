@@ -115,9 +115,25 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      * @param grailsApplication
      * @return
      */
+    /**
+     * Reused across calls: the loader caches the embedded plugin manifests, and a fresh instance per
+     * call threw that cache away every time. See ApplicationContextPluginFileSource#listManifests.
+     */
+    private volatile ApplicationContextPluginFileSource embeddedPluginFileSource
+
+    private ApplicationContextPluginFileSource embeddedPluginFileSource(GrailsApplication grailsApplication) {
+        if (null == embeddedPluginFileSource) {
+            embeddedPluginFileSource = new ApplicationContextPluginFileSource(
+                    grailsApplication.mainContext,
+                    '/WEB-INF/rundeck/plugins/'
+            )
+        }
+        return embeddedPluginFileSource
+    }
+
     def listEmbeddedPlugins(GrailsApplication grailsApplication) {
-        def loader = new ApplicationContextPluginFileSource(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
-        def result = [success: true, logs: []]
+        def loader = embeddedPluginFileSource(grailsApplication)
+        Map<String, Object> result = [success: true, logs: []]
         def pluginList
         try {
             pluginList = loader.listManifests()

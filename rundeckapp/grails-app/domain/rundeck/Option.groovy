@@ -327,7 +327,16 @@ public class Option implements Comparable, OptionData {
             data.optionConfigData=configData
         }
 
-        DataBindingUtils.bindObjectToInstance opt, data, [], [], null
+        // Grails 8.0.0-M6 reads an empty include list as "bind nothing" where it previously meant
+        // "no restriction", which left every property on a new Option null. Passing null asks for
+        // the unrestricted binding this call has always intended.
+        DataBindingUtils.bindObjectToInstance opt, data, null, null, null
+        // optionValues is declared transient, so the binding above does not populate it, and
+        // produceValuesList() derives valuesList from it. Assign it here so the derivation has its
+        // input regardless of how the binder treats transients.
+        if (data.optionValues != null) {
+            opt.optionValues = data.optionValues
+        }
         opt.valuesList = opt.produceValuesList()
         return opt
     }

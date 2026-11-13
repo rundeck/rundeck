@@ -62,12 +62,24 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
                 grailsApplication = grailsApplication
             }
         }
+        // Several actions here fail through controller.error(), which renders a view including
+        // common/_messages.gsp, and that template uses <g:autoLink> from UtilityTagLib. Under
+        // Grails 8 an unregistered tag in unit-test view rendering is an error ("Tag [autoLink]
+        // does not exist"), so the taglib needs registering for the whole spec, not just in the
+        // one feature that already did it inline.
+        //
+        // Must come after defineBeans: UtilityTagLib has a configurationService dependency, and
+        // registering it earlier leaves that null, which turns the failure into
+        // "Error executing tag <g:autoLink>: Cannot invoke method getString() on null object".
+        //
+        // Unit-test registration concern only -- UtilityTagLib defines 83 tags as Closure fields
+        // and they resolve fine at runtime; menu/jobs.gsp uses autoLink and renders in the app.
+        mockTagLib(UtilityTagLib)
     }
 
     @Unroll
     def "action #action requires form token"() {
         when:
-            def utilTagLib = mockTagLib(UtilityTagLib)
             request.method = 'POST'
             controller."$action"()
         then:

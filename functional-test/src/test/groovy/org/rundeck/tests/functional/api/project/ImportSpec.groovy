@@ -32,17 +32,33 @@ class ImportSpec extends BaseContainer {
                 getClass().getResource(RESOURCE_ARCHIVE_TEST_README_DIR).getPath()
             )
         )
-        client.put(
+        def importResponse = client.put(
             "/project/${projectName}/import?jobUuidOption=remove&importConfig=true",
             archiveJar,
             'application/zip'
         )
+        // The endpoint answers 200 even when the import fails -- the outcome is in the body, as
+        // import_status, and RdClient.put only checks the HTTP status. Without this check a failed
+        // import is invisible here and surfaces three lines down as a 404 on readme.md, with the
+        // errors that explain it already discarded. The other imports in this spec keep their
+        // response; this one did not.
+        assert importResponse.import_status == 'successful' : "import did not succeed: ${importResponse}"
 
         when: "We try to read readme content"
         String readmeContent
         try(def readmeResponse = client.doGetAcceptAll("/project/${projectName}/readme.md")) {
-            assert readmeResponse.successful
+            // A 404 here has two unrelated causes and only the body tells them apart.
+            // apiProjectFileGet answers api.error.item.doesnotexist with args ['resource', filename],
+            // so "resource: null" means the mapping's static filename parameter never reached params
+            // -- the family described in rundeckpro/.claude/rules/grails-command-object-binding.md --
+            // while "resource: readme.md" means the import stored nothing, which it can do silently:
+            // the md-file branch is skipped when mdfilestemp is empty and import_status stays
+            // 'successful' because it only reflects job, execution and ACL errors.
+            // Read once, then assert: the assert message is evaluated eagerly here, so building it
+            // from the body consumes it and the next read fails with "closed".
             readmeContent = readmeResponse.body().string()
+            assert readmeResponse.successful :
+                    "readme not readable (${readmeResponse.code()}): ${readmeContent}"
         }
 
         then: "The content: "
