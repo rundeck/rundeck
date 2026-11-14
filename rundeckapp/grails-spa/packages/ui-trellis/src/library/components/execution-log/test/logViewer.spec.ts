@@ -34,11 +34,6 @@ const findByTestId = (wrapper: VueWrapper<any>, testId: string) => {
   return wrapper.find(`[data-testid="${testId}"]`);
 };
 
-const findEventHandler = (eventBus: { on: jest.Mock }, eventName: string) => {
-  const call = eventBus.on.mock.calls.find((args) => args[0] === eventName);
-  return call ? call[1] : undefined;
-};
-
 // Setup function to mount the component with given props
 const createWrapper = (props = {}, options = {}): VueWrapper<any> => {
   return shallowMount(LogViewer, {
@@ -378,70 +373,6 @@ describe("LogViewer", () => {
         expect(wrapper.emitted("line-deselect")).toBeTruthy();
         expect(wrapper.emitted("line-deselect")?.[0]).toEqual([42]);
       });
-    });
-  });
-
-  describe("Hide incomplete nodes", () => {
-    it("renders hide incomplete checkbox in settings and keeps it disabled until it applies", async () => {
-      const wrapper = createWrapper({ showSettings: true });
-      await flushPromises();
-
-      const checkbox = findByTestId(
-        wrapper,
-        "log-viewer-hide-incomplete-checkbox",
-      );
-      expect(checkbox.exists()).toBe(true);
-      expect(checkbox.attributes("disabled")).toBeDefined();
-    });
-
-    it("hides log lines for incomplete nodes when hide state is published", async () => {
-      mockViewer.entries = [
-        { node: "runner", log: "skipped" },
-        { node: "localhost", log: "ok" },
-      ];
-      const wrapper = createWrapper({ showSettings: true });
-      await flushPromises();
-
-      const stateHandler = findEventHandler(
-        mockEventBus as unknown as { on: jest.Mock },
-        "execution-hide-incomplete-nodes-state",
-      );
-      expect(stateHandler).toBeDefined();
-      stateHandler({
-        hide: true,
-        applies: true,
-        nodeNames: ["runner"],
-      });
-      await nextTick();
-
-      expect(findByTestId(wrapper, "log-entry-runner").exists()).toBe(false);
-      expect(findByTestId(wrapper, "log-entry-localhost").exists()).toBe(true);
-      expect(findByTestId(wrapper, "log-entry-localhost").text()).toContain(
-        "ok",
-      );
-    });
-
-    it("emits toggle when user checks hide incomplete nodes", async () => {
-      const wrapper = createWrapper({ showSettings: true });
-      await flushPromises();
-
-      const stateHandler = findEventHandler(
-        mockEventBus as unknown as { on: jest.Mock },
-        "execution-hide-incomplete-nodes-state",
-      );
-      stateHandler({ hide: false, applies: true, nodeNames: ["runner"] });
-      await nextTick();
-
-      await findByTestId(
-        wrapper,
-        "log-viewer-hide-incomplete-checkbox",
-      ).setValue(true);
-      await nextTick();
-
-      expect(mockEventBus.emit).toHaveBeenCalledWith(
-        "execution-hide-incomplete-nodes-toggle",
-        true,
-      );
     });
   });
 });

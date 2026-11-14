@@ -33,6 +33,32 @@ jQuery(function () {
         };
     }
 
+    function fakeFlow() {
+        return {
+            pendingStepsForNode: function () { return 0; },
+            pluralize: function (n, word) { return n == 1 ? word : word + 's'; },
+            hideSkippedSteps: ko.observable(false)
+        };
+    }
+
+    function nodeWithSteps(states, flow) {
+        var node = new RDNode('node1', [], flow || fakeFlow());
+        states.forEach(function (state, i) {
+            node.steps.push({
+                stepctx: String(i + 1),
+                parameterizedStep: ko.observable(false),
+                executionState: ko.observable(state)
+            });
+        });
+        return node;
+    }
+
+    function summarizeNode(states) {
+        var node = nodeWithSteps(states);
+        node.summarize();
+        return {state: node.summaryState(), text: node.summary()};
+    }
+
     new TestHarness("executionStateKO.test.js", {
         computeNodeDurationUsesWallClockNotStepSum: function () {
             var steps = [
@@ -131,30 +157,50 @@ jQuery(function () {
             var ms = RDNode.computeNodeDurationMs(-1, steps, 457);
             this.assert('clamps to execDurationMs', ms === 457);
         },
-        isSkippedOnlySuccessAcceptsAllStepsSkippedTest: function () {
-            this.assert('every step was skipped',
-                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 0, NOT_STARTED: 3}) === true);
+        summarizeCountsSkippedStepsAsCompleteTest: function () {
+            this.assert('ok + skipped + ok is a complete node',
+                summarizeNode(['SUCCEEDED', 'SKIPPED', 'SUCCEEDED']).state === 'SUCCEEDED');
+            this.assert('summary mentions the skipped step',
+                summarizeNode(['SUCCEEDED', 'SKIPPED', 'SUCCEEDED']).text === 'All Steps OK (1 skipped)');
+            this.assert('all skipped is also complete',
+                summarizeNode(['SKIPPED', 'SKIPPED']).state === 'SUCCEEDED');
+            this.assert('all skipped text',
+                summarizeNode(['SKIPPED', 'SKIPPED']).text === 'All Steps skipped');
         },
-        isSkippedOnlySuccessAcceptsMixOfSkippedAndSucceededTest: function () {
-            this.assert('every step that ran succeeded',
-                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 2, NOT_STARTED: 1}) === true);
+        summarizeKeepsNeverStartedStepsIncompleteTest: function () {
+            this.assert('steps that never started leave the node incomplete',
+                summarizeNode(['SUCCEEDED', 'NOT_STARTED', 'NOT_STARTED']).state === 'PARTIAL_NOT_STARTED');
+            this.assert('a skipped step does not hide a never-started one',
+                summarizeNode(['SUCCEEDED', 'SKIPPED', 'NOT_STARTED']).state === 'PARTIAL_NOT_STARTED');
         },
-        isSkippedOnlySuccessRejectsStepThatRanWithoutSucceedingTest: function () {
-            this.assert('aborted step',
-                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 1, NOT_STARTED: 1, other: 1}) === false);
+        summarizeDoesNotCountSkippedAsDidNotSucceedTest: function () {
+            this.assert('only the aborted step did not succeed',
+                summarizeNode(['SUCCEEDED', 'SKIPPED', 'ABORTED']).text === '1 did not succeed');
+            this.assert('failure still wins',
+                summarizeNode(['SUCCEEDED', 'SKIPPED', 'FAILED']).state === 'FAILED');
         },
-        isSkippedOnlySuccessRejectsPendingWorkTest: function () {
-            this.assert('node still has pending steps',
-                RDNode.isSkippedOnlySuccess({total: 3, SUCCEEDED: 2, NOT_STARTED: 1, pending: 1}) === false);
+        computeNodeDurationIgnoresSkippedStepsTest: function () {
+            var steps = [
+                stepFixture({
+                    startTime: '2014-09-05T21:28:04Z',
+                    endTime: '2014-09-05T21:28:05Z',
+                    duration: 1000
+                }),
+                stepFixture({
+                    executionState: 'SKIPPED',
+                    startTime: '2014-09-05T21:28:43Z',
+                    endTime: '2014-09-05T21:28:43Z'
+                })
+            ];
+            var ms = RDNode.computeNodeDurationMs(-1, steps, -1);
+            this.assert('a skipped step does not stretch the node duration', ms === 1000);
         },
-        isSkippedOnlySuccessRejectsNodeWithoutSkippedStepsTest: function () {
-            this.assert('nothing was skipped',
-                RDNode.isSkippedOnlySuccess({total: 2, SUCCEEDED: 2, NOT_STARTED: 0}) === false);
-        },
-        isSkippedOnlySuccessRejectsSummaryWithoutCountsTest: function () {
-            this.assert('summary from a server that does not report counts',
-                RDNode.isSkippedOnlySuccess({summaryState: 'PARTIAL_NOT_STARTED'}) === false);
-            this.assert('no summary at all', RDNode.isSkippedOnlySuccess(null) === false);
+        visibleStepsHidesSkippedStepsOnlyWhenToggledTest: function () {
+            var flow = fakeFlow();
+            var node = nodeWithSteps(['SUCCEEDED', 'SKIPPED', 'SUCCEEDED'], flow);
+            this.assert('all steps shown by default', node.visibleSteps().length === 3);
+            flow.hideSkippedSteps(true);
+            this.assert('skipped step hidden when toggled', node.visibleSteps().length === 2);
         }
     });
 });

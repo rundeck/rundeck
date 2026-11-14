@@ -56,12 +56,22 @@ public enum ExecutionState {
      * After waiting the execution did not start
      */
     NOT_STARTED,
+    /**
+     * The step was deliberately skipped, e.g. its conditional or ruleset skip condition was met.
+     * Applies to steps and nodes only; it is distinct from {@link #NOT_STARTED}, which means the
+     * step was never triggered.
+     */
+    SKIPPED,
     ;
 
+    /**
+     * @return true if this state is a final (completed) state
+     */
     public boolean isCompletedState() {
         return this == ExecutionState.ABORTED || this == ExecutionState.SUCCEEDED || this == ExecutionState.FAILED
                 || this == ExecutionState.NODE_MIXED || this == ExecutionState.NODE_PARTIAL_SUCCEEDED
                 || this == NOT_STARTED
+                || this == SKIPPED
                 ;
     }
 }

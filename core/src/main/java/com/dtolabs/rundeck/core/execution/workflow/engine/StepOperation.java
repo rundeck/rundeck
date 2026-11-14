@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.engine;
 
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
 import com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor;
@@ -39,6 +40,11 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     @Getter private boolean didRun = false;
+    /**
+     * true if the engine skipped this step because its skip conditions were met, as opposed to the
+     * step never being started because its start conditions were never met
+     */
+    @Getter private volatile boolean didSkip = false;
     @Getter private final String identity;
     private final WorkflowStrategyProfile profile;
 
@@ -62,6 +68,20 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
         this.skipTriggerConditions = skipTriggerConditions;
         this.skipTriggerState = skipTriggerState;
         this.profile = profile;
+    }
+
+    /**
+     * @return the step this operation runs
+     */
+    public StepExecutionItem getStepItem() {
+        return callable.getStepItem();
+    }
+
+    /**
+     * Record that the engine skipped this step because its skip conditions were met
+     */
+    public void markSkipped() {
+        didSkip = true;
     }
 
     @Override

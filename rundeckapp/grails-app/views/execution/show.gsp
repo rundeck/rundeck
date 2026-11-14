@@ -625,13 +625,13 @@ search
                           <div data-bind="visible: activeTab()==='nodes'" class="pull-right" style="margin-left: 10px;">
                               <div class="checkbox-inline">
                                   <input type="checkbox"
-                                         data-bind="checked: hideIncompleteNodes, enable: hideIncompleteNodesApplies"
-                                         id="hide-incomplete-nodes"
-                                         data-testid="hide-incomplete-nodes"
-                                         title="${g.message(code: 'execution.show.nodes.hideIncompleteNodes.description',
-                                                 default: 'Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.')}"/>
-                                  <label for="hide-incomplete-nodes">
-                                      <g:message code="execution.show.nodes.hideIncompleteNodes.label" default="Hide incomplete nodes"/>
+                                         data-bind="checked: hideSkippedSteps"
+                                         id="hide-skipped-steps"
+                                         data-testid="hide-skipped-steps"
+                                         title="${g.message(code: 'execution.show.nodes.hideSkippedSteps.description',
+                                                 default: 'Hide steps that were skipped, e.g. because a conditional did not match.')}"/>
+                                  <label for="hide-skipped-steps">
+                                      <g:message code="execution.show.nodes.hideSkippedSteps.label" default="Hide skipped steps"/>
                                   </label>
                               </div>
                           </div>

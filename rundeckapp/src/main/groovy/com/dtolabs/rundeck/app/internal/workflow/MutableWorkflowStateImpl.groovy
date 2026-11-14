@@ -201,6 +201,14 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             if (nodeSet && (null == currentStep.nodeStepTargets || currentStep.nodeStepTargets.size() < 1)) {
                 currentStep.setNodeStepTargets(nodeSet)
             }
+            if (stepStateChange.stepState.executionState == ExecutionState.SKIPPED) {
+                //the engine skipped this whole node step without running it on any node, so it is
+                //skipped on every node it targets
+                (currentStep.nodeStepTargets ?: nodeSet)?.each { String targetNode ->
+                    toUpdateComplete << updateNodeStepState(currentStep, targetNode, identifier, stepStateChange)
+                }
+                finishNodeStepIfNodesFinished(currentStep, timestamp)
+            }
         }
         transitionStateIfWaiting(identifier,currentStep.mutableStepState)
         if (currentStep.ownerStepState) {
@@ -429,7 +437,13 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         if (finished) {
             boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
             boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
-            def overall = aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED
+            //a step whose nodes were all skipped is itself skipped rather than succeeded
+            boolean skippedAll = currentStep.nodeStateMap &&
+                                 currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.SKIPPED }
+            def overall = aborted ? ExecutionState.ABORTED :
+                          failed ? ExecutionState.FAILED :
+                          skippedAll ? ExecutionState.SKIPPED :
+                          ExecutionState.SUCCEEDED
             resolveStepCompleted(overall, timestamp, currentStep)
         }
     }
@@ -476,17 +490,22 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     protected ExecutionState summarizedSubStateResult(Collection<? extends ExecutionState> execStates,
                                                       ExecutionState overall) {
         boolean finished = execStates.every { it!=null && it.isCompletedState() }
-        boolean aborted = execStates.any { it == ExecutionState.ABORTED }
-        boolean abortedAll = execStates.every { it == ExecutionState.ABORTED }
-        boolean failed = execStates.any { it == ExecutionState.FAILED }
-        boolean failedAll = execStates.every { it == ExecutionState.FAILED }
-        boolean succeeded = execStates.any { it == ExecutionState.SUCCEEDED }
-        boolean succeededAll = execStates.every { it == ExecutionState.SUCCEEDED }
+        //SKIPPED states are neutral: they do not count for or against success, failure or abort
+        boolean skippedAll = execStates.size() > 0 && execStates.every { it == ExecutionState.SKIPPED }
+        def considered = execStates.findAll { it != ExecutionState.SKIPPED }
+        boolean aborted = considered.any { it == ExecutionState.ABORTED }
+        boolean abortedAll = considered.every { it == ExecutionState.ABORTED }
+        boolean failed = considered.any { it == ExecutionState.FAILED }
+        boolean failedAll = considered.every { it == ExecutionState.FAILED }
+        boolean succeeded = considered.any { it == ExecutionState.SUCCEEDED }
+        boolean succeededAll = considered.every { it == ExecutionState.SUCCEEDED }
         boolean notStartedAll = execStates?.size() == 0 || execStates.every { it == ExecutionState.WAITING || it == null }
         ExecutionState result = overall
         if (finished) {
             //all nodes finished
-            if (abortedAll) {
+            if (skippedAll) {
+                result = ExecutionState.SKIPPED
+            } else if (abortedAll) {
                 result = ExecutionState.ABORTED
             } else if (failedAll) {
                 result = ExecutionState.FAILED
@@ -579,6 +598,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         ExecutionState.values().findAll{it.isCompletedState()}.each{
             allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING, ExecutionState.NOT_STARTED]
         }
+        //a skip can be the first thing reported for a step, before any WAITING state was observed
+        allowed[ExecutionState.SKIPPED] = allowed[ExecutionState.SKIPPED] + [null]
         if (errorHandler) {
             allowed[ExecutionState.RUNNING] << ExecutionState.FAILED
         }
