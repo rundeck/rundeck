@@ -258,6 +258,40 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             }
         }
 
+        if (!stepStateChange.nodeState && stepStateChange.stepState.executionState == ExecutionState.SKIPPED) {
+            skipSubWorkflowSteps(currentStep, timestamp)
+        }
+    }
+
+    /**
+     * When a step that contains a prebuilt sub workflow (e.g. a job reference) is skipped, the steps of
+     * that sub workflow never run, so skip them too, recursively. Otherwise they stay WAITING or are
+     * finalized as NOT_STARTED, which leaves the parent step and node summaries incomplete.
+     *
+     * @param skippedStep the step that was skipped
+     * @param timestamp time of the skip
+     */
+    private void skipSubWorkflowSteps(MutableWorkflowStepState skippedStep, Date timestamp) {
+        //a parameterized step has one sub workflow per parameter set
+        Collection<MutableWorkflowStepState> owners = skippedStep.parameterizedStateMap ?
+                skippedStep.mutableParameterizedStateMap.values() :
+                [skippedStep]
+        owners.each { MutableWorkflowStepState owner ->
+            if (!owner.hasSubWorkflow()) {
+                return
+            }
+            MutableWorkflowState subflow = owner.mutableSubWorkflowState
+            int subIndex = owner.stepIdentifier.context.size()
+            subflow.stepStates.each { WorkflowStepState child ->
+                //the sub step's own update recurses into its sub workflow, and fans out to its nodes
+                subflow.updateStateForStep(
+                        child.stepIdentifier,
+                        subIndex,
+                        StateUtils.stepStateChange(StateUtils.stepState(ExecutionState.SKIPPED)),
+                        timestamp
+                )
+            }
+        }
     }
 
     /**
