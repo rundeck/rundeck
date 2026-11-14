@@ -2,6 +2,7 @@ package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.PluginUtils
@@ -248,7 +249,7 @@ class RepositoryController {
                 responseMsg.msg = "Plugin Uninstalled"
             } catch(Exception ex) {
                 log.error("Unable to uninstall plugin.",ex)
-                responseMsg.errors = [[code:"plugin.uninstall.failure", msg: "Failed to uninstall plugin: ${ex.message}"]]
+                responseMsg.errors = [[code:"plugin.uninstall.failure", msg: "Failed to uninstall plugin: ${ClientErrorMessages.publicMessage(ex)}"]]
                 response.setStatus(400)
             }
             render responseMsg as JSON

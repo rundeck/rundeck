@@ -52,6 +52,12 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
                 MBeanContainer mbContainer=new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
                 server.addEventListener(mbContainer);
                 server.addBean(mbContainer);
+                org.eclipse.jetty.server.handler.ErrorHandler quietServerErrors =
+                        new org.eclipse.jetty.server.handler.ErrorHandler()
+                quietServerErrors.setShowStacks(false)
+                quietServerErrors.setShowCauses(false)
+                quietServerErrors.setShowMessageInTitle(false)
+                server.setErrorHandler(quietServerErrors)
                 for (Handler handler : server.getHandlers()) {
                     if (handler instanceof ContextHandler) {
                         ((ContextHandler) handler).setMaxFormKeys(2000)
@@ -66,6 +72,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
+        factory.addConfigurations(new QuietJettyErrorPageConfiguration())
         factory.useForwardHeaders=useForwardHeaders
         applySecureSessionCookieDefault(factory)
     }
@@ -96,6 +103,23 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      */
     static boolean isHttpsUrl(final String url) {
         url != null && url.trim().toLowerCase().startsWith("https://")
+    }
+
+    /**
+     * Replaces the context error handler with one that omits stacks and exception text,
+     * keeping any error-page mappings Spring Boot already registered.
+     * @param context web app context whose error handler is replaced
+     */
+    static void installQuietErrorHandler(WebAppContext context) {
+        QuietJettyErrorHandler quiet = new QuietJettyErrorHandler()
+        def current = context.getErrorHandler()
+        if (current instanceof org.eclipse.jetty.ee10.servlet.ErrorPageErrorHandler) {
+            def pages = ((org.eclipse.jetty.ee10.servlet.ErrorPageErrorHandler) current).getErrorPages()
+            if (pages != null) {
+                quiet.setErrorPages(pages)
+            }
+        }
+        context.setErrorHandler(quiet)
     }
 }
 

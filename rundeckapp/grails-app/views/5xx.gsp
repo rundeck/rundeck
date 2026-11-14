@@ -47,11 +47,6 @@
   <asset:javascript src="bootstrap.js" />
 </head>
 
-<g:if test="${!exception && request.getAttribute('jakarta.servlet.error.exception')}">
-  <%
-    exception=request.getAttribute('jakarta.servlet.error.exception').cause
-  %>
-</g:if>
 <body id="four-oh-four-page">
     <div class="four-oh-four">
       <div style="padding-top:16vh;">
@@ -67,10 +62,6 @@
             <h3>There was an unexpected error</h3>
             <h4>Please check the service log for more details.</h4>
             <h4>At ${new Date()}</h4>
-            <g:if test="${request.getAttribute('jakarta.servlet.error.message')}">
-              <h5><g:enc>${request.getAttribute('jakarta.servlet.error.message')}</g:enc></h5>
-            </g:if>
-            <h5><g:enc>${exception?.message}</g:enc></h5>
             <div>
               <h5>
                 URI: <g:enc>${request.forwardURI}</g:enc>

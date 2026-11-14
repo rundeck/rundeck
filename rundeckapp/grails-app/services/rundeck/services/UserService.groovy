@@ -24,6 +24,7 @@ import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.model.v1.user.dto.SaveUserResponse
 import org.rundeck.app.data.model.v1.user.dto.UserProperties
 import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.spi.data.DataAccessException
@@ -156,8 +157,17 @@ class UserService {
         String firstName
         String email
     }
-    void updateUserProfile(String username, String lastName, String firstName, String email) {
-        userDataProvider.updateUserProfile(username, lastName, firstName, email)
+    /**
+     * Persists first name, last name and email for a login.
+     *
+     * @param username login name
+     * @param lastName last name, or null
+     * @param firstName first name, or null
+     * @param email email address, or null
+     * @return provider result, including whether the profile was saved
+     */
+    SaveUserResponse updateUserProfile(String username, String lastName, String firstName, String email) {
+        return userDataProvider.updateUserProfile(username, lastName, firstName, email)
     }
 
     List<String> getUserGroupSourcePluginRoles(String username) {

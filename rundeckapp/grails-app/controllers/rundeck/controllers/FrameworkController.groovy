@@ -18,6 +18,7 @@ package rundeck.controllers
 
 
 import com.dtolabs.rundeck.app.api.project.sources.Resources
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
 import com.dtolabs.rundeck.app.api.tag.TagForNodes
@@ -2403,7 +2404,7 @@ List of config values, each value contains:
             // Path validation failed (security check)
             log.warn("Node source path validation failed for ${sourceDesc}: ${e.message}")
             emptydata = true
-            warning = e.message  // Use the validation error message
+            warning = ClientErrorMessages.publicMessage(e)
 
         } catch (ResourceModelSourceException e) {
             // File is not a valid node source (content validation failed)
@@ -2486,7 +2487,7 @@ List of config values, each value contains:
             )
         } catch (com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException e) {
             log.warn("Node source path validation failed for save operation: ${e.message}")
-            flash.error = e.message
+            flash.error = ClientErrorMessages.publicMessage(e)
             return redirect(
                 controller: 'framework',
                 action: 'projectNodeSources',
@@ -4087,7 +4088,7 @@ Since: v52''',
             [
                 status: HttpServletResponse.SC_BAD_REQUEST,
                 code  : 'api.error.invalid.request',
-                args  : [e.message]
+                args  : [ClientErrorMessages.publicMessage(e)]
             ]
         )
     }
@@ -4155,14 +4156,16 @@ Since: v52''',
         try {
             generator.generateDocument(nodes, baos)
         } catch (ResourceFormatGeneratorException e) {
+            log.error("Failed to generate resource document", e)
             return apiService.renderErrorFormat(
                 response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                           code  : 'api.error.resource.format.generator', args: [e.message]]
+                           code  : 'api.error.resource.format.generator', args: [ClientErrorMessages.publicMessage(e)]]
             )
         } catch (IOException e) {
+            log.error("Failed to generate resource document", e)
             return apiService.renderErrorFormat(
                 response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                           code  : 'api.error.resource.format.generator', args: [e.message]]
+                           code  : 'api.error.resource.format.generator', args: [ClientErrorMessages.publicMessage(e)]]
             )
         }
         final types = generator.getMIMETypes() as List
@@ -4650,7 +4653,7 @@ by:
             try {
                 text = request.inputStream.text
             } catch (Throwable e) {
-                error = e.message
+                error = ClientErrorMessages.publicMessage(e)
             }
         }else{
             def succeeded = apiService.parseJsonXmlWith(request,response,[
