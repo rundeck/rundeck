@@ -36,15 +36,37 @@ class RenameTracker<A> {
      * @param newval
      * @return original value for renamed item, or null
      */
-    A originalValue(A newval){
-        if(renamedTrackedItems.values().contains(newval)){
-            return renamedTrackedItems.keySet().find{renamedTrackedItems[it] == newval}
+    A originalValue(A newval) {
+        //one locked entrySet scan - synchronizedMap doesn't guard iteration over its views
+        synchronized (renamedTrackedItems) {
+            for (Map.Entry<A, A> entry : renamedTrackedItems.entrySet()) {
+                if (entry.value == newval) {
+                    return entry.key
+                }
+            }
         }
         null
     }
 
     boolean wasRenamed(A oldval) {
         renamedValue(oldval) != null
+    }
+
+    /**
+     * Stop tracking any rename mapping where the given path is either the old or new name.
+     *
+     * @param path path no longer tracked (e.g. because it was deleted)
+     */
+    void untrack(A path) {
+        synchronized (renamedTrackedItems) {
+            renamedTrackedItems.remove(path)
+            Iterator<Map.Entry<A, A>> iter = renamedTrackedItems.entrySet().iterator()
+            while (iter.hasNext()) {
+                if (iter.next().value == path) {
+                    iter.remove()
+                }
+            }
+        }
     }
 
     /**
@@ -61,17 +83,22 @@ class RenameTracker<A> {
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)
+            return
+        }
+        //collapse a rename chain to origin -> newval, so links don't accumulate
+        def origin = originalValue(oldval)
+        if (origin != null) {
+            renamedTrackedItems.remove(oldval)
+            renamedTrackedItems[origin] = newval
         } else {
             renamedTrackedItems[oldval] = newval
         }
     }
 
-
-
     @Override
     public String toString() {
         return "RenameTracker{" +
                 "renamedTrackedItems=" + renamedTrackedItems +
-                '}';
+                '}'
     }
 }

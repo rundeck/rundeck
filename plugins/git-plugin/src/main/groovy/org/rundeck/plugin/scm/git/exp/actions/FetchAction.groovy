@@ -24,7 +24,6 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
-
 /**
  * Created by greg on 9/8/15.
  */
@@ -58,10 +57,11 @@ class FetchAction extends BaseAction implements GitExportAction {
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
-
-        //fetch remote changes
+    ) throws ScmPluginException {
+        //fetch remote changes. fetchFromRemote already wraps its own failure in
+        //remoteAccessFailure() (redacted, user-facing); wrapping again here only doubled the
+        //message prefix and, for a failure thrown by setupTransportAuthentication (which runs
+        //before fetchFromRemote's own try/catch), bypassed that redaction entirely
         def update = plugin.fetchFromRemote(context)
 
         def result = new ScmExportResultImpl()
