@@ -79,4 +79,46 @@ class WorkflowStepUtilSpec extends Specification {
         summary == "interpreter'remotelocal/filepath -- arg' ('descriptionTest') [extension]"
     }
 
+    def "summarize command plugin steps deserialized from workflow json"() {
+        given:
+        def step = Mock(WorkflowStepData){
+            pluginType >> type
+            nodeStep >> true
+            configuration >> config
+        }
+        when:
+        def summary = WorkflowStepUtil.summarize(step)
+        then:
+        summary == expected
+        where:
+        type              | config                                                                  | expected
+        'exec-command'    | [adhocRemoteString: 'echo hello']                                       | 'echo hello'
+        'script-inline'   | [adhocLocalString: 'echo script', argString: 'a b']                     | 'echo script -- a b'
+        'script-inline'   | [adhocLocalString: 'echo s', scriptInterpreter: 'bash -c',
+                             interpreterArgsQuoted: 'true', fileExtension: 'sh']                    | "bash -c'echo s' [sh]"
+        'script-file-url' | [adhocFilepath: '/tmp/a.sh', interpreterArgsQuoted: 'false']            | '/tmp/a.sh'
+        'script-file-url' | [adhocFilepath: 'https://host/a.sh', argString: 'x']                   | 'https://host/a.sh -- x'
+        'exec-command'    | null                                                                    | ''
+    }
+
+    def "getCommandString"() {
+        given:
+        def step = Mock(WorkflowStepData){
+            pluginType >> type
+            configuration >> config
+        }
+        expect:
+        WorkflowStepUtil.getCommandString(step) == expected
+        where:
+        type              | config                            | expected
+        'builtin-command' | [exec: 'echo legacy']             | 'echo legacy'
+        'exec-command'    | [adhocRemoteString: 'echo hello'] | 'echo hello'
+        'script-inline'   | [adhocLocalString: 'echo hello']  | null
+        'some-plugin'     | [adhocRemoteString: 'echo hello'] | null
+    }
+
+    def "getCommandString null step"() {
+        expect:
+        WorkflowStepUtil.getCommandString(null) == null
+    }
 }
