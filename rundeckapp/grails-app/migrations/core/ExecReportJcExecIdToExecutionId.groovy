@@ -24,7 +24,7 @@ databaseChangeLog = {
         sql("""update base_report set execution_id = (IF(jc_exec_id REGEXP '^[0-9]+\$', CAST(jc_exec_id as unsigned),
  null))""")
     }
-    changeSet(author: "gschueler (generated)", id: "1653344096108-52", dbms: 'h2,postgresql,mssql') {
+    changeSet(author: "gschueler (generated)", id: "1653344096108-52", dbms: 'h2,postgresql') {
         preConditions(onFail: 'MARK_RAN') {
             and {
                 columnExists(tableName: "base_report", columnName: 'execution_id')
@@ -32,6 +32,16 @@ databaseChangeLog = {
             }
         }
         sql("""update base_report set execution_id = cast(JC_EXEC_ID as bigint)""")
+    }
+    changeSet(author: "rundeckdev", id: "RUN-5152-jc-exec-id-to-execution-id-mssql", dbms: 'mssql') {
+        comment{'Lower-case column reference so the update works on case-sensitive collations'}
+        preConditions(onFail: 'MARK_RAN') {
+            and {
+                columnExists(tableName: "base_report", columnName: 'execution_id')
+                columnExists(tableName: "base_report", columnName: 'jc_exec_id')
+            }
+        }
+        sql("""update base_report set execution_id = cast(jc_exec_id as bigint)""")
     }
     changeSet(author: "gschueler (generated)", id: "1653344096108-53", dbms: 'oracle') {
         preConditions(onFail: 'MARK_RAN') {
