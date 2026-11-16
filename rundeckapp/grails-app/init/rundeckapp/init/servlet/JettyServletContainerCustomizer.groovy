@@ -43,6 +43,15 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
     Boolean useForwardHeaders
     String serverUrl
     FeatureService featureService
+    /**
+     * Concurrent request cap installed by {@link JettyQosCustomizer}.
+     * {@code 0} (the default) installs no handler.
+     */
+    int qosMaxRequests = 0
+    /**
+     * Seconds a request may stay suspended before {@code 503} with {@code Retry-After}.
+     */
+    int qosMaxSuspendSeconds = 60
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
@@ -64,6 +73,12 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
         // TODO: Re-enable HTTP method filtering once ServletAPI issue is resolved
         if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
             factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
+        }
+        if (qosMaxRequests > 0) {
+            factory.addServerCustomizers(new JettyQosCustomizer(
+                    maxRequests: qosMaxRequests,
+                    maxSuspendSeconds: qosMaxSuspendSeconds
+            ))
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
