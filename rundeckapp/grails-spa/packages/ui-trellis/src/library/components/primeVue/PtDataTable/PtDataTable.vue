@@ -244,9 +244,22 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .pt-data-table {
+  --radii-pt-data-table: 8px;
+  --sizes-pt-data-table-header-height: 45px;
+  --sizes-pt-data-table-row-height: 52px;
+  --sizes-pt-data-table-cell-padding: 14px;
+  --sizes-pt-data-table-paginator-height: 56px;
+  --sizes-pt-data-table-paginator-control: 42px;
+  --sizes-pt-data-table-paginator-icon: 14px;
+  --sizes-pt-data-table-control-height: 38px;
+  --sizes-pt-data-table-rpp-width: 64px;
+  --radii-pt-data-table-control: 6px;
+  --sizes-pt-data-table-paginator-gap: 4px;
+  --sizes-pt-data-table-paginator-padding: 7px;
+
   :deep(.p-datatable-table-container) {
     border: var(--sizes-px) solid var(--colors-gray-300-original);
-    border-radius: var(--radii-lg);
+    border-radius: var(--radii-pt-data-table);
     overflow: hidden;
   }
 
@@ -255,27 +268,28 @@ export default defineComponent({
   }
 
   :deep(.p-datatable-thead > tr > th) {
-    height: calc(var(--sizes-10) + var(--sizes-1) + var(--sizes-px));
-    padding: var(--sizes-3\.5);
+    height: var(--sizes-pt-data-table-header-height);
+    padding: var(--sizes-pt-data-table-cell-padding);
+    overflow: hidden;
     border-width: var(--sizes-none) var(--sizes-none) var(--sizes-px);
     border-color: var(--colors-gray-300-original);
     background: var(--colors-gray-50);
     color: var(--colors-gray-800);
-    font-size: 14px;
     font-weight: var(--fontWeights-bold);
-    line-height: 17px;
   }
 
   :deep(.p-datatable-tbody > tr > td) {
-    height: calc(var(--sizes-12) + var(--sizes-1));
-    padding: var(--sizes-3\.5);
+    height: var(--sizes-pt-data-table-row-height);
+    padding: var(--sizes-pt-data-table-cell-padding);
+    overflow: hidden;
     border-width: var(--sizes-none) var(--sizes-none) var(--sizes-px);
     border-color: var(--colors-gray-300-original);
     background: var(--colors-white);
     color: var(--colors-gray-800);
-    font-size: 14px;
     font-weight: var(--fontWeights-regular);
     line-height: 21px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   :deep(.p-datatable-tbody > tr:last-child > td) {
@@ -288,19 +302,19 @@ export default defineComponent({
 
   :deep(.p-paginator) {
     justify-content: flex-end;
-    min-height: var(--sizes-14);
-    gap: var(--sizes-1);
-    padding: var(--sizes-2) var(--sizes-none);
+    flex-wrap: nowrap;
+    min-height: var(--sizes-pt-data-table-paginator-height);
+    gap: var(--sizes-pt-data-table-paginator-gap);
+    padding: var(--sizes-pt-data-table-paginator-padding) var(--sizes-none);
     border: var(--sizes-none);
-    border-radius: var(--radii-md);
+    border-radius: var(--radii-pt-data-table-control);
     color: var(--colors-gray-800);
-    font-size: 14px;
     line-height: 21px;
   }
 
   :deep(.p-paginator-current) {
     margin: var(--sizes-none);
-    padding: var(--sizes-2);
+    padding: var(--sizes-pt-data-table-paginator-padding);
   }
 
   :deep(.p-paginator-first),
@@ -308,9 +322,9 @@ export default defineComponent({
   :deep(.p-paginator-page),
   :deep(.p-paginator-next),
   :deep(.p-paginator-last) {
-    width: calc(var(--sizes-10) + var(--sizes-0\.5));
-    min-width: calc(var(--sizes-10) + var(--sizes-0\.5));
-    height: calc(var(--sizes-10) + var(--sizes-0\.5));
+    width: var(--sizes-pt-data-table-paginator-control);
+    min-width: var(--sizes-pt-data-table-paginator-control);
+    height: var(--sizes-pt-data-table-paginator-control);
     margin: var(--sizes-none);
     border-radius: var(--radii-full);
     color: var(--colors-gray-800);
@@ -321,11 +335,20 @@ export default defineComponent({
     color: var(--colors-gray-800);
   }
 
+  :deep(.p-paginator .p-icon) {
+    width: var(--sizes-pt-data-table-paginator-icon);
+    height: var(--sizes-pt-data-table-paginator-icon);
+  }
+
   :deep(.p-paginator-rpp-dropdown) {
-    height: calc(var(--sizes-9) + (var(--sizes-px) * 2));
-    margin-left: var(--sizes-2);
+    flex: 0 0 auto;
+    width: var(--sizes-pt-data-table-rpp-width);
+    min-width: var(--sizes-pt-data-table-rpp-width);
+    max-width: var(--sizes-pt-data-table-rpp-width);
+    height: var(--sizes-pt-data-table-control-height);
+    margin-left: var(--sizes-pt-data-table-paginator-gap);
     border-color: var(--colors-gray-300-original);
-    border-radius: var(--radii-md);
+    border-radius: var(--radii-pt-data-table-control);
   }
 }
 </style>

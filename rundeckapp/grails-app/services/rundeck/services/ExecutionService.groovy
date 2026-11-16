@@ -4843,6 +4843,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
   def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
 
     // Standard Criteria-based query (original implementation)
+    Map<String, String> sortableFields = [
+      id           : 'id',
+      dateCompleted: 'dateCompleted',
+      description  : 'description',
+      user         : 'user'
+    ]
+    String sortField = sortableFields[query.sortBy]
+    String sortDirection = query.sortOrder == 'ascending' ? 'asc' : 'desc'
     def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
     def criteriaClos = { isCount ->
 
@@ -4858,8 +4866,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           maxResults(max)
         }
         and {
-          order('dateCompleted', 'desc')
-          order('id', 'desc')  // Secondary sort by id for consistent pagination (faster than dateStarted)
+          if (sortField) {
+            order(sortField, sortDirection)
+            if (sortField != 'id') {
+              order('id', sortDirection)
+            }
+          } else {
+            order('dateCompleted', 'desc')
+            order('id', 'desc')  // Secondary sort by id for consistent pagination (faster than dateStarted)
+          }
         }
       }
     }

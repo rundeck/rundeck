@@ -74,6 +74,38 @@ describe("PtDataTable", () => {
     ]);
   });
 
+  it("passes sort state and forwards sort events", async () => {
+    const wrapper = await createWrapper({
+      props: {
+        sortField: "user",
+        sortOrder: -1,
+      },
+    });
+    const dataTable = wrapper.findComponent(DataTable);
+
+    expect(dataTable.props("sortField")).toBe("user");
+    expect(dataTable.props("sortOrder")).toBe(-1);
+
+    await dataTable.vm.$emit("sort", {
+      first: 0,
+      rows: 10,
+      sortField: "user",
+      sortOrder: 1,
+    });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.emitted("sort")).toEqual([
+      [
+        {
+          first: 0,
+          rows: 10,
+          sortField: "user",
+          sortOrder: 1,
+        },
+      ],
+    ]);
+  });
+
   it("forwards selection updates with their payload", async () => {
     const wrapper = await createWrapper();
     const dataTable = wrapper.findComponent(DataTable);
