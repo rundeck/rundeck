@@ -340,7 +340,9 @@ jobs:
                       command: rundeck_test_images_build_push openjdk-25-jre-headless
       - run-build-step:
           step-name: Test CI Scripts
-          command: bash scripts/circleci/test/apt-get-retry-test.sh
+          command: |
+            bash scripts/circleci/test/apt-get-retry-test.sh
+            bash scripts/circleci/test/emudhra-trust-test.sh
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build

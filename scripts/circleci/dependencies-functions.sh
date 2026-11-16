@@ -53,17 +53,10 @@ dependencies_install_zulu11jdk() {
 
 # Refuse a JDK that still trusts the roots that signed the compromised eMudhra intermediates.
 # Temurin October 2026 builds (17.0.21+9, 25.0.5+8) remove those roots from cacerts.
-# A JDK that still has the roots is accepted only when blocked.certs lists them.
+# blocked.certs is a fingerprint list, so a name or comment there is not acceptance.
 dependencies_assert_emudhra_untrusted() {
     local java_home="$1"
     local cacerts="${java_home}/lib/security/cacerts"
-    local blocked
-    for blocked in "${java_home}/lib/security/blocked.certs" "${java_home}/conf/security/blocked.certs"; do
-        if [[ -f "${blocked}" ]] && grep -qiE 'emudhra|emSign ECC Root CA - G3|AAA Certificate Services' "${blocked}"; then
-            echo "JDK blocklist covers the eMudhra intermediates: ${blocked}"
-            return 0
-        fi
-    done
     if [[ ! -f "${cacerts}" ]]; then
         echo "No cacerts at ${cacerts}"
         exit 1
@@ -74,16 +67,18 @@ dependencies_assert_emudhra_untrusted() {
         exit 1
     fi
     local bad=0
-    if echo "${dump}" | grep -q 'CN=emSign ECC Root CA - G3'; then
+    # Match the trust-anchor subject. A pipe to grep -q is unsafe: setup.sh sets pipefail,
+    # and grep -q closes the pipe early, so SIGPIPE can hide a root that is still present.
+    if [[ "${dump}" == *"Owner: CN=emSign ECC Root CA - G3,"* ]]; then
         echo "JDK still trusts emSign ECC Root CA - G3 (${java_home})"
         bad=1
     fi
-    if echo "${dump}" | grep -q 'CN=AAA Certificate Services'; then
+    if [[ "${dump}" == *"Owner: CN=AAA Certificate Services,"* ]]; then
         echo "JDK still trusts AAA Certificate Services (${java_home})"
         bad=1
     fi
     if [[ "${bad}" -ne 0 ]]; then
-        echo "Refusing ${java_home}: cacerts still trusts the eMudhra signing roots and blocked.certs does not list them."
+        echo "Refusing ${java_home}: cacerts still trusts the eMudhra signing roots."
         exit 1
     fi
     echo "JDK cacerts does not trust the eMudhra signing roots (${java_home})"
