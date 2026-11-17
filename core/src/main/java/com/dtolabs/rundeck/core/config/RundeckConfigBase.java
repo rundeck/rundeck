@@ -525,6 +525,10 @@ public class RundeckConfigBase {
         // Off unless an operator turns it on: enabling it makes Quartz re-check ACTION_RUN
         // for a job's stored user, which stops schedules that have been running until now.
         Enabled scheduledRunAuthorization = new Enabled();
+        // On unless an operator turns it off. The field has to exist so a configured false
+        // survives ConfigurationService refresh; an unbound property is dropped and the
+        // lookup falls back to the default, which would turn the cache back on.
+        Enabled webhookTemplateCache = new Enabled(true);
         // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
         // (the default) makes the editor manually resizable via drag handle instead of
         // auto-sizing to a fixed number of lines.

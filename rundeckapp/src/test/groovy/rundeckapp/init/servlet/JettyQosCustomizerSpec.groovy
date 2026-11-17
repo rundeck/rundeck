@@ -10,6 +10,7 @@ import org.eclipse.jetty.server.ServerConnector
 import org.eclipse.jetty.server.handler.QoSHandler
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -66,55 +67,85 @@ class JettyQosCustomizerSpec extends Specification {
         qos.maxRequestCount == 4
         qos.maxSuspend == Duration.ofSeconds(15)
         qos.handler.is(original)
-        dump(qos).contains(JettyQosCustomizer.HEALTH_PATH)
-        dump(qos).contains(JettyQosCustomizer.HEALTH_PATH_CHILDREN)
+    }
+
+    @Unroll
+    def "health path #path is exempt=#exempt"() {
+        expect:
+        HealthExemptQoSHandler.isHealthPath(path) == exempt
+
+        where:
+        path                                      | exempt
+        '/monitoring/health'                      | true
+        '/monitoring/health/'                     | true
+        '/monitoring/health/liveness'             | true
+        '/monitoring/health/readiness'            | true
+        '/rundeck/monitoring/health'              | true
+        '/rundeck/monitoring/health/liveness'     | true
+        '/slow/x'                                 | false
+        '/api/44/webhook/token'                   | false
+        '/monitoring/healthcare'                  | false
+        null                                      | false
     }
 
     def "health answers while non-health requests are past the cap"() {
-        given:
+        expect:
+        healthStaysUp('/')
+    }
+
+    def "health answers under a non-root context path while the cap is full"() {
+        expect:
+        healthStaysUp('/rundeck')
+    }
+
+    private static void healthStaysUp(String contextPath) {
         CountDownLatch entered = new CountDownLatch(2)
         CountDownLatch release = new CountDownLatch(1)
         Server server = new Server()
         ServerConnector connector = new ServerConnector(server)
         connector.port = 0
         server.addConnector(connector)
-        server.handler = context(entered, release)
+        server.handler = context(entered, release, contextPath)
         new JettyQosCustomizer(maxRequests: 2, maxSuspendSeconds: 1).customize(server)
         server.start()
         int port = connector.localPort
         HttpClient client = HttpClient.newHttpClient()
+        String prefix = contextPath == '/' ? '' : contextPath
 
-        when:
-        List<java.util.concurrent.CompletableFuture<HttpResponse<String>>> slow = (1..4).collect {
-            client.sendAsync(request(port, '/slow/x'), HttpResponse.BodyHandlers.ofString())
+        try {
+            List<java.util.concurrent.CompletableFuture<HttpResponse<String>>> slow = (1..4).collect {
+                client.sendAsync(request(port, "${prefix}/slow/x"), HttpResponse.BodyHandlers.ofString())
+            }
+            assert entered.await(5, TimeUnit.SECONDS)
+
+            long started = System.nanoTime()
+            HttpResponse<String> liveness = client.send(
+                    request(port, "${prefix}/monitoring/health/liveness"),
+                    HttpResponse.BodyHandlers.ofString())
+            HttpResponse<String> readiness = client.send(
+                    request(port, "${prefix}/monitoring/health/readiness"),
+                    HttpResponse.BodyHandlers.ofString())
+            long elapsedMs = (System.nanoTime() - started) / 1_000_000L
+
+            List<HttpResponse<String>> rejected = awaitDone(slow, 2, 8)
+            release.countDown()
+            slow.each { it.get(5, TimeUnit.SECONDS) }
+
+            assert liveness.statusCode() == 200
+            assert readiness.statusCode() == 200
+            assert liveness.body() == 'UP'
+            assert readiness.body() == 'UP'
+            assert elapsedMs < 1000
+            assert rejected.size() == 2
+            assert rejected.every { it.statusCode() == 503 && it.headers().firstValue('retry-after').orElse('') == '1' }
+        } finally {
+            release.countDown()
+            server.stop()
         }
-        assert entered.await(5, TimeUnit.SECONDS)
-
-        long started = System.nanoTime()
-        HttpResponse<String> liveness = client.send(request(port, '/monitoring/health/liveness'), HttpResponse.BodyHandlers.ofString())
-        HttpResponse<String> readiness = client.send(request(port, '/monitoring/health/readiness'), HttpResponse.BodyHandlers.ofString())
-        long elapsedMs = (System.nanoTime() - started) / 1_000_000L
-
-        List<HttpResponse<String>> rejected = awaitDone(slow, 2, 8)
-        release.countDown()
-        slow.each { it.get(5, TimeUnit.SECONDS) }
-
-        then:
-        liveness.statusCode() == 200
-        readiness.statusCode() == 200
-        liveness.body() == 'UP'
-        readiness.body() == 'UP'
-        elapsedMs < 1000
-        rejected.size() == 2
-        rejected.every { it.statusCode() == 503 && it.headers().firstValue('retry-after').orElse('') == '1' }
-
-        cleanup:
-        release?.countDown()
-        server?.stop()
     }
 
-    private static ServletContextHandler context(CountDownLatch entered, CountDownLatch release) {
-        ServletContextHandler context = new ServletContextHandler('/')
+    private static ServletContextHandler context(CountDownLatch entered, CountDownLatch release, String contextPath) {
+        ServletContextHandler context = new ServletContextHandler(contextPath)
         context.addServlet(new ServletHolder(new HttpServlet() {
             @Override
             protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
@@ -149,11 +180,5 @@ class JettyQosCustomizerSpec extends Specification {
             }
         }
         done
-    }
-
-    private static String dump(QoSHandler qos) {
-        StringWriter writer = new StringWriter()
-        qos.dump(writer, '  ')
-        writer.toString()
     }
 }
