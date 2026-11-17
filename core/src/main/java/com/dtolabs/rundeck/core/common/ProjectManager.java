@@ -38,6 +38,15 @@ public interface ProjectManager {
     Collection<String> listFrameworkProjectNames();
 
     /**
+     * List projects that are disabled and may have unfinished deferred cleanup.
+     *
+     * @return disabled project names
+     */
+    default Collection<String> listDisabledFrameworkProjectNames() {
+        return java.util.Collections.emptyList();
+    }
+
+    /**
      * @return number of projects
      */
     int countFrameworkProjects();
@@ -89,6 +98,18 @@ public interface ProjectManager {
     void removeFrameworkProject(String projectName);
 
     /**
+     * Remove a project only when its persistent identity still matches.
+     *
+     * @param projectName name of the project
+     * @param projectId expected persistent project identifier
+     * @return true when the expected project was removed
+     */
+    default boolean removeFrameworkProject(String projectName, long projectId) {
+        removeFrameworkProject(projectName);
+        return true;
+    }
+
+    /**
      * Create a new project if it doesn't, otherwise throw exception
      * @param projectName name of project
      * @param properties config properties
@@ -102,6 +123,18 @@ public interface ProjectManager {
      * @param projectName name of the project.
      */
     void disableFrameworkProject(String projectName);
+
+    /**
+     * Disable a project only when its persistent identity still matches.
+     *
+     * @param projectName name of the project
+     * @param projectId expected persistent project identifier
+     * @return true when the expected project was disabled
+     */
+    default boolean disableFrameworkProject(String projectName, long projectId) {
+        disableFrameworkProject(projectName);
+        return true;
+    }
 
     /**
      * Enables a previously disabled project.

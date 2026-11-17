@@ -84,6 +84,40 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
     }
 
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    boolean deleteIfIdentityMatches(final Serializable id, final String name) {
+        Serializable expectedId = id
+        String expectedName = name
+        Project.where {
+            id == expectedId && name == expectedName
+        }.deleteAll() == 1
+    }
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    boolean updateStateIfIdentityMatches(
+            final Serializable id,
+            final String name,
+            final RdProject.State state
+    ) {
+        Serializable expectedId = id
+        String expectedName = name
+        Project current = Project.findByName(expectedName)
+        if (current?.id != expectedId) {
+            return false
+        }
+        Long expectedVersion = current.version
+        Project.where {
+            id == expectedId &&
+                name == expectedName &&
+                version == expectedVersion
+        }.updateAll(
+            state: state,
+            version: expectedVersion + 1L
+        ) == 1
+    }
+
+    @Override
     RdProject findByName(final String name) {
         RdProject project = projectDataService.getByName(name)
         return project ?: null

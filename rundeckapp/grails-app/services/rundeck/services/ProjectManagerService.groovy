@@ -186,6 +186,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         return projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.ENABLED) 
     }
 
+    /**
+     * Lists projects whose deferred deletion may need recovery.
+     */
+    @Override
+    Collection<String> listDisabledFrameworkProjectNames() {
+        projectDataProvider.getFrameworkProjectNamesByState(RdProject.State.DISABLED)
+    }
+
     @Override
     int countFrameworkProjects() {
         return projectDataProvider.countFrameworkProjectsByState(RdProject.State.ENABLED)
@@ -620,12 +628,34 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         deleteProjectResources(projectName)
     }
 
+    /**
+     * Removes only the project row that initiated deferred cleanup.
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean removeFrameworkProject(final String projectName, final long projectId) {
+        if (!projectDataProvider.deleteIfIdentityMatches(projectId, projectName)) {
+            return false
+        }
+        deleteProjectResources(projectName)
+        true
+    }
+
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     void disableFrameworkProject(String projectName) {
         def projectData = SimpleProjectBuilder.with(projectDataProvider.findByName(projectName))
         projectData.setState(RdProject.State.DISABLED)
         projectDataProvider.update(projectData.id, projectData)
+    }
+
+    /**
+     * Disables only the project row selected by the delete request.
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    boolean disableFrameworkProject(final String projectName, final long projectId) {
+        projectDataProvider.updateStateIfIdentityMatches(projectId, projectName, RdProject.State.DISABLED)
     }
 
     @Override
