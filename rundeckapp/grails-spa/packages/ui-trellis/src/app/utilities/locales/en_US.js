@@ -204,6 +204,9 @@ const messages = {
   "activity.table.nodes": "Nodes",
   "activity.table.duration": "Duration",
   "activity.table.executor": "Executor",
+  "activity.table.status": "Status",
+  "activity.table.title": "Job / Command",
+  "activity.table.options": "Options",
   "activity.table.loading": "Loading executions…",
   "activity.table.pageReport":
     "Showing {first} to {last} of {totalRecords} executions",

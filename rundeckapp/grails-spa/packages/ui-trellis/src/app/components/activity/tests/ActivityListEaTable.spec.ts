@@ -19,7 +19,6 @@ const createWrapper = async (options: MountOptions = {}) => {
         total: 1,
       },
       loading: false,
-      bulkEditMode: false,
       selectedIds: [],
       ...options.props,
     },
@@ -368,6 +367,100 @@ describe("ActivityListEaTable", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.emitted("update:selectedIds")).toEqual([[[42, 43]]]);
+  });
+
+  it("disables select-all while a page is loading", async () => {
+    const wrapper = await createWrapper({ props: { loading: true } });
+
+    expect(
+      wrapper
+        .find('[data-testid="activity-ea-select-all"]')
+        .attributes("disabled"),
+    ).toBeDefined();
+  });
+
+  it("renders only the configured columns and hides the toolbar", async () => {
+    const wrapper = await createWrapper({
+      props: {
+        columns: ["status", "id", "user", "title", "args"],
+        showToolbar: false,
+      },
+    });
+
+    expect(
+      wrapper.findAllComponents(Column).map((column) => column.props("field")),
+    ).toEqual(["status", "id", "user", "title", "argstring"]);
+    expect(
+      wrapper.find('[data-testid="activity-ea-execution-count"]').exists(),
+    ).toBe(false);
+  });
+
+  it("hides the selection checkboxes when not selectable", async () => {
+    const wrapper = await createWrapper({ props: { selectable: false } });
+
+    expect(
+      wrapper.find('[data-testid="activity-ea-select-all"]').exists(),
+    ).toBe(false);
+    expect(
+      wrapper
+        .find(`[data-testid="activity-ea-select-${mockReports[0].id}"]`)
+        .exists(),
+    ).toBe(false);
+  });
+
+  it("disables column sorting when the consumer cannot sort", async () => {
+    const wrapper = await createWrapper({ props: { sortable: false } });
+
+    expect(
+      wrapper
+        .findAllComponents(Column)
+        .some((column) => column.props("sortable")),
+    ).toBe(false);
+  });
+
+  it("shows the job title with referenced, deleted and custom status markers", async () => {
+    const wrapper = await createWrapper({
+      props: {
+        columns: ["status", "title"],
+        jobIdFilter: "parent-job",
+        reports: [
+          {
+            ...mockReports[0],
+            id: 7,
+            status: "needs-review",
+            customStatus: "needs-review",
+            job: { id: "child-job", name: "deploy", group: "ops" },
+          },
+          {
+            ...mockReports[0],
+            id: 8,
+            jobDeleted: true,
+            description: "echo hi",
+          },
+        ],
+      },
+    });
+
+    expect(wrapper.find('[data-testid="activity-ea-title-7"]').text()).toBe(
+      "ops/deploy",
+    );
+    expect(
+      wrapper.find('[data-testid="activity-ea-referenced-7"]').text(),
+    ).toBe("Referenced");
+    expect(
+      wrapper.find('[data-testid="activity-ea-custom-status-7"]').text(),
+    ).toBe("needs-review");
+    expect(
+      wrapper
+        .find('[data-testid="activity-ea-status-7"]')
+        .attributes("data-execstate"),
+    ).toBe("OTHER");
+    expect(wrapper.find('[data-testid="activity-ea-title-8"]').text()).toBe(
+      "echo hi",
+    );
+    expect(
+      wrapper.find('[data-testid="activity-ea-job-deleted-8"]').exists(),
+    ).toBe(true);
   });
 
   it("emits the execution selected by a row click", async () => {

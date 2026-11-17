@@ -1,6 +1,6 @@
 <template>
   <div class="activity-ea-table">
-    <div class="activity-ea-table__toolbar">
+    <div v-if="showToolbar" class="activity-ea-table__toolbar">
       <span
         class="activity-ea-table__count text-heading--md"
         data-testid="activity-ea-execution-count"
@@ -80,13 +80,40 @@
       @sort="onSort"
       @row-click="onRowClick"
     >
-      <Column field="id" sortable class="activity-ea-table__execution">
+      <Column
+        v-if="hasColumn('status')"
+        field="status"
+        class="activity-ea-table__status"
+      >
+        <template #header>
+          <span class="sr-only" data-testid="activity-ea-header-status">
+            {{ $t("activity.table.status") }}
+          </span>
+        </template>
+        <template #body="{ data }">
+          <b
+            class="exec-status icon"
+            :title="statusState(data)"
+            :data-execstate="statusState(data).toUpperCase()"
+            :data-statusstring="statusState(data)"
+            :data-testid="`activity-ea-status-${data.id}`"
+          ></b>
+        </template>
+      </Column>
+      <Column
+        v-if="hasColumn('id')"
+        field="id"
+        :sortable="sortable"
+        class="activity-ea-table__execution"
+      >
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <input
+              v-if="selectable"
               type="checkbox"
               :checked="allPageSelected"
               :indeterminate="somePageSelected"
+              :disabled="loading"
               :aria-label="$t('activity.table.selectAll')"
               data-testid="activity-ea-select-all"
               @click.stop
@@ -100,6 +127,7 @@
         <template #body="{ data }">
           <div class="activity-ea-table__execution-content">
             <input
+              v-if="selectable"
               type="checkbox"
               :checked="isSelected(data)"
               :aria-label="
@@ -122,7 +150,12 @@
           </div>
         </template>
       </Column>
-      <Column field="dateEnded" sortable class="activity-ea-table__date">
+      <Column
+        v-if="hasColumn('dateEnded')"
+        field="dateEnded"
+        :sortable="sortable"
+        class="activity-ea-table__date"
+      >
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-date-time">
@@ -139,7 +172,11 @@
           </span>
         </template>
       </Column>
-      <Column field="plugin" class="activity-ea-table__plugin">
+      <Column
+        v-if="hasColumn('plugin')"
+        field="plugin"
+        class="activity-ea-table__plugin"
+      >
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-plugin">
@@ -163,7 +200,11 @@
           </div>
         </template>
       </Column>
-      <Column field="nodes" class="activity-ea-table__nodes">
+      <Column
+        v-if="hasColumn('nodes')"
+        field="nodes"
+        class="activity-ea-table__nodes"
+      >
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-nodes">
@@ -188,7 +229,11 @@
           </span>
         </template>
       </Column>
-      <Column field="duration" class="activity-ea-table__duration">
+      <Column
+        v-if="hasColumn('duration')"
+        field="duration"
+        class="activity-ea-table__duration"
+      >
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-duration">
@@ -202,7 +247,12 @@
           </span>
         </template>
       </Column>
-      <Column field="user" sortable class="activity-ea-table__executor">
+      <Column
+        v-if="hasColumn('user')"
+        field="user"
+        :sortable="sortable"
+        class="activity-ea-table__executor"
+      >
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-executor">
@@ -213,6 +263,75 @@
         <template #body="{ data }">
           <span class="activity-ea-table__truncate" :title="data.user">
             {{ data.user }}
+          </span>
+        </template>
+      </Column>
+
+      <Column
+        v-if="hasColumn('title')"
+        field="title"
+        class="activity-ea-table__title"
+      >
+        <template #header>
+          <div class="activity-ea-table__header-content text-button">
+            <span data-testid="activity-ea-header-title">
+              {{ $t("activity.table.title") }}
+            </span>
+          </div>
+        </template>
+        <template #body="{ data }">
+          <div class="activity-ea-table__title-content">
+            <span
+              class="activity-ea-table__truncate"
+              :title="reportTitle(data)"
+              :data-testid="`activity-ea-title-${data.id}`"
+            >
+              {{ reportTitle(data) }}
+            </span>
+            <span
+              v-if="isReferenced(data)"
+              class="text-secondary"
+              :data-testid="`activity-ea-referenced-${data.id}`"
+            >
+              <i class="fas fa-arrow-circle-right-alt" aria-hidden="true"></i>
+              {{ $t("Referenced") }}
+            </span>
+            <span
+              v-if="data.jobDeleted"
+              class="text-strong"
+              :data-testid="`activity-ea-job-deleted-${data.id}`"
+            >
+              {{ $t("job.has.been.deleted.0", [""]) }}
+            </span>
+            <span
+              v-if="hasCustomStatus(data)"
+              class="exec-status-text custom-status"
+              :data-testid="`activity-ea-custom-status-${data.id}`"
+            >
+              {{ data.customStatus }}
+            </span>
+          </div>
+        </template>
+      </Column>
+      <Column
+        v-if="hasColumn('args')"
+        field="argstring"
+        class="activity-ea-table__args"
+      >
+        <template #header>
+          <div class="activity-ea-table__header-content text-button">
+            <span data-testid="activity-ea-header-args">
+              {{ $t("activity.table.options") }}
+            </span>
+          </div>
+        </template>
+        <template #body="{ data }">
+          <span
+            class="activity-ea-table__truncate"
+            :title="data.argstring"
+            :data-testid="`activity-ea-args-${data.id}`"
+          >
+            {{ data.argstring }}
           </span>
         </template>
       </Column>
@@ -250,8 +369,11 @@ import PtSelect from "../../../library/components/primeVue/PtSelect/PtSelect.vue
 import PluginIcon from "../../../library/components/plugins/PluginIcon.vue";
 import type { Pageable } from "../../../library/interfaces/UiTypes";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import type {
-  ActivityExecution,
+import { executionState, isCustomStatus } from "./executionState";
+import {
+  DEFAULT_ACTIVITY_COLUMNS,
+  type ActivityColumn,
+  type ActivityExecution,
   ActivityPageRequest,
   ActivitySavedFilter,
   ActivitySavedFilterOption,
@@ -283,9 +405,30 @@ export default defineComponent({
       type: Boolean,
       required: true,
     },
-    bulkEditMode: {
+    /** Built-in columns to render, in display order. */
+    columns: {
+      type: Array as PropType<ActivityColumn[]>,
+      default: () => [...DEFAULT_ACTIVITY_COLUMNS],
+    },
+    /** Shows the row and select-all checkboxes used for bulk actions. */
+    selectable: {
       type: Boolean,
-      required: true,
+      default: true,
+    },
+    /** Allows server-backed sorting on the id, date and executor columns. */
+    sortable: {
+      type: Boolean,
+      default: true,
+    },
+    /** Shows the count, time filter and saved filter toolbar. */
+    showToolbar: {
+      type: Boolean,
+      default: true,
+    },
+    /** Job ID filter of the current query, used to flag referenced jobs. */
+    jobIdFilter: {
+      type: String,
+      default: "",
     },
     selectedIds: {
       type: Array as PropType<number[]>,
@@ -399,6 +542,36 @@ export default defineComponent({
     },
   },
   methods: {
+    /** Whether a built-in column is configured for display. */
+    hasColumn(column: ActivityColumn): boolean {
+      return this.columns.includes(column);
+    },
+    /** Normalized state name driving the status icon. */
+    statusState(execution: ActivityExecution): string {
+      return executionState(execution.status);
+    },
+    /** Job path for existing jobs, otherwise the execution description. */
+    reportTitle(execution: ActivityExecution): string {
+      if (execution.job && !execution.jobDeleted) {
+        return execution.job.group
+          ? `${execution.job.group}/${execution.job.name}`
+          : execution.job.name || "";
+      }
+      return execution.description || "";
+    },
+    /** Whether the row ran through a job reference of the filtered job. */
+    isReferenced(execution: ActivityExecution): boolean {
+      return Boolean(
+        this.jobIdFilter &&
+        execution.job &&
+        this.jobIdFilter !== execution.job.id &&
+        this.jobIdFilter !== "!null",
+      );
+    },
+    /** Whether the row finished with a user-defined custom status. */
+    hasCustomStatus(execution: ActivityExecution): boolean {
+      return isCustomStatus(execution.status);
+    },
     /** Returns the translated label for a relative-time filter value. */
     timeFilterLabel(value: string): string {
       return (
@@ -525,6 +698,7 @@ export default defineComponent({
   --radii-activity-table-control: 6px;
   --sizes-activity-table-checkbox: 16px;
   --sizes-activity-table-compact-column: 150px;
+  --sizes-activity-table-status-column: 48px;
   --sizes-activity-table-date-column: 277px;
   --sizes-activity-table-plugin-column: 300px;
   --sizes-activity-table-loading-height: 220px;
@@ -593,8 +767,29 @@ export default defineComponent({
   width: var(--sizes-activity-table-compact-column);
 }
 
+:deep(.activity-ea-table__status) {
+  width: var(--sizes-activity-table-status-column);
+}
+
+:deep(.activity-ea-table__title) {
+  width: var(--sizes-activity-table-plugin-column);
+}
+
+:deep(.activity-ea-table__args) {
+  width: var(--sizes-activity-table-date-column);
+}
+
 :deep(.activity-ea-table__executor) {
   width: var(--sizes-activity-table-date-column);
+}
+
+.activity-ea-table__title-content {
+  display: flex;
+  align-items: center;
+  gap: var(--sizes-activity-table-content-gap);
+  min-width: var(--sizes-none);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .activity-ea-table__header-content,

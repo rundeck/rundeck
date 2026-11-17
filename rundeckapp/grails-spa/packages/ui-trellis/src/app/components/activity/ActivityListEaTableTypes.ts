@@ -8,6 +8,32 @@ import type { Execution } from "../../../library/types/executions/Execution";
 export type ActivitySortField = "id" | "dateEnded" | "user";
 
 /**
+ * Built-in columns the activity table can render.
+ */
+export type ActivityColumn =
+  | "status"
+  | "id"
+  | "dateEnded"
+  | "plugin"
+  | "title"
+  | "nodes"
+  | "duration"
+  | "user"
+  | "args";
+
+/**
+ * Columns shown when a consumer does not choose its own set.
+ */
+export const DEFAULT_ACTIVITY_COLUMNS: readonly ActivityColumn[] = [
+  "id",
+  "dateEnded",
+  "plugin",
+  "nodes",
+  "duration",
+  "user",
+];
+
+/**
  * PrimeVue's ascending and descending sort direction values.
  */
 export type ActivitySortOrder = 1 | -1;
