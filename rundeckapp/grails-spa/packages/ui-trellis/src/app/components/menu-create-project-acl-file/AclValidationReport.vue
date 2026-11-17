@@ -17,7 +17,11 @@
         role="img"
         data-testid="acl-validation-identity-help"
       >
-        <i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>
+        <i
+          class="glyphicon glyphicon-question-sign"
+          aria-hidden="true"
+          data-testid="acl-validation-identity-help-icon"
+        ></i>
       </span>
       <ol>
         <li

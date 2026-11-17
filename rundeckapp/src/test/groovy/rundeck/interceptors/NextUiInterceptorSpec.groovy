@@ -36,6 +36,8 @@ class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest
             'scheduledExecution' | 'delete'                | false
             'menu'               | 'jobs'                  | true
             'menu'               | 'home'                  | true
+            'menu'               | 'createProjectAclFile'  | true
+            'menu'               | 'saveProjectAclFile'    | true
             'menu'               | 'index'                 | false
             'menu'               | 'projectHome'           | false
             'user'               | 'list'                  | true

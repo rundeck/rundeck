@@ -43,6 +43,9 @@ describe("AclValidationReport", () => {
     const helpIcons = wrapper.findAll(
       '[data-testid="acl-validation-identity-help"]',
     );
+    const helpGlyphs = wrapper.findAll(
+      '[data-testid="acl-validation-identity-help-icon"]',
+    );
     expect(helpIcons).toHaveLength(2);
     expect(helpIcons[0].attributes("title")).toBe(
       "acl.validation.error.sourceIdentity.help",
@@ -50,7 +53,10 @@ describe("AclValidationReport", () => {
     expect(helpIcons[0].classes()).toEqual(
       expect.arrayContaining(["has_tooltip", "text-info"]),
     );
-    expect(helpIcons[0].find(".glyphicon-question-sign").exists()).toBe(true);
+    expect(helpGlyphs).toHaveLength(2);
+    expect(helpGlyphs[0].classes()).toEqual(
+      expect.arrayContaining(["glyphicon", "glyphicon-question-sign"]),
+    );
   });
 
   it("renders every message when a document repeats the same message", async () => {

@@ -22,7 +22,8 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:set var="uiType" value="${params.boolean('nextUi') ? 'next' : 'current'}"/>
+<g:set var="nextUiEnabled" value="${params.boolean('nextUi')}"/>
+<g:set var="uiType" value="${nextUiEnabled ? 'next' : 'current'}"/>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -66,7 +67,7 @@
             saveUrl     : g.createLink(
                 controller: 'menu',
                 action: 'saveProjectAclFile',
-                params: [project: project ?: params.project, nextUi: params.nextUi]
+                params: [project: project ?: params.project, nextUi: nextUiEnabled ? true : null]
             ),
             cancelUrl   : g.createLink(controller: 'menu', action: 'projectAcls', params: [project: project ?: params.project]),
             backUrl     : g.createLink(controller: 'menu', action: 'projectAcls', params: [project: project ?: params.project]),
