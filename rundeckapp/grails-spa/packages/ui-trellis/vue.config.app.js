@@ -166,6 +166,9 @@ module.exports = {
     },
     devServer: {
       hot: true,
+      watchFiles: [
+        Path.resolve(__dirname, "../../../../translations/**/*.ts"),
+      ],
       watchOptions: {
         followSymlinks: true,
       },

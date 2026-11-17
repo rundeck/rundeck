@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "family": "named-grails-plugin",
+  "publicNamespace": "rundeckpro/plugins/schedule-forecast/grails-app/i18n",
+  "files": [
+    {
+      "source": "plugins/schedule-forecast/grails-app/i18n/forecast-messages.properties",
+      "target": "translations/rundeckpro/plugins/schedule-forecast/grails-app/i18n/forecast-public-messages.properties",
+      "created": true,
+      "inserted": 2
+    },
+    {
+      "source": "plugins/schedule-forecast/grails-app/i18n/forecast-messages_es_419.properties",
+      "target": "translations/rundeckpro/plugins/schedule-forecast/grails-app/i18n/forecast-public-messages_es_419.properties",
+      "created": true,
+      "inserted": 2
+    },
+    {
+      "source": "plugins/schedule-forecast/grails-app/i18n/forecast-messages_ja.properties",
+      "target": "translations/rundeckpro/plugins/schedule-forecast/grails-app/i18n/forecast-public-messages_ja.properties",
+      "created": true,
+      "inserted": 2
+    }
+  ]
+}

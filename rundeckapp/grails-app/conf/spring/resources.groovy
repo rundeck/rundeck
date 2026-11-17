@@ -289,7 +289,15 @@ beans={
         return
     }
 
-    rundeckI18nEnhancer(RundeckExtendedMessageBundle, ref("messageSource"),"file:${rdeckBase}/i18n/messages".toString())
+    // POC: resolve each key in administrator, canonical-localized,
+    // legacy-localized, canonical-default, legacy-default order.
+    rundeckI18nEnhancer(
+            RundeckExtendedMessageBundle,
+            ref("messageSource"),
+            "file:${rdeckBase}/i18n/messages".toString(),
+            "classpath:public-messages",
+            "classpath:messages"
+    )
 
     if(application.config.getProperty("rundeck.gui.staticUserResources.enabled",Boolean.class,false)) {
         externalStaticResourceConfigurer(ExternalStaticResourceConfigurer) {

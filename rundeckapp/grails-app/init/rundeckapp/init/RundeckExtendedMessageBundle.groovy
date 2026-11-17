@@ -15,13 +15,16 @@
  */
 package rundeckapp.init
 
+import groovy.transform.CompileStatic
 import org.grails.spring.context.support.PluginAwareResourceBundleMessageSource
+import org.springframework.context.MessageSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Field
 
 
+@CompileStatic
 class RundeckExtendedMessageBundle {
     private static final transient Logger LOG = LoggerFactory.getLogger(RundeckExtendedMessageBundle.class)
 
@@ -30,10 +33,43 @@ class RundeckExtendedMessageBundle {
             PluginAwareResourceBundleMessageSource msgSource = (PluginAwareResourceBundleMessageSource) messageSource
             Field oldBaseNameField = msgSource.getClass().getSuperclass().getDeclaredField("basenames")
             oldBaseNameField.setAccessible(true)
-            def oldBaseNames = oldBaseNameField.get(msgSource).toList()
+            List<String> oldBaseNames = ((String[]) oldBaseNameField.get(msgSource)).toList()
             oldBaseNames.add(0, externalBase)
             msgSource.setBasenames(oldBaseNames.toArray(new String[oldBaseNames.size()]))
             LOG.debug("adding external i18n message source: ${externalBase}")
         }
+    }
+
+    /**
+     * Configures the Core default family with locale-aware per-key fallback.
+     *
+     * @param messageSource application message source
+     * @param administratorBase administrator override basename
+     * @param canonicalBase canonical public basename
+     * @param legacyBase retained legacy basename
+     */
+    RundeckExtendedMessageBundle(
+            PluginAwareResourceBundleMessageSource messageSource,
+            String administratorBase,
+            String canonicalBase,
+            String legacyBase
+    ) {
+        Field basenamesField = messageSource.getClass().getSuperclass().getDeclaredField('basenames')
+        basenamesField.setAccessible(true)
+        List<String> unrelatedBasenames =
+                ((String[]) basenamesField.get(messageSource)).toList().findAll { String basename ->
+            basename != canonicalBase && basename != legacyBase && basename != administratorBase
+        }
+        MessageSource previousParent = messageSource.parentMessageSource
+        LocaleAwareTranslationMessageSource translationSource =
+                new LocaleAwareTranslationMessageSource(
+                        administratorBase,
+                        canonicalBase,
+                        legacyBase
+                )
+        translationSource.parentMessageSource = previousParent
+        messageSource.setBasenames(unrelatedBasenames as String[])
+        messageSource.parentMessageSource = translationSource
+        LOG.debug('configured locale-aware Core i18n message source')
     }
 }
