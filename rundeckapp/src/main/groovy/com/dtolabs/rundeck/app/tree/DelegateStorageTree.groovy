@@ -4,8 +4,10 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.rundeck.app.grails.events.AppEvents
 
+@Slf4j
 @CompileStatic
 class DelegateStorageTree implements StorageTree {
     StorageTreeCreator creator
@@ -28,36 +30,46 @@ class DelegateStorageTree implements StorageTree {
         if(!refreshable){
             return
         }
-        Map<String, String> config = creator.getStorageConfigMap()
-        Boolean providerTypeSet = false
-        Boolean providerPathSet = false
-        Boolean converterTypeSet = false
-        Boolean converterPathSet = false
-        Boolean providerPresent = false
-        Boolean converterPresent = false
-        for(entry in config){
-            if(entry.getKey().toString().contains("provider")){
-                providerPresent=true
-                if(entry.getKey().toString().endsWith("path")){
-                    providerPathSet=true
+        try {
+            Map<String, String> config = creator.getStorageConfigMap()
+            Boolean providerTypeSet = false
+            Boolean providerPathSet = false
+            Boolean converterTypeSet = false
+            Boolean converterPathSet = false
+            Boolean providerPresent = false
+            Boolean converterPresent = false
+            for(entry in config){
+                if(entry.getKey().toString().contains("provider")){
+                    providerPresent=true
+                    if(entry.getKey().toString().endsWith("path")){
+                        providerPathSet=true
+                    }
+                    else if(entry.getKey().toString().endsWith("type")){
+                        providerTypeSet=true
+                    }
                 }
-                else if(entry.getKey().toString().endsWith("type")){
-                    providerTypeSet=true
+                if(entry.getKey().toString().contains("converter")){
+                    converterPresent=true
+                    if(entry.getKey().toString().endsWith("path")){
+                        converterPathSet=true
+                    }
+                    else if(entry.getKey().toString().endsWith("type")){
+                        converterTypeSet=true
+                    }
                 }
             }
-            if(entry.getKey().toString().contains("converter")){
-                converterPresent=true
-                if(entry.getKey().toString().endsWith("path")){
-                    converterPathSet=true
-                }
-                else if(entry.getKey().toString().endsWith("type")){
-                    converterTypeSet=true
-                }
+            if(configuration != config && (converterPresent && converterPathSet && converterTypeSet) || (providerPresent && providerPathSet && providerTypeSet)){
+                storageTree = creator.create(false)
+                configuration = config
             }
-        }
-        if(configuration != config && (converterPresent && converterPathSet && converterTypeSet) || (providerPresent && providerPathSet && providerTypeSet)){
-            storageTree = creator.create(false)
-            configuration = config
+        } catch (Exception e) {
+            // Must not propagate: the event bus dispatches every subscriber of this event in a single
+            // loop, so an exception thrown here skips all the subscribers registered after this one.
+            log.error(
+                "Failed to rebuild the storage tree after a configuration change; the previous storage " +
+                "tree is still in use. Check the storage provider and converter configuration: ${e.message}",
+                e
+            )
         }
     }
 }
