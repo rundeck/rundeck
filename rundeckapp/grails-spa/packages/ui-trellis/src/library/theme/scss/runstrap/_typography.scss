@@ -240,6 +240,30 @@ a.text-danger:hover,
   // color: lighten(var(--danger-states-color), 25%);
 }
 
+// Lighten contextual text colors to meet WCAG AA on dark backgrounds.
+*[data-color-theme="dark"] {
+  .text-primary,
+  .text-primary:hover,
+  .text-primary:focus,
+  a.text-primary {
+    color: var(--blue-200);
+  }
+
+  .text-warning,
+  .text-warning:hover,
+  .text-warning:focus,
+  a.text-warning {
+    color: var(--orange-300);
+  }
+
+  .text-danger,
+  .text-danger:hover,
+  .text-danger:focus,
+  a.text-danger {
+    color: var(--red-200);
+  }
+}
+
 .glyphicon {
   line-height: 1;
 }

@@ -149,10 +149,17 @@
 // RUN-4965: .has-warning has no dark-aware pairing (unlike .has-error/.has-success above),
 // and help-block text keeps the static Bootstrap state color in every validation state.
 *[data-color-theme="dark"] {
+  // Lighten validation text to meet WCAG AA on dark backgrounds.
+  .has-error {
+    .form-control-feedback,
+    .control-label {
+      color: var(--red-200);
+    }
+  }
   .has-warning {
     .form-control-feedback,
     .control-label {
-      color: var(--warning-color);
+      color: var(--orange-300);
     }
     .form-control,
     .form-control:focus {
@@ -161,7 +168,7 @@
     }
   }
   .has-error .help-block {
-    color: var(--danger-color);
+    color: var(--red-200);
   }
   .has-success .help-block {
     color: var(--success-color);

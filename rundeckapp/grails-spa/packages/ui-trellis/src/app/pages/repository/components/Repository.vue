@@ -125,6 +125,17 @@ export default defineComponent({
     text-transform: uppercase;
   }
 }
+
+// .repo-header uses hardcoded light colors; theme it in dark mode.
+[data-color-theme="dark"] .repo-header {
+  background: var(--background-color-lvl2);
+  color: var(--font-color);
+
+  a {
+    color: var(--font-color);
+  }
+}
+
 .repo-meta {
   // padding-left: 1em;
   margin-bottom: 1em;
