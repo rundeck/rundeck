@@ -22,7 +22,7 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:set var="uiType" value="${params.nextUi ? 'next' : 'current'}"/>
+<g:set var="uiType" value="${params.boolean('nextUi') ? 'next' : 'current'}"/>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>

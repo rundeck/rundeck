@@ -40,15 +40,18 @@ class ProjectAclCreatePage extends BasePage {
     private static final By CANCEL_BUTTON_BY = By.cssSelector("[name='cancel']")
     private static final By SAVE_BUTTON_BY = By.cssSelector("[name='save']")
     private static final By GLOBAL_ERROR_BY = By.cssSelector(".alert.alert-danger")
+    private static final By POLICY_LIST_BY = By.id("policyList")
     private static final By BODY_BY = By.tagName("body")
 
     final String project
     private final String basePath
+    private final String listPath
 
     ProjectAclCreatePage(final SeleniumContext context, final String project) {
         super(context)
         this.project = project
         this.basePath = "/project/${project}/admin/acls/create"
+        this.listPath = "/project/${project}/admin/acls"
     }
 
     /**
@@ -206,9 +209,16 @@ class ProjectAclCreatePage extends BasePage {
     void replaceEditorText(final String text) {
         waitForElementVisible(EDITOR_BY)
         WebElement editor = el(EDITOR_INPUT_BY)
-        editor.sendKeys(Keys.chord(Keys.CONTROL, "a"))
+        executeScript("document.querySelector('.ace_editor').env.editor.selectAll();")
         editor.sendKeys(Keys.BACK_SPACE)
-        editor.sendKeys(text)
+        if (text.contains("\n")) {
+            ((JavascriptExecutor) driver).executeScript(
+                    "document.querySelector('.ace_editor').env.editor.insert(arguments[0]);",
+                    text
+            )
+        } else {
+            editor.sendKeys(text)
+        }
         waitForEditorText(text)
     }
 
@@ -248,7 +258,7 @@ class ProjectAclCreatePage extends BasePage {
      */
     void clickBack() {
         clickElementSafely(backLinkBy)
-        waitForUrlToContain("/project/${project}/admin/acls")
+        waitForProjectAclList()
     }
 
     /**
@@ -263,7 +273,25 @@ class ProjectAclCreatePage extends BasePage {
      */
     void clickCancel() {
         clickElementSafely(CANCEL_BUTTON_BY)
-        waitForUrlToContain("/project/${project}/admin/acls")
+        waitForProjectAclList()
+    }
+
+    /**
+     * Waits until the browser reaches the project ACL list page.
+     */
+    void waitForProjectAclList() {
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until {
+            URI.create(driver.currentUrl).path.endsWith(listPath)
+        }
+        waitForElementVisible(POLICY_LIST_BY)
+    }
+
+    /**
+     * Returns whether the browser is on the project ACL list page.
+     */
+    boolean isAtProjectAclList() {
+        URI.create(driver.currentUrl).path.endsWith(listPath) &&
+                waitForElementVisible(POLICY_LIST_BY).isDisplayed()
     }
 
     /**
@@ -297,6 +325,13 @@ class ProjectAclCreatePage extends BasePage {
      */
     List<String> getFileTextErrors() {
         els(fileTextErrorBy)*.text
+    }
+
+    /**
+     * Returns the policy validation report text when YAML validation fails.
+     */
+    String getValidationReportText() {
+        waitForElementVisible(validationReportBy).text
     }
 
     /**
@@ -344,6 +379,12 @@ class ProjectAclCreatePage extends BasePage {
         nextUi
                 ? By.cssSelector("[data-testid='acl-file-text-error']")
                 : By.cssSelector("#acl_text_editor_content .help-block")
+    }
+
+    private By getValidationReportBy() {
+        nextUi
+                ? By.cssSelector("[data-testid='acl-validation-report']")
+                : By.cssSelector("#createform .card-content ul")
     }
 
     private By getBackLinkBy() {

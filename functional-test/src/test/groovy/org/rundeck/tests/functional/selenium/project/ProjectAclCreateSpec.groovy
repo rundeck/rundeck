@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.project
 
+import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.annotations.UiMechanism
 import org.rundeck.util.annotations.UiModeFlag
@@ -11,7 +12,11 @@ import org.rundeck.util.gui.pages.project.ProjectAclCreatePage
 
 /**
  * Selenium coverage for stable project ACL policy creation flows.
+ *
+ * Excluded from Pro: the Pro {@code ui-acl-manager} plugin replaces the legacy raw YAML editor
+ * view with a tabbed Rules/Editor UI on the default path.
  */
+@ExcludePro
 @SeleniumCoreTest
 @UiModeFlag(
     featureName = "menu-create-project-acl-file",
@@ -97,7 +102,7 @@ class ProjectAclCreateSpec extends SeleniumBase {
             createPage.clickBack()
 
         then:
-            createPage.currentUrl().contains("/project/${PROJECT_NAME}/admin/acls")
+            createPage.atProjectAclList
 
         where:
             [nextUi] << UI_MODES
@@ -137,6 +142,41 @@ class ProjectAclCreateSpec extends SeleniumBase {
             [nextUi] << UI_MODES
     }
 
+    def "admin can correct validation errors and save a valid project ACL policy"() {
+        given:
+            String policyName = "valid-policy-${nextUi ? 'next' : 'legacy'}"
+            String invalidPolicy = "description: invalid policy\nfor:\n  resource:\n    - allow: read"
+            String validPolicy = "description: valid policy\nfor:\n  resource:\n    - allow: read\nby:\n  group: test_group"
+            createPage = openCreatePage(nextUi)
+
+        when: "an incomplete policy is submitted first"
+            createPage.enterName(policyName)
+            createPage.replaceEditorText(invalidPolicy)
+            createPage.clickSave()
+            createPage.waitForUrlToContain('/admin/acls/save')
+
+        then: "the form re-renders with the validation report and preserves the input"
+            createPage.globalErrorText.contains('Validation failed')
+            createPage.validationReportText.contains("Required 'by:' or 'notBy:' section was not present")
+            createPage.name == policyName
+            createPage.editorText == invalidPolicy
+
+        when: "the policy is corrected and resubmitted using the regenerated CSRF token"
+            createPage.replaceEditorText(validPolicy)
+            createPage.clickSave()
+            createPage.waitForProjectAclList()
+
+        then: "the browser lands on the project ACL list and the stored policy matches via API"
+            createPage.atProjectAclList
+            getProjectAclContents(policyName).trim() == validPolicy
+
+        cleanup:
+            deleteProjectAcl(policyName)
+
+        where:
+            [nextUi] << UI_MODES
+    }
+
     def "dirty editor warns before navigation but Cancel does not"() {
         given:
             createPage = openCreatePage(nextUi)
@@ -150,7 +190,7 @@ class ProjectAclCreateSpec extends SeleniumBase {
             createPage.clickCancel()
 
         then:
-            createPage.currentUrl().contains("/project/${PROJECT_NAME}/admin/acls")
+            createPage.atProjectAclList
 
         where:
             [nextUi] << UI_MODES
@@ -199,5 +239,27 @@ class ProjectAclCreateSpec extends SeleniumBase {
         result.setNextUiCookie(nextUi)
         result.go()
         result
+    }
+
+    /**
+     * Fetches the stored text of a project ACL policy through the API.
+     *
+     * @param policyName policy name without the {@code .aclpolicy} extension
+     * @return stored policy YAML contents
+     */
+    private String getProjectAclContents(final String policyName) {
+        Map response = get("/project/${PROJECT_NAME}/acl/${policyName}.aclpolicy", Map)
+        (response.contents as String)?.normalize()
+    }
+
+    /**
+     * Deletes a project ACL policy through the API if it exists.
+     *
+     * @param policyName policy name without the {@code .aclpolicy} extension
+     */
+    private void deleteProjectAcl(final String policyName) {
+        try (def response = doDelete("/project/${PROJECT_NAME}/acl/${policyName}.aclpolicy")) {
+            assert response.code() in [204, 404] : "Unexpected status deleting ACL ${policyName}: ${response.code()}"
+        }
     }
 }
