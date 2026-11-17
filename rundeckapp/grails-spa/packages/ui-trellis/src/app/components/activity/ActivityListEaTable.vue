@@ -1,5 +1,5 @@
 <template>
-  <div class="activity-ea-table">
+  <div class="activity-ea-table" @auxclick="onAuxClick">
     <div v-if="showToolbar" class="activity-ea-table__toolbar">
       <span
         class="activity-ea-table__count text-heading--md"
@@ -67,7 +67,8 @@
       :always-show-paginator="true"
       paginator-template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
       :current-page-report-template="currentPageReportTemplate"
-      :rows-per-page-options="[10, 20, 50]"
+      :rows-per-page-options="rowsPerPageOptions"
+      :row-class="rowClass"
       :lazy="true"
       :sort-field="sortField"
       :sort-order="sortOrder"
@@ -80,261 +81,272 @@
       @sort="onSort"
       @row-click="onRowClick"
     >
-      <Column
-        v-if="hasColumn('status')"
-        field="status"
-        class="activity-ea-table__status"
-      >
-        <template #header>
-          <span class="sr-only" data-testid="activity-ea-header-status">
-            {{ $t("activity.table.status") }}
-          </span>
-        </template>
-        <template #body="{ data }">
-          <b
-            class="exec-status icon"
-            :title="statusState(data)"
-            :data-execstate="statusState(data).toUpperCase()"
-            :data-statusstring="statusState(data)"
-            :data-testid="`activity-ea-status-${data.id}`"
-          ></b>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('id')"
-        field="id"
-        :sortable="sortable"
-        class="activity-ea-table__execution"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <input
-              v-if="selectable"
-              type="checkbox"
-              :checked="allPageSelected"
-              :indeterminate="somePageSelected"
-              :disabled="loading"
-              :aria-label="$t('activity.table.selectAll')"
-              data-testid="activity-ea-select-all"
-              @click.stop
-              @change="togglePageSelection"
-            />
-            <span data-testid="activity-ea-header-execution">
-              {{ $t("activity.table.execution") }}
+      <template v-for="column in columns" :key="column">
+        <Column
+          v-if="column === 'status'"
+          field="status"
+          class="activity-ea-table__status"
+        >
+          <template #header>
+            <span class="sr-only" data-testid="activity-ea-header-status">
+              {{ $t("activity.table.status") }}
             </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <div class="activity-ea-table__execution-content">
-            <input
-              v-if="selectable"
-              type="checkbox"
-              :checked="isSelected(data)"
-              :aria-label="
-                $t('activity.table.selectExecution', { id: data.id })
-              "
-              :data-testid="`activity-ea-select-${data.id}`"
-              @click.stop
-              @change="toggleSelection(data)"
-            />
-            <a
-              :href="data.permalink"
-              target="_blank"
-              rel="noopener noreferrer"
-              :data-testid="`activity-ea-execution-${data.id}`"
-              @click.stop
-              @click.middle.stop
-            >
-              #{{ data.id }}
-            </a>
-          </div>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('dateEnded')"
-        field="dateEnded"
-        :sortable="sortable"
-        class="activity-ea-table__date"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-date-time">
-              {{ $t("activity.table.dateTime") }}
-            </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <span
-            class="activity-ea-table__truncate"
-            :title="completedDate(data)"
-          >
-            {{ completedDate(data) }}
-          </span>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('plugin')"
-        field="plugin"
-        class="activity-ea-table__plugin"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-plugin">
-              {{ $t("activity.table.plugin") }}
-            </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <div class="activity-ea-table__plugin-content">
-            <PluginIcon
-              v-if="hasPluginIcon(data)"
-              :detail="data.plugin"
-              icon-class="activity-ea-table__plugin-icon"
-            />
+          </template>
+          <template #body="{ data }">
+            <b
+              class="exec-status icon"
+              :title="statusState(data)"
+              :data-execstate="statusState(data).toUpperCase()"
+              :data-statusstring="statusState(data)"
+              :data-testid="`activity-ea-status-${data.id}`"
+            ></b>
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'id'"
+          field="id"
+          :sortable="sortable"
+          class="activity-ea-table__execution"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <input
+                v-if="selectable"
+                type="checkbox"
+                :checked="allPageSelected"
+                :indeterminate="somePageSelected"
+                :disabled="loading"
+                :aria-label="$t('activity.table.selectAll')"
+                data-testid="activity-ea-select-all"
+                @click.stop
+                @change="togglePageSelection"
+              />
+              <span data-testid="activity-ea-header-execution">
+                {{ $t("activity.table.execution") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
+            <div class="activity-ea-table__execution-content">
+              <input
+                v-if="selectable"
+                type="checkbox"
+                :checked="isSelected(data)"
+                :aria-label="
+                  $t('activity.table.selectExecution', { id: data.id })
+                "
+                :data-testid="`activity-ea-select-${data.id}`"
+                @click.stop
+                @change="toggleSelection(data)"
+              />
+              <a
+                :href="data.permalink"
+                target="_blank"
+                rel="noopener noreferrer"
+                :data-testid="`activity-ea-execution-${data.id}`"
+                @click.stop
+                @click.middle.stop
+              >
+                #{{ data.id }}
+              </a>
+            </div>
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'dateEnded'"
+          field="dateEnded"
+          :sortable="sortable"
+          class="activity-ea-table__date"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-date-time">
+                {{ $t("activity.table.dateTime") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
             <span
               class="activity-ea-table__truncate"
-              :title="executionTitle(data)"
+              :title="completedTooltip(data)"
             >
-              {{ executionTitle(data) }}
+              <span class="timeabs">{{ completedDate(data) }}</span>
+              <span
+                v-if="showRelativeDate && data.dateEnded && data.dateEnded.date"
+                class="timerel text-muted"
+                :data-testid="`activity-ea-date-relative-${data.id}`"
+              >
+                {{ relativeDate(data.dateEnded.date) }}
+              </span>
             </span>
-          </div>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('nodes')"
-        field="nodes"
-        class="activity-ea-table__nodes"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-nodes">
-              {{ $t("activity.table.nodes") }}
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'plugin'"
+          field="plugin"
+          class="activity-ea-table__plugin"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-plugin">
+                {{ $t("activity.table.plugin") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
+            <div class="activity-ea-table__plugin-content">
+              <PluginIcon
+                v-if="hasPluginIcon(data)"
+                :detail="data.plugin"
+                icon-class="activity-ea-table__plugin-icon"
+              />
+              <span
+                class="activity-ea-table__truncate"
+                :title="executionTitle(data)"
+              >
+                {{ executionTitle(data) }}
+              </span>
+            </div>
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'nodes'"
+          field="nodes"
+          class="activity-ea-table__nodes"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-nodes">
+                {{ $t("activity.table.nodes") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
+            <span
+              v-if="data.node && data.node.failed > 0"
+              class="activity-ea-table__nodes-failed"
+              :title="nodesTooltip(data)"
+            >
+              <i class="far fa-times-circle" aria-hidden="true"></i>
+              {{ data.node.failed }} {{ $t("failed") }}
             </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <span
-            v-if="data.node && data.node.failed > 0"
-            class="activity-ea-table__nodes-failed"
-          >
-            <i class="far fa-times-circle" aria-hidden="true"></i>
-            {{ data.node.failed }} {{ $t("failed") }}
-          </span>
-          <span
-            v-else-if="data.node && data.node.succeeded > 0"
-            class="activity-ea-table__nodes-succeeded"
-          >
-            <i class="far fa-check-circle" aria-hidden="true"></i>
-            {{ data.node.succeeded }} {{ $t("ok") }}
-          </span>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('duration')"
-        field="duration"
-        class="activity-ea-table__duration"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-duration">
-              {{ $t("activity.table.duration") }}
+            <span
+              v-else-if="data.node && data.node.succeeded > 0"
+              class="activity-ea-table__nodes-succeeded"
+              :title="nodesTooltip(data)"
+            >
+              <i class="far fa-check-circle" aria-hidden="true"></i>
+              {{ data.node.succeeded }} {{ $t("ok") }}
             </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <span :data-testid="`activity-ea-duration-${data.id}`">
-            {{ executionDuration(data) }}
-          </span>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('user')"
-        field="user"
-        :sortable="sortable"
-        class="activity-ea-table__executor"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-executor">
-              {{ $t("activity.table.executor") }}
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'duration'"
+          field="duration"
+          class="activity-ea-table__duration"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-duration">
+                {{ $t("activity.table.duration") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
+            <span :data-testid="`activity-ea-duration-${data.id}`">
+              {{ executionDuration(data) }}
             </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <span class="activity-ea-table__truncate" :title="data.user">
-            {{ data.user }}
-          </span>
-        </template>
-      </Column>
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'user'"
+          field="user"
+          :sortable="sortable"
+          class="activity-ea-table__executor"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-executor">
+                {{ $t("activity.table.executor") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
+            <span class="activity-ea-table__truncate" :title="data.user">
+              {{ data.user }}
+            </span>
+          </template>
+        </Column>
 
-      <Column
-        v-if="hasColumn('title')"
-        field="title"
-        class="activity-ea-table__title"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-title">
-              {{ $t("activity.table.title") }}
-            </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <div class="activity-ea-table__title-content">
+        <Column
+          v-if="column === 'title'"
+          field="title"
+          class="activity-ea-table__title"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-title">
+                {{ $t("activity.table.title") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
+            <div class="activity-ea-table__title-content">
+              <span
+                class="activity-ea-table__truncate"
+                :title="titleTooltip(data)"
+                :data-testid="`activity-ea-title-${data.id}`"
+              >
+                {{ reportTitle(data) }}
+              </span>
+              <span
+                v-if="isReferenced(data)"
+                class="text-secondary"
+                :data-testid="`activity-ea-referenced-${data.id}`"
+              >
+                <i class="fas fa-arrow-circle-right-alt" aria-hidden="true"></i>
+                {{ $t("Referenced") }}
+              </span>
+              <span
+                v-if="data.jobDeleted"
+                class="text-strong"
+                :data-testid="`activity-ea-job-deleted-${data.id}`"
+              >
+                {{ $t("job.has.been.deleted.0", [""]) }}
+              </span>
+              <span
+                v-if="hasCustomStatus(data)"
+                class="exec-status-text custom-status"
+                :data-testid="`activity-ea-custom-status-${data.id}`"
+              >
+                {{ data.customStatus }}
+              </span>
+            </div>
+          </template>
+        </Column>
+        <Column
+          v-if="column === 'args'"
+          field="argstring"
+          class="activity-ea-table__args"
+        >
+          <template #header>
+            <div class="activity-ea-table__header-content text-button">
+              <span data-testid="activity-ea-header-args">
+                {{ $t("activity.table.options") }}
+              </span>
+            </div>
+          </template>
+          <template #body="{ data }">
             <span
               class="activity-ea-table__truncate"
-              :title="reportTitle(data)"
-              :data-testid="`activity-ea-title-${data.id}`"
+              :title="data.argstring"
+              :data-testid="`activity-ea-args-${data.id}`"
             >
-              {{ reportTitle(data) }}
+              {{ data.argstring }}
             </span>
-            <span
-              v-if="isReferenced(data)"
-              class="text-secondary"
-              :data-testid="`activity-ea-referenced-${data.id}`"
-            >
-              <i class="fas fa-arrow-circle-right-alt" aria-hidden="true"></i>
-              {{ $t("Referenced") }}
-            </span>
-            <span
-              v-if="data.jobDeleted"
-              class="text-strong"
-              :data-testid="`activity-ea-job-deleted-${data.id}`"
-            >
-              {{ $t("job.has.been.deleted.0", [""]) }}
-            </span>
-            <span
-              v-if="hasCustomStatus(data)"
-              class="exec-status-text custom-status"
-              :data-testid="`activity-ea-custom-status-${data.id}`"
-            >
-              {{ data.customStatus }}
-            </span>
-          </div>
-        </template>
-      </Column>
-      <Column
-        v-if="hasColumn('args')"
-        field="argstring"
-        class="activity-ea-table__args"
-      >
-        <template #header>
-          <div class="activity-ea-table__header-content text-button">
-            <span data-testid="activity-ea-header-args">
-              {{ $t("activity.table.options") }}
-            </span>
-          </div>
-        </template>
-        <template #body="{ data }">
-          <span
-            class="activity-ea-table__truncate"
-            :title="data.argstring"
-            :data-testid="`activity-ea-args-${data.id}`"
-          >
-            {{ data.argstring }}
-          </span>
-        </template>
-      </Column>
+          </template>
+        </Column>
+      </template>
 
       <template #empty>
         <div
@@ -424,6 +436,31 @@ export default defineComponent({
     showToolbar: {
       type: Boolean,
       default: true,
+    },
+    /** Adds the relative ("2 days ago") time beside the completion date. */
+    showRelativeDate: {
+      type: Boolean,
+      default: false,
+    },
+    /** "compact" (1m 5s) or "humanize" (a minute) duration text. */
+    durationFormat: {
+      type: String as PropType<"compact" | "humanize">,
+      default: "compact",
+    },
+    /** Execution row to highlight, e.g. the one the page was opened for. */
+    highlightId: {
+      type: [Number, String] as PropType<number | string | null>,
+      default: null,
+    },
+    /** Adds the legacy activity row classes (status, job/adhoc) to rows. */
+    legacyRowClasses: {
+      type: Boolean,
+      default: false,
+    },
+    /** Opens the execution in a new tab when a row is middle-clicked. */
+    middleClickOpensTab: {
+      type: Boolean,
+      default: false,
     },
     /** Job ID filter of the current query, used to flag referenced jobs. */
     jobIdFilter: {
@@ -533,6 +570,12 @@ export default defineComponent({
         this.pageIds.some((id) => this.selectedIds.includes(id))
       );
     },
+    /** Standard page sizes plus the configured page size. */
+    rowsPerPageOptions(): number[] {
+      return Array.from(new Set([10, 20, 50, this.pagination.max]))
+        .filter((size) => size > 0)
+        .sort((left, right) => left - right);
+    },
     currentPageReportTemplate(): string {
       return this.$t("activity.table.pageReport", {
         first: "{first}",
@@ -542,9 +585,72 @@ export default defineComponent({
     },
   },
   methods: {
-    /** Whether a built-in column is configured for display. */
-    hasColumn(column: ActivityColumn): boolean {
-      return this.columns.includes(column);
+    /** Row classes for highlighting and the optional legacy markers. */
+    rowClass(execution: ActivityExecution): Record<string, boolean> {
+      const highlight =
+        this.highlightId !== null &&
+        String(this.highlightId) === String(execution.id);
+      if (!this.legacyRowClasses) {
+        return { highlight };
+      }
+      return {
+        link: true,
+        activity_row: true,
+        autoclickable: true,
+        [`ali-${execution.id}`]: true,
+        succeed: execution.status === "succeeded",
+        fail: execution.status === "failed",
+        missed: execution.status === "missed",
+        job: Boolean(execution.job),
+        adhoc: !execution.job,
+        highlight,
+      };
+    },
+    /** Opens the middle-clicked row's execution in a new tab. */
+    onAuxClick(event: MouseEvent) {
+      if (!this.middleClickOpensTab || event.button !== 1) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (!target || target.closest("a")) {
+        return;
+      }
+      const index = Number(
+        target.closest("tr[data-p-index]")?.getAttribute("data-p-index"),
+      );
+      const execution = Number.isInteger(index)
+        ? this.reports[index]
+        : undefined;
+      if (execution?.permalink) {
+        window.open(execution.permalink, "_blank");
+      }
+    },
+    /** Relative completion time; calendar wording within the last week. */
+    relativeDate(date: string): string {
+      return moment().diff(moment(date), "days") <= 7
+        ? DateTimeFormatters.formatCalendar(date)
+        : DateTimeFormatters.formatFromNow(date);
+    },
+    /** Completion tooltip matching the legacy Activity wording. */
+    completedTooltip(execution: ActivityExecution): string {
+      if (!this.showRelativeDate || !execution.dateEnded?.date) {
+        return this.completedDate(execution);
+      }
+      const ended = moment(execution.dateEnded.date);
+      return this.$t(
+        execution.status === "missed"
+          ? "info.missed.0.1"
+          : "info.completed.0.1",
+        [ended.toISOString(), ended.fromNow()],
+      );
+    },
+    /** Total node count tooltip for the nodes column. */
+    nodesTooltip(execution: ActivityExecution): string {
+      return this.$t("0.total", [execution.node?.total ?? 0]);
+    },
+    /** Full job path for jobs, otherwise the displayed title. */
+    titleTooltip(execution: ActivityExecution): string {
+      return this.reportTitle(execution);
     },
     /** Normalized state name driving the status icon. */
     statusState(execution: ActivityExecution): string {
@@ -666,6 +772,10 @@ export default defineComponent({
       const duration = moment.duration(endTime - startTime);
       if (duration.asMilliseconds() < 0) {
         return "";
+      }
+      if (this.durationFormat === "humanize") {
+        moment.relativeTimeThreshold("ss", -1);
+        return duration.humanize();
       }
       const totalSeconds = Math.floor(duration.asSeconds());
       if (totalSeconds < 60) {

@@ -2,7 +2,9 @@
   <div class="activity-list">
     <section class="section-space-bottom spacing-x">
       <span
-        v-if="pagination.total > 0 && pagination.total > pagination.max"
+        v-if="
+          !nextUi && pagination.total > 0 && pagination.total > pagination.max
+        "
         class="text-muted"
         data-testid="page-info"
       >
@@ -565,6 +567,12 @@
       :show-toolbar="false"
       :job-id-filter="query.jobIdFilter"
       :moment-job-format="momentJobFormat"
+      :show-relative-date="true"
+      duration-format="humanize"
+      :highlight-id="highlightExecutionId"
+      :legacy-row-classes="true"
+      :middle-click-opens-tab="true"
+      :sortable="true"
       data-testid="activity-list-ea-table"
       @page="onEaPage"
       @row-click="autoBulkEdit"
@@ -670,13 +678,13 @@ const knownStatusList = KNOWN_EXECUTION_STATUSES;
 /** Activity columns shown by the next UI history table, in display order. */
 const NEXT_UI_COLUMNS: ActivityColumn[] = [
   "status",
-  "id",
   "dateEnded",
   "nodes",
   "duration",
   "user",
   "title",
   "args",
+  "id",
 ];
 
 /** Maps activity table sort columns to persisted ExecutionQuery fields. */

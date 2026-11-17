@@ -74,14 +74,19 @@ describe("ActivityList next UI table", () => {
     expect(table.exists()).toBe(true);
     expect(table.props("columns")).toEqual([
       "status",
-      "id",
       "dateEnded",
       "nodes",
       "duration",
       "user",
       "title",
       "args",
+      "id",
     ]);
+    expect(table.props("showRelativeDate")).toBe(true);
+    expect(table.props("durationFormat")).toBe("humanize");
+    expect(table.props("legacyRowClasses")).toBe(true);
+    expect(table.props("middleClickOpensTab")).toBe(true);
+    expect(wrapper.find('[data-testid="page-info"]').exists()).toBe(false);
     expect(table.props("showToolbar")).toBe(false);
     expect(table.props("selectable")).toBe(false);
     expect(table.props("reports")).toHaveLength(mockReports.length);

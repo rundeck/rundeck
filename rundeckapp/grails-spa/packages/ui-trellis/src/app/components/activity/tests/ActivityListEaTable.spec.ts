@@ -395,6 +395,119 @@ describe("ActivityListEaTable", () => {
     ).toBe(false);
   });
 
+  it("renders columns in the configured order", async () => {
+    const wrapper = await createWrapper({
+      props: { columns: ["user", "dateEnded", "id"] },
+    });
+
+    expect(
+      wrapper.findAllComponents(Column).map((column) => column.props("field")),
+    ).toEqual(["user", "dateEnded", "id"]);
+  });
+
+  it("adds the relative completion time and legacy tooltip when enabled", async () => {
+    const wrapper = await createWrapper({
+      props: {
+        showRelativeDate: true,
+        reports: [
+          {
+            ...mockReports[0],
+            dateStarted: {
+              unixtime: 1720195500000,
+              date: "2024-07-05T16:55:00Z",
+            },
+            dateEnded: {
+              unixtime: 1720195561552,
+              date: "2024-07-05T16:56:01Z",
+            },
+          },
+        ],
+      },
+    });
+    const id = mockReports[0].id;
+
+    expect(
+      wrapper.find(`[data-testid="activity-ea-date-relative-${id}"]`).text(),
+    ).not.toBe("");
+    expect(
+      wrapper
+        .find(".activity-ea-table__date .activity-ea-table__truncate")
+        .attributes("title"),
+    ).toContain("Completed");
+  });
+
+  it("humanizes the duration when requested", async () => {
+    const wrapper = await createWrapper({
+      props: {
+        durationFormat: "humanize",
+        reports: [
+          {
+            ...mockReports[0],
+            dateStarted: {
+              unixtime: 1720195500000,
+              date: "2024-07-05T16:55:00Z",
+            },
+            dateEnded: {
+              unixtime: 1720195561552,
+              date: "2024-07-05T16:56:01Z",
+            },
+          },
+        ],
+      },
+    });
+
+    expect(
+      wrapper
+        .find(`[data-testid="activity-ea-duration-${mockReports[0].id}"]`)
+        .text(),
+    ).toBe("a minute");
+  });
+
+  it("adds legacy row classes and highlights the requested execution", async () => {
+    const wrapper = await createWrapper({
+      props: {
+        legacyRowClasses: true,
+        highlightId: mockReports[0].id,
+      },
+    });
+    const row = wrapper.find("tbody tr");
+
+    expect(row.classes()).toEqual(
+      expect.arrayContaining([
+        "activity_row",
+        "autoclickable",
+        "succeed",
+        "job",
+        "highlight",
+        `ali-${mockReports[0].id}`,
+      ]),
+    );
+  });
+
+  it("opens the execution in a new tab on a middle-click when enabled", async () => {
+    const open = jest.spyOn(window, "open").mockImplementation(() => null);
+    const wrapper = await createWrapper({
+      props: { middleClickOpensTab: true },
+    });
+
+    await wrapper
+      .find("tbody tr td:nth-child(2)")
+      .trigger("auxclick", { button: 1 });
+
+    expect(open).toHaveBeenCalledWith(mockReports[0].permalink, "_blank");
+    open.mockRestore();
+  });
+
+  it("includes the configured page size in the rows-per-page options", async () => {
+    const wrapper = await createWrapper({
+      props: { pagination: { offset: 0, max: 30, total: 1 } },
+    });
+
+    expect(
+      wrapper.findComponent(PtDataTable).props("rowsPerPageOptions"),
+    ).toEqual([10, 20, 30, 50]);
+  });
+
   it("hides the selection checkboxes when not selectable", async () => {
     const wrapper = await createWrapper({ props: { selectable: false } });
 
