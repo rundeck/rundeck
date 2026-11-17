@@ -132,9 +132,9 @@ buildConfig {
 
     buildConfigField('String', 'NAME', "\"rundeck\"")
     buildConfigField('String', 'VERSION', "\"${project.version}\"")
-    buildConfigField('String', 'GIT_COMMIT', "\"${project.gitCommit}\"")
-    buildConfigField('String', 'GIT_BRANCH', "\"${project.gitBranch}\"")
-    buildConfigField('String', 'GIT_DESCRIPTION', "\"${project.gitDescribeInfo}\"")
+    buildConfigField('String', 'GIT_COMMIT', "String.valueOf(\"${project.gitCommit}\")")
+    buildConfigField('String', 'GIT_BRANCH', "String.valueOf(\"${project.gitBranch}\")")
+    buildConfigField('String', 'GIT_DESCRIPTION', "String.valueOf(\"${project.gitDescribeInfo}\")")
     buildConfigField('String', 'BUILD_NUM', "\"0\"")
     buildConfigField('String', 'BUILD_IDENT', "\"${version + '-0'}\"")
 }
