@@ -240,14 +240,13 @@ class LocalJobSchedulesManager implements SchedulesManager {
      * @return
      */
     def listScheduledJobs(String serverUUID = null, String project = null){
-        def results = ScheduledExecution.scheduledJobs()
-        if (serverUUID) {
-            results = results.withServerUUID(serverUUID)
+        // Named queries are gone in Grails 8. Restrictions go in the list{} closure: a .where{}
+        // chained onto the DetachedCriteria scheduledJobs() returns is silently discarded, and the
+        // query degrades to the unrestricted set.
+        ScheduledExecution.scheduledJobs().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+            if (project) { eq 'project', project }
         }
-        if(project) {
-            results = results.withProject(project)
-        }
-        results.list()
     }
 
 }

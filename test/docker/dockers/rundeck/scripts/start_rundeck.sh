@@ -80,8 +80,10 @@ cat > $HOME/etc/profile <<END
 RDECK_BASE=$RDECK_BASE
 export RDECK_BASE
 
-# Grails 7: Java 17 required
-JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}
+# Derive JAVA_HOME from the java on PATH instead of naming a JDK directory. The literal used
+# before embedded both the major version and the architecture, so it had to be edited in lockstep
+# with the Dockerfile and only ever resolved on amd64.
+JAVA_HOME=${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")}
 export JAVA_HOME
 
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH
@@ -285,6 +287,16 @@ do
       echo "Still working. hang on..."; # output a progress character.
     else  break; # found successful startup message.
     fi
+    # Stop as soon as the server is known to be dead, instead of waiting out every attempt. The
+    # outer harness gives up at almost the same time as this loop, so the dump below was never
+    # reached on a startup failure and the exception stayed invisible -- the periodic `tail -n 5`
+    # only ever showed the bottom of the stack trace.
+    if [ -f "$LOGFILE" ] && grep -qE "APPLICATION FAILED TO START|Application run failed" "$LOGFILE" ; then
+      echo >&2 "FAIL: the server failed during startup."
+      echo >&2 "--- last 200 lines of $LOGFILE ---"
+      tail -n 200 "$LOGFILE" >&2
+      exit 1
+    fi
     if [ -n "$STARTUP_FAILURE_MSG" ] ; then
       if grep "${STARTUP_FAILURE_MSG}" "$LOGFILE" ; then
         >&2 grep "${STARTUP_FAILURE_MSG}" "$LOGFILE"
@@ -295,9 +307,20 @@ do
     (( count += 1 ))  ; # increment attempts counter.
     (( count == MAX_ATTEMPTS )) && {
         echo >&2 "FAIL: Reached max attempts to find success message in logfile. Exiting."
+        # Dump the log before giving up. The periodic `tail -n 5` below only ever shows the bottom
+        # of a stack trace, so a startup failure left no trace of what actually went wrong.
+        if [ -f "$LOGFILE" ] ; then
+          echo >&2 "--- last 200 lines of $LOGFILE ---"
+          tail -n 200 "$LOGFILE" >&2
+        fi
         exit 1
     }
-    tail -n 5 $LOGFILE
+    # Guard the tail: this runs on the first iteration, before any sleep, so with `set -e` a
+    # not-yet-created logfile killed the whole script right here -- taking down the container and
+    # hiding whatever the real startup problem was.
+    if [ -f "$LOGFILE" ] ; then
+      tail -n 5 "$LOGFILE"
+    fi
     $HOME/server/sbin/rundeckd status || {
         echo >&2 "FAIL: rundeckd is not running. Exiting."
         exit 1

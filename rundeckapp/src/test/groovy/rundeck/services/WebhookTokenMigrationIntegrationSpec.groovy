@@ -63,6 +63,9 @@ class WebhookTokenMigrationIntegrationSpec extends Specification implements Data
 
         when: "the startup migration re-hashes existing LEGACY webhook tokens"
         migrationService.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
 
         and: "the webhook is triggered again after the migration, with the SAME raw token"
         def webhookAfter = Webhook.findByAuthToken(clearToken)

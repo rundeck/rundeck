@@ -91,7 +91,7 @@
       <g:each in="${0..colcount-1}" var="colnum">
         <g:set var="colstart" value="${(int)(colnum)*datapercol}"/>
         <g:set var="colmax" value="${(int)(colnum+1)*datapercol-1}"/>
-        <g:set var="coldata" value="${systemInfo[colstart..(colmax<systemInfo.size?colmax:systemInfo.size-1)]}"/>
+        <g:set var="coldata" value="${systemInfo[colstart..(colmax<systemInfo.size()?colmax:systemInfo.size()-1)]}"/>
         <div class="col-xs-6">
           <g:each in="${coldata}" var="dataset">
             <g:each in="${dataset.keySet().sort()}" var="dataname">
