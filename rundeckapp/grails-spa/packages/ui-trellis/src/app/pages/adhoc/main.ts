@@ -8,6 +8,7 @@ import NextUiToggle from "../../../library/components/widgets/settings-bar/NextU
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
 import { getRundeckContext } from "../../../library";
 import type { UiMessage } from "../../../library/stores/UIStore";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const rundeckContext = getRundeckContext();
 const rootStore = rundeckContext.rootStore;
@@ -83,6 +84,8 @@ async function mountAdhocApp() {
       vue.use(uiv);
       vue.use(i18n);
       vue.use(VueCookies);
+      // The next UI activity table is built on PrimeVue DataTable/Paginator
+      configurePrimeVue(vue);
       vue.mount(el);
     } catch (error) {
       console.error("[adhoc/main.ts] Error mounting Vue app:", error);
