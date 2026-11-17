@@ -178,14 +178,16 @@ export default defineComponent({
 // Dark mode for the horizontal stepper (the vertical variant has its own
 // scoped dark block below). The active/completed states keep their
 // saturated blue accent; only the muted base state and completed/active
-// titles need a dark-safe color here.
+// titles need a dark-safe color here. The base and completed overrides
+// exclude active/completed steps so the light-mode state precedence
+// (active wins over completed) is preserved.
 *[data-color-theme="dark"] {
-  .p-step-header .p-step-number {
+  .p-step:not(.p-completed):not(.p-step-active) .p-step-header .p-step-number {
     border-color: var(--border-color);
     color: var(--text-muted-color);
   }
 
-  .p-step.p-completed .p-step-number {
+  .p-step.p-completed:not(.p-step-active) .p-step-number {
     background: var(--background-color-lvl3);
   }
 
