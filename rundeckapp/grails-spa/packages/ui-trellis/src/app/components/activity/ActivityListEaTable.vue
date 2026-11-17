@@ -231,7 +231,11 @@
               class="activity-ea-table__nodes-failed"
               :title="nodesTooltip(data)"
             >
-              <i class="far fa-times-circle" aria-hidden="true"></i>
+              <i
+                v-if="!legacyTheme"
+                class="far fa-times-circle"
+                aria-hidden="true"
+              ></i>
               {{ data.node.failed }} {{ $t("failed") }}
             </span>
             <span
@@ -239,7 +243,11 @@
               class="activity-ea-table__nodes-succeeded"
               :title="nodesTooltip(data)"
             >
-              <i class="far fa-check-circle" aria-hidden="true"></i>
+              <i
+                v-if="!legacyTheme"
+                class="far fa-check-circle"
+                aria-hidden="true"
+              ></i>
               {{ data.node.succeeded }} {{ $t("ok") }}
             </span>
           </template>
@@ -277,6 +285,7 @@
           </template>
           <template #body="{ data }">
             <span class="activity-ea-table__truncate" :title="data.user">
+              <em v-if="legacyTheme">{{ $t("by") }}</em>
               {{ data.user }}
             </span>
           </template>
@@ -1009,6 +1018,51 @@ export default defineComponent({
 
 /* Legacy Activity colors: mirrors runstrap's .table/.table-hover theme rules. */
 .activity-ea-table.activity-ea-table--legacy-theme {
+  margin-top: var(--sizes-none);
+
+  /* Fit the card like the legacy table instead of fixed column widths. */
+  :deep(.p-datatable-table) {
+    table-layout: auto;
+  }
+
+  :deep(.p-datatable-thead > tr > th),
+  :deep(.p-datatable-tbody > tr > td) {
+    width: auto;
+    height: auto;
+    padding: var(--sizes-2) var(--sizes-3);
+    vertical-align: middle;
+  }
+
+  :deep(.activity-ea-table__status) {
+    width: var(--sizes-activity-table-status-column);
+  }
+
+  :deep(.activity-ea-table__execution) {
+    text-align: right;
+  }
+
+  :deep(.activity-ea-table__execution .activity-ea-table__execution-content) {
+    justify-content: flex-end;
+  }
+
+  :deep(.activity-ea-table__duration),
+  .timerel {
+    color: var(--text-secondary-color);
+  }
+
+  .timerel {
+    margin-left: var(--sizes-2);
+  }
+
+  .activity-ea-table__nodes-failed,
+  .activity-ea-table__nodes-succeeded {
+    color: var(--font-color);
+  }
+
+  .activity-ea-table__truncate {
+    white-space: nowrap;
+  }
+
   :deep(.p-datatable-table-container) {
     border: var(--sizes-none);
     border-radius: var(--sizes-none);
@@ -1067,7 +1121,7 @@ export default defineComponent({
   }
 
   .activity-ea-table__execution-content a {
-    color: var(--link-color);
+    color: var(--font-color);
   }
 }
 </style>
