@@ -82,7 +82,7 @@ const createWrapper = (options: MountOptions = {}): VueWrapper<any> => {
         LogNodeChunk: {
           name: "LogNodeChunk",
           props: ["entries"],
-          emits: ["line-select", "jumped", "follow-change", "content-size"],
+          emits: ["line-select", "jumped", "follow-change"],
           template: `
             <div data-testid="log-node-chunk">
               <div
@@ -411,56 +411,23 @@ describe("LogViewer", () => {
     });
   });
 
-  describe("Node view height", () => {
-    it("bounds the scroller at 600px before the log content is measured", async () => {
+  describe("Node view sizing", () => {
+    it("marks the viewer for content-sized layout in the node view", async () => {
       const wrapper = createWrapper({ props: { node: "node1" } });
       await flushPromises();
 
-      expect(
-        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
-      ).toContain("height: 600px");
+      expect(findByTestId(wrapper, "log-viewer").classes()).toContain(
+        "execution-log--node",
+      );
     });
 
-    it("sizes the scroller to the log content when it is shorter than 600px", async () => {
-      const wrapper = createWrapper({ props: { node: "node1" } });
-      await flushPromises();
-
-      await wrapper
-        .findComponent({ name: "LogNodeChunk" })
-        .vm.$emit("content-size", 120);
-      await nextTick();
-
-      expect(
-        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
-      ).toContain("height: 120px");
-    });
-
-    it("caps the scroller at 600px when the log content is taller", async () => {
-      const wrapper = createWrapper({ props: { node: "node1" } });
-      await flushPromises();
-
-      await wrapper
-        .findComponent({ name: "LogNodeChunk" })
-        .vm.$emit("content-size", 5000);
-      await nextTick();
-
-      expect(
-        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
-      ).toContain("height: 600px");
-    });
-
-    it("does not set a scroller height outside the node view", async () => {
+    it("does not mark the viewer for content-sized layout outside the node view", async () => {
       const wrapper = createWrapper();
       await flushPromises();
 
-      await wrapper
-        .findComponent({ name: "LogNodeChunk" })
-        .vm.$emit("content-size", 120);
-      await nextTick();
-
-      expect(
-        findByTestId(wrapper, "log-viewer-scroller").attributes("style"),
-      ).toBeUndefined();
+      expect(findByTestId(wrapper, "log-viewer").classes()).not.toContain(
+        "execution-log--node",
+      );
     });
   });
 

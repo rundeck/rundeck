@@ -31,9 +31,10 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
   const elm = document.querySelector(query) as HTMLElement;
 
   // The wfnodeoutput element has no explicit height in the Knockout template, so it
-  // sizes to the LogViewer. In node mode the LogViewer bounds its own scroller height
-  // (log content height, capped at 600px), which gives vue-virtual-scroller the
-  // bounded viewport it needs without padding short logs with blank space.
+  // sizes to the LogViewer. In node mode the LogViewer's `execution-log--node` CSS
+  // sizes the log to its content and caps it with `max-height: 600px`, which gives
+  // vue-virtual-scroller the bounded viewport it needs without padding short logs
+  // with blank space.
   elm.style.overflow = "hidden";
 
   // Unmount any existing viewer for this node/step to avoid stacking

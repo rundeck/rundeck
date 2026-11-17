@@ -2,7 +2,7 @@
   <div
     ref="root"
     class="execution-log"
-    :class="[`execution-log--${colorTheme}`]"
+    :class="[`execution-log--${colorTheme}`, { 'execution-log--node': node }]"
     data-testid="log-viewer"
   >
     <RdDrawer
@@ -119,7 +119,6 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="scrollerStyle"
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -213,7 +212,6 @@
           @line-select="handleLineSelect"
           @jumped="jumped = true"
           @follow-change="onNodeFollowChange"
-          @content-size="onNodeContentSize"
         />
       </div>
     </div>
@@ -242,11 +240,6 @@ import LogNodeChunk from "./LogNodeChunk.vue";
 import { getRundeckContext } from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
-/**
- * Maximum height (px) of the log viewport in the node view. The virtual scroller
- * needs a bounded viewport, so longer logs scroll inside a box of this height.
- */
-const NODE_VIEW_MAX_HEIGHT = 600;
 const context = getRundeckContext();
 const rootStore = context.rootStore;
 
@@ -378,8 +371,6 @@ export default defineComponent({
       viewerEntriesByNodeCtx: null,
       viewerFilteredEntries: [] as any[],
       autorunDisposer: null as IReactionDisposer | null,
-      /** Measured log content height (px) reported by LogNodeChunk in the node view */
-      nodeContentHeight: null as number | null,
       hideIncompleteNodes: false,
       hideIncompleteApplies: false,
       incompleteNodeNames: [] as string[],
@@ -395,21 +386,6 @@ export default defineComponent({
   computed: {
     settingsChange() {
       return Object.assign({}, this.settings);
-    },
-    /**
-     * Inline style of the scroller. In the node view the height fits the log
-     * content up to NODE_VIEW_MAX_HEIGHT, and stays at the cap until the content
-     * is measured so the virtual scroller always has a bounded viewport.
-     */
-    scrollerStyle() {
-      if (!this.node) {
-        return {};
-      }
-      const height =
-        this.nodeContentHeight === null
-          ? NODE_VIEW_MAX_HEIGHT
-          : Math.min(this.nodeContentHeight, NODE_VIEW_MAX_HEIGHT);
-      return { height: `${height}px`, flex: "none", overflowY: "hidden" };
     },
     followIcon() {
       return this.mfollow ? "fas fa-eye" : "fas fa-eye-slash";
@@ -672,12 +648,6 @@ export default defineComponent({
         this.mfollow = val;
       }
     },
-    /** Records the log content height reported by LogNodeChunk (node view only). */
-    onNodeContentSize(size: number) {
-      if (this.node) {
-        this.nodeContentHeight = size;
-      }
-    },
     handleLineSelect(idx: number) {
       if (this.overSize) {
         alert("Line-linking is not supported for over-sized logs");
@@ -808,6 +778,31 @@ export default defineComponent({
 
 .execution-log__chunk {
   contain: layout;
+}
+
+/*
+ * Node view: the log panel sizes to its content, capped at 600px.
+ * The DynamicScroller root (.execution-log__chunk) keeps a bounded viewport
+ * through max-height, so virtualization still works for long logs.
+ * The doubled class beats LogNodeChunk's scoped `.scroller { height: 100% }`.
+ */
+.execution-log.execution-log--node,
+.execution-log.execution-log--node .execution-log__scroller,
+.execution-log.execution-log--node .execution-log__scroller-item-container,
+.execution-log.execution-log--node .execution-log__node-chunk,
+.execution-log.execution-log--node .execution-log__chunk {
+  height: auto;
+}
+.execution-log.execution-log--node .execution-log__scroller,
+.execution-log.execution-log--node .execution-log__node-chunk {
+  flex: none;
+}
+.execution-log.execution-log--node .execution-log__scroller {
+  overflow-y: hidden;
+}
+.execution-log.execution-log--node .execution-log__chunk {
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .progress {

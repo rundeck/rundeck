@@ -13,28 +13,13 @@ jest.mock("../logEntryFlex.vue", () => ({
   template: "<div />",
 }));
 
-// Measured content height reported by the virtual scroller (RecycleScroller.totalSize)
-const mockTotalSize = ref(0);
 // Rows the virtual scroller has not measured yet (DynamicScroller.$_undefinedSizes)
 const mockUndefinedSizes = ref(0);
 const mockScrollToBottom = jest.fn();
 const mockGetItemSize = jest.fn();
 
-// DynamicScroller wraps a RecycleScroller (its "scroller" ref) whose
-// totalSize is the summed height of the measured log lines.
-const RecycleScrollerStub = defineComponent({
-  name: "RecycleScroller",
-  computed: {
-    totalSize(): number {
-      return mockTotalSize.value;
-    },
-  },
-  template: "<div />",
-});
-
 const DynamicScrollerStub = defineComponent({
   name: "DynamicScroller",
-  components: { RecycleScroller: RecycleScrollerStub },
   props: { items: { type: Array, default: () => [] } },
   setup() {
     // $-prefixed keys are not proxied from data, so expose it on the instance context.
@@ -56,7 +41,6 @@ const DynamicScrollerStub = defineComponent({
   },
   template: `
     <div>
-      <RecycleScroller ref="scroller" />
       <template v-for="(item, index) in items" :key="index">
         <slot :item="item" :index="index" :active="true" />
       </template>
@@ -200,7 +184,6 @@ const extraEntry = { ...mockEntries[0], log: "another line", lineNumber: 4 };
 describe("LogNodeChunk", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTotalSize.value = 0;
     mockUndefinedSizes.value = 0;
     installFrameMock();
   });
@@ -451,41 +434,6 @@ describe("LogNodeChunk", () => {
       await scrollTo(wrapper, 500);
 
       expect(wrapper.emitted("follow-change")).toEqual([[true]]);
-    });
-  });
-
-  describe("Content size", () => {
-    it("emits the measured content height when it changes", async () => {
-      const wrapper = createWrapper();
-
-      mockTotalSize.value = 240;
-      await wrapper.vm.$nextTick();
-      mockTotalSize.value = 240;
-      await wrapper.vm.$nextTick();
-      mockTotalSize.value = 480;
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.emitted("content-size")).toEqual([[240], [480]]);
-    });
-
-    it("does not emit before any content has been measured", async () => {
-      const wrapper = createWrapper();
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.emitted("content-size")).toBeUndefined();
-    });
-
-    it("keeps reporting the content height after display settings change", async () => {
-      const wrapper = createWrapper();
-      mockTotalSize.value = 240;
-      await wrapper.vm.$nextTick();
-
-      await wrapper.setProps({ gutter: false });
-      await wrapper.vm.$nextTick();
-      mockTotalSize.value = 300;
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.emitted("content-size")?.at(-1)).toEqual([300]);
     });
   });
 });
