@@ -85,7 +85,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
                 groupPath: 'integration/test',
                 description: 'handle dynamic properties issue',
                 argString: '-a b -c d',
-                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy'])]),
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([description: 'Command', adhocRemoteString: 'test buddy'])]),
                 serverNodeUUID: null,
                 scheduled: true
         ]+overrides
