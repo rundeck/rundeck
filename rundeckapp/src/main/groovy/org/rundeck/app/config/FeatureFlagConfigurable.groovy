@@ -65,6 +65,16 @@ class FeatureFlagConfigurable implements SystemConfigurable {
                 "users have been granted run access: turning it on stops schedules that run today.",
             'ops_admin'
         ),
+        featureConfig(
+            Features.WEBHOOK_TEMPLATE_CACHE,
+            "Webhook template cache",
+            "Compile each webhook rule template once and reuse it across events. Leave this on. " +
+                "Turning it off compiles the template on every event and can stall the instance during a webhook burst. " +
+                "Applies on the next webhook, without a restart.",
+            'ops_admin',
+            'Feature',
+            'true'
+        ),
         //TODO: include additional feature flags here
     ]
 
@@ -117,12 +127,23 @@ class FeatureFlagConfigurable implements SystemConfigurable {
     }
 
     private static SysConfigProp featureConfig(Features feature, String label, String description, String auth, String category) {
+        featureConfig(feature, label, description, auth, category, 'false')
+    }
+
+    private static SysConfigProp featureConfig(
+        Features feature,
+        String label,
+        String description,
+        String auth,
+        String category,
+        String defaultValue
+    ) {
         SystemConfig.builder().with {
             key("rundeck.feature.${feature.propertyName}.enabled")
                 .datatype("Boolean")
                 .label(label)
                 .description(description)
-                .defaultValue("false")
+                .defaultValue(defaultValue)
                 .category(category)
                 .visibility("Advanced")
                 .strata("default")
