@@ -172,6 +172,18 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginWorkflowItem(int step, StepExecutionItem item) {
+        pushStepContext(step, item);
+        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING), new Date());
+    }
+
+    /**
+     * Push the context levels for a step (including any parent levels of a hierarchical conditional
+     * sub-step) onto the context stack. Must be balanced by {@link #popStepContext(StepExecutionItem)}.
+     *
+     * @param step step number
+     * @param item the step
+     */
+    private void pushStepContext(int step, StepExecutionItem item) {
         HasParentStepContext parented = asHierarchical(item);
         if (parented != null) {
             List<Integer> parentPath = parented.getParentStepPath();
@@ -191,7 +203,59 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         } else {
             stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));
         }
-        notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING), new Date());
+    }
+
+    /**
+     * Pop the context levels pushed by {@link #pushStepContext(int, StepExecutionItem)}.
+     *
+     * @param item the step
+     */
+    private void popStepContext(StepExecutionItem item) {
+        stepContext.finishStepContext();
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Pop all levels of the parent path from the context stack for multi-level nesting
+                for (int i = 0; i < parentPath.size(); i++) {
+                    stepContext.finishContext();
+                    stepContext.finishStepContext();
+                }
+            } else {
+                // Single-level conditional substep (original behavior)
+                stepContext.finishContext();
+                stepContext.finishStepContext();
+            }
+        }
+    }
+
+    /**
+     * A step skipped by the workflow engine is never begun or finished, so report it as SKIPPED
+     * here. The step context is pushed and popped within this call so that it stays balanced even
+     * though the engine thread has no other context for the step.
+     */
+    @Override
+    public void skipWorkflowItem(int step, StepExecutionItem item) {
+        pushStepContext(step, item);
+        try {
+            notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.SKIPPED), new Date());
+        } finally {
+            popStepContext(item);
+        }
+    }
+
+    /**
+     * A node step skipped for a single node (without being executed) reports SKIPPED for that node
+     * within the step's current context.
+     */
+    @Override
+    public void skipExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
+        stepContext.beginNodeContext(node);
+        try {
+            notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.SKIPPED), new Date());
+        } finally {
+            stepContext.finishNodeContext();
+        }
     }
 
     @Override
@@ -214,22 +278,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         if (!isNodeStep) {
             notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());
         }
-        stepContext.finishStepContext();
-        HasParentStepContext parented = asHierarchical(item);
-        if (parented != null) {
-            List<Integer> parentPath = parented.getParentStepPath();
-            if (parentPath != null && !parentPath.isEmpty()) {
-                // Pop all levels of the parent path from the context stack for multi-level nesting
-                for (int i = 0; i < parentPath.size(); i++) {
-                    stepContext.finishContext();
-                    stepContext.finishStepContext();
-                }
-            } else {
-                // Single-level conditional substep (original behavior)
-                stepContext.finishContext();
-                stepContext.finishStepContext();
-            }
-        }
+        popStepContext(item);
     }
 
     /**

@@ -36,6 +36,11 @@ import com.dtolabs.rundeck.core.rules.RuleEngine
 import com.dtolabs.rundeck.core.rules.Rules
 import com.dtolabs.rundeck.core.rules.StateObj
 import com.dtolabs.rundeck.core.rules.States
+import com.dtolabs.rundeck.core.rules.StateWorkflowSystem
+import com.dtolabs.rundeck.core.rules.WorkflowSystemEvent
+import com.dtolabs.rundeck.core.rules.WorkflowSystemEventType
+import com.dtolabs.rundeck.core.execution.workflow.engine.StepCallable
+import com.dtolabs.rundeck.core.execution.workflow.engine.StepOperation
 import com.dtolabs.rundeck.core.rules.WorkflowEngineBuilder
 import com.dtolabs.rundeck.core.rules.WorkflowSystem
 import com.dtolabs.rundeck.core.rules.Workflows
@@ -364,6 +369,136 @@ class EngineWorkflowExecutorSpec extends Specification {
         result.success
         result.resultSet.size() == 0
 
+    }
+
+    static class NeverStartProfile extends SequentialStrategyProfile {
+        @Override
+        Set<Condition> getStartConditionsForStep(
+                final WorkflowExecutionItem item,
+                final int stepNum,
+                final boolean isFirstStep
+        )
+        {
+            stepNum == 2 ? [({ StateObj state -> false } as Condition)] as Set : super.
+                getStartConditionsForStep(item, stepNum, isFirstStep)
+        }
+    }
+
+    static class TestNeverStartWorkflowStrategy extends TestWorkflowStrategy {
+        @Override
+        WorkflowStrategyProfile getProfile() {
+            new NeverStartProfile()
+        }
+    }
+
+    private StepExecutionContext skipTestContext(WorkflowExecutionListener wfListener) {
+        Mock(StepExecutionContext) {
+            getExecutionListener() >> Stub(ExecutionListener)
+            getWorkflowExecutionListener() >> wfListener
+            getNodes() >> Mock(INodeSet) {
+                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            }
+            getFrameworkProject() >> PROJECT_NAME
+            getStepNumber() >> 1
+            getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
+        }
+    }
+
+    def "a step skipped by the engine is reported to the workflow listener"() {
+        given:
+        def engine = new EngineWorkflowExecutor(framework)
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-skip-strategy', TestSkipProfileWorkflowStrategy)
+        def wfListener = Mock(WorkflowExecutionListener)
+        def stepItem = Mock(StepExecutionItem) {
+            getType() >> 'blah'
+        }
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                getCommands() >> [stepItem]
+                getStrategy() >> 'test-skip-strategy'
+            }
+        }
+
+        when:
+        def result = engine.executeWorkflowImpl(skipTestContext(wfListener), item)
+
+        then:
+        result.success
+        1 * wfListener.skipWorkflowItem(1, stepItem)
+        0 * wfListener.beginWorkflowItem(_, _)
+    }
+
+    def "a step that was never started is not reported as skipped"() {
+        given:
+        def engine = new EngineWorkflowExecutor(framework)
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-never-strategy', TestNeverStartWorkflowStrategy)
+        def wfListener = Mock(WorkflowExecutionListener)
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                getCommands() >> [
+                        Mock(StepExecutionItem) { getType() >> 'blah' },
+                        Mock(StepExecutionItem) { getType() >> 'blah' }
+                ]
+                getStrategy() >> 'test-never-strategy'
+            }
+        }
+
+        when:
+        engine.executeWorkflowImpl(skipTestContext(wfListener), item)
+
+        then: "step 1 ran, step 2's start conditions were never met, and nothing was reported skipped"
+        1 * wfListener.beginWorkflowItem(1, _)
+        0 * wfListener.beginWorkflowItem(2, _)
+        0 * wfListener.skipWorkflowItem(_, _)
+    }
+
+    def "createSkipNotifier ignores other events and unknown operations"() {
+        given:
+        def op = new StepOperation(
+                2, 'two', Mock(StepCallable) { getStepItem() >> Mock(StepExecutionItem) },
+                null, null, [] as Set, [] as Set, null
+        )
+        def wfListener = Mock(WorkflowExecutionListener)
+        def notifier = EngineWorkflowExecutor.createSkipNotifier([op] as Set, wfListener)
+        def eventFor = { WorkflowSystemEventType type, String identity ->
+            [
+                    getEventType: { -> type },
+                    getMessage  : { -> 'msg' },
+                    getData     : { -> [getIdentity: { -> identity }] as StateWorkflowSystem.OperationEvent }
+            ] as WorkflowSystemEvent
+        }
+
+        when:
+        notifier.onEvent(eventFor(WorkflowSystemEventType.WillRunOperation, op.identity))
+        notifier.onEvent(eventFor(WorkflowSystemEventType.WillSkipOperation, '[99]unknown'))
+
+        then:
+        0 * wfListener.skipWorkflowItem(_, _)
+        !op.didSkip
+
+        when:
+        notifier.onEvent(eventFor(WorkflowSystemEventType.WillSkipOperation, op.identity))
+
+        then:
+        1 * wfListener.skipWorkflowItem(2, _)
+        op.didSkip
+    }
+
+    def "composed conditions describe themselves instead of printing lambdas"() {
+        given:
+        def a = Rules.equalsCondition('a', '1')
+        def b = Rules.equalsCondition('b', '2')
+
+        expect:
+        Condition.and(a, b).toString() == "(${a} AND ${b})"
+        Condition.or([a, b]).toString() == "(${a} OR ${b})"
+        Condition.not(a).toString() == "NOT ${a}"
+        !Condition.and(a, b).toString().contains('Lambda')
     }
 
     static final class TestSkip3NotFailedWorkflowStrategy extends TestWorkflowStrategy {

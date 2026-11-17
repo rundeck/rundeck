@@ -1471,9 +1471,6 @@ const messages = {
   commonWorkflowSteps: "Common Workflow Steps",
   learnMore: "Learn more",
   plugins: "plugins",
-  hideIncompleteNodes: "Hide incomplete nodes",
-  hideIncompleteNodesDescription:
-    "Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.",
   "markdown.help.link.label": "Markdown syntax help",
   "job.tree.browse.group.label": "Browse job group: {0}",
   "repository.plugin.sourceLink.label": "Plugin source code",

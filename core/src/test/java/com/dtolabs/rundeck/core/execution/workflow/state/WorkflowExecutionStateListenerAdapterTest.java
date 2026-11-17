@@ -389,6 +389,66 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         assertStepStateEvent((Object[]) testListener1.events.get(6), ExecutionState.SUCCEEDED, null, 1);
         assertWorkflowStateEvent((Object[]) testListener1.events.get(7), ExecutionState.SUCCEEDED);
     }
+    public void testEventsSkipWorkflowItem() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        nodes.put("test1", new NodeEntryImpl("test1"));
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.skipWorkflowItem(2, testitem);
+
+        assertEquals(2, testListener1.events.size());
+        assertWorkflowStateEvent((Object[]) testListener1.events.get(0), ExecutionState.RUNNING, "test1");
+        assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.SKIPPED, null, 2);
+    }
+
+    /**
+     * The step context pushed for a skip must be popped again, so that a following step reports
+     * under its own identifier rather than nested inside the skipped one.
+     */
+    public void testEventsSkipWorkflowItemKeepsContextBalanced() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        nodes.put("test1", new NodeEntryImpl("test1"));
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.skipWorkflowItem(1, testitem);
+        test.beginWorkflowItem(2, testitem);
+
+        assertEquals(3, testListener1.events.size());
+        assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.SKIPPED, null, 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.RUNNING, null, 2);
+    }
+
+    public void testEventsSkipSubStepItem() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        nodes.put("test1", new NodeEntryImpl("test1"));
+        HashMap<String, INodeEntry> nodes2 = new HashMap<String, INodeEntry>();
+        nodes2.put("test2", new NodeEntryImpl("test2"));
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.beginWorkflowItem(1, testitem);
+        //sub workflow
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes2)).build(), null);
+
+        test.skipWorkflowItem(1, testitem);
+
+        assertEquals(4, testListener1.events.size());
+        assertStepStateEvent((Object[]) testListener1.events.get(3), ExecutionState.SKIPPED, null, 1, 1);
+    }
+
+    public void testEventsSkipExecuteNodeStep() {
+        HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
+        NodeEntryImpl node1 = new NodeEntryImpl("test1");
+        nodes.put("test1", node1);
+        test.beginWorkflowExecution(ExecutionContextImpl.builder().nodes(new NodeSetImpl(nodes)).build(), null);
+
+        test.beginWorkflowItem(1, testitem);
+        test.skipExecuteNodeStep(null, testitem, node1);
+
+        assertEquals(3, testListener1.events.size());
+        assertStepStateEvent((Object[]) testListener1.events.get(1), ExecutionState.RUNNING, null, 1);
+        assertStepStateEvent((Object[]) testListener1.events.get(2), ExecutionState.SKIPPED, "test1", 1);
+    }
+
     public void testEventsBeginNodeStepItem() {
         HashMap<String, INodeEntry> nodes = new HashMap<String, INodeEntry>();
         NodeEntryImpl node1 = new NodeEntryImpl("test1");

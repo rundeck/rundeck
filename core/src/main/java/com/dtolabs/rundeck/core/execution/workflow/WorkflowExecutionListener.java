@@ -83,4 +83,26 @@ public interface WorkflowExecutionListener  {
      */
     public void finishExecuteNodeStep(NodeStepResult result, ExecutionContext context, StepExecutionItem item,
             INodeEntry node);
+
+    /**
+     * Called when a workflow step is skipped by the workflow engine, e.g. a conditional or ruleset
+     * skip condition was met. The step is never begun or finished, so this is the only
+     * notification for it. The default implementation does nothing.
+     *
+     * @param step step number
+     * @param item the skipped step
+     */
+    default void skipWorkflowItem(int step, StepExecutionItem item) {
+    }
+
+    /**
+     * Called when a node step is skipped for a single node without being executed, e.g. the
+     * node did not pass the step's conditional. The default implementation does nothing.
+     *
+     * @param context context
+     * @param item step
+     * @param node the node the step was skipped for
+     */
+    default void skipExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
+    }
 }

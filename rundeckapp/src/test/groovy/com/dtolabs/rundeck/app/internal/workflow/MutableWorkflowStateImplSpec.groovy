@@ -131,6 +131,173 @@ class MutableWorkflowStateImplSpec extends Specification {
         wf.stepStates[0].nodeStateMap[nodeA].executionState.toString() == 'SUCCEEDED'
         wf.stepStates[0].nodeStateMap[nodeB].executionState.toString() == 'SUCCEEDED'
     }
+    def "SKIPPED node does not stop a node step from succeeding"() {
+        given:
+        def date = new Date()
+        def nodeA = 'TargetNode1'
+        def nodeB = 'TargetNode2'
+
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = true
+        def wf = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: mutableStep1], null, 'server')
+
+        when: "nodeA runs and nodeB is skipped before any other state was reported for it"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA, nodeB])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING), nodeA), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), nodeA), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED), nodeB), date)
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then:
+        wf.stepStates[0].nodeStateMap[nodeA].executionState == ExecutionState.SUCCEEDED
+        wf.stepStates[0].nodeStateMap[nodeB].executionState == ExecutionState.SKIPPED
+        wf.stepStates[0].stepState.executionState == ExecutionState.SUCCEEDED
+    }
+
+    def "node step is SKIPPED when every node is skipped"() {
+        given:
+        def date = new Date()
+        def nodeA = 'TargetNode1'
+        def nodeB = 'TargetNode2'
+
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = true
+        def wf = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: mutableStep1], null, 'server')
+
+        when:
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA, nodeB])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED), nodeA), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED), nodeB), date)
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then:
+        wf.stepStates[0].nodeStateMap[nodeA].executionState == ExecutionState.SKIPPED
+        wf.stepStates[0].nodeStateMap[nodeB].executionState == ExecutionState.SKIPPED
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+    }
+
+    def "a step-level SKIPPED on a node step is applied to every node the step targets"() {
+        given:
+        def date = new Date()
+        def nodeA = 'TargetNode1'
+        def nodeB = 'TargetNode2'
+
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = true
+        def wf = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: mutableStep1], null, 'server')
+
+        when: "the engine reports the step skipped, with no node context"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA, nodeB])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+
+        then: "every target node and the step itself are SKIPPED, not left WAITING/NOT_STARTED"
+        wf.stepStates[0].nodeStateMap[nodeA].executionState == ExecutionState.SKIPPED
+        wf.stepStates[0].nodeStateMap[nodeB].executionState == ExecutionState.SKIPPED
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+
+        when: "the workflow then completes"
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then: "finalization keeps SKIPPED"
+        wf.stepStates[0].nodeStateMap[nodeA].executionState == ExecutionState.SKIPPED
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+    }
+
+    @Unroll
+    def "skipping a #kind job reference step skips its prebuilt sub workflow steps"() {
+        given: "a job reference step with a prebuilt two step sub workflow, the first sub step a node step"
+        def date = new Date()
+        def node = 'TargetNode1'
+
+        //the node step must be marked before the sub workflow is built, as it is when built from a job
+        def subStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1, 1))
+        subStep1.nodeStep = true
+        def sub = new MutableWorkflowStateImpl([node], 2, [0: subStep1], stepIdentifier(1), 'server')
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub)
+        parent.nodeStep = parentIsNodeStep
+        def wf = new MutableWorkflowStateImpl([node], 1, [0: parent], null, 'server')
+
+        when: "the engine skips the job reference step"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [node])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+
+        then: "every sub step is skipped, rather than left WAITING"
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        sub.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        sub.stepStates[0].nodeStateMap[node].executionState == ExecutionState.SKIPPED
+        sub.stepStates[1].stepState.executionState == ExecutionState.SKIPPED
+
+        when: "the workflow completes"
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then: "finalization keeps the whole subtree SKIPPED instead of NOT_STARTED"
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        sub.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        sub.stepStates[1].stepState.executionState == ExecutionState.SKIPPED
+
+        where:
+        kind            | parentIsNodeStep
+        "workflow step" | false
+        "node step"     | true
+    }
+
+    def "skipping a step skips nested sub workflows recursively"() {
+        given: "step 1 contains a sub workflow whose step 1 itself contains a sub workflow"
+        def date = new Date()
+        def node = 'TargetNode1'
+
+        def inner = new MutableWorkflowStateImpl([node], 1, null, stepIdentifier(1, 1), 'server')
+        def middleStep = new MutableWorkflowStepStateImpl(stepIdentifier(1, 1), inner)
+        def middle = new MutableWorkflowStateImpl([node], 1, [0: middleStep], stepIdentifier(1), 'server')
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), middle)
+        def wf = new MutableWorkflowStateImpl([node], 1, [0: parent], null, 'server')
+
+        when:
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [node])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then:
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        middle.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        inner.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+    }
+
+    def "a late RUNNING event does not override SKIPPED"() {
+        given:
+        def date = new Date()
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        def wf = new MutableWorkflowStateImpl(['server'], 1, [0: mutableStep1], null, 'server')
+
+        when:
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, ['server'])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        then:
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+    }
+
+    @Unroll
+    def "summarizedSubStateResult treats SKIPPED as neutral: #states -> #expected"() {
+        given:
+        def wf = new MutableWorkflowStateImpl(['server'], 1, [:], null, 'server')
+
+        expect:
+        wf.summarizedSubStateResult(states, ExecutionState.SUCCEEDED) == expected
+
+        where:
+        states                                                                  | expected
+        [ExecutionState.SKIPPED]                                                | ExecutionState.SKIPPED
+        [ExecutionState.SKIPPED, ExecutionState.SKIPPED]                        | ExecutionState.SKIPPED
+        [ExecutionState.SUCCEEDED, ExecutionState.SKIPPED]                      | ExecutionState.SUCCEEDED
+        [ExecutionState.FAILED, ExecutionState.SKIPPED]                         | ExecutionState.FAILED
+        [ExecutionState.ABORTED, ExecutionState.SKIPPED]                        | ExecutionState.ABORTED
+        [ExecutionState.SUCCEEDED, ExecutionState.FAILED, ExecutionState.SKIPPED] | ExecutionState.NODE_MIXED
+        [ExecutionState.SUCCEEDED, ExecutionState.SUCCEEDED]                    | ExecutionState.SUCCEEDED
+    }
+
     def "captured state test of above"(){
         given:
         def date = new Date()
