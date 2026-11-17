@@ -136,4 +136,57 @@ describe("ActivityList next UI table", () => {
         .attributes("disabled"),
     ).toBeUndefined();
   });
+
+  it("ignores a superseded history response", async () => {
+    const wrapper = await mountActivityList("next");
+    let resolveOlder: (value: unknown) => void = () => undefined;
+    mockQueryExecutions
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveOlder = resolve;
+        }),
+      )
+      .mockResolvedValueOnce({
+        results: [{ ...cloneDeep(mockReports[0]), id: 99 }],
+        paging: { max: 10, offset: 10, total: 20, count: 1 },
+      });
+    const table = wrapper.findComponent(ActivityListEaTable);
+
+    await table.vm.$emit("page", { offset: 0, max: 10 });
+    await table.vm.$emit("page", { offset: 10, max: 10 });
+    await flushPromises();
+    resolveOlder({
+      results: cloneDeep(mockReports),
+      paging: { max: 10, offset: 0, total: 20, count: 2 },
+    });
+    await flushPromises();
+
+    expect(
+      wrapper
+        .findComponent(ActivityListEaTable)
+        .props("reports")
+        .map((report: { id: number }) => report.id),
+    ).toEqual([99]);
+  });
+
+  it("clears the history error after a successful retry", async () => {
+    mockQueryExecutions.mockRejectedValueOnce(new Error("boom"));
+    const wrapper = await mountActivityList("next");
+    expect(wrapper.find('[data-testid="error-message"]').exists()).toBe(true);
+
+    await wrapper
+      .findComponent(ActivityListEaTable)
+      .vm.$emit("page", { offset: 0, max: 10 });
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="error-message"]').exists()).toBe(false);
+  });
+
+  it("passes the legacy theme to the shared table", async () => {
+    const wrapper = await mountActivityList("next");
+
+    expect(
+      wrapper.findComponent(ActivityListEaTable).props("legacyTheme"),
+    ).toBe(true);
+  });
 });

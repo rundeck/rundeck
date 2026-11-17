@@ -508,6 +508,20 @@ describe("ActivityListEaTable", () => {
     ).toEqual([10, 20, 30, 50]);
   });
 
+  it("never passes a negative total while the count is unknown", async () => {
+    const wrapper = await createWrapper({
+      props: { loading: true, pagination: { offset: 0, max: 10, total: -1 } },
+    });
+
+    expect(wrapper.findComponent(PtDataTable).props("totalRecords")).toBe(0);
+  });
+
+  it("applies the legacy theme class when requested", async () => {
+    const wrapper = await createWrapper({ props: { legacyTheme: true } });
+
+    expect(wrapper.classes()).toContain("activity-ea-table--legacy-theme");
+  });
+
   it("hides the selection checkboxes when not selectable", async () => {
     const wrapper = await createWrapper({ props: { selectable: false } });
 

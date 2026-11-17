@@ -572,6 +572,7 @@
       :highlight-id="highlightExecutionId"
       :legacy-row-classes="true"
       :middle-click-opens-tab="true"
+      :legacy-theme="true"
       :sortable="true"
       data-testid="activity-list-ea-table"
       @page="onEaPage"
@@ -579,12 +580,12 @@
       @update:selected-ids="onEaSelection"
     />
     <div
-      v-if="loadError && nextUi"
+      v-if="historyLoadError && nextUi"
       class="text-warning"
       data-testid="error-message"
     >
       <i class="fas fa-error"></i>
-      {{ $t("error.message.0", [loadError]) }}
+      {{ $t("error.message.0", [historyLoadError]) }}
     </div>
     <div v-if="!nextUi && reports.length < 1" class="loading-area">
       <span
@@ -794,6 +795,10 @@ export default defineComponent({
       /** Whether the page renders the next UI history table. */
       nextUi: loadJsonData("pageUiMeta")?.uiType === "next",
       eaColumns: NEXT_UI_COLUMNS,
+      /** Error from the latest history query, cleared on each new query. */
+      historyLoadError: null as null | string,
+      /** Identifies the latest history query; older responses are ignored. */
+      activityRequestSequence: 0,
       /** Server sort requested by the next UI table, if any. */
       sort: null as null | { sortBy: string; sortOrder: string },
     };
@@ -1199,6 +1204,8 @@ export default defineComponent({
       }
     },
     async loadActivity(offset: number) {
+      const requestId = ++this.activityRequestSequence;
+      this.historyLoadError = null;
       this.loading = true;
       this.pagination.offset = offset;
       const xquery = this.parseToExecutionQuery();
@@ -1208,6 +1215,9 @@ export default defineComponent({
           this.projectName,
           Object.assign({ offset: offset, max: this.pagination.max }, xquery),
         );
+        if (requestId !== this.activityRequestSequence) {
+          return;
+        }
         this.loading = false;
         if (response) {
           this.pagination.offset = response.paging.offset;
@@ -1222,8 +1232,12 @@ export default defineComponent({
             this.eventBus.emit("activity-query-result", response);
         }
       } catch (error) {
+        if (requestId !== this.activityRequestSequence) {
+          return;
+        }
         this.loading = false;
         this.loadError = (error as Error).message;
+        this.historyLoadError = this.loadError;
       }
     },
     parseToExecutionQuery() {

@@ -1,5 +1,9 @@
 <template>
-  <div class="activity-ea-table" @auxclick="onAuxClick">
+  <div
+    class="activity-ea-table"
+    :class="{ 'activity-ea-table--legacy-theme': legacyTheme }"
+    @auxclick="onAuxClick"
+  >
     <div v-if="showToolbar" class="activity-ea-table__toolbar">
       <span
         class="activity-ea-table__count text-heading--md"
@@ -62,7 +66,7 @@
       data-key="id"
       :first="pagination.offset"
       :rows="pagination.max"
-      :total-records="pagination.total"
+      :total-records="Math.max(0, pagination.total)"
       :paginator="loading || pagination.total > 0"
       :always-show-paginator="true"
       paginator-template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
@@ -454,6 +458,11 @@ export default defineComponent({
     },
     /** Adds the legacy activity row classes (status, job/adhoc) to rows. */
     legacyRowClasses: {
+      type: Boolean,
+      default: false,
+    },
+    /** Uses the legacy Activity table colors from the active theme. */
+    legacyTheme: {
       type: Boolean,
       default: false,
     },
@@ -996,5 +1005,69 @@ export default defineComponent({
   color: var(--colors-gray-800);
   font-size: var(--sizes-activity-table-loading-icon);
   line-height: var(--sizes-activity-table-loading-icon);
+}
+
+/* Legacy Activity colors: mirrors runstrap's .table/.table-hover theme rules. */
+.activity-ea-table.activity-ea-table--legacy-theme {
+  :deep(.p-datatable-table-container) {
+    border: var(--sizes-none);
+    border-radius: var(--sizes-none);
+    background: transparent;
+  }
+
+  :deep(.p-datatable-thead > tr > th) {
+    border-color: var(--table-line-color);
+    background: var(--background-color);
+    color: var(--font-color);
+  }
+
+  :deep(.p-datatable-tbody > tr) {
+    background: transparent;
+    color: var(--font-color);
+  }
+
+  :deep(.p-datatable-tbody > tr > td) {
+    border-width: var(--sizes-px) var(--sizes-none) var(--sizes-none);
+    border-color: var(--table-line-color);
+    background: transparent;
+    color: var(--font-color);
+  }
+
+  :deep(.p-datatable-tbody > tr:hover > td) {
+    background: var(--background-color-accent-lvl2);
+  }
+
+  :deep(.p-datatable-tbody > tr.missed > td) {
+    background: var(--warning-bg-color);
+  }
+
+  :deep(.p-datatable-tbody > tr.highlight > td) {
+    background: var(--background-color-accent-lvl3);
+  }
+
+  :deep(.p-datatable-empty-message > td) {
+    background: var(--background-color-accent-lvl2);
+    color: var(--font-color);
+  }
+
+  :deep(.p-paginator),
+  :deep(.p-paginator-current),
+  :deep(.p-paginator-first),
+  :deep(.p-paginator-prev),
+  :deep(.p-paginator-page),
+  :deep(.p-paginator-next),
+  :deep(.p-paginator-last) {
+    background: transparent;
+    color: var(--font-color);
+  }
+
+  :deep(.p-paginator-page.p-paginator-page-selected) {
+    background: var(--background-color-accent-lvl2);
+    color: var(--font-color);
+  }
+
+  .activity-ea-table__execution-content a {
+    color: var(--link-color);
+  }
 }
 </style>
