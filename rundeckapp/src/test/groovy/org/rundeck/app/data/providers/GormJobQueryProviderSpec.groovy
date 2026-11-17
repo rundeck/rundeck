@@ -140,6 +140,40 @@ class GormJobQueryProviderSpec extends Specification implements DataTest {
         1             | "serverNodeUUID" | "serveruuid"     | new RdJobQueryInput(serverNodeUUIDFilter: "serveruuid")
     }
 
+    def "ApplyJobUuidCriteria matches uuid or referencing job ids"() {
+        given:
+        def crit = Mock(BuildableCriteria)
+        def uuid = "2020c78b-a228-4627-8015-3177ebaa00a7"
+
+        when:
+        provider.applyJobUuidCriteria(new RdJobQueryInput(jobUuidFilter: uuid), refIds, crit)
+
+        then:
+        1 * crit.or(_) >> { args ->
+            args[0].delegate = crit
+            args[0].call()
+            return crit
+        }
+        1 * crit.eq("uuid", uuid) >> crit
+        inCount * crit.'in'("id", refIds) >> crit
+
+        where:
+        refIds   | inCount
+        []       | 0
+        [1L, 2L] | 1
+    }
+
+    def "ApplyJobUuidCriteria without filter"() {
+        given:
+        def crit = Mock(BuildableCriteria)
+
+        when:
+        provider.applyJobUuidCriteria(new RdJobQueryInput(), [], crit)
+
+        then:
+        0 * crit._
+    }
+
     def "ApplyBoolFiltersCriteria"() {
         given:
         def crit = Mock(BuildableCriteria)

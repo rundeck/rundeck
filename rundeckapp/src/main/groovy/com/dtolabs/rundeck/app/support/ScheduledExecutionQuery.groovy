@@ -50,6 +50,8 @@ public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput,
     Boolean executionEnabledFilter
     @Schema(description = 'In cluster mode, use to select scheduled jobs assigned to the server with given UUID.',format='uuid')
     String serverNodeUUIDFilter
+    @Schema(description = 'Select the job with the given UUID, and any jobs that reference it in a Job Reference step.',format='uuid')
+    String jobUuidFilter
 
     Integer daysAhead
     Boolean runJobLaterFilter
@@ -120,6 +122,12 @@ public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput,
         scheduleEnabledFilter(nullable: true)
         executionEnabledFilter(nullable: true)
         serverNodeUUIDFilter(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
+            if (null == val) return true;
+            try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
+                return false
+            }
+        })
+        jobUuidFilter(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;
             try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
                 return false
