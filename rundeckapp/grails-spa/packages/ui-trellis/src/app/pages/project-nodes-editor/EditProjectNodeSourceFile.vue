@@ -53,6 +53,14 @@
           </div>
         </div>
       </div>
+      <div
+        v-if="pathOutsideAllowedPaths"
+        class="alert alert-warning"
+        role="alert"
+        data-testid="node-source-path-warning"
+      >
+        {{ $t("project.nodes.edit.file.path.outside.allowed.warning") }}
+      </div>
       <ui-socket
         section="edit-project-node-source-file"
         location="editor"
@@ -115,6 +123,7 @@ import PageConfirm from "../../../library/components/utils/PageConfirm.vue";
 import { EventBus } from "../../../library";
 
 export default defineComponent({
+  name: "EditProjectNodeSourceFile",
   components: { PluginConfig, AceEditor, UiSocket, PageConfirm },
   props: {
     eventBus: { type: Object as PropType<typeof EventBus>, required: true },
@@ -124,6 +133,7 @@ export default defineComponent({
     provider: { type: String, default: "", required: false },
     value: { type: String, required: true },
     errorMessage: { type: String, default: "" },
+    pathOutsideAllowedPaths: { type: Boolean, default: false },
     saving: { type: Boolean, default: false },
   },
   emits: ["cancel", "save"],

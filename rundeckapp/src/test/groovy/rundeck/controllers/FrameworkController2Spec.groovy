@@ -1196,7 +1196,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
     // RUN-4671: Security validation tests for editProjectNodeSourceFile
 
-    void "editProjectNodeSourceFile should reject paths outside project directory by default"() {
+    void "editProjectNodeSourceFile should return path warning #expectedWarning for #providerType source"() {
         given: "a file resource model source pointing outside the project directory"
         params.project = "TestProject"
         params.index = "0"
@@ -1213,7 +1213,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
         def mockSource = [
             index: 0,
-            type: 'file',
+            type: providerType,
             writeableSource: mockWriteableSource
         ]
 
@@ -1245,10 +1245,15 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         when: "editProjectNodeSourceFile is called"
         def result = controller.editProjectNodeSourceFile()
 
-        then: "file should be treated as empty and warning set"
+        then: "file should be treated as empty and the stable warning state returned"
         result.fileEmpty == true
         result.fileText == ""
-        controller.flash.warning == "File path must be within the project directory"
+        result.pathOutsideAllowedPaths == expectedWarning
+
+        where:
+        providerType | expectedWarning
+        'file'       | true
+        'script'     | false
     }
 
     void "editProjectNodeSourceFile should handle non-existent files"() {
@@ -1300,6 +1305,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         result.project == "TestProject"
         result.index == 0
         result.fileEmpty == true
+        result.pathOutsideAllowedPaths == false
         result.sourceDesc == '/var/rundeck/projects/TestProject/etc/nonexistent.yaml'
     }
 
@@ -1353,6 +1359,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             "TestProject"
         )
         result.project == "TestProject"
+        result.pathOutsideAllowedPaths == false
         result.sourceDesc == '/opt/shared/nodes.yaml'
 
         cleanup:

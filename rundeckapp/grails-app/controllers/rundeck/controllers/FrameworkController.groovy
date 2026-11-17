@@ -2358,6 +2358,7 @@ List of config values, each value contains:
         def emptydata = false
         def fileText = ""
         def warning = null
+        boolean pathOutsideAllowedPaths = false
 
         try {
             // Path validation using validateWriteableSource
@@ -2403,7 +2404,10 @@ List of config values, each value contains:
             // Path validation failed (security check)
             log.warn("Node source path validation failed for ${sourceDesc}: ${e.message}")
             emptydata = true
-            warning = e.message  // Use the validation error message
+            pathOutsideAllowedPaths = providerType == 'file'
+            if (!pathOutsideAllowedPaths) {
+                warning = e.message
+            }
 
         } catch (ResourceModelSourceException e) {
             // File is not a valid node source (content validation failed)
@@ -2430,7 +2434,8 @@ List of config values, each value contains:
                 fileFormat  : modelFormat ? (Formats[modelFormat] ?: modelFormat) : '',
                 sourceDesc  : sourceDesc,
                 providerType: providerType,
-                providerDesc: desc
+                providerDesc: desc,
+                pathOutsideAllowedPaths: pathOutsideAllowedPaths
         ]
     }
 

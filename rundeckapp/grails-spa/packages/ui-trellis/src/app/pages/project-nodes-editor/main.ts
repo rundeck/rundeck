@@ -26,6 +26,7 @@ context.rootStore.ui.addItems([
             eventBus: context.eventBus,
             index: -1,
             nextPageUrl: "",
+            pathOutsideAllowedPaths: false,
           };
         },
         mounted() {
@@ -35,13 +36,19 @@ context.rootStore.ui.addItems([
             this.index = context.data.editProjectNodeSourceData.index;
             this.nextPageUrl =
               context.data.editProjectNodeSourceData.nextPageUrl;
+            this.pathOutsideAllowedPaths = Boolean(
+              context.data.editProjectNodeSourceData.pathOutsideAllowedPaths,
+            );
           } else {
             const data = loadJsonData("editProjectNodeSourceData");
             this.index = data.index;
             this.nextPageUrl = data.nextPageUrl;
+            this.pathOutsideAllowedPaths = Boolean(
+              data.pathOutsideAllowedPaths,
+            );
           }
         },
-        template: `<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :eventBus="eventBus" v-if="index>=0"/>`,
+        template: `<edit-project-node-source-page :index="index" :next-page-url="nextPageUrl" :event-bus="eventBus" :path-outside-allowed-paths="pathOutsideAllowedPaths" v-if="index>=0"/>`,
       }),
     ),
   },
