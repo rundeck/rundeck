@@ -29,12 +29,10 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-
 /**
  * Created by greg on 9/8/15.
  */
 class PushAction extends BaseAction implements GitExportAction {
-
     PushAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
@@ -42,6 +40,12 @@ class PushAction extends BaseAction implements GitExportAction {
     @Override
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
         def status = plugin.getStatusInternal(context, false)
+        //status.message is null both during the brief bulk-init LOADING window and for an
+        //already-clean, fully-synced repo with nothing to report - only the former should say
+        //"loading"
+        def statusMessage = status.state == SynchState.LOADING ?
+                "Git status is still loading, please try again shortly" :
+                (status.message ?: "")
         BuilderUtil.inputViewBuilder(id) {
             title "Push remote Git changes"
             buttonTitle "Push"
@@ -51,7 +55,7 @@ class PushAction extends BaseAction implements GitExportAction {
                         title "Export Status"
                         renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
                         renderingOption StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY, "text/x-markdown"
-                        defaultValue status.message + """
+                        defaultValue statusMessage + """
 
 Pushing to remote branch: `${plugin.branch}`"""
                     },
@@ -71,7 +75,6 @@ Pushing to remote branch: `${plugin.branch}`"""
             ]
             )
         }
-
     }
 
     @Override
@@ -81,8 +84,7 @@ Pushing to remote branch: `${plugin.branch}`"""
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         def result = new ScmExportResultImpl()
 
         Ref tagref
@@ -121,21 +123,22 @@ Pushing to remote branch: `${plugin.branch}`"""
         } catch (Exception e) {
             throw plugin.remoteAccessFailure('Failed push to remote', e)
         }
-        def sb = new StringBuilder()
         def updates = (push*.remoteUpdates).flatten()
-        updates.each {
-            sb.append it.toString()
+        def failedUpdates = updates.findAll {
+            it.status != RemoteRefUpdate.Status.OK && it.status != RemoteRefUpdate.Status.UP_TO_DATE
         }
-        def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
         result.success = !failedUpdates
         if (failedUpdates) {
             result.message = "Some updates failed: " + failedUpdates
-        } else {
+        } else if (commit) {
             result.message = "Remote push result: OK. (Commit: ${commit.name})"
+        } else {
+            result.message = "Remote push result: OK."
         }
         result.id = commit?.name
-        result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
+        if (commit) {
+            result.commit = new GitScmCommit(GitUtil.metaForCommit(commit))
+        }
         return result
     }
-
 }

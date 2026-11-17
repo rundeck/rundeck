@@ -140,6 +140,36 @@ class BaseGitPluginSpec extends Specification {
         git.close()
     }
 
+    def "cloneOrCreate leaves git/repo null, not a closed reference, when a re-clone fails"() {
+        given: "a workdir whose configured remote url differs from the requested one, forcing a re-clone"
+        def origindir = new File(tempdir, 'origin')
+        def gitdir = new File(tempdir, 'scm')
+        def origin = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, origin, 'testcommit.txt', 'blah')
+        origin.close()
+
+        def git = Git.cloneRepository()
+                .setURI(origindir.absolutePath)
+                .setDirectory(gitdir)
+                .setBranch('master')
+                .call()
+
+        def plugin = new BaseGitPlugin(new Common())
+        plugin.branch = 'master'
+        //simulate an already-initialized plugin pointing at the old (about to be replaced) repo
+        plugin.git = git
+        plugin.repo = git.repository
+        def context = Mock(ScmOperationContext)
+
+        when: "cloneOrCreate re-clones from a different, unreachable url and the clone fails"
+        plugin.cloneOrCreate(context, gitdir, new File(tempdir, 'gone').absolutePath, 'export')
+
+        then: "the failure surfaces, and git/repo are null rather than left pointing at a closed repository"
+        thrown(ScmPluginException)
+        plugin.git == null
+        plugin.repo == null
+    }
+
     @Unroll
     def "serialize job to valid file path"() {
         given:
@@ -404,6 +434,43 @@ class BaseGitPluginSpec extends Specification {
         'yaml' | _
     }
 
+    def "serialize and serializeTemp do not register a deleteOnExit hook for their temp files"() {
+        given: "deleteOnExit() permanently roots a file's name in the static, JVM-wide" +
+                " DeleteOnExitHook set, which is never pruned - both methods must delete their" +
+                " temp files directly (serialize() in a finally block, serializeTemp() on failure" +
+                " and via the caller once done with the file it returns) instead of relying on it"
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference) {
+            getVersion() >> 1L
+            getJobSerializer() >> Mock(JobSerializer) {
+                serialize(_, _, _, _) >> { args -> args[1].write('data'.bytes) }
+            }
+        }
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+        base.mapper.fileForJob(_) >> outfile
+
+        int deleteOnExitCalls = 0
+        def originalDeleteOnExit = File.metaClass.getMetaMethod('deleteOnExit')
+        File.metaClass.deleteOnExit = { ->
+            deleteOnExitCalls++
+            originalDeleteOnExit.invoke(delegate)
+        }
+
+        when:
+        base.serialize(job, 'xml', true, false)
+        def tempResult = base.serializeTemp(job, 'xml', true, false)
+
+        then:
+        deleteOnExitCalls == 0
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(File)
+        tempResult?.delete()
+    }
+
     def "fetch from remote clean"() {
         given:
         Common config = new Common()
@@ -637,6 +704,106 @@ class BaseGitPluginSpec extends Specification {
 
     }
 
+    private static Map placeholder(Map content) {
+        def marker = new BaseGitPlugin.RefreshPlaceholder()
+        marker.putAll(content)
+        marker
+    }
+
+    def "RefreshPlaceholder uses identity, not content, for equals/hashCode"() {
+        given: "two placeholders with identical content, as two concurrent refreshes of the same unchanged job would produce"
+        def a = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def b = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+
+        // invoked reflectively, since Groovy's dynamic dispatch for a directly-compiled a.equals(b)
+        // (or a == b) routes through its own structural comparison for Map operands regardless of
+        // an overridden equals() - see the javadoc on RefreshPlaceholder. The real call sites in
+        // production code go through java.util.Map's plain-Java default replace/remove methods,
+        // which dispatch equals() normally and are unaffected; this reflective call exercises the
+        // same normal JVM dispatch to verify the override itself is correct.
+        def equalsMethod = a.getClass().getMethod("equals", Object)
+
+        expect: "they are never equal to each other, only to themselves"
+        !(equalsMethod.invoke(a, b) as boolean)
+        equalsMethod.invoke(a, a) as boolean
+    }
+
+    def "publishJobStatusIfCurrent drops a stale result regardless of which refresh finishes first"() {
+        given: "two overlapping refreshes for the same (unchanged) job - content-identical placeholders"
+        def plugin = new BaseGitPlugin(new Common())
+        def olderPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def newerPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', olderPlaceholder)
+        plugin.beginJobStatusRefresh('job1', newerPlaceholder)
+
+        when: "the older, slower refresh finishes last and tries to publish"
+        def staleResult = [synch: 'CLEAN', id: 'job1', version: 1, ident: 'stale']
+        plugin.publishJobStatusIfCurrent('job1', olderPlaceholder, staleResult)
+
+        then: "its result is dropped: the newer refresh's placeholder is still in place, untouched"
+        plugin.jobStateMap['job1'].is(newerPlaceholder)
+
+        when: "the newer refresh then finishes and publishes"
+        def freshResult = [synch: 'CLEAN', id: 'job1', version: 1, ident: 'fresh']
+        plugin.publishJobStatusIfCurrent('job1', newerPlaceholder, freshResult)
+
+        then: "its result is accepted"
+        plugin.jobStateMap['job1'].is(freshResult)
+    }
+
+    def "publishJobStatusIfCurrent rejects an older refresh even if it happens to finish first"() {
+        given: "the same overlapping scenario, but the older refresh finishes (and publishes) before the newer one"
+        def plugin = new BaseGitPlugin(new Common())
+        def olderPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def newerPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', olderPlaceholder)
+        plugin.beginJobStatusRefresh('job1', newerPlaceholder)
+
+        when: "the older refresh finishes first and publishes"
+        plugin.publishJobStatusIfCurrent('job1', olderPlaceholder, [synch: 'CLEAN', id: 'job1', ident: 'stale'])
+
+        then: "its result is dropped: it is no longer the currently-installed placeholder"
+        plugin.jobStateMap['job1'].is(newerPlaceholder)
+
+        when: "the newer refresh then finishes and publishes"
+        def freshResult = [synch: 'CLEAN', id: 'job1', ident: 'fresh']
+        plugin.publishJobStatusIfCurrent('job1', newerPlaceholder, freshResult)
+
+        then: "its (truly current) result is accepted, not blocked by the earlier publish attempt"
+        plugin.jobStateMap['job1'].is(freshResult)
+    }
+
+    def "abandonJobStatusRefresh only clears its own placeholder, never a newer refresh's"() {
+        given: "two overlapping refreshes for the same job"
+        def plugin = new BaseGitPlugin(new Common())
+        def olderPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def newerPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', olderPlaceholder)
+        plugin.beginJobStatusRefresh('job1', newerPlaceholder)
+
+        when: "the older refresh fails and abandons its own placeholder"
+        plugin.abandonJobStatusRefresh('job1', olderPlaceholder)
+
+        then: "the newer refresh's placeholder is untouched, not left stuck or wiped"
+        plugin.jobStateMap['job1'].is(newerPlaceholder)
+    }
+
+    def "a deletion's unconditional removal can't be resurrected by an in-flight refresh"() {
+        given: "a refresh in progress for a job that then gets deleted out from under it"
+        def plugin = new BaseGitPlugin(new Common())
+        def loadingMarker = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', loadingMarker)
+
+        when: "the job is deleted (an unconditional removal, as done on a real DELETE event)"
+        plugin.jobStateMap.remove('job1')
+
+        and: "the in-flight refresh finishes afterward and tries to publish"
+        plugin.publishJobStatusIfCurrent('job1', loadingMarker, [synch: 'CLEAN', id: 'job1'])
+
+        then: "the job stays forgotten - its stale result isn't resurrected"
+        !plugin.jobStateMap.containsKey('job1')
+    }
+
     def "local path is rejected when the scheme allowlist excludes file"() {
         given:
         System.setProperty(GitScmSecurityConfig.ALLOWED_SCHEMES, 'https,http,ssh')
@@ -697,6 +864,88 @@ class BaseGitPluginSpec extends Specification {
         then:
         failure.message == GitTransportErrors.GENERIC_ACCESS_MESSAGE
         !failure.message.contains('secret-line')
+    }
+
+    def "remoteAccessFailure reconstructs a sensitive-transport error's cause with the credential redacted"() {
+        given: "the exception's own message is already safe (GitTransportErrors' generic message)," +
+                " but its cause must not leak the credential either - while still being the same" +
+                " exception type, since clusterFixJobs()/keepClusterPullFailure() classify a pull" +
+                " failure by walking causedBy(e, JGitInternalException/GitAPIException) on this chain"
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new org.eclipse.jgit.errors.TransportException(
+                'fatal: repository https://user:secret@example.com/repo.git not found'
+        )
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository', leaked)
+
+        then:
+        failure.message == GitTransportErrors.GENERIC_ACCESS_MESSAGE
+        failure.cause != null
+        failure.cause.class == leaked.class
+        !failure.cause.is(leaked)
+        !failure.cause.message.contains('secret')
+        //the real failure site, not wherever the reconstruction itself happened to run
+        failure.cause.stackTrace == leaked.stackTrace
+    }
+
+    def "remoteAccessFailure reconstructs a non-transport error's cause with the credential redacted"() {
+        given: "a failure GitTransportErrors doesn't replace (safe == null), so the exception's own" +
+                " message is the redacted one built here - the cause must match it, and stay the" +
+                " same exception type, rather than carrying the raw text or being dropped entirely"
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new Exception('fatal: repository https://user:secret@example.com/repo.git not found')
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository', leaked)
+
+        then:
+        !failure.message.contains('secret')
+        failure.cause != null
+        failure.cause.class == leaked.class
+        !failure.cause.is(leaked)
+        !failure.cause.message.contains('secret')
+        failure.cause.stackTrace == leaked.stackTrace
+    }
+
+    def "remoteAccessFailure drops the cause when its type has no (String) constructor to redact it with"() {
+        given: "an exception type that can't be rebuilt with a redacted message - dropping the" +
+                " cause entirely is still safer than keeping the credential-bearing original"
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        plugin.branch = 'main'
+        def leaked = new NoStringCtorException()
+
+        when:
+        def failure = plugin.remoteAccessFailure('Failed cloning the repository', leaked)
+
+        then:
+        !failure.message.contains('secret')
+        failure.cause == null
+    }
+
+    def "localIoFailure reconstructs the cause with the credential redacted"() {
+        given:
+        def plugin = new BaseGitPlugin(new Common(rawInput: [:]))
+        def leaked = new java.io.IOException('fatal: repository https://user:secret@example.com/repo.git not found')
+
+        when:
+        def failure = plugin.localIoFailure('Failed configuring cloned repository', leaked)
+
+        then:
+        !failure.message.contains('secret')
+        failure.cause != null
+        failure.cause.class == leaked.class
+        !failure.cause.is(leaked)
+        !failure.cause.message.contains('secret')
+        failure.cause.stackTrace == leaked.stackTrace
+    }
+
+    static class NoStringCtorException extends RuntimeException {
+        NoStringCtorException() {
+            super('fatal: repository https://user:secret@example.com/repo.git not found')
+        }
     }
 
     //Signed Jar classes cannot be directly mocked. Hence.....

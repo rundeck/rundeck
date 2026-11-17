@@ -58,4 +58,34 @@ class RenameTrackerSpec extends Specification {
         then:
         !t.renamedTrackedItems['a']
     }
+
+    def "trackItem rename chain collapses to single entry"() {
+        given:
+        def t = new RenameTracker<String>()
+
+        when:
+        t.trackItem("a", "b")
+        t.trackItem("b", "c")
+
+        then:
+        t.renamedTrackedItems.size() == 1
+        t.renamedValue("a") == "c"
+        t.originalValue("c") == "a"
+        !t.wasRenamed("b")
+    }
+
+    def "trackItem rename chain fully reverted leaves no entries"() {
+        given:
+        def t = new RenameTracker<String>()
+
+        when:
+        t.trackItem("a", "b")
+        t.trackItem("b", "c")
+        t.trackItem("c", "a")
+
+        then:
+        t.renamedTrackedItems.isEmpty()
+        !t.wasRenamed("a")
+        t.originalValue("a") == null
+    }
 }
