@@ -101,6 +101,13 @@ tasks.register('officialBuild') {
 tasks.register('officialPush') {
     dependsOn officialBuild
     doLast {
+        // officialBuild rebuilds the image. Check that result before any tag is pushed.
+        if (dockerTags) {
+            def checkScript = new File(project.rootProject.projectDir, "scripts/circleci/assert-revoked-ca-roots.sh")
+            exec {
+                commandLine "bash", checkScript.absolutePath, "${dockerRepository}:${dockerTags[0]}"
+            }
+        }
         for (tag in dockerTags) {
             exec {
                 commandLine "docker", "push", "${dockerRepository}:$tag"
