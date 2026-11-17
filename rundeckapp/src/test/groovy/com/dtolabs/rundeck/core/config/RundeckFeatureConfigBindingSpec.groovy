@@ -7,7 +7,7 @@ import org.springframework.core.env.StandardEnvironment
 import spock.lang.Specification
 
 /**
- * RUN-5179: an explicit false for the webhook template cache must survive the same
+ * An explicit false for the webhook template cache must survive the same
  * Spring bind that ConfigurationService uses on refresh.
  */
 class RundeckFeatureConfigBindingSpec extends Specification {
