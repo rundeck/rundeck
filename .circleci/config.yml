@@ -10,7 +10,7 @@ parameters:
     default: false
 
 orbs:
-  aws-cli: circleci/aws-cli@5.4.2
+  aws-cli: circleci/aws-cli@5.4.3
   slack: circleci/slack@6.1.3
   snyk: snyk/snyk@2.3.0 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
