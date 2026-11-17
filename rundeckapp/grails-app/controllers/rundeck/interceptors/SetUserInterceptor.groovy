@@ -46,7 +46,9 @@ class SetUserInterceptor {
 
     }
     boolean before() {
-        if (interceptorHelper.matchesAllowedAsset(controllerName, request)) {
+        // /monitoring is allowed so anonymous scrapes work while monitoringAuth is off.
+        // When the flag is on, data paths must run subject setup so role changes are visible.
+        if (interceptorHelper.matchesAllowedAsset(controllerName, request) && !monitoringDataAuthRequired()) {
             return true
         }
         if (request.pathInfo?.startsWith("/error")) {
@@ -173,6 +175,36 @@ class SetUserInterceptor {
     void afterView() {
         // no-op
     }
+
+    /**
+     * True when this request is a monitoring data endpoint and
+     * {@code rundeck.feature.monitoringAuth.enabled} is on.
+     * Health and readiness stay on the anonymous allowlist.
+     */
+    private boolean monitoringDataAuthRequired() {
+        boolean enabled = configurationService.getBoolean('feature.enableAll', false) ||
+            configurationService.getBoolean('feature.monitoringAuth.enabled', false)
+        if (!enabled) {
+            return false
+        }
+        String uri = request.requestURI ?: ''
+        String servletPath = request.servletPath ?: ''
+        String pathInfo = request.pathInfo ?: ''
+        return GATED_MONITORING_PATHS.any { String gated ->
+            matchesGatedPath(uri, gated) || matchesGatedPath(servletPath, gated) || matchesGatedPath(pathInfo, gated)
+        }
+    }
+
+    private static boolean matchesGatedPath(String path, String gated) {
+        path == gated || path.startsWith(gated + '/')
+    }
+
+    private static final List<String> GATED_MONITORING_PATHS = [
+        '/monitoring/metrics',
+        '/monitoring/prometheus',
+        '/monitoring/info',
+        '/monitoring/threaddump',
+    ]
 
     private Subject createAuthSubject(HttpServletRequest request) {
         def principal = request.userPrincipal

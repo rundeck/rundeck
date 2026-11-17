@@ -48,6 +48,7 @@ import org.rundeck.util.Sizes
 import org.springframework.web.bind.annotation.PathVariable
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.ConfigurationService
+import rundeck.services.MonitoringEndpointService
 
 import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -71,6 +72,7 @@ class ApiController extends ControllerBase{
     def quartzScheduler
     def frameworkService
     ConfigurationService configurationService
+    MonitoringEndpointService monitoringEndpointService
     LinkGenerator grailsLinkGenerator
 
     static allowedMethods = [
@@ -335,12 +337,9 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             return
         }
 
-        // Modern monitoring endpoints - always available (unless explicitly disabled)
-        def monitoringEnabled = configurationService.getBoolean("metrics.monitoring.enabled", true)
-        
-        def names = ['prometheus', 'metrics', 'health', 'info', 'threaddump']
-        
-        if (!name || !names.contains(name)) {
+        // Served here, not via forward to /monitoring/*, so the web path can require a session
+        // without rejecting this already-authorized API call on the nested FORWARD dispatch.
+        if (!monitoringEndpointService.knownEndpoint(name)) {
             return apiService.renderErrorFormat(
                 response,
                 [
@@ -354,7 +353,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             )
         }
         
-        if (!monitoringEnabled) {
+        if (!monitoringEndpointService.monitoringEnabled) {
             return apiService.renderErrorFormat(
                 response,
                 [
@@ -367,9 +366,10 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 ]
             )
         }
-        
-        // Forward to monitoring controller
-        forward(uri: "/monitoring/$name")
+
+        def payload = monitoringEndpointService.payloadFor(name)
+        response.status = payload.status
+        render(text: payload.body, contentType: payload.contentType, encoding: 'UTF-8')
     }
     
     /**

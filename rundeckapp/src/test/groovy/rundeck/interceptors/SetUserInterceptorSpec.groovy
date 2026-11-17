@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import org.springframework.context.ApplicationContext
 import org.rundeck.app.auth.RequiredRoleProvider
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import grails.testing.gorm.DataTest
@@ -653,6 +654,51 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
         cleanup:
         servletContext.removeAttribute("TOKENS_FILE_PROPS")
+    }
+
+    void "monitoringAuth refreshes the subject on data paths and leaves health anonymous"() {
+        given:
+            interceptor.interceptorHelper = Mock(InterceptorHelper) {
+                matchesAllowedAsset(_, _) >> true
+            }
+            interceptor.configurationService = Mock(ConfigurationService) {
+                getBoolean(_, _) >> { String name, boolean defaultValue ->
+                    if (name == 'feature.monitoringAuth.enabled') {
+                        return authOn
+                    }
+                    if (name == 'security.authorization.preauthenticated.enabled') {
+                        return true
+                    }
+                    return defaultValue
+                }
+                getString('security.requiredRole', '') >> ''
+            }
+            interceptor.applicationContext = Mock(ApplicationContext) {
+                getBeansOfType(_) >> [:]
+            }
+            interceptor.userService = Mock(UserService) {
+                getUserGroupSourcePluginRoles('admin') >> ['ops_admin']
+            }
+            request.servletPath = path
+            request.requestURI = path
+            request.remoteUser = 'admin'
+            request.userPrincipal = new Username('admin')
+            session.user = 'admin'
+            session.subject = new javax.security.auth.Subject()
+        when:
+            boolean allowed = interceptor.before()
+        then:
+            allowed
+            if (expectRefresh) {
+                assert session.subject.principals.find { it instanceof Group && it.name == 'ops_admin' }
+            } else {
+                assert session.subject.principals.find { it instanceof Group } == null
+            }
+        where:
+            path                      | authOn | expectRefresh
+            '/monitoring/prometheus'  | true   | true
+            '/monitoring/prometheus'  | false  | false
+            '/monitoring/health'      | true   | false
     }
 
     static class TestRequireRoleProvider implements RequiredRoleProvider {
