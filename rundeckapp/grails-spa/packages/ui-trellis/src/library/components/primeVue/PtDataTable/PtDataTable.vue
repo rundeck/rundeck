@@ -260,7 +260,7 @@ export default defineComponent({
   :deep(.p-datatable-table-container) {
     border: var(--sizes-px) solid var(--colors-gray-300-original);
     border-radius: var(--radii-pt-data-table);
-    overflow: hidden;
+    overflow-x: auto;
   }
 
   :deep(.p-datatable-table) {

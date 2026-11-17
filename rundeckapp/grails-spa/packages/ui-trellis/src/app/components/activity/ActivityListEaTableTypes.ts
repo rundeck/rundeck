@@ -1,10 +1,11 @@
 import type { Execution } from "../../../library/types/executions/Execution";
 
 /**
- * Columns exposed by the EA activity table for single-column sorting.
+ * Columns exposed by the EA activity table for single-column sorting. Limited to
+ * values backed by persisted execution fields, since the lazy table cannot sort
+ * across pages on the client.
  */
-export type ActivitySortField =
-  "id" | "dateEnded" | "plugin" | "nodes" | "duration" | "user";
+export type ActivitySortField = "id" | "dateEnded" | "user";
 
 /**
  * PrimeVue's ascending and descending sort direction values.

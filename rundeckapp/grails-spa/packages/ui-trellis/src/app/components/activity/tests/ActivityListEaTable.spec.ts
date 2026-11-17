@@ -294,7 +294,7 @@ describe("ActivityListEaTable", () => {
     ).toBe("Saved Filters");
   });
 
-  it("makes every visible column sortable", async () => {
+  it("makes only server-sortable columns sortable", async () => {
     const wrapper = await createWrapper();
 
     expect(
@@ -305,9 +305,9 @@ describe("ActivityListEaTable", () => {
     ).toEqual([
       { field: "id", sortable: true },
       { field: "dateEnded", sortable: true },
-      { field: "plugin", sortable: true },
-      { field: "nodes", sortable: true },
-      { field: "duration", sortable: true },
+      { field: "plugin", sortable: false },
+      { field: "nodes", sortable: false },
+      { field: "duration", sortable: false },
       { field: "user", sortable: true },
     ]);
   });
@@ -323,19 +323,19 @@ describe("ActivityListEaTable", () => {
     await table.vm.$emit("sort", {
       first: 20,
       rows: 20,
-      sortField: "plugin",
+      sortField: "user",
       sortOrder: 1,
     });
     await wrapper.vm.$nextTick();
 
-    expect(table.props("sortField")).toBe("plugin");
+    expect(table.props("sortField")).toBe("user");
     expect(table.props("sortOrder")).toBe(1);
     expect(wrapper.emitted("page")).toEqual([
       [
         {
           offset: 0,
           max: 20,
-          sortField: "plugin",
+          sortField: "user",
           sortOrder: 1,
         },
       ],

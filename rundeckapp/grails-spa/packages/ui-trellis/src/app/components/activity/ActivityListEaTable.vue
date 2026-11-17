@@ -139,7 +139,7 @@
           </span>
         </template>
       </Column>
-      <Column field="plugin" sortable class="activity-ea-table__plugin">
+      <Column field="plugin" class="activity-ea-table__plugin">
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-plugin">
@@ -163,7 +163,7 @@
           </div>
         </template>
       </Column>
-      <Column field="nodes" sortable class="activity-ea-table__nodes">
+      <Column field="nodes" class="activity-ea-table__nodes">
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-nodes">
@@ -188,7 +188,7 @@
           </span>
         </template>
       </Column>
-      <Column field="duration" sortable class="activity-ea-table__duration">
+      <Column field="duration" class="activity-ea-table__duration">
         <template #header>
           <div class="activity-ea-table__header-content text-button">
             <span data-testid="activity-ea-header-duration">
