@@ -580,4 +580,16 @@ describe("ActivityListEaTable", () => {
 
     expect(wrapper.emitted("row-click")).toBeUndefined();
   });
+
+  it("opens the execution link in the same tab when configured", async () => {
+    const wrapper = await createWrapper({
+      props: { executionLinkTarget: "_self" },
+    });
+
+    expect(
+      wrapper
+        .find('[data-testid="activity-ea-execution-42"]')
+        .attributes("target"),
+    ).toBe("_self");
+  });
 });

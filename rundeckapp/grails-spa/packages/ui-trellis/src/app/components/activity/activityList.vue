@@ -571,6 +571,7 @@
       :highlight-id="highlightExecutionId"
       :legacy-row-classes="true"
       :middle-click-opens-tab="true"
+      execution-link-target="_self"
       :sortable="true"
       data-testid="activity-list-ea-table"
       @page="onEaPage"

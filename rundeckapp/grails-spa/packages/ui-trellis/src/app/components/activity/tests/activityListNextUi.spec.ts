@@ -85,6 +85,7 @@ describe("ActivityList next UI table", () => {
     expect(table.props("showRelativeDate")).toBe(true);
     expect(table.props("legacyRowClasses")).toBe(true);
     expect(table.props("middleClickOpensTab")).toBe(true);
+    expect(table.props("executionLinkTarget")).toBe("_self");
     expect(wrapper.find('[data-testid="page-info"]').exists()).toBe(false);
     expect(table.props("showToolbar")).toBe(false);
     expect(table.props("selectable")).toBe(false);

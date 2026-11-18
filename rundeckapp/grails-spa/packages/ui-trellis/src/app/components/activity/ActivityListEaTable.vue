@@ -141,7 +141,7 @@
               />
               <a
                 :href="data.permalink"
-                target="_blank"
+                :target="executionLinkTarget"
                 rel="noopener noreferrer"
                 :data-testid="`activity-ea-execution-${data.id}`"
                 @click.stop
@@ -453,6 +453,11 @@ export default defineComponent({
     legacyRowClasses: {
       type: Boolean,
       default: false,
+    },
+    /** Where the execution ID link opens: "_blank" (new tab) or "_self". */
+    executionLinkTarget: {
+      type: String as PropType<"_blank" | "_self">,
+      default: "_blank",
     },
     /** Opens the execution in a new tab when a row is middle-clicked. */
     middleClickOpensTab: {
@@ -800,10 +805,12 @@ export default defineComponent({
   --sizes-activity-table-control-padding: 10px;
   --radii-activity-table-control: 6px;
   --sizes-activity-table-checkbox: 16px;
-  --sizes-activity-table-compact-column: 150px;
-  --sizes-activity-table-status-column: 48px;
-  --sizes-activity-table-date-column: 277px;
-  --sizes-activity-table-plugin-column: 300px;
+  /* Proportional widths (same ratios as the 150/277/300/48px design) so the
+     table always fits its container instead of forcing a horizontal scroll. */
+  --sizes-activity-table-compact-column: 9%;
+  --sizes-activity-table-status-column: 3%;
+  --sizes-activity-table-date-column: 17%;
+  --sizes-activity-table-plugin-column: 18%;
   --sizes-activity-table-loading-height: 220px;
   --sizes-activity-table-loading-gap: 4px;
   --sizes-activity-table-loading-icon: 48px;
