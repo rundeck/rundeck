@@ -2,7 +2,7 @@
   <div
     ref="root"
     class="execution-log"
-    :class="[`execution-log--${colorTheme}`]"
+    :class="[`execution-log--${colorTheme}`, { 'execution-log--node': node }]"
     data-testid="log-viewer"
   >
     <RdDrawer
@@ -37,6 +37,7 @@
             id="logview_gutter"
             v-model="settings.gutter"
             type="checkbox"
+            data-testid="log-viewer-gutter-checkbox"
           />
           <label for="logview_gutter">Display Gutter</label>
         </div>
@@ -113,13 +114,11 @@
     <div
       ref="scroller"
       class="execution-log__scroller"
+      data-testid="log-viewer-scroller"
       :class="{
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="
-        node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}
-      "
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -779,6 +778,31 @@ export default defineComponent({
 
 .execution-log__chunk {
   contain: layout;
+}
+
+/*
+ * Node view: the log panel sizes to its content, capped at 600px.
+ * The DynamicScroller root (.execution-log__chunk) keeps a bounded viewport
+ * through max-height, so virtualization still works for long logs.
+ * The doubled class beats LogNodeChunk's scoped `.scroller { height: 100% }`.
+ */
+.execution-log.execution-log--node,
+.execution-log.execution-log--node .execution-log__scroller,
+.execution-log.execution-log--node .execution-log__scroller-item-container,
+.execution-log.execution-log--node .execution-log__node-chunk,
+.execution-log.execution-log--node .execution-log__chunk {
+  height: auto;
+}
+.execution-log.execution-log--node .execution-log__scroller,
+.execution-log.execution-log--node .execution-log__node-chunk {
+  flex: none;
+}
+.execution-log.execution-log--node .execution-log__scroller {
+  overflow-y: hidden;
+}
+.execution-log.execution-log--node .execution-log__chunk {
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .progress {

@@ -2,6 +2,7 @@
   <div
     v-if="entryOutputs && entryOutputs.length > 0"
     class="execution-log__node-chunk"
+    data-testid="log-node-chunk"
   >
     <DynamicScroller
       :key="nodeChunkKey"
@@ -10,6 +11,7 @@
       :min-item-size="2"
       class="scroller execution-log__chunk"
       key-field="lineNumber"
+      data-testid="log-node-chunk-scroller"
     >
       <template #default="{ item, index, active }">
         <DynamicScrollerItem
