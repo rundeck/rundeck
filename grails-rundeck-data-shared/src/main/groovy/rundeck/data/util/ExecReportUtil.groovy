@@ -3,10 +3,15 @@ package rundeck.data.util
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
-import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.report.SaveReportRequestImpl
 
 class ExecReportUtil {
+    /**
+     * Build the request to save the activity report of an execution
+     * @param exec execution
+     * @param job job of the execution, or null for an adhoc execution
+     * @return report request, titled with the command string for a single-command adhoc execution
+     */
     static SaveReportRequest buildSaveReportRequest(ExecutionData exec, JobData job = null) {
         def failedCount = exec.failedNodeList ? exec.failedNodeList.split(',').size() : 0
         def successCount = exec.succeededNodeList ? exec.succeededNodeList.split(',').size() : 0;
@@ -18,9 +23,8 @@ class ExecReportUtil {
                 null == job
                         && exec.getWorkflowData()?.steps
                         && exec.getWorkflowData()?.steps.size() == 1
-                        && exec.getWorkflowData()?.steps[0].pluginType == WorkflowStepConstants.TYPE_COMMAND
         ) {
-            adhocScript = exec.getWorkflowData()?.steps[0].configuration.exec
+            adhocScript = WorkflowStepUtil.getCommandString(exec.getWorkflowData()?.steps[0])
         }
         def summary = summarizeJob(exec)
         def issuccess = exec.statusSucceeded()

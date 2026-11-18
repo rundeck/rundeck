@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
+import rundeck.data.util.WorkflowStepUtil
 
 class PluginStep extends WorkflowStep{
     public static final List<String> LEGACY_BUILTIN_TYPES = Collections.unmodifiableList(
@@ -269,8 +270,11 @@ class PluginStep extends WorkflowStep{
                '}';
     }
 
+    /**
+     * @return summary text, showing the command or script of a command plugin step
+     */
     @Override
     public String summarize() {
-        return "Plugin["+ type + ', nodeStep: '+nodeStep+']';
+        return WorkflowStepUtil.summarize(this)
     }
 }

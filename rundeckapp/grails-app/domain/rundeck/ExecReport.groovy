@@ -18,6 +18,7 @@ package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import org.rundeck.app.data.model.v1.report.RdExecReport
+import rundeck.data.util.WorkflowStepUtil
 
 
 class ExecReport extends BaseReport implements RdExecReport{
@@ -94,8 +95,8 @@ class ExecReport extends BaseReport implements RdExecReport{
     }
     /**
      * Generate an ExecReport based off of an existing execution
-     * @param exec
-     * @return
+     * @param exec execution
+     * @return report, titled with the command string for a single-command adhoc execution
      */
     static ExecReport fromExec(Execution exec){
         def failedCount = exec.failedNodeList ?exec.failedNodeList.split(',').size():0
@@ -109,9 +110,8 @@ class ExecReport extends BaseReport implements RdExecReport{
             null == exec.scheduledExecution
             && workflowData?.commands
             && workflowData.commands.size()==1
-            && workflowData.commands[0] instanceof CommandExec
         ){
-            adhocScript=workflowData.commands[0].adhocRemoteString
+            adhocScript=WorkflowStepUtil.getCommandString(workflowData.commands[0])
         }
         def summary = "[${workflowData?.commands ? workflowData.commands.size() : 0} steps]"
         def issuccess = exec.statusSucceeded()
