@@ -74,16 +74,15 @@ describe("ActivityList next UI table", () => {
     expect(table.exists()).toBe(true);
     expect(table.props("columns")).toEqual([
       "status",
+      "id",
       "dateEnded",
       "nodes",
       "duration",
       "user",
       "title",
       "args",
-      "id",
     ]);
     expect(table.props("showRelativeDate")).toBe(true);
-    expect(table.props("durationFormat")).toBe("humanize");
     expect(table.props("legacyRowClasses")).toBe(true);
     expect(table.props("middleClickOpensTab")).toBe(true);
     expect(wrapper.find('[data-testid="page-info"]').exists()).toBe(false);
@@ -180,13 +179,5 @@ describe("ActivityList next UI table", () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="error-message"]').exists()).toBe(false);
-  });
-
-  it("passes the legacy theme to the shared table", async () => {
-    const wrapper = await mountActivityList("next");
-
-    expect(
-      wrapper.findComponent(ActivityListEaTable).props("legacyTheme"),
-    ).toBe(true);
   });
 });

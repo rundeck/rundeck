@@ -436,33 +436,6 @@ describe("ActivityListEaTable", () => {
     ).toContain("Completed");
   });
 
-  it("humanizes the duration when requested", async () => {
-    const wrapper = await createWrapper({
-      props: {
-        durationFormat: "humanize",
-        reports: [
-          {
-            ...mockReports[0],
-            dateStarted: {
-              unixtime: 1720195500000,
-              date: "2024-07-05T16:55:00Z",
-            },
-            dateEnded: {
-              unixtime: 1720195561552,
-              date: "2024-07-05T16:56:01Z",
-            },
-          },
-        ],
-      },
-    });
-
-    expect(
-      wrapper
-        .find(`[data-testid="activity-ea-duration-${mockReports[0].id}"]`)
-        .text(),
-    ).toBe("a minute");
-  });
-
   it("adds legacy row classes and highlights the requested execution", async () => {
     const wrapper = await createWrapper({
       props: {
@@ -514,12 +487,6 @@ describe("ActivityListEaTable", () => {
     });
 
     expect(wrapper.findComponent(PtDataTable).props("totalRecords")).toBe(0);
-  });
-
-  it("applies the legacy theme class when requested", async () => {
-    const wrapper = await createWrapper({ props: { legacyTheme: true } });
-
-    expect(wrapper.classes()).toContain("activity-ea-table--legacy-theme");
   });
 
   it("hides the selection checkboxes when not selectable", async () => {

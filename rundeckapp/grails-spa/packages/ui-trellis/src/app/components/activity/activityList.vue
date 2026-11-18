@@ -568,11 +568,9 @@
       :job-id-filter="query.jobIdFilter"
       :moment-job-format="momentJobFormat"
       :show-relative-date="true"
-      duration-format="humanize"
       :highlight-id="highlightExecutionId"
       :legacy-row-classes="true"
       :middle-click-opens-tab="true"
-      :legacy-theme="true"
       :sortable="true"
       data-testid="activity-list-ea-table"
       @page="onEaPage"
@@ -679,13 +677,13 @@ const knownStatusList = KNOWN_EXECUTION_STATUSES;
 /** Activity columns shown by the next UI history table, in display order. */
 const NEXT_UI_COLUMNS: ActivityColumn[] = [
   "status",
+  "id",
   "dateEnded",
   "nodes",
   "duration",
   "user",
   "title",
   "args",
-  "id",
 ];
 
 /** Maps activity table sort columns to persisted ExecutionQuery fields. */

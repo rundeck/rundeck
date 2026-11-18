@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="activity-ea-table"
-    :class="{ 'activity-ea-table--legacy-theme': legacyTheme }"
-    @auxclick="onAuxClick"
-  >
+  <div class="activity-ea-table" @auxclick="onAuxClick">
     <div v-if="showToolbar" class="activity-ea-table__toolbar">
       <span
         class="activity-ea-table__count text-heading--md"
@@ -231,11 +227,7 @@
               class="activity-ea-table__nodes-failed"
               :title="nodesTooltip(data)"
             >
-              <i
-                v-if="!legacyTheme"
-                class="far fa-times-circle"
-                aria-hidden="true"
-              ></i>
+              <i class="far fa-times-circle" aria-hidden="true"></i>
               {{ data.node.failed }} {{ $t("failed") }}
             </span>
             <span
@@ -243,11 +235,7 @@
               class="activity-ea-table__nodes-succeeded"
               :title="nodesTooltip(data)"
             >
-              <i
-                v-if="!legacyTheme"
-                class="far fa-check-circle"
-                aria-hidden="true"
-              ></i>
+              <i class="far fa-check-circle" aria-hidden="true"></i>
               {{ data.node.succeeded }} {{ $t("ok") }}
             </span>
           </template>
@@ -285,7 +273,6 @@
           </template>
           <template #body="{ data }">
             <span class="activity-ea-table__truncate" :title="data.user">
-              <em v-if="legacyTheme">{{ $t("by") }}</em>
               {{ data.user }}
             </span>
           </template>
@@ -455,11 +442,6 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    /** "compact" (1m 5s) or "humanize" (a minute) duration text. */
-    durationFormat: {
-      type: String as PropType<"compact" | "humanize">,
-      default: "compact",
-    },
     /** Execution row to highlight, e.g. the one the page was opened for. */
     highlightId: {
       type: [Number, String] as PropType<number | string | null>,
@@ -467,11 +449,6 @@ export default defineComponent({
     },
     /** Adds the legacy activity row classes (status, job/adhoc) to rows. */
     legacyRowClasses: {
-      type: Boolean,
-      default: false,
-    },
-    /** Uses the legacy Activity table colors from the active theme. */
-    legacyTheme: {
       type: Boolean,
       default: false,
     },
@@ -791,10 +768,6 @@ export default defineComponent({
       if (duration.asMilliseconds() < 0) {
         return "";
       }
-      if (this.durationFormat === "humanize") {
-        moment.relativeTimeThreshold("ss", -1);
-        return duration.humanize();
-      }
       const totalSeconds = Math.floor(duration.asSeconds());
       if (totalSeconds < 60) {
         return `${totalSeconds}s`;
@@ -1014,114 +987,5 @@ export default defineComponent({
   color: var(--colors-gray-800);
   font-size: var(--sizes-activity-table-loading-icon);
   line-height: var(--sizes-activity-table-loading-icon);
-}
-
-/* Legacy Activity colors: mirrors runstrap's .table/.table-hover theme rules. */
-.activity-ea-table.activity-ea-table--legacy-theme {
-  margin-top: var(--sizes-none);
-
-  /* Fit the card like the legacy table instead of fixed column widths. */
-  :deep(.p-datatable-table) {
-    table-layout: auto;
-  }
-
-  :deep(.p-datatable-thead > tr > th),
-  :deep(.p-datatable-tbody > tr > td) {
-    width: auto;
-    height: auto;
-    padding: var(--sizes-2) var(--sizes-3);
-    vertical-align: middle;
-  }
-
-  :deep(.activity-ea-table__status) {
-    width: var(--sizes-activity-table-status-column);
-  }
-
-  :deep(.activity-ea-table__execution) {
-    text-align: right;
-  }
-
-  :deep(.activity-ea-table__execution .activity-ea-table__execution-content) {
-    justify-content: flex-end;
-  }
-
-  :deep(.activity-ea-table__duration),
-  .timerel {
-    color: var(--text-secondary-color);
-  }
-
-  .timerel {
-    margin-left: var(--sizes-2);
-  }
-
-  .activity-ea-table__nodes-failed,
-  .activity-ea-table__nodes-succeeded {
-    color: var(--font-color);
-  }
-
-  .activity-ea-table__truncate {
-    white-space: nowrap;
-  }
-
-  :deep(.p-datatable-table-container) {
-    border: var(--sizes-none);
-    border-radius: var(--sizes-none);
-    background: transparent;
-  }
-
-  :deep(.p-datatable-thead > tr > th) {
-    border-color: var(--table-line-color);
-    background: var(--background-color);
-    color: var(--font-color);
-  }
-
-  :deep(.p-datatable-tbody > tr) {
-    background: transparent;
-    color: var(--font-color);
-  }
-
-  :deep(.p-datatable-tbody > tr > td) {
-    border-width: var(--sizes-px) var(--sizes-none) var(--sizes-none);
-    border-color: var(--table-line-color);
-    background: transparent;
-    color: var(--font-color);
-  }
-
-  :deep(.p-datatable-tbody > tr:hover > td) {
-    background: var(--background-color-accent-lvl2);
-  }
-
-  :deep(.p-datatable-tbody > tr.missed > td) {
-    background: var(--warning-bg-color);
-  }
-
-  :deep(.p-datatable-tbody > tr.highlight > td) {
-    background: var(--background-color-accent-lvl3);
-  }
-
-  :deep(.p-datatable-empty-message > td) {
-    background: var(--background-color-accent-lvl2);
-    color: var(--font-color);
-  }
-
-  :deep(.p-paginator),
-  :deep(.p-paginator-current),
-  :deep(.p-paginator-first),
-  :deep(.p-paginator-prev),
-  :deep(.p-paginator-page),
-  :deep(.p-paginator-next),
-  :deep(.p-paginator-last) {
-    background: transparent;
-    color: var(--font-color);
-  }
-
-  :deep(.p-paginator-page.p-paginator-page-selected) {
-    background: var(--background-color-accent-lvl2);
-    color: var(--font-color);
-  }
-
-  .activity-ea-table__execution-content a {
-    color: var(--font-color);
-  }
 }
 </style>
