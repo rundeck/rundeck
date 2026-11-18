@@ -2,13 +2,18 @@ package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiMechanism
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import org.rundeck.util.gui.pages.project.ProjectAclCreatePage
 
 /**
  * A Quartz trigger runs a scheduled job as the user saved on the job, without
@@ -31,6 +36,7 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
     public static final String ACLPOLICY_FILE = PROJECT_NAME + ".aclpolicy"
     static final String RESTRICTED_USER = 'AuthTest1'
     static final String USER_PASSWORD = 'password'
+    static final UI_MODES = UiModes.nextUiAndDefault()
 
     def setupSpec() {
         setupProject(PROJECT_NAME)
@@ -47,15 +53,25 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
      * with the early-access editor. Pro runs its own copy, {@code ScheduledJobExecutionAclWarningProSpec}.
      */
     @ExcludePro
+    @UiModeFlag(
+        featureName = "menu-create-project-acl-file",
+        status = UiModeStatus.NEXT_UI,
+        mechanism = UiMechanism.COOKIE,
+        jiraTicket = "RUN-0000",
+        description = "ACL remediation opens both project ACL UIs selected by the nextUi cookie."
+    )
     def "scheduled job saved by a user without run access warns on the job page"() {
         given: "a user who may author jobs but not run them schedules one"
+            // per-iteration name: each iteration must be identifiable on its own, and cleanup
+            // removes it so the next iteration's job list holds only its own job
+            String jobName = "job scheduled by a user who cannot run it ${nextUi ? 'next' : 'legacy'}"
             def login = page LoginPage
             login.go()
             login.login(RESTRICTED_USER, USER_PASSWORD)
             waitForPageLoadComplete()
 
             def jobCreatePage = go JobCreatePage, PROJECT_NAME
-            jobCreatePage.fillBasicJob 'job scheduled by a user who cannot run it'
+            jobCreatePage.fillBasicJob jobName
             jobCreatePage.enableDailySchedule()
             jobCreatePage.clickCreateJob()
             jobCreatePage.waitForUrlToContain('/job/show')
@@ -98,15 +114,29 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             adminView.executionAclFixLink.isDisplayed()
 
         when: "the remediation link is followed"
-            adminView.executionAclFixLink.click()
+            adminView.setNextUiCookie(nextUi)
+            adminView.openExecutionAclFixLink()
 
         then: "it opens the project ACL editor, pre-filled with the granting policy"
-            adminView.waitForUrlToContain('/admin/acls/create')
+            def aclCreatePage = page(ProjectAclCreatePage, PROJECT_NAME, [nextUi: nextUi])
+            aclCreatePage.validatePage()
+            aclCreatePage.editorText.contains("Allow ${RESTRICTED_USER} to run job")
+            aclCreatePage.editorText.contains('allow:')
+            aclCreatePage.editorText.contains('- run')
+            aclCreatePage.editorText.contains("urn: user:${RESTRICTED_USER}")
 
         cleanup:
+            // the warning-badge count above sees every job in the project, so this iteration's
+            // job must not survive into the next one; API-only, so it runs before any UI step can throw
+            deleteProjectJobs()
             def topMenuPage = page TopMenuPage
+            // the cookie selected this iteration's ACL editor; don't let it outlive the iteration
+            topMenuPage.deleteNextUiCookie()
             topMenuPage.logOut()
             waitForPageLoadComplete()
+
+        where:
+            [nextUi] << UI_MODES
     }
 
     def "scheduled job saved by a user who can run it shows no warning"() {
@@ -137,5 +167,17 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             def topMenuPage = page TopMenuPage
             topMenuPage.logOut()
             waitForPageLoadComplete()
+    }
+
+    /**
+     * Deletes every job in the spec's project through the API. Listing the project rather than
+     * tracking a uuid also removes a job whose iteration failed before its uuid was read.
+     */
+    private void deleteProjectJobs() {
+        def jobs = get("/project/${PROJECT_NAME}/jobs", List)
+        jobs.each { job ->
+            def response = doDelete("/job/${(job as Map).id}")
+            assert response.successful : "could not delete job ${(job as Map).id}: ${response.code()}"
+        }
     }
 }

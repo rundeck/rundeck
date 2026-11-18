@@ -68,6 +68,7 @@ module.exports = {
     "pages/job/head/scm-status-badge": {
       entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
     },
+    "pages/menu-create-project-acl-file": { entry: "./src/app/pages/menu-create-project-acl-file/main.ts" },
   },
   publicPath: "/assets/static/",
   outputDir: process.env.VUE_APP_OUTPUT_DIR,
