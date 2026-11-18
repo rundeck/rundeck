@@ -94,9 +94,13 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
     static final Map<String, String> CONFIG_MAPPING_FWK;
 
     static {
+        // Not marked required: the command may instead come from the node's "script-exec" attribute,
+        // which is only known at execution time. executeCommand fails with a ConfigurationFailure if
+        // neither the property nor the node attribute is set.
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
-                                           "Shell command to execute",
-                                           true, null));
+                                           "Shell command to execute. Not required if the node defines a \""
+                                           + SCRIPT_ATTRIBUTE + "\" attribute, which overrides this value.",
+                                           false, null));
         properties.add(PropertyUtil.string(CONFIG_INTERPRETER, "Interpreter",
                                            "Shell or interpreter to pass the command string to. Not required.",
                                            false, null));

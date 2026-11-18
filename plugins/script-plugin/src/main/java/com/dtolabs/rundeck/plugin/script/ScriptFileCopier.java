@@ -104,6 +104,9 @@ public class ScriptFileCopier implements FileCopier, Describable {
     static final Map<String, String> CONFIG_MAPPING_FWK;
 
     static {
+        // Not marked required: the command may instead come from the node's "script-copy" attribute,
+        // which is only known at execution time. copyFile throws a FileCopierException if neither
+        // the property nor the node attribute is set.
         properties.add(PropertyUtil.string(CONFIG_COMMAND, "Command",
                                            "Shell command to execute the file copy. Can include references to these variables:\n" +
                                                    "${file-copy.file}: This is the local path of the source file" +
@@ -111,8 +114,10 @@ public class ScriptFileCopier implements FileCopier, Describable {
                                                    "${file-copy.dir}: Local working directory when executing the command.\n" +
                                                    "${file-copy.filename}: Source file name without path.\n" +
                                                    "${file-copy.destination}: This is the value " +
-                                                   "of the expected destination filepath for the file",
-                                           true, null));
+                                                   "of the expected destination filepath for the file\n" +
+                                                   "Not required if the node defines a \"" + SCRIPT_ATTRIBUTE +
+                                                   "\" attribute, which overrides this value.",
+                                           false, null));
         properties.add(PropertyUtil.string(CONFIG_FILEPATH, "Remote Filepath",
                                            "Remote filepath destination for copied scripts, can include " +
                                                    "${file-copy.filename} or any node or job attributes. If " +
