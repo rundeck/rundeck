@@ -1,5 +1,8 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import EditProjectNodeSourceFile from "../EditProjectNodeSourceFile.vue";
+import messages from "../../../utilities/locales/en_US.js";
+
+const $t = (key: string) => (messages as Record<string, string>)[key] || key;
 
 jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   __esModule: true,
@@ -30,6 +33,7 @@ const createWrapper = async (
       pathOutsideAllowedPaths: options.pathOutsideAllowedPaths ?? false,
     },
     global: {
+      mocks: { $t },
       stubs: {
         PluginConfig: true,
         AceEditor: true,
@@ -53,7 +57,9 @@ describe("EditProjectNodeSourceFile", () => {
 
     expect(warning.exists()).toBe(true);
     expect(warning.text()).toBe(
-      "project.nodes.edit.file.path.outside.allowed.warning",
+      "This node source uses a file outside the project's allowed paths. " +
+        "Move the file into the project directory or add its base directory " +
+        "to rundeck.resourceModelSource.file.allowedBasePaths.",
     );
   });
 
