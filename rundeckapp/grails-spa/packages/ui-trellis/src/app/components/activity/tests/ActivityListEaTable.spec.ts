@@ -430,9 +430,7 @@ describe("ActivityListEaTable", () => {
       wrapper.find(`[data-testid="activity-ea-date-relative-${id}"]`).text(),
     ).not.toBe("");
     expect(
-      wrapper
-        .find(".activity-ea-table__date .activity-ea-table__truncate")
-        .attributes("title"),
+      wrapper.find(".activity-ea-table__date-content").attributes("title"),
     ).toContain("Completed");
   });
 

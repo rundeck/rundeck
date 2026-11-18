@@ -166,19 +166,21 @@
             </div>
           </template>
           <template #body="{ data }">
-            <span
-              class="activity-ea-table__truncate"
+            <div
+              class="activity-ea-table__date-content"
               :title="completedTooltip(data)"
             >
-              <span class="timeabs">{{ completedDate(data) }}</span>
+              <span class="activity-ea-table__truncate timeabs">
+                {{ completedDate(data) }}
+              </span>
               <span
                 v-if="showRelativeDate && data.dateEnded && data.dateEnded.date"
-                class="timerel text-muted"
+                class="activity-ea-table__truncate activity-ea-table__date-relative timerel"
                 :data-testid="`activity-ea-date-relative-${data.id}`"
               >
                 {{ relativeDate(data.dateEnded.date) }}
               </span>
-            </span>
+            </div>
           </template>
         </Column>
         <Column
@@ -866,6 +868,27 @@ export default defineComponent({
 :deep(.activity-ea-table__nodes),
 :deep(.activity-ea-table__duration) {
   width: var(--sizes-activity-table-compact-column);
+}
+
+.activity-ea-table__date-content {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--sizes-none);
+}
+
+.activity-ea-table__date-relative {
+  color: var(--colors-gray-600);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* The global ".card .icon" rule offsets icons inside cards; keep it centred. */
+:deep(.activity-ea-table__status .exec-status) {
+  position: static;
+  top: auto;
+  display: inline-block;
+  transform: none;
+  vertical-align: middle;
 }
 
 :deep(.activity-ea-table__status) {
