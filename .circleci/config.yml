@@ -186,6 +186,39 @@ commands:
             - ~/.gradle/caches/jars-9     # Downloaded JARs only
           key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
 
+  # Gradle task-output (build) cache shared between pipelines. Build and the Gradle test job each
+  # save under their own prefix; restore tries the job's own prefix first, then the build one.
+  restore-gradle-task-cache:
+    description: Restore Gradle task-output cache
+    parameters:
+      prefix:
+        type: string
+        default: gradle-bc-v1
+    steps:
+      - restore_cache:
+          keys:
+            - << parameters.prefix >>-{{ .Branch }}-{{ .Revision }}
+            - << parameters.prefix >>-{{ .Branch }}-
+            - gradle-bc-v1-{{ .Branch }}-{{ .Revision }}
+            - gradle-bc-v1-{{ .Branch }}-
+            - << parameters.prefix >>-main-
+            - gradle-bc-v1-main-
+
+  save-gradle-task-cache:
+    description: Save Gradle task-output cache
+    parameters:
+      prefix:
+        type: string
+        default: gradle-bc-v1
+    steps:
+      - run:
+          name: Gradle task-output cache size
+          command: du -sh ~/.gradle/caches/build-cache-1 || true
+      - save_cache:
+          paths:
+            - ~/.gradle/caches/build-cache-1
+          key: << parameters.prefix >>-{{ .Branch }}-{{ .Revision }}
+
   ## Deps Installers quick references.
   # Install node
   install-node:
@@ -310,6 +343,7 @@ jobs:
       - install-ui-trellis-packages
       - install-package-manager-packages
       - restore-build-cache
+      - restore-gradle-task-cache
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -368,6 +402,7 @@ jobs:
       - store_artifacts:
           path: artifacts
       - save-build-cache
+      - save-gradle-task-cache
 
 
   # Run Gradle Tests
@@ -383,11 +418,15 @@ jobs:
       - install-ui-trellis-packages
       - install-package-manager-packages
       - restore-build-cache
+      - restore-gradle-task-cache:
+          prefix: gradle-bc-test-v1
       - run-build-step:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
       - collect-gradle-tests
       - save-build-cache
+      - save-gradle-task-cache:
+          prefix: gradle-bc-test-v1
 
   # Run UI Tests
   test-gui:
