@@ -40,6 +40,9 @@
   --lineHeights-body-compact: 0.875rem; /* 14px */
   --lineHeights-button: 1.0625rem; /* 17px */
 
+  /* Text-relative vertical gap; resolves against the element font-size (legacy 1em margin) */
+  --spacing-text-gap: 1em;
+
   /* Query match highlighting */
   --colors-yellow-200: #fff3b2;
 }

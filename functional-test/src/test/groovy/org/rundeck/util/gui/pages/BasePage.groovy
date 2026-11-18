@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.Cookie
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.NoSuchElementException
@@ -63,6 +64,23 @@ abstract class BasePage {
     /** Fluent: enable legacyUi mode. Shorthand for withFlag('legacyUi', true) */
     BasePage withLegacyUi(boolean enabled = true) {
         return withFlag('legacyUi', enabled)
+    }
+
+    /**
+     * Set the {@code nextUi} cookie so every following request is served in the requested UI version.
+     * Selenium only sets cookies for the current domain, so the base URL is loaded first when the
+     * browser is not on the Rundeck host yet. Set it explicitly on every iteration (true or false):
+     * false forces legacy even when the instance's nextUiMode flag is on, and an unset cookie would
+     * leak the previous iteration's mode.
+     * @param enabled cookie value
+     */
+    void setNextUiCookie(boolean enabled) {
+        String base = context.client.baseUrl
+        String current = driver.currentUrl
+        if (!current || !current.startsWith(base)) {
+            driver.get(base + '/')
+        }
+        driver.manage().addCookie(new Cookie('nextUi', enabled.toString(), '/'))
     }
 
     abstract String getLoadPath()

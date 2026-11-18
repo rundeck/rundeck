@@ -62,6 +62,7 @@ module.exports = {
     "pages/job/browse": { entry: "./src/app/pages/job/browse/main.ts" },
     "pages/job/upload": { entry: "./src/app/pages/job/upload/main.ts" },
     "pages/home": { entry: "./src/app/pages/home/main.ts" },
+    "pages/menu-wait": { entry: "./src/app/pages/menu-wait/main.ts" },
     "pages/job/head/scm-action-buttons": {
       entry: "./src/app/pages/job/head/scm/scm-action-buttons.ts",
     },

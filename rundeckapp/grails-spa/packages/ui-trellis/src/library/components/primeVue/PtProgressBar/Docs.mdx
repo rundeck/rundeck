@@ -1,0 +1,36 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as PtProgressBarStories from './PtProgressBar.stories'
+
+<Meta of={PtProgressBarStories} />
+
+<Title />
+
+<Subtitle />
+[Component reference on primevue](https://v4.primevue.org/progressbar/)
+
+## Import
+
+```ts
+import { PtProgressBar } from "@rundeck/ui-trellis/src/library/components/primeVue";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={PtProgressBarStories.Playground} sourceState="shown" />
+<Controls of={PtProgressBarStories.Playground} />
+
+## How to use
+
+Pass `value` (0-100; out-of-range values are clamped, unlike raw PrimeVue which overflows). Use `mode="indeterminate"` when progress is unknown and `showValue=false` to hide the label. The default slot replaces the `N%` label. No striped variant; styling follows the library tokens (no Figma spec).
+
+
+<Description of={PtProgressBarStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+Renders `role="progressbar"` with `aria-valuemin`/`aria-valuenow`/`aria-valuemax` (clamped). Pass `ariaLabel` or `ariaLabelledby` to describe it. In determinate mode a visually hidden `progress.bar.percent.complete` ("N% Complete") label is rendered for screen readers.
