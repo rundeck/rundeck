@@ -9,7 +9,6 @@
     :value="nodesText"
     :event-bus="eventBus"
     :error-message="errorMessage"
-    :path-outside-allowed-paths="pathOutsideAllowedPaths"
     :saving="saving"
     @cancel="handleCancel"
     @save="handleSave"
@@ -38,10 +37,6 @@ export default defineComponent({
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: true,
-    },
-    pathOutsideAllowedPaths: {
-      type: Boolean,
-      default: false,
     },
   },
   data() {

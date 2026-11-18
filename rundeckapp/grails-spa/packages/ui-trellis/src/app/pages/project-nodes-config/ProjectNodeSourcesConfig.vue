@@ -42,6 +42,14 @@
             </div>
           </div>
         </div>
+        <div
+          v-if="pathOutsideAllowedPaths(plugin.origIndex)"
+          class="alert alert-warning row-space"
+          data-testid="node-source-path-warning"
+        >
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ $t("project.nodes.edit.file.path.outside.allowed.warning") }}
+        </div>
       </div>
     </template>
   </project-plugin-config>
@@ -124,6 +132,12 @@ export default defineComponent({
       return this.sourcesData.length > index
         ? this.sourcesData[index].errors
         : undefined;
+    },
+    pathOutsideAllowedPaths(index: number): boolean {
+      return Boolean(
+        this.sourcesData.length > index &&
+        this.sourcesData[index].pathOutsideAllowedPaths,
+      );
     },
     pluginsConfigWasSaved() {
       this.$emit("saved");

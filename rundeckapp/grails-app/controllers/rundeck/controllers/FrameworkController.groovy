@@ -2317,6 +2317,30 @@ List of config values, each value contains:
         return configProps
     }
 
+    /**
+     * Determines whether a file source resolves outside the project and configured allowed paths.
+     */
+    private boolean isPathOutsideAllowedPaths(
+        String providerType,
+        IProjectNodes.WriteableProjectNodes source,
+        String project
+    ) {
+        if (providerType != 'file' || !source) {
+            return false
+        }
+        try {
+            source.writeableSource.validateWriteableSource(
+                buildConfigPropertiesForValidation(),
+                frameworkService.getRundeckFramework(),
+                project
+            )
+            return false
+        } catch (com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException e) {
+            log.warn("Node source path validation failed for ${source.writeableSource.sourceDescription}: ${e.message}")
+            return true
+        }
+    }
+
     def editProjectNodeSourceFile() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -2358,7 +2382,6 @@ List of config values, each value contains:
         def emptydata = false
         def fileText = ""
         def warning = null
-        boolean pathOutsideAllowedPaths = false
 
         try {
             // Path validation using validateWriteableSource
@@ -2404,8 +2427,7 @@ List of config values, each value contains:
             // Path validation failed (security check)
             log.warn("Node source path validation failed for ${sourceDesc}: ${e.message}")
             emptydata = true
-            pathOutsideAllowedPaths = providerType == 'file'
-            if (!pathOutsideAllowedPaths) {
+            if (providerType != 'file') {
                 warning = e.message
             }
 
@@ -2434,8 +2456,7 @@ List of config values, each value contains:
                 fileFormat  : modelFormat ? (Formats[modelFormat] ?: modelFormat) : '',
                 sourceDesc  : sourceDesc,
                 providerType: providerType,
-                providerDesc: desc,
-                pathOutsideAllowedPaths: pathOutsideAllowedPaths
+                providerDesc: desc
         ]
     }
 
@@ -3258,6 +3279,11 @@ Since: v23''',
                         index: index,
                         type: config.type,
                         errors: parseExceptions[ident]?.message ?: null,
+                        pathOutsideAllowedPaths: isPathOutsideAllowedPaths(
+                            config.type,
+                            writeableSource,
+                            project
+                        ),
                         resources: new Resources(
                             writeable: writeableSource ? true : false,
                             description: writeableSource?.writeableSource?.sourceDescription,
@@ -3686,6 +3712,11 @@ Since: v23''',
                 index: index,
                 type: type,
                 errors: errors,
+                pathOutsideAllowedPaths: isPathOutsideAllowedPaths(
+                    type,
+                    writeableSource,
+                    project
+                ),
                 resources: sourceContent
             ),
             [formats: responseFormats]

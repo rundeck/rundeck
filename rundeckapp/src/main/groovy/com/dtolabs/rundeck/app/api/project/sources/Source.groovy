@@ -31,5 +31,11 @@ class Source {
     String type
     @Ignore(onlyIfNull = true)
     String errors
+    /**
+     * Indicates that the file source path is outside the project's allowed paths.
+     */
+    @XmlAttribute
+    @Ignore(onlyIfNull = true)
+    Boolean pathOutsideAllowedPaths
     Resources resources
 }

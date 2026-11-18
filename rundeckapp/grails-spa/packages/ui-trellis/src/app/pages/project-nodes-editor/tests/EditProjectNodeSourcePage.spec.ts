@@ -57,7 +57,6 @@ const createWrapper = async (): Promise<VueWrapper> => {
       index: 0,
       nextPageUrl: "/project/test/sources",
       eventBus,
-      pathOutsideAllowedPaths: true,
     },
     global: {
       provide: {
@@ -83,13 +82,11 @@ describe("EditProjectNodeSourcePage", () => {
     nodeSourceFile.nodeSource = undefined;
   });
 
-  it("passes path warning state to the node source editor", async () => {
+  it("renders the node source editor", async () => {
     const wrapper = await createWrapper();
 
-    expect(
-      wrapper
-        .findComponent(EditProjectNodeSourceFile)
-        .props("pathOutsideAllowedPaths"),
-    ).toBe(true);
+    expect(wrapper.findComponent(EditProjectNodeSourceFile).exists()).toBe(
+      true,
+    );
   });
 });

@@ -1196,7 +1196,60 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
     // RUN-4671: Security validation tests for editProjectNodeSourceFile
 
-    void "editProjectNodeSourceFile should return path warning #expectedWarning for #providerType source"() {
+    void "apiSourcesList should mark file sources outside allowed paths"() {
+        given: "a file resource model source pointing outside the project directory"
+        params.project = "TestProject"
+
+        def mockWriteableSource = Mock(WriteableModelSource) {
+            getSyntaxMimeType() >> 'application/yaml'
+            getSourceDescription() >> '/etc/passwd'
+            getHasData() >> true
+            validateWriteableSource(_, _, _) >> {
+                throw new com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException(
+                    "File path must be within the project directory"
+                )
+            }
+        }
+        def mockProjectNodes = Mock(IProjectNodes) {
+            listResourceModelConfigurations() >> [[type: 'file']]
+            getWriteableResourceModelSources() >> [
+                Mock(IProjectNodes.WriteableProjectNodes) {
+                    getIndex() >> 1
+                    getWriteableSource() >> mockWriteableSource
+                }
+            ]
+            getResourceModelSourceExceptionsMap() >> [:]
+        }
+        def mockProject = Mock(IRundeckProject) {
+            getProjectNodes() >> mockProjectNodes
+        }
+
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _, _) >> true
+            requireParameters(_, _, _) >> true
+            requireExists(_, _, _) >> true
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            existsFrameworkProject("TestProject") >> true
+            getFrameworkProject("TestProject") >> mockProject
+            getRundeckFramework() >> Mock(Framework)
+        }
+        controller.featureService = Mock(FeatureService) {
+            featurePresent(_) >> false
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            authorizeProjectConfigure(_, "TestProject") >> true
+        }
+
+        when: "the project sources are listed"
+        controller.apiSourcesList()
+
+        then: "the source exposes a stable warning state"
+        response.status == 200
+        response.json.sources[0].pathOutsideAllowedPaths == true
+    }
+
+    void "editProjectNodeSourceFile should return flash warning #expectedWarning for #providerType source"() {
         given: "a file resource model source pointing outside the project directory"
         params.project = "TestProject"
         params.index = "0"
@@ -1245,15 +1298,15 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         when: "editProjectNodeSourceFile is called"
         def result = controller.editProjectNodeSourceFile()
 
-        then: "file should be treated as empty and the stable warning state returned"
+        then: "file should be treated as empty without duplicating the file-source warning"
         result.fileEmpty == true
         result.fileText == ""
-        result.pathOutsideAllowedPaths == expectedWarning
+        controller.flash.warning == expectedWarning
 
         where:
         providerType | expectedWarning
-        'file'       | true
-        'script'     | false
+        'file'       | null
+        'script'     | "File path must be within the project directory"
     }
 
     void "editProjectNodeSourceFile should handle non-existent files"() {
@@ -1305,7 +1358,6 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         result.project == "TestProject"
         result.index == 0
         result.fileEmpty == true
-        result.pathOutsideAllowedPaths == false
         result.sourceDesc == '/var/rundeck/projects/TestProject/etc/nonexistent.yaml'
     }
 
@@ -1359,7 +1411,6 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             "TestProject"
         )
         result.project == "TestProject"
-        result.pathOutsideAllowedPaths == false
         result.sourceDesc == '/opt/shared/nodes.yaml'
 
         cleanup:

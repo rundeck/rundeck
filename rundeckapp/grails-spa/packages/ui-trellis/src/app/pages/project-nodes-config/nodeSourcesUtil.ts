@@ -13,6 +13,7 @@ export interface NodeSourceResources {
 export interface NodeSource {
   index: number;
   type: string;
+  pathOutsideAllowedPaths?: boolean;
   resources: NodeSourceResources;
   errors?: string;
 }

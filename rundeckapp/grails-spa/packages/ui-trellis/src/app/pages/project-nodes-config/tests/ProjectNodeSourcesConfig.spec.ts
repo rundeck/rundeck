@@ -1,6 +1,9 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import ProjectNodeSourcesConfig from "../ProjectNodeSourcesConfig.vue";
 import { getProjectNodeSources } from "../nodeSourcesUtil";
+import messages from "../../../utilities/locales/en_US.js";
+
+const $t = (key: string) => (messages as Record<string, string>)[key] || key;
 
 jest.mock("../nodeSourcesUtil", () => ({
   getProjectNodeSources: jest.fn(),
@@ -27,6 +30,7 @@ const createWrapper = async (errors: string) => {
   ]);
   const wrapper = mount(ProjectNodeSourcesConfig, {
     props: { eventBus: { emit: jest.fn() } as any },
+    global: { mocks: { $t } },
   });
   await flushPromises();
   return wrapper;
@@ -62,5 +66,30 @@ describe("ProjectNodeSourcesConfig", () => {
 
     expect(error.text()).toBe("<b>x</b>");
     expect(error.element.querySelector("b")).toBeNull();
+  });
+
+  it("shows remediation guidance on the source card for a path outside allowed paths", async () => {
+    mockedGetSources.mockResolvedValue([
+      {
+        index: 1,
+        type: "file",
+        pathOutsideAllowedPaths: true,
+        resources: { writeable: true },
+      } as any,
+    ]);
+
+    const wrapper = mount(ProjectNodeSourcesConfig, {
+      props: { eventBus: { emit: jest.fn() } as any },
+      global: { mocks: { $t } },
+    });
+    await flushPromises();
+
+    expect(
+      wrapper.find('[data-testid="node-source-path-warning"]').text(),
+    ).toBe(
+      "This node source uses a file outside the project's allowed paths. " +
+        "Move the file into the project directory or add its base directory " +
+        "to rundeck.resourceModelSource.file.allowedBasePaths.",
+    );
   });
 });
