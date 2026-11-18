@@ -94,6 +94,27 @@ describe("ActivityList next UI table", () => {
     expect(wrapper.findComponent(OffsetPagination).exists()).toBe(false);
   });
 
+  it("renders the columns a page asks for", async () => {
+    (loadJsonData as jest.Mock).mockReturnValue({ uiType: "next" });
+    const wrapper = shallowMount(ActivityList, {
+      props: {
+        eventBus: mockEventBus,
+        nextUiColumns: ["status", "id", "title"],
+      },
+      global: {
+        components: { OffsetPagination, Modal, Btn },
+        stubs: { modal: false, btn: false, "i18n-t": true, ProgressBar: true },
+        mocks: { ...i18nMocks },
+        directives: { tooltip: () => {} },
+      },
+    });
+    await flushPromises();
+
+    expect(wrapper.findComponent(ActivityListEaTable).props("columns")).toEqual(
+      ["status", "id", "title"],
+    );
+  });
+
   it("requests the sorted page from the executions API", async () => {
     const wrapper = await mountActivityList("next");
 

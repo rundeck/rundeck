@@ -561,7 +561,7 @@
       :reports="reports"
       :pagination="pagination"
       :loading="loading"
-      :columns="eaColumns"
+      :columns="nextUiColumns"
       :selectable="bulkEditMode"
       :selected-ids="eaSelectedIds"
       :show-toolbar="false"
@@ -731,6 +731,11 @@ export default defineComponent({
       type: String as PropType<string>,
       required: false,
     },
+    /** Columns of the next UI history table; pages drop ones they do not show. */
+    nextUiColumns: {
+      type: Array as PropType<ActivityColumn[]>,
+      default: () => [...NEXT_UI_COLUMNS],
+    },
   },
 
   data() {
@@ -793,7 +798,6 @@ export default defineComponent({
       rundeckContext: getRundeckContext(),
       /** Whether the page renders the next UI history table. */
       nextUi: loadJsonData("pageUiMeta")?.uiType === "next",
-      eaColumns: NEXT_UI_COLUMNS,
       /** Error from the latest history query, cleared on each new query. */
       historyLoadError: null as null | string,
       /** Identifies the latest history query; older responses are ignored. */
