@@ -5,9 +5,15 @@ import moment from "moment";
 
 import App from "./App.vue";
 import NextUiToggle from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
-import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
+import {
+  commonAddUiMessages,
+  initI18n,
+  type LocalizedMessages,
+  updateLocaleMessages,
+} from "../../utilities/i18n";
 import { getRundeckContext } from "../../../library";
 import type { UiMessage } from "../../../library/stores/UIStore";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const rundeckContext = getRundeckContext();
 const rootStore = rundeckContext.rootStore;
@@ -51,16 +57,11 @@ async function mountAdhocApp() {
 
       // Provide addUiMessages so components can add translations dynamically
       // This matches the pattern used by ui-socket components
-      vue.provide("addUiMessages", async (messages: UiMessage[]) => {
-        const newMessages = messages.reduce(
-          (acc: any, message: UiMessage) =>
-            message ? { ...acc, ...message } : acc,
-          {},
-        );
-        const locale = rundeckContext.locale || "en_US";
-        const lang = rundeckContext.language || "en";
-        return updateLocaleMessages(i18n, locale, lang, newMessages);
-      });
+      vue.provide(
+        "addUiMessages",
+        async (messages: UiMessage[] | LocalizedMessages) =>
+          commonAddUiMessages(i18n, messages),
+      );
 
       // Load any initial messages that were already registered in rootStore.ui
       // This ensures translations loaded before Vue app initialization are available
@@ -83,6 +84,8 @@ async function mountAdhocApp() {
       vue.use(uiv);
       vue.use(i18n);
       vue.use(VueCookies);
+      // The next UI activity table is built on PrimeVue DataTable/Paginator
+      configurePrimeVue(vue);
       vue.mount(el);
     } catch (error) {
       console.error("[adhoc/main.ts] Error mounting Vue app:", error);

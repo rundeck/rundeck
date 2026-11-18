@@ -4833,6 +4833,36 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return [result:result,total:total]
     }
 
+  /** Persisted Execution properties accepted by {@link ExecutionQuery#sortBy}. */
+  static final Map<String, String> EXECUTION_SORT_FIELDS = [
+    id           : 'id',
+    dateCompleted: 'dateCompleted',
+    user         : 'user'
+  ].asImmutable()
+
+  /**
+   * Builds the criteria ordering for an execution query. Supported sort fields are ordered in the
+   * requested direction with id as tie-breaker; unsupported or absent fields keep the default
+   * dateCompleted desc, id desc order.
+   * @param query execution query providing sortBy and sortOrder
+   * @return closure to be run with a criteria builder delegate
+   */
+  static Closure executionOrder(ExecutionQuery query) {
+    String sortField = EXECUTION_SORT_FIELDS[query.sortBy]
+    String sortDirection = query.sortOrder == 'ascending' ? 'asc' : 'desc'
+    return {
+      if (sortField) {
+        order(sortField, sortDirection)
+        if (sortField != 'id') {
+          order('id', sortDirection)
+        }
+      } else {
+        order('dateCompleted', 'desc')
+        order('id', 'desc')  // Secondary sort by id for consistent pagination (faster than dateStarted)
+      }
+    }
+  }
+
   /**
   * Query executions
   * @param query query
@@ -4858,8 +4888,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           maxResults(max)
         }
         and {
-          order('dateCompleted', 'desc')
-          order('id', 'desc')  // Secondary sort by id for consistent pagination (faster than dateStarted)
+          Closure orderClos = executionOrder(query)
+          orderClos.delegate = delegate
+          orderClos()
         }
       }
     }

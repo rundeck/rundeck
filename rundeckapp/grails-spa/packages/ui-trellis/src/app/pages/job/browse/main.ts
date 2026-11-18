@@ -9,6 +9,7 @@ import {
 } from "../../../../library/stores/JobListFilterStore";
 import { JobPageStoreInjectionKey } from "../../../../library/stores/JobPageStore";
 import { loadJsonData } from "../../../utilities/loadJsonData";
+import { registerPrimeVueTheme } from "../../../../library/utilities/primeVueConfig";
 import JobListPage from "./JobListPage.vue";
 import JobsPage from "./JobsPage.vue";
 import JobsPageHeader from "./JobsPageHeader.vue";
@@ -20,6 +21,9 @@ import JobScheduleInfo from "./tree/JobScheduleInfo.vue";
 import JobScmStatus from "./tree/JobScmStatus.vue";
 
 function init() {
+  // JobsPage (and its Activity table) renders inside the UI socket app, which
+  // was configured from a different entry; give this entry's components the theme.
+  registerPrimeVueTheme();
   const rootStore = getRundeckContext().rootStore;
   const uiMeta = loadJsonData("pageUiMeta");
   const uiType = uiMeta?.uiType || "current";
