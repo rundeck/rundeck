@@ -48,4 +48,15 @@ databaseChangeLog = {
             column(name: "last_login", type: '${timestamp.type}')
         }
     }
+
+    changeSet(author: "rundeckdev", id: "RUN-5152-rduser-password-lower-case-mssql", dbms: 'mssql') {
+        comment{'Rename PASSWORD to lower case so Hibernate resolves the column on case-sensitive collations'}
+        preConditions(onFail: 'MARK_RAN') {
+            sqlCheck(expectedResult: '1', "select count(*) from sys.columns where object_id = OBJECT_ID('rduser') and name COLLATE Latin1_General_BIN = 'PASSWORD'")
+        }
+        sql("""EXEC sp_rename 'rduser.PASSWORD', 'password', 'COLUMN'""")
+        rollback {
+            sql("""EXEC sp_rename 'rduser.password', 'PASSWORD', 'COLUMN'""")
+        }
+    }
  }
