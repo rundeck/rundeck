@@ -752,6 +752,12 @@ class ConfigSpec extends BaseContainer{
         node1.attributes.editUrl == "EditURL"
         node1.attributes.remoteUrl == "RemoteURL"
 
+        when: "Request the aggregated project resources"
+        Map<String, Map> projectNodes = client.get("/project/$projectName/resources", Map)
+
+        then: "The existing out-of-project file source still contributes nodes"
+        projectNodes.node1.nodename == "node1"
+        projectNodes.node1.hostname == "hostname1"
 
         when: "Update the first source with adding a new node"
         def nodeUpdateResponse = doPost("/project/$projectName/source/1/resources", [

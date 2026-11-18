@@ -115,6 +115,7 @@ import PageConfirm from "../../../library/components/utils/PageConfirm.vue";
 import { EventBus } from "../../../library";
 
 export default defineComponent({
+  name: "EditProjectNodeSourceFile",
   components: { PluginConfig, AceEditor, UiSocket, PageConfirm },
   props: {
     eventBus: { type: Object as PropType<typeof EventBus>, required: true },

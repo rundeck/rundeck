@@ -631,6 +631,8 @@ const messages = {
   "project.node.file.source.description.label": "Description",
   "project.nodes.edit.save.error.message": "Error Saving Content:",
   "project.nodes.edit.empty.description": "Note: No content was available.",
+  "project.nodes.edit.file.path.outside.allowed.warning":
+    "This node source uses a file outside the project's allowed paths. Move the file into the project directory or add its base directory to rundeck.resourceModelSource.file.allowedBasePaths.",
   "button.action.Cancel": "Cancel",
   "button.action.Save": "Save",
   "job-edit-page": {

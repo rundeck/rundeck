@@ -41,7 +41,7 @@ context.rootStore.ui.addItems([
             this.nextPageUrl = data.nextPageUrl;
           }
         },
-        template: `<edit-project-node-source-page :index="index"  :next-page-url="nextPageUrl" :eventBus="eventBus" v-if="index>=0"/>`,
+        template: `<edit-project-node-source-page :index="index" :next-page-url="nextPageUrl" :event-bus="eventBus" v-if="index>=0"/>`,
       }),
     ),
   },

@@ -36,9 +36,11 @@
     <g:jsMessages code="page.unsaved.changes"/>
     <asset:stylesheet href="static/css/pages/project-nodes-editor.css"/>
     <asset:javascript src="static/pages/project-nodes-editor.js" defer="defer"/>
-    <g:embedJSON data="${[index:index,nextPageUrl:g.createLink(controller: 'framework',
-                                                           action: 'projectNodeSources',
-                                                           params: [project: project],absolute:true)]}"
+    <g:embedJSON data="${[index      : index,
+                          nextPageUrl: g.createLink(controller: 'framework',
+                                                    action: 'projectNodeSources',
+                                                    params: [project: project],
+                                                    absolute: true)]}"
                  id="editProjectNodeSourceData"></g:embedJSON>
     <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
     <g:javascript>
