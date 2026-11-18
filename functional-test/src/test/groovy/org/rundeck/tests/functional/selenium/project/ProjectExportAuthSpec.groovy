@@ -1,7 +1,11 @@
 package org.rundeck.tests.functional.selenium.project
 
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiMechanism
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.ProjectExportPage
@@ -26,6 +30,9 @@ class ProjectExportAuthSpec extends SeleniumBase {
     public static final String ACLPOLICY_FILE = PROJECT_NAME + ".aclpolicy"
 
     static final String USER_PASSWORD = 'password'
+
+    /** The export wait page is Vue behind the nextUi cookie; legacy KO/GSP is the default. */
+    static final UI_MODES = UiModes.nextUiAndDefault()
 
     def setupSpec() {
         setupProject(PROJECT_NAME)
@@ -110,5 +117,30 @@ class ProjectExportAuthSpec extends SeleniumBase {
         where: "user account with specific authorization is used"
             user        | _
             'AuthTest9' | _
+    }
+
+    /**
+     * AuthTest7 only holds project export + read: it must still be able to complete an export
+     * and reach the ready state with the download button on the wait page.
+     */
+    @UiModeFlag(featureName = 'menu-wait', status = UiModeStatus.NEXT_UI, mechanism = UiMechanism.COOKIE,
+        description = 'Export wait page is Vue behind the nextUi cookie; legacy KO/GSP is the default.')
+    def "export-only user completes the export and sees the ready state"() {
+        given:
+            def loginPage = go LoginPage
+            loginPage.login('AuthTest7', USER_PASSWORD)
+            def projectExportPage = page(ProjectExportPage, PROJECT_NAME, [nextUi: nextUi])
+            projectExportPage.go()
+        when:
+            projectExportPage.exportArchiveButton.click()
+            projectExportPage.waitForWaitPageToken()
+        then: "the expected UI version renders the wait page and it reaches the ready state"
+            projectExportPage.validateWaitPageVersion()
+            projectExportPage.waitForExportReady()
+            projectExportPage.downloadText == "${PROJECT_NAME}.rdproject.jar".toString()
+        cleanup:
+            page TopMenuPage logOut()
+        where:
+            [nextUi] << UI_MODES
     }
 }

@@ -2,6 +2,7 @@ import PtAutoComplete from "./PtAutoComplete/PtAutoComplete.vue";
 import PtEntityAutoComplete from "./PtEntityAutoComplete/PtEntityAutoComplete.vue";
 import PtInput from "./PtInput/PtInput.vue";
 import PtModal from "./PtModal/PtModal.vue";
+import PtProgressBar from "./PtProgressBar/PtProgressBar.vue";
 import PtRadioGroup from "./PtRadioGroup/PtRadioGroup.vue";
 import PtSelect from "./PtSelect/PtSelect.vue";
 import PtSelectButton from "./PtSelectButton/PtSelectButton.vue";
@@ -11,6 +12,7 @@ export {
   PtEntityAutoComplete,
   PtInput,
   PtModal,
+  PtProgressBar,
   PtRadioGroup,
   PtSelect,
   PtSelectButton,

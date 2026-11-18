@@ -22,11 +22,35 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<g:set var="uiType" value="${params.boolean('nextUi') ? 'next' : 'current'}"/>
+<g:set var="waitProject" value="${params.project ?: request.project}"/>
 <html>
 <head>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
     <title><g:message code="archive.request.please.wait.pagetitle.wait" default="Export archive"/></title>
+    <g:if test="${uiType=='next'}">
+        <g:embedJSON id="exportWaitData" data="${[
+                token: token,
+                project: waitProject,
+                ready: ready ? true : false,
+                percentage: percentage ?: 0,
+                instance: params.instance ?: null,
+                iproject: params.iproject ?: null,
+                pollUrl: createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token, instance: params.instance, iproject: params.iproject, format: 'json']),
+                downloadUrl: createLink(controller: 'project', action: 'exportWait', params: [project: waitProject, token: params.token, download: true]),
+                refreshUrl: createLink(controller: 'project', action: 'exportWait', params: [project: waitProject, token: params.token, instance: params.instance, iproject: params.iproject]),
+                returnUrl: createLink(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        ]}"/>
+        <asset:stylesheet src="static/css/pages/menu-wait.css"/>
+        <asset:javascript src="static/pages/menu-wait.js" defer="defer"/>
+        <g:javascript>
+            window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+                "exportWaitData": loadJsonData('exportWaitData')
+            });
+        </g:javascript>
+    </g:if>
+    <g:if test="${uiType!='next'}">
     <asset:javascript src="vendor/knockout.min.js"/>
     <asset:javascript src="vendor/knockout-mapping.js"/>
     <g:embedJSON data="${[
@@ -92,9 +116,18 @@
             ko.applyBindings(request);
         });
     </g:javascript>
+    </g:if>
 </head>
 
 <body>
+<g:if test="${uiType=='next'}">
+<div class="content">
+<div id="layoutBody">
+<div id="menuWaitPage"></div>
+</div>
+</div>
+</g:if>
+<g:if test="${uiType!='next'}">
 <div class="content">
 <div id="layoutBody">
 <div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage() && !errors()">
@@ -226,5 +259,6 @@
 </div>
 </div>
 </div>
+</g:if>
 </body>
 </html>

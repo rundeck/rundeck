@@ -1491,6 +1491,31 @@ const messages = {
   "security.groups.description":
     "The list of groups/roles names provided by the login system. (Cannot be modified via User Profile.)",
   "not.set": "Not set",
+  "progress.bar.percent.complete": "{0}% Complete",
+  "archive.request.please.wait.pagetitle.wait": "[WAIT] Export archive",
+  "archive.request.please.wait.pagetitle.ready": "[READY] Export archive",
+  "archive.request.download.title": "Download an archive of project {project}",
+  "archive.request.will.expire":
+    "This archive will expire after a short time after the initial download.",
+  "archive.request.token.not.found":
+    "The token {token} was not found.  It may have expired.",
+  "archive.request.error": "There was an error exporting the Project Archive",
+  "archive.request.exporting.title":
+    "Exporting an archive of project {project}\u2026",
+  "archive.request.please.wait":
+    "Please wait, your request is being processed.",
+  "export.another.instance.process":
+    "Exporting project {project} to {instance}",
+  "export.another.instance.success":
+    "Archive successfully imported on the new instance",
+  "export.another.instance.goto": "Go to the other instance",
+  "export.another.instance.goto.link": "Go to the other instance",
+  "return.to.configuration": "\u2190 Return",
+  "request.error.notfound.title": "Not Found",
+  "refresh.this.page": "Refresh this page",
+  "refresh.every.5.seconds": "Refresh every 5 seconds",
+  "menu.wait.loading": "Loading...",
+  "menu.wait.request.failed": "Request failed",
 };
 
 export default messages;
