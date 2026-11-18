@@ -19,7 +19,8 @@ tasks.withType(GroovyCompile).configureEach {
     }
     
     def opts=['-Xmx1024m']
-    if(isRunning){
+    if(isRunning || name != 'compileGroovy'){
+        // EXP 03: only main compileGroovy generates the spec; test compiles must not overwrite it
         //disable openapi spec generation during bootRun
         opts.add('-Dmicronaut.openapi.enabled=false')
     }else{

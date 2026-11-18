@@ -609,3 +609,101 @@ tasks.register('verifyBuild', JavaExec) {
     }
     args scriptArgs
 }
+
+// EXP 04: keep in-repo jars out of astTransformationClasspath (breaks if a local project ships an AST transform)
+allprojects {
+    afterEvaluate {
+        tasks.withType(GroovyCompile).configureEach { t ->
+            def root = rootProject.rootDir.path
+            t.astTransformationClasspath = t.astTransformationClasspath.filter { !it.path.startsWith(root) }
+        }
+    }
+}
+
+// EXP 05b: the core manifest date must not invalidate runtime-classpath consumers (GSP, assets)
+allprojects {
+    normalization { runtimeClasspath { metaInf { ignoreAttribute 'Rundeck-Build-Date' } } }
+}
+
+// EXP 07 (G7): assetPluginPackage writes into processResources' output (build/resources/main/META-INF).
+// Give it its own dir and add it to the main output instead. projectsEvaluated runs after the plugin's own afterEvaluate.
+gradle.projectsEvaluated {
+    allprojects { p ->
+        def ext = p.extensions.findByName('assets')
+        def t = p.tasks.findByName('assetPluginPackage')
+        if (t && ext?.packagePlugin?.getOrElse(false)?.toString() == "true") {
+            def dir = p.layout.buildDirectory.dir('asset-plugin').get().asFile
+            t.destinationDirectory.set(new File(dir, 'META-INF'))
+            p.sourceSets.main.output.dir(dir, builtBy: t)
+        }
+    }
+}
+
+// EXP 09b: legacy `sourceJar` (gradle/java.gradle) and java `sourcesJar` write the same -sources.jar -> each sees the
+// other's output as changed. Give the legacy one a distinct classifier.
+allprojects { p ->
+    p.tasks.matching { it.name == 'sourceJar' }.configureEach { it.archiveClassifier.set('sources-legacy') }
+}
+// EXP 09c (= 08b, rundeckapp part): copyPluginLibs has no outputs and rewrites *.jar.properties -> bootWar reruns
+project(':rundeckapp') { p ->
+    p.tasks.matching { it.name == 'copyPluginLibs' }.configureEach { t ->
+        t.inputs.files(p.configurations.pluginFiles)
+        t.inputs.property('version', p.version.toString())
+        t.outputs.dir(p.layout.buildDirectory.dir('WEB-INF/rundeck/plugins'))
+    }
+}
+
+// EXP 11: on a detached HEAD git-build-info joins the refs from a HashMap, so gitBranch's order
+// differs between clones of the same commit and breaks build-cache keys. Sort it.
+allprojects {
+    plugins.withId('org.dvaske.gradle.git-build-info') {
+        def b = project.ext.gitBranch?.toString()
+        if (b?.contains(',')) { project.ext.gitBranch = b.split(',')*.trim().sort().join(', ') }
+    }
+}
+
+// EXP 12 (E7): compiler fork jvmArgs carry absolute paths (-Dmicronaut.openapi.target.file=..., -Dbase.dir=...),
+// so the build-cache key differs per checkout dir. Move them to a provider whose cache input is the relative path.
+class RootRelativeJvmArg implements org.gradle.process.CommandLineArgumentProvider {
+    @org.gradle.api.tasks.Input String key
+    @org.gradle.api.tasks.Input String rel
+    @org.gradle.api.tasks.Internal String root
+    Iterable<String> asArguments() { ["-D${key}=${rel.split(';').collect { it.startsWith('@ROOT@') ? root + it.substring(6) : it }.join(';')}".toString()] }
+}
+gradle.projectsEvaluated {
+    def root = rootProject.rootDir.canonicalPath
+    allprojects { p ->
+        p.tasks.withType(GroovyCompile).each { t ->
+            def fo = t.groovyOptions.forkOptions
+            def moved = fo.jvmArgs.findAll { it.startsWith('-D') && it.contains(root) }
+            if (moved) {
+                fo.jvmArgs = fo.jvmArgs - moved
+                moved.each { a ->
+                    def kv = a.substring(2).split('=', 2)
+                    fo.jvmArgumentProviders.add(new RootRelativeJvmArg(key: kv[0], rel: kv[1].replace(root, '@ROOT@'), root: root))
+                }
+            }
+        }
+    }
+}
+
+// EXP 13 (E7): compiled GSP classes carry `public static final long LAST_MODIFIED = <source mtime>`, a constant
+// in the ABI. A fresh clone has fresh mtimes, so plugin jars' ABI differs per checkout and every consumer misses
+// the cache. Pin the .gsp mtimes before compiling (content-based inputs are unaffected).
+// Known residue: compileGroovyPages itself still misses across checkouts ("additional actions have changed",
+// from actions the Grails/GSP setup adds); a separate pin task (v2) did not change that and added misses.
+allprojects {
+    tasks.matching { it.name == 'compileGroovyPages' }.configureEach { t ->
+        t.doFirst { t.source.files.each { it.setLastModified(946684800000L) } }
+    }
+}
+
+// CI only: keep large, cheap-to-rebuild archives out of the build cache (jar stays cached: plugin zips and
+// copy tasks hash its bytes, so rebuilding it with new timestamps would make them miss).
+if (System.getenv("CI")) {
+    allprojects {
+        tasks.matching { it.name in ["war", "bootWar", "packageWar", "shadowJar"] }.configureEach {
+            it.outputs.doNotCacheIf("large archive, cheap to rebuild") { true }
+        }
+    }
+}

@@ -1,6 +1,10 @@
 version: 2.1
 
 parameters:
+  seed-build-cache:
+    type: boolean
+    default: false
+    description: Save the Gradle task-output cache from a non-main branch
   disable-wizcli-scan:
     type: boolean
     default: true
@@ -169,11 +173,16 @@ commands:
   restore-build-cache:
     description: Restore Build cache
     steps:
+      - run:
+          name: Hash dependency declarations
+          command: |
+            { cat gradle.properties gradle/wrapper/gradle-wrapper.properties
+              find . \( -name build.gradle -o -name settings.gradle \) -not -path '*/node_modules/*' -not -path '*/build/*' | sort | xargs cat
+            } | sha256sum > /tmp/deps.sha
       - restore_cache:
           keys:
-            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
-            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-
-            - cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-
+            - deps-v3-{{ checksum "/tmp/deps.sha" }}
+            - deps-v3-
 
   #Save gradle cache
   save-build-cache:
@@ -184,7 +193,49 @@ commands:
             - ~/.gradle/wrapper
             - ~/.gradle/caches/modules-2  # Dependency metadata only
             - ~/.gradle/caches/jars-9     # Downloaded JARs only
-          key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
+          key: deps-v3-{{ checksum "/tmp/deps.sha" }}
+
+  # Gradle task-output (build) cache: one key per day, written only from main (or a seeding pipeline),
+  # restored from the newest. Entries written more than 2 days ago are pruned before saving.
+  restore-gradle-task-cache:
+    description: Restore Gradle task-output cache
+    steps:
+      - run:
+          name: Build cache day key
+          command: date -u +%F > /tmp/bc-day.txt
+      - restore_cache:
+          keys:
+            - gradle-bc-v2-{{ checksum "/tmp/bc-day.txt" }}
+            - gradle-bc-v2-
+
+  save-gradle-task-cache:
+    description: Prune and save Gradle task-output cache (main or seed-build-cache only)
+    steps:
+      - when:
+          condition:
+            or:
+              - equal: [ main, << pipeline.git.branch >> ]
+              - << pipeline.parameters.seed-build-cache >>
+          steps:
+            - run:
+                when: always
+                name: Prune Gradle task-output cache
+                command: |
+                  D=~/.gradle/caches/build-cache-1
+                  mkdir -p "$D"
+                  echo "before prune: $(du -sh "$D" | cut -f1), $(find "$D" -type f -name '[0-9a-f]*' | wc -l) entries"
+                  find "$D" -type f -name '[0-9a-f]*' -mtime +2 -delete
+                  echo "after prune:  $(du -sh "$D" | cut -f1), $(find "$D" -type f -name '[0-9a-f]*' | wc -l) entries"
+                  KB=$(du -sk "$D" | cut -f1)
+                  if [ "$KB" -gt 1572864 ]; then
+                    echo "Gradle task-output cache is ${KB} KB, over the 1.5 GB cap: NOT saving it"
+                    circleci-agent step halt
+                  fi
+            - save_cache:
+                when: always
+                paths:
+                  - ~/.gradle/caches/build-cache-1
+                key: gradle-bc-v2-{{ checksum "/tmp/bc-day.txt" }}
 
   ## Deps Installers quick references.
   # Install node
@@ -310,6 +361,7 @@ jobs:
       - install-ui-trellis-packages
       - install-package-manager-packages
       - restore-build-cache
+      - restore-gradle-task-cache
       - run-build-step:
           step-name: Build War
           command: rundeck_war_build
@@ -383,11 +435,12 @@ jobs:
       - install-ui-trellis-packages
       - install-package-manager-packages
       - restore-build-cache
+      - restore-gradle-task-cache
       - run-build-step:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
       - collect-gradle-tests
-      - save-build-cache
+      - save-gradle-task-cache
 
   # Run UI Tests
   test-gui:
@@ -593,7 +646,6 @@ jobs:
       - run-build-step:
           step-name: Publish war
           command: packaging_publish_war
-      - save-build-cache
 
   # Test packaging
   packaging-test:
@@ -624,7 +676,6 @@ jobs:
       - run-build-step:
           step-name: T Packages
           command: packaging_test_packages
-      - save-build-cache
       - store_artifacts:
           path: ~/workspace/packaging/packaging/build/distributions
 

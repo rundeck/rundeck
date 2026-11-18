@@ -85,7 +85,7 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
 
     args = [ 'version' ]
 
-    if (findProperty('environment')?:'development' == 'release' || project.buildType == 'release') {
+    if ((findProperty('environment')?:'development') == 'release' || findProperty('buildType') == 'release') {
         if (project.vTag == 'GA') {
             args.add("${project.vNum}".toString())
         }
