@@ -282,7 +282,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
             maxDaysToKeep: tryParseInt(properties.get("project.execution.history.cleanup.retention.days")).orElse(-1),
             minimumExecutionToKeep: tryParseInt(properties.get("project.execution.history.cleanup.retention.minimum")).
                 orElse(0),
-            maximumDeletionSize: tryParseInt(properties.get("project.execution.history.cleanup.batch")).orElse(500)
+            maximumDeletionSize: tryParseInt(properties.get("project.execution.history.cleanup.batch")).orElse(500),
+            executionsToKeepPerJob: tryParseInt(properties.get("project.execution.history.cleanup.retention.perJob")).
+                orElse(0)
         )
     }
 
@@ -389,6 +391,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                                 maxDaysToKeep         : config.maxDaysToKeep,
                                 minimumExecutionToKeep: config.minimumExecutionToKeep,
                                 maximumDeletionSize   : config.maximumDeletionSize,
+                                executionsToKeepPerJob: config.executionsToKeepPerJob,
                                 project               : project,
                                 logFileStorageService : logFileStorageService,
                                 fileUploadService     : fileUploadService,

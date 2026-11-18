@@ -774,6 +774,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 getMaxDaysToKeep()>>1
                 getMaximumDeletionSize()>>2
                 getMinimumExecutionToKeep()>>3
+                getExecutionsToKeepPerJob()>>4
             }
             service.scheduledExecutionService = Mock(ScheduledExecutionService)
             service.configurationService = Mock(ConfigurationService){
@@ -783,7 +784,10 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             service.scheduleCleanerExecutions(project, config)
         then:
             1 * service.scheduledExecutionService.deleteCleanerExecutionsJob(project)
-            1 * service.scheduledExecutionService.scheduleCleanerExecutionsJob(project, 'cron1', { it.maxDaysToKeep==1 && it.maximumDeletionSize==2 && it.minimumExecutionToKeep==3 })
+            1 * service.scheduledExecutionService.scheduleCleanerExecutionsJob(project, 'cron1', {
+                it.maxDaysToKeep==1 && it.maximumDeletionSize==2 && it.minimumExecutionToKeep==3 &&
+                it.executionsToKeepPerJob==4
+            })
     }
     def "getProjectCleanerExecutionsScheduledConfig"(){
         given:
@@ -799,6 +803,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                     'project.execution.history.cleanup.retention.days'   : days,
                     'project.execution.history.cleanup.retention.minimum': min,
                     'project.execution.history.cleanup.batch'            : batch,
+                    'project.execution.history.cleanup.retention.perJob' : perJob,
                 ]
             }
         when:
@@ -809,17 +814,18 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
             result.maxDaysToKeep == expectDays
             result.minimumExecutionToKeep == expectMin
             result.maximumDeletionSize == expectBatch
+            result.executionsToKeepPerJob == expectPerJob
         where:
-            enabled | expectEnabled | days   | expectDays | min    | expectMin | batch  | expectBatch
-            'true'  | true          | '1'    | 1          | '2'    | 2         | '3'    | 3
-            'true'  | true          | '1'    | 1          | '2'    | 2         | null   | 500
-            'true'  | true          | '1'    | 1          | '2'    | 2         | 'asdf' | 500
-            'true'  | true          | '1'    | 1          | null   | 0         | null   | 500
-            'true'  | true          | '1'    | 1          | 'asdf' | 0         | null   | 500
-            'true'  | true          | null   | -1         | null   | 0         | null   | 500
-            'true'  | true          | 'asdf' | -1         | null   | 0         | null   | 500
-            null    | false         | null   | -1         | null   | 0         | null   | 500
-            'false' | false         | null   | -1         | null   | 0         | null   | 500
+            enabled | expectEnabled | days   | expectDays | min    | expectMin | batch  | expectBatch | perJob | expectPerJob
+            'true'  | true          | '1'    | 1          | '2'    | 2         | '3'    | 3           | '4'    | 4
+            'true'  | true          | '1'    | 1          | '2'    | 2         | null   | 500         | null   | 0
+            'true'  | true          | '1'    | 1          | '2'    | 2         | 'asdf' | 500         | 'asdf' | 0
+            'true'  | true          | '1'    | 1          | null   | 0         | null   | 500         | null   | 0
+            'true'  | true          | '1'    | 1          | 'asdf' | 0         | null   | 500         | null   | 0
+            'true'  | true          | null   | -1         | null   | 0         | null   | 500         | null   | 0
+            'true'  | true          | 'asdf' | -1         | null   | 0         | null   | 500         | null   | 0
+            null    | false         | null   | -1         | null   | 0         | null   | 500         | null   | 0
+            'false' | false         | null   | -1         | null   | 0         | null   | 500         | null   | 0
 
     }
     def "refresh session projects uses cache with feature flag"() {

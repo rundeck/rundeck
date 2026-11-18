@@ -781,6 +781,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             params.cleanerHistory = 'on'
             params.cleanperiod = '1'
             params.minimumtokeep = '2'
+            params.minimumtokeepperjob = '4'
             params.maximumdeletionsize = '3'
             params.crontabString = 'crontab1'
 
@@ -793,7 +794,8 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             response.status == 302
             request.errors == null
             1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
-                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
+                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3 &&
+                it.executionsToKeepPerJob==4
             })
 
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
@@ -1738,6 +1740,7 @@ project.label=A Label
             params.cleanerHistory = 'on'
             params.cleanperiod = '1'
             params.minimumtokeep = '2'
+            params.minimumtokeepperjob = '4'
             params.maximumdeletionsize = '3'
             params.crontabString = 'crontab1'
         when:
@@ -1746,7 +1749,8 @@ project.label=A Label
 
         then:
             1 * controller.frameworkService.scheduleCleanerExecutions('TestSaveProject',{
-                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
+                it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3 &&
+                it.executionsToKeepPerJob==4
             })
             response.status == 302
             request.errors == null

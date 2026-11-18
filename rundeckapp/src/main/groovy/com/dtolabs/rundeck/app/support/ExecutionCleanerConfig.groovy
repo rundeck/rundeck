@@ -12,4 +12,9 @@ interface ExecutionCleanerConfig {
     String getCronExpression()
     int getMinimumExecutionToKeep()
     int getMaximumDeletionSize()
+
+    /**
+     * @return number of most recent completed executions to keep for each job, 0 to disable
+     */
+    int getExecutionsToKeepPerJob()
 }
