@@ -39,6 +39,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get -y --no-install-recommends install \
         acl \
+        ca-certificates \
         curl \
         gnupg2 \
         ssh-client \
