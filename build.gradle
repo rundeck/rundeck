@@ -697,3 +697,13 @@ allprojects {
         t.doFirst { t.source.files.each { it.setLastModified(946684800000L) } }
     }
 }
+
+// CI only: keep large, cheap-to-rebuild archives out of the build cache (jar stays cached: plugin zips and
+// copy tasks hash its bytes, so rebuilding it with new timestamps would make them miss).
+if (System.getenv("CI")) {
+    allprojects {
+        tasks.matching { it.name in ["war", "bootWar", "packageWar", "shadowJar"] }.configureEach {
+            it.outputs.doNotCacheIf("large archive, cheap to rebuild") { true }
+        }
+    }
+}
