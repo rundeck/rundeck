@@ -30,7 +30,7 @@ class S3Container extends GenericContainer<S3Container> {
 
     S3Container() {
         // renovate: datasource=docker depName=rustfs/rustfs
-        this("rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff")
+        this("rustfs/rustfs:1.0.4@sha256:ed9210d6411d77ffceb70d94b964a3cb7d225983368bc25bebe01e995293dcc2")
     }
 
     S3Container(String dockerImageName) {

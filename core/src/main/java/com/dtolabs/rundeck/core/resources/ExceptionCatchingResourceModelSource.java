@@ -71,7 +71,7 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
     }
 
     private void logException(Throwable e) {
-        logger.error(null != identity ? identity + " " : "" + e.getMessage(), e);
+        logger.error((null != identity ? identity + " " : "") + e.getMessage(), e);
     }
 
     /**

@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -1357,7 +1358,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
                 ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
                 loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
-                        args, jobcontext, secureOptionNodeDeferred)
+                        args, jobcontext, secureOptionNodeDeferred, { String msg -> loghandler.logWarn(msg) })
             }
             String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
@@ -1610,6 +1611,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 )
             }
             return false;
+        } catch (Exception e) {
+            // Storage plugins (e.g. CyberArk) may throw unchecked errors such as NPE
+            log.error("Error checking key storage path ${storagePath}", e)
+            if (failIfMissing) {
+                throw new ExecutionServiceException(
+                        "Could not read password, storage path ${storagePath}: Key Storage plugin error " +
+                        "(${e.class.simpleName}): ${e.message ?: 'no message'}",
+                        e
+                )
+            }
+            return false
         }
     }
 
@@ -1631,6 +1643,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param secureOptsExposed exposed secure option values
      * @param secureOpts private secure option values
      * @param authContext auth context
+     * @param jobLogWarning optional callback that receives a message for each option whose default value could not
+     *                      be loaded from key storage and was not required to fail the execution, so that it can
+     *                      be written to the job log
      */
     void loadSecureOptionStorageDefaults(
             ScheduledExecution scheduledExecution,
@@ -1640,7 +1655,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean failIfMissingRequired=false,
             Map<String, String> args = null,
             Map<String, String> job = null,
-            Map secureOptionNodeDeferred = null
+            Map secureOptionNodeDeferred = null,
+            Closure jobLogWarning = null
     )
     {
         def found = scheduledExecution.options?.findAll {
@@ -1672,11 +1688,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         password = defStoragePath //to be resolved later
                         exists=true
                     }else {
-                        if(keystore.hasPassword(defStoragePath)){
-                            password = keystore.readPassword(defStoragePath)
-                            exists=true
-                        }else{
-                            failMessage = "path not found"
+                        try {
+                            if(keystore.hasPassword(defStoragePath)){
+                                password = keystore.readPassword(defStoragePath)
+                                exists=true
+                            }else{
+                                failMessage = "path not found"
+                            }
+                        } catch (StorageException e) {
+                            throw e
+                        } catch (Exception e) {
+                            // Storage plugins (e.g. CyberArk) may throw unchecked errors such as NPE
+                            failMessage = "Key Storage plugin error (${e.class.simpleName}): ${e.message ?: 'no message'}"
+                            log.error("Error reading key storage path ${defStoragePath} for option '${it.name}'", e)
                         }
                     }
                     if(exists){
@@ -1703,10 +1727,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                         "path: ${defStoragePath}: ${failMessage}"
                         )
                     } else {
-                        log.warn(
-                                "Option '${it.name}' default value could not be loaded from key storage " +
-                                        "path: ${defStoragePath}: ${failMessage}"
-                        )
+                        String warning = "Option '${it.name}' default value could not be loaded from key storage " +
+                                "path: ${defStoragePath}: ${failMessage}"
+                        log.warn(warning)
+                        jobLogWarning?.call(warning)
                     }
                 }
             }
@@ -4233,7 +4257,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext['user.name'] = jobcontext.username
 
         def secureOptionNodeDeferred = [:]
-        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,plainOpts,jobcontext, secureOptionNodeDeferred)
+        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,plainOpts,jobcontext, secureOptionNodeDeferred,
+                { String msg -> executionContext.getExecutionListener()?.log(com.dtolabs.rundeck.core.Constants.WARN_LEVEL, msg) })
 
         //validate the option values
         if(dovalidate){
@@ -4658,7 +4683,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Execute a subworkflow from the Step (only for Workflow Steps)
      * @param executionContext the execution context
      * @param runnerExecutionItem the runner execution item containing the subworkflow
-     * @return StepExecutionResult
+     * @return StepExecutionResult with nested workflow output copied to the parent context
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     private def runSubworkflowExecutionItem(
@@ -4702,6 +4727,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 return executionUtilService.runRefJobWithTimer(thread, startTime, false, 0)
             }
 
+            copySubworkflowOutput(executionContext, wresult.result)
+
             // Process result after the workflow completes
             if (!wresult.result || !wresult.result.success || wresult.interrupt) {
                 String errors = ""
@@ -4723,6 +4750,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionContext.getExecutionListener().log(0, msg)
             log.error(msg, e)
             throw new StepException(msg,StepFailureReason.Unknown)
+        }
+    }
+
+    /**
+     * Copies output produced by a nested workflow into the parent step output context.
+     *
+     * @param executionContext parent step execution context
+     * @param workflowResult nested workflow result
+     */
+    private static void copySubworkflowOutput(
+            StepExecutionContext executionContext,
+            Object workflowResult
+    ) {
+        if (!(workflowResult instanceof WorkflowExecutionResult) || !executionContext.outputContext) {
+            return
+        }
+        DataContext aggregateData = workflowResult.sharedContext?.getData(ContextView.global())
+        aggregateData?.getData()?.each { String group, Map<String, String> values ->
+            executionContext.outputContext.addOutput(group, values)
         }
     }
 

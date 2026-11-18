@@ -15,6 +15,39 @@ const messages = {
       cancel: "Annuler",
       ok: "OK",
     },
+    datePicker: {
+      clear: "Nettoyer",
+      month: "Mois",
+      year: "An",
+      today: "Aujourd\u02bchui",
+      month1: "Janvier",
+      month2: "F\u00e9vrier",
+      month3: "Mars",
+      month4: "Avril",
+      month5: "Mai",
+      month6: "Juin",
+      month7: "Juillet",
+      month8: "Ao\u00fbt",
+      month9: "Septembre",
+      month10: "Octobre",
+      month11: "Novembre",
+      month12: "D\u00e9cembre",
+      week1: "Lun",
+      week2: "Mar",
+      week3: "Mer",
+      week4: "Jeu",
+      week5: "Ven",
+      week6: "Sam",
+      week7: "Dim",
+    },
+    timePicker: {
+      am: "AM",
+      pm: "PM",
+    },
+    multiSelect: {
+      placeholder: "S\u00e9lectionner...",
+      filterPlaceholder: "Rechercher...",
+    },
   },
   cron: {
     section: {
@@ -51,14 +84,14 @@ const messages = {
   message_domainUserLastNameLabel: "Nom",
   message_domainUserEmailLabel: "Email",
   message_domainUserLabel: "Utilisateur",
-  message_pageUsersTokensLabel: "N\u00BA Jetons",
+  message_pageUsersTokensLabel: "N\u00ba Jetons",
   message_pageUsersTokensHelp:
     "Vous pouvez adminisitrer les jetons depuis la page de profil utilisateur.",
-  message_pageUsersLoggedStatus: "Status",
+  message_pageUsersLoggedStatus: "Statut",
   message_pageUserLoggedOnly: "Utilisateurs connect\u00e9s uniquement",
   message_pageUserNotSet: "Non d\u00e9fini",
   message_pageUserNone: "Aucun",
-  message_pageFilterLogin: "Login",
+  message_pageFilterLogin: "Identifiant",
   message_pageFilterHostName: "Nom d\u02bch\u00f4te",
   message_pageFilterSessionID: "ID de session",
   message_pageFilterBtnSearch: "Rechercher",
@@ -124,8 +157,6 @@ const messages = {
   "in.of": "dans",
   execution: "Ex\u00e9cution | Ex\u00e9cutions",
   "execution.count": "1 Ex\u00e9cution | {0} Ex\u00e9cutions",
-  "Bulk Delete Executions: R\u00e9sultats":
-    "Suppression en masse des ex\u00e9cutions: R\u00e9sultats",
   "Requesting bulk delete, please wait.":
     "Demande de suppression en masse, veuillez patienter.",
   "bulkresult.attempted.text":
@@ -169,7 +200,6 @@ const messages = {
   failed: "\u00e9chou\u00e9",
   ok: "ok",
   "0.total": "{0} total",
-
   period: {
     label: {
       All: "n\u02bcimporte quand",
@@ -188,7 +218,6 @@ const messages = {
   "The Node Source had an error":
     "La source de n\u0153ud a rencontr\u00e9 une erreur",
   "Validation errors": "Erreurs de validation",
-
   "unauthorized.status.help.1":
     "Certaines sources de n\u0153ud ont renvoy\u00e9 un message 'Non autoris\u00e9'.",
   "unauthorized.status.help.2":
@@ -205,7 +234,7 @@ const messages = {
   "use.the.node.sources.tab.1": "Utiliser le ",
   "no.modifiable.sources.found": "Aucune source modifiable trouv\u00e9e",
   "framework.service.NodeEnhancer.explanation":
-    "Les Node Enhancers peuvent modifier les donn\u00e9es charg\u00e9es \u00e0 partir des sources de nœuds",
+    "Les Node Enhancers peuvent modifier les donn\u00e9es charg\u00e9es \u00e0 partir des sources de n\u0153uds",
   "framework.service.NodeEnhancer.label.short.plural": "Enhancers",
   "modifiable.node.sources.will.appear.here":
     "Les sources de n\u0153uds modifiables appara\u00cetront ici",
@@ -214,20 +243,16 @@ const messages = {
   "add.node.source": "Ajouter une nouvelle source de n\u0153ud",
   "nodes.title": "N\u0153uds",
   "project.edit.ResourceModelSource.explanation":
-    "Sources de nœuds pour le projet. Les sources sont chargées dans l'ordre défini, les sources ultérieures remplaçant les précédentes. (Vous pouvez utiliser {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
-
+    "Sources de n\u0153uds pour le projet. Les sources sont charg\u00e9es dans l\u02bcordre d\u00e9fini, les sources ult\u00e9rieures rempla\u00e7ant les pr\u00e9c\u00e9dentes. (Vous pouvez utiliser {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
   "acl.config.link.title":
     "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
   "acl.config.system.link.title":
     "Param\u00e8tres syst\u00e8me > Contr\u00f4le d\u02bcacc\u00e8s",
   "acl.example.summary": "Exemple de strat\u00e9gie ACL",
-
   "empty.message.default":
     "Aucune configuration trouv\u00e9e. Cliquez sur {0} pour ajouter un nouveau plugin.",
-
   "page.keyStorage.description":
     "Le stockage de cl\u00e9s fournit une structure globale de type r\u00e9pertoire pour enregistrer les cl\u00e9s et mots de passe publics et priv\u00e9s, \u00e0 utiliser avec l\u02bcauthentification des n\u0153uds d\u02bcex\u00e9cution..",
-
   "bulk.delete": "Suppression en masse",
   "select.none": "Ne rien s\u00e9lectionner",
   "select.all": "Tout s\u00e9lectionner",
@@ -259,14 +284,14 @@ const messages = {
   no: "Non",
   "node.access.not-runnable.message":
     "Vous n\u02bcavez pas acc\u00e8s \u00e0 l\u02bcex\u00e9cution de commandes sur ce n\u0153ud.",
-  "Node.count.vue": "Node | Nodes",
+  "Node.count.vue": "N\u0153uds | N\u0153ud | N\u0153uds",
   "node.filter": "Filtre de n\u0153ud",
   "node.filter.exclude": "Exclure le filtre",
   "node.metadata.os": "Syst\u00e8me d\u02bcexploitation",
-  "node.metadata.status": "Status",
+  "node.metadata.status": "Statut",
   nodes: "N\u0153uds :",
   "notification.event.onfailure": "En cas d\u02bc\u00e9chec",
-  "edit.nodes.header": "Modifier les nœuds",
+  "edit.nodes.header": "Modifier les n\u0153uds",
   "notification.event.onsuccess": "En cas de succ\u00e8s",
   "notification.event.onstart": "Au d\u00e9marrage",
   "notification.event.onavgduration": "Dur\u00e9e moyenne d\u00e9pass\u00e9e",
@@ -333,21 +358,13 @@ const messages = {
   "scheduledExecution.property.nodesSelectedByDefault.true.description":
     "Les n\u0153uds cibles sont s\u00e9lectionn\u00e9s par d\u00e9faut",
   "scheduledExecution.property.notifyAvgDurationThreshold.description":
-    "Ajoutez ou d\u00e9finissez une valeur de seuil \u00e0 la dur\u00e9e moyenne pour d\u00e9clencher les notifications.\n\n" +
-    "- pourcentage => ex .: 20%\n" +
-    "- temps delta => ex .: + 20s, +20\n" +
-    "- temps absolu => 30s, 5m\n" +
-    "Utilisez `s`,`m`,`h`,`d`,`w`,`y` etc. comme unit\u00e9s de temps pour les secondes, les minutes, les heures, etc..." +
-    "L\u02bcunit\u00e9 de temps par d\u00e9faut sera la seconde si elle n\u02bcest pas sp\u00e9cifi\u00e9e\n" +
-    "Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
+    "Ajoutez ou d\u00e9finissez une valeur de seuil \u00e0 la dur\u00e9e moyenne pour d\u00e9clencher les notifications.\n\n- pourcentage => ex .: 20%\n- temps delta => ex .: + 20s, +20\n- temps absolu => 30s, 5m\nUtilisez `s`,`m`,`h`,`d`,`w`,`y` etc. comme unit\u00e9s de temps pour les secondes, les minutes, les heures, etc...L\u02bcunit\u00e9 de temps par d\u00e9faut sera la seconde si elle n\u02bcest pas sp\u00e9cifi\u00e9e\nPeut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
   "scheduledExecution.property.notifyAvgDurationThreshold.label": "Seuil",
   "scheduledExecution.property.orchestrator.label": "Orchestrateur",
   "scheduledExecution.property.orchestrator.description":
     "Cela peut \u00eatre utilis\u00e9 pour contr\u00f4ler l\u02bcordre et le moment dans lesquels les n\u0153uds sont trait\u00e9s",
   "scheduledExecution.property.retry.delay.description":
-    "Le temps entre l\u02bcchec de l\u02bcex\u00e9cution et la nouvelle tentative. Temps en secondes, " +
-    'ou pr\u00e9cisez les unit\u00e9s de temps : "120m", "2h", "3d". Utilisez vide ou 0 pour indiquer aucun d\u00e9lai. Peut inclure la valeur de l\u02bcoption ' +
-    "r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}delay{'}'}\".",
+    "Le temps entre l\u02bcchec de l\u02bcex\u00e9cution et la nouvelle tentative. Temps en secondes, ou pr\u00e9cisez les unit\u00e9s de temps : \"120m\", \"2h\", \"3d\". Utilisez vide ou 0 pour indiquer aucun d\u00e9lai. Peut inclure la valeur de l\u02bcoption r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}delay{'}'}\".",
   "scheduledExecution.property.retry.description":
     "Nombre maximal de tentatives de r\u00e9-ex\u00e9cution lorsque ce traitement est directement appel\u00e9. Une nouvelle tentative se produira si le traitement \u00e9choue ou expire, mais pas s\u02bcil est tu\u00e9 manuellement. Peut utiliser une r\u00e9f\u00e9rence de valeur d\u02bcoption comme \"{'$'}{'{'}option{'.'}retry{'}'}\".",
   "scheduledExecution.property.successOnEmptyNodeFilter.false.description":
@@ -357,9 +374,7 @@ const messages = {
   "scheduledExecution.property.successOnEmptyNodeFilter.true.description":
     "Poursuivre l\u02bcex\u00e9cution",
   "scheduledExecution.property.timeout.description":
-    "Dur\u00e9e maximale d\u02bcex\u00e9cution d\u02bcune ex\u00e9cution. Temps en secondes, " +
-    'ou pr\u00e9cisez les unit\u00e9s de temps : "120m", "2h", "3d". Utilisez vide ou 0 pour indiquer qu\u02bcil n\u02bcy a pas de d\u00e9lai d\u02bcattente. Peut inclure la valeur de l\u02bcoption ' +
-    "r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}timeout{'}'}\".",
+    "Dur\u00e9e maximale d\u02bcex\u00e9cution d\u02bcune ex\u00e9cution. Temps en secondes, ou pr\u00e9cisez les unit\u00e9s de temps : \"120m\", \"2h\", \"3d\". Utilisez vide ou 0 pour indiquer qu\u02bcil n\u02bcy a pas de d\u00e9lai d\u02bcattente. Peut inclure la valeur de l\u02bcoption r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}timeout{'}'}\".",
   "scheduledExecution.property.scheduleEnabled.description":
     "Autoriser ce traitement \u00e0 \u00eatre planifi\u00e9 ?",
   "scheduledExecution.property.scheduleEnabled.label":
@@ -376,7 +391,6 @@ const messages = {
   "set.as.default.filter": "D\u00e9finir comme filtre par d\u00e9faut",
   "show.all.nodes": "Afficher tous les n\u0153uds",
   yes: "Oui",
-  // job query field labels
   "jobquery.title.titleFilter": "Commande Adhoc",
   "jobquery.title.contextFilter": "Le contexte",
   "jobquery.title.actionFilter": "action",
@@ -444,7 +458,7 @@ const messages = {
     "nodes-tab-title": "N\u0153uds & Runners",
     "node-dispatch-true-label": "Envoi aux n\u0153uds via le Runner",
     "node-dispatch-false-label": "Ex\u00e9cuter sur le Runner",
-    "section-title": "Dispatch",
+    "section-title": "Envoi",
     "section-title-help":
       "Choisissez le Runner et les n\u0153uds s\u00e9lectionn\u00e9s",
   },
@@ -480,7 +494,7 @@ const messages = {
     "Ex\u00e9cuter une commande sur {0} {1}",
   "create.a.job.for.count.nodes.ellipsis":
     "Cr\u00e9er un traitement pour {0} {1}",
-  "resource.metadata.entity.tags": "Tags",
+  "resource.metadata.entity.tags": "Mots cl\u00e9s",
   filters: "Filtres",
   "all.nodes": "Tous les n\u0153uds",
   "delete.this.filter.ellipsis": "Supprimer ce filtre...",
@@ -495,7 +509,7 @@ const messages = {
   "node.changes.success":
     "Les modifications de n\u0153ud ont \u00e9t\u00e9 enregistr\u00e9es avec succ\u00e8s.",
   "node.changes.notsaved":
-    "Les modifications de n\u0153ud n\u0027ont pas \u00e9t\u00e9 enregistr\u00e9es.",
+    "Les modifications de n\u0153ud n\u02bcont pas \u00e9t\u00e9 enregistr\u00e9es.",
   "node.remoteEdit.edit": "Modifier le n\u0153ud:",
   "node.remoteEdit.continue": "Continuer...",
   node: "N\u0153ud",
@@ -515,11 +529,11 @@ const messages = {
   "node.metadata.osVersion": "Version d\u02bcOS",
   "node.metadata.type": "Type",
   "node.metadata.username": "Utilisateur",
-  "node.metadata.tags": "Tags",
+  "node.metadata.tags": "Mots cl\u00e9s",
   "button.Edit.label": "Modifier",
   "default.paginate.prev": "-",
   "default.paginate.next": "+",
-  "jump.to": "Sauter \u00e0\:",
+  "jump.to": "Sauter \u00e0:",
   "per.page": "Par page",
   "remove.default.filter": "Supprimer le filtre par d\u00e9faut",
   "scheduledExecution.action.edit.button.label": "Modifier ce traitement...",
@@ -553,10 +567,9 @@ const messages = {
     "L\u02bcex\u00e9cution du traitement est d\u00e9sactiv\u00e9e",
   "delete.this.job": "Supprimer ce traitement",
   "action.prepareAndRun.tooltip":
-    "Choisir les options et lancer l\u02bcex\u00e9cution du traitement…",
+    "Choisir les options et lancer l\u02bcex\u00e9cution du traitement\u2026",
   "job.bulk.modify.confirm.panel.title":
     "Confirmer la modification du traitement en masse",
-
   "job.bulk.delete.confirm.message":
     "Voulez-vous vraiment supprimer les traitements s\u00e9lectionn\u00e9s ?",
   "job.bulk.disable_schedule.confirm.message":
@@ -567,7 +580,6 @@ const messages = {
     "D\u00e9planifier l\u02bcex\u00e9cution pour tous les traitements s\u00e9lectionn\u00e9s ?",
   "job.bulk.enable_execution.confirm.message":
     "Activer l\u02bcex\u00e9cution pour tous les traitements s\u00e9lectionn\u00e9s ?",
-
   "job.bulk.disable_schedule.button": "D\u00e9sactiver les planifications",
   "job.bulk.enable_schedule.button": "Activer les planifications",
   "job.bulk.delete.button": "Supprimer les traitements",
@@ -590,7 +602,7 @@ const messages = {
   "job.upload.button.title": "Charger une d\u00e9finition de traitement",
   cancel: "Annuler",
   "job.actions": "Actions de traitement",
-  "job.bulk.activate.menu.label": "Modification en masse…",
+  "job.bulk.activate.menu.label": "Modification en masse\u2026",
   "job.bulk.deactivate.menu.label": "Quitter le mode d'\u00e9dition en masse",
   "upload.definition.button.label": "Charger une d\u00e9finition",
   "new.job.button.label": "Nouveau traitement",
@@ -638,7 +650,7 @@ const messages = {
     "Export: Les modifications \u00e0 distance doivent \u00eatre synchronis\u00e9es",
   "scm.export.status.LOADING.display.text": "En cours de chargement",
   "scm.export.status.EXPORT_NEEDED.description":
-    "Statut d\u02bcexportation \: modifi\u00e9",
+    "Statut d\u02bcexportation : modifi\u00e9",
   "scm.export.status.CREATE_NEEDED.display.text": "Cr\u00e9\u00e9",
   "scm.import.status.IMPORT_NEEDED.display.text": "Importation n\u00e9cessaire",
   "scm.import.status.DELETE_NEEDED.display.text":
@@ -709,13 +721,10 @@ const messages = {
   "no.authorized.access.to.projects":
     "Vous n\u02bcavez aucun acc\u00e8s autoris\u00e9 aux projets.",
   "no.authorized.access.to.projects.contact.your.administrator.user.roles.0":
-    "Contactez votre administrateur. (R\u00f4les de l\u02bcutilisateur \: {0})",
+    "Contactez votre administrateur. (R\u00f4les de l\u02bcutilisateur : {0})",
   "page.home.loading.projects": "Chargement de projets",
   "app.firstRun.md":
-    "Merci d'\u00eatre abonn\u00e9 \u00e0 {0}.\n\n" +
-    "  \n\n\n" +
-    "* [{0} Portail d'assistance &raquo;](http://support.rundeck.com)\n\n" +
-    "* [{0} Documentation &raquo;]({1})",
+    "Merci d\u02bc\u00eatre abonn\u00e9 \u00e0 {0}.\n\n  \n\n\n* [{0} Portail d\u02bcassistance &raquo;](http://support.rundeck.com)\n\n* [{0} Documentation &raquo;]({1})",
   "page.home.section.project.title": "{0} Projet",
   "page.home.section.project.title.plural": "{0} Projets",
   "page.home.duration.in.the.last.day": "Au cours des derni\u00e8res 24 heures",
@@ -898,7 +907,7 @@ const messages = {
   "form.field.too.long.message":
     "Cette valeur ne peut pas comporter plus de {max} caract\u00e8res",
   "form.option.validation.errors.message":
-    "Corriger les erreurs de validation avant d’enregistrer les modifications",
+    "Corriger les erreurs de validation avant d\u2019enregistrer les modifications",
   "option.list.header.name.title": "Nom",
   "option.list.header.values.title": "Valeurs",
   "option.list.header.restrictions.title": "Restrictions",
@@ -922,10 +931,684 @@ const messages = {
   "option.view.notenforced.placeholder": "Aucun",
   "option.view.action.delete.title": "Supprimer cette option",
   "option.view.action.edit.title": "Modifier cette option",
-  "option.view.action.duplicate.title": "Duplicate this Option",
+  "option.view.action.duplicate.title": "Dupliquer cette option",
   "option.view.action.moveUp.title": "D\u00e9placer vers le haut",
   "option.view.action.moveDown.title": "D\u00e9placer vers le bas",
   "option.view.action.drag.title": "Faire glisser pour r\u00e9organiser",
+  "storage.enter.path": "Saisissez un chemin",
+  "storage.enter.password": "Saisissez un mot de passe",
+  "storage.enter.directory.name": "Saisissez le nom du r\u00e9pertoire",
+  "storage.specify.name": "Sp\u00e9cifiez un nom.",
+  "soft.wrap": "Retour \u00e0 la ligne automatique",
+  "average.duration": "Dur\u00e9e moyenne",
+  "job.starting.execution": "Commencer l\u02bcex\u00e9cution...",
+  "enter.a.command": "Entrez une commande",
+  "retry.failed.nodes": "R\u00e9essayer les n\u0153uds ayant \u00e9chou\u00e9s",
+  "Execution.plural": "Ex\u00e9cutions",
+  "Workflow.property.keepgoing.prompt": "Si une \u00e9tape \u00e9choue :",
+  "Workflow.strategy.description.node-first":
+    "Ex\u00e9cutez toutes les \u00e9tapes sur un n\u0153ud avant de passer au n\u0153ud suivant.",
+  "Workflow.strategy.label.parallel": "Parall\u00e8le",
+  "access.control": "Contr\u00f4le d\u02bcacc\u00e8s",
+  "all.nodes.menu.item": "-Tous les n\u0153uds-",
+  "button.action.Create": "Cr\u00e9er",
+  "collapse.all": "Tout r\u00e9duire",
+  "delete.project": "Supprimer le projet",
+  "dispatch.to.nodes": "Envoi aux n\u0153uds",
+  "edit.message.of.the.day": "Modifier le message du jour...",
+  "edit.nodes": "Modifier les n\u0153uds",
+  "edit.nodes.title": "Editer les n\u0153uds",
+  "edit.readme": "Editer Lisez\u00admoi",
+  "expand.all": "D\u00e9velopper tout",
+  "export.archive": "Export d\u02bcarchive",
+  "gui.menu.AccessControl": "Contr\u00f4le d\u02bcacc\u00e8s",
+  "gui.menu.KeyStorage": "Stockage de cl\u00e9s",
+  "gui.menu.Scm": "Configuration SCM",
+  "import.archive": "Import d\u02bcarchives",
+  "project.admin.menu.Scm.title": "Configurer SCM...",
+  "project.node.sources.title": "Sources de n\u0153ud",
+  "schedule.to.run.repeatedly": "Ex\u00e9cution cyclique ?",
+  "scheduledExecution.property.loglevel.label": "Niveau de journal",
+  "scheduledExecution.property.multipleExecutions.label":
+    "Ex\u00e9cutions multiples ?",
+  "scheduledExecution.property.retry.delay.label":
+    "d\u00e9lai avant nouvel essai",
+  "scheduledExecution.property.retry.label": "Recommencez",
+  "scheduledExecution.property.timeout.label": "Temps max",
+  "step.type.jobreference.title": "R\u00e9f\u00e9rence \u00e0 un traitement",
+  add: "ajouter",
+  Node: "N\u0153ud",
+  "Node.plural": "N\u0153uds",
+  "your.recently.executed.commands":
+    "Vos commandes r\u00e9cemment ex\u00e9cut\u00e9es",
+  "node.dispatch.settings": "Param\u00e8tres d\u02bcenvoi de n\u0153ud",
+  running1: "En cours...",
+  "maximum.number.of.parallel.threads.to.use":
+    "Nombre maximal de threads parall\u00e8les \u00e0 utiliser",
+  "maximum.threadcount.for.nodes":
+    "Nombre maximal de threads pour les n\u0153uds",
+  "continue.to.execute.on.other.nodes":
+    "Continuer \u00e0 ex\u00e9cuter sur d\u02bcautres n\u0153uds",
+  continue: "Continuer",
+  "do.not.execute.on.any.other.nodes":
+    "Ne pas ex\u00e9cuter sur d\u02bcautres n\u0153uds",
+  stop: "Arr\u00eater",
+  "job.execution.acl.missing.owner.warning.title":
+    "Cette planification n\u02bca aucun utilisateur enregistr\u00e9 : rien n\u02bcautorise l\u02bcex\u00e9cution de ce traitement. La planification s\u02bcex\u00e9cute toujours, mais une version future pourrait appliquer cette v\u00e9rification. Enregistrez \u00e0 nouveau le traitement avec un utilisateur autoris\u00e9 \u00e0 l\u02bcex\u00e9cuter.",
+  "job.execution.acl.missing.owner.blocked.warning.title":
+    "Cette planification n\u02bca aucun utilisateur enregistr\u00e9 : rien n\u02bcautorise l\u02bcex\u00e9cution de ce traitement et la planification est ignor\u00e9e. Enregistrez \u00e0 nouveau le traitement avec un utilisateur autoris\u00e9 \u00e0 l\u02bcex\u00e9cuter.",
+  "script.content.multiline.prompt.warning":
+    "ATTENTION : cet usage peut \u00eatre DANGEREUX. Consultez la documentation pour plus de d\u00e9tails.",
+  "global.log.filters": "Filtres de journal global",
+  "option.usage.multiline.note":
+    "Les valeurs d\u02bcune option de texte multiligne devront probablement \u00eatre plac\u00e9es entre guillemets lorsqu\u02bcelles sont utilis\u00e9es dans des scripts ou des arguments de ligne de commande :",
+  "form.option.optionType.multiline.label": "Texte multiligne",
+  "scheduledExecution.jobName.label": "Nom du traitement",
+  "scheduledExecution.property.description.label": "Description",
+  "job.editor.preview.runbook": "Aper\u00e7u Readme",
+  "job.editor.workflow.unsavedchanges.warning":
+    "Certaines modifications apport\u00e9es au workflow ne sont pas enregistr\u00e9es.",
+  "choose.action.label": "Choisir \u2026",
+  "scheduledExecution.groupPath.description":
+    "Le groupe est un chemin s\u00e9par\u00e9 par /",
+  more: "Plus...",
+  "job.edit.groupPath.choose.text":
+    "Cliquez sur le nom du groupe \u00e0 utiliser",
+  "scheduledExecution.property.executionLifecyclePluginConfig.help.text":
+    "Les plugins s\u00e9lectionn\u00e9s seront activ\u00e9s pour ce traitement.",
+  "JobExec.nodeStep.true.label": "\u00c9tape du n\u0153ud",
+  "step.plugins.filter.prompt": "Etape de recherche",
+  Project: "Projet",
+  "Workflow.Step.jobreference.title": "Selectionner le traitement par",
+  "Workflow.Step.jobreference.name.label": "Nom",
+  "Workflow.Step.jobreference.name.description":
+    "Utilisez Nom et groupe pour rechercher le traitement.",
+  "Workflow.Step.jobreference.uuid.label": "UUID",
+  "Workflow.Step.jobreference.uuid.description":
+    "Recherche de traitement par UUID.",
+  "Workflow.Step.jobreference.name-group.label": "Nom du poste / groupe",
+  "scheduledExecution.groupPath.label": "Chemin de groupe",
+  "Workflow.Step.uuid.label": "UUID",
+  "Workflow.Step.jobreference.uuid.help":
+    "Vous pouvez saisir un nom de traitement ou un UUID, mais si l\u02bcUUID et le nom de traitement sont sp\u00e9cifi\u00e9s, ils doivent correspondre au m\u00eame traitement.",
+  "Workflow.Step.argString.label": "Arguments",
+  "Workflow.Step.jobreference.import.options.label": "Importer des options ?",
+  "Workflow.Step.jobreference.import.options.help":
+    "Passez en argument les valeurs de l\u02bcoption de traitement parente correspondant aux options du traitement r\u00e9f\u00e9renc\u00e9.",
+  "Workflow.Step.jobreference.ignore.notifications.label":
+    "Ignorer les notifications",
+  "Workflow.Step.jobreference.ignore.notifications.help":
+    "Ignorer toute notification dans un traitement r\u00e9f\u00e9renc\u00e9.",
+  "Workflow.Step.jobreference.fail.on.disabled.label":
+    "\u00c9chec de l\u02bcex\u00e9cution d\u00e9sactiv\u00e9e ?",
+  "Workflow.Step.jobreference.fail.on.disabled.help":
+    "Si le traitement r\u00e9f\u00e9renc\u00e9 a \u00e9t\u00e9 d\u00e9sactiv\u00e9, il sera consid\u00e9r\u00e9 comme un \u00e9chec.",
+  "Workflow.Step.jobreference.child.nodes.label":
+    "Utiliser les n\u0153uds du traitement r\u00e9f\u00e9renc\u00e9.",
+  "Workflow.Step.jobreference.child.nodes.help":
+    "Si la t\u00e2che r\u00e9f\u00e9renc\u00e9e provient d\u02bcun autre projet, vous pouvez utiliser la liste de n\u0153uds de t\u00e2che r\u00e9f\u00e9renc\u00e9e au lieu des n\u0153uds du parent.",
+  "override.node.filters": "Remplacer les filtres de n\u0153uds ?",
+  "JobExec.property.nodeFilter.help.description":
+    "Entrez un filtre de n\u0153ud pour remplacer les n\u0153uds cibles du traitement d\u00e9clench\u00e9. Si vous entrez une nouvelle cha\u00eene de filtre, vous pouvez \u00e9galement modifier le nombre de threads et le comportement si le job \u00e9choue pour un n\u0153ud. Si le job r\u00e9f\u00e9renc\u00e9 appartient \u00e0 un autre projet, ce filtre n\u02bcutilisera que les n\u0153uds du projet parent.",
+  "scheduledExecution.property.nodeIntersect.label":
+    "Intersection de n\u0153uds",
+  "scheduledExecution.property.nodeIntersect.false":
+    "Non, utilisez le filtre de n\u0153ud r\u00e9f\u00e9renc\u00e9 ou remplac\u00e9 par un traitement r\u00e9f\u00e9renc\u00e9",
+  "scheduledExecution.property.nodeIntersect.true":
+    "Oui, cr\u00e9ez une intersection de n\u0153uds avec les n\u0153uds de traitement actuels",
+  "node.filter.prompt": "Filtre de n\u0153ud",
+  "JobExec.property.nodeThreadcount.null.description":
+    "Si ce champ est vide, utilisez le nombre de threads d\u00e9fini pour le traitement d\u00e9clench\u00e9.",
+  "JobExec.property.nodeKeepgoing.null.description":
+    "Maintenir le comportement d\u00e9fini pour le traitement d\u00e9clench\u00e9",
+  "Workflow.property.keepgoing.true.description":
+    "Ex\u00e9cutez les \u00e9tapes restantes avant d\u02bc\u00e9chouer.",
+  "Workflow.property.keepgoing.false.description":
+    "Arr\u00eatez \u00e0 l\u02bc\u00e9tape \u00e9chou\u00e9e.",
+  "JobExec.property.nodeRankOrder.null.description":
+    "Maintenir l\u02bcordre des n\u0153uds d\u00e9fini dans le traitement d\u00e9clench\u00e9",
+  "JobExec.nodeStep.title": "Ex\u00e9cuter en tant que",
+  "JobExec.nodeStep.true.description":
+    "Ex\u00e9cute pour chaque n\u0153ud et permet l\u02bcutilisation de variables de contexte de n\u0153ud en tant qu\u02bcarguments du traitement.",
+  "JobExec.nodeStep.false.label": "\u00c9tape du flux de traitement",
+  "JobExec.nodeStep.false.description":
+    "N\u02bcex\u00e9cute qu\u02bcune seule fois et n\u02bca aucune information de contexte de n\u0153ud.",
+  "Workflow.Step.jobreference.argString.placeholder":
+    "Entrez des arguments, par ex. -option1 valeur -option2 valeur",
+  "Workflow.Step.jobreference.uuid.placeholder":
+    "Entrez l\u02bcUUID, par ex. 5910b723-2436-4497-96d5-49a08db95d2b",
+  "select.an.existing.job.to.use":
+    "S\u00e9lectionnez un traitement existant \u00e0 utiliser",
+  "Workflow.step.property.description.placeholder":
+    "\u00c9tiquette ou description de cette \u00e9tape",
+  "enter.a.node.filter.override":
+    "Entrez une cha\u00eene de filtre. Laissez vide pour utiliser le filtre d\u00e9fini pour le traitement d\u00e9clench\u00e9.",
+  "mynode1.mynode2": "monn\u0153ud1 monn\u0153ud2",
+  include: "Inclure",
+  exclude: "Exclure",
+  attribute: "attribut",
+  value: "valeur",
+  "step.type.jobreference.project.label": "Projet en cours ({0})",
+  "no.jobs.in.this.project": "Aucun traitement dans ce projet",
+  "JobExec.property.nodeFilter.null.description":
+    "Les n\u0153uds utilis\u00e9s seront ceux d\u00e9finis pour le traitement d\u00e9clench\u00e9.",
+  "results.truncated.count.results.shown":
+    "R\u00e9sultats tronqu\u00e9s. {0} r\u00e9sultats affich\u00e9s.",
+  "options.label": "Options",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.label":
+    "Continuer si le gestionnaire d\u02bcerreurs r\u00e9ussit.",
+  "Workflow.stepErrorHandler.keepgoingOnSuccess.description":
+    "Si le flux de traitement keepgoing est false, cela permet au workflow de continuer lorsque le gestionnaire d\u02bcerreurs a r\u00e9ussi",
+  "Workflow.stepErrorHandler.label.keep.going.on.success":
+    "continuer si le gestionnaire r\u00e9ussit",
+  "framework.service.WorkflowNodeStep.description":
+    "Fonctionne une fois pour chaque n\u0153ud dans le flux de traitement.",
+  "framework.service.WorkflowStep.description":
+    "Fonctionne une seule fois dans un flux de traitement.",
+  "archive.import.importConfig.true.help":
+    "Remplace la configuration du projet par les propri\u00e9t\u00e9s stock\u00e9es dans l\u02bcarchive.",
+  "archive.import.importACL.true.title":
+    "Importer les strat\u00e9gies ACL du projet",
+  "archive.import.importWebhooks.false.help":
+    "Ne pas importer les webhooks dans le projet",
+  "archive.import.importWebhooks.true.help":
+    "Importer les webhooks dans le projet",
+  "archive.import.importScm.false.help":
+    "Ne pas importer la configuration SCM.",
+  "archive.import.importConfig.false.help":
+    "N\u02bcimporte pas la configuration du projet.",
+  "archive.import.importWebhooks.true.title": "Importer les webhooks",
+  "archive.import.importACL.false.help":
+    "N\u02bcimporte pas les strat\u00e9gies ACL.",
+  "archive.import.importWebhooks.false.title": "Ne pas importer les webhooks",
+  "archive.import.importACL.true.help":
+    "Importer toutes les strat\u00e9gies ACL du projet en \u00e9crasant les strat\u00e9gies portant le m\u00eame nom.",
+  "archive.import.importNodesSource.false.help":
+    "Ne pas importer les sources de n\u0153uds.",
+  "archive.import.importScm.unauthorized.help":
+    "Non autoris\u00e9 \u00e0 configurer SCM.",
+  "archive.import.importConfig.true.title":
+    "Importer la configuration du projet",
+  "archive.import.importScm.true.title":
+    "Importer la configuration SCM du projet.",
+  "archive.import.importNodesSource.true.help":
+    "Remplace les sources du n\u0153ud par les propri\u00e9t\u00e9s pr\u00e9sentes dans l\u02bcarchive.",
+  "archive.import.importNodesSource.true.title":
+    "Importer les sources de n\u0153uds",
+  "archive.import.importNodesSource.failed.message":
+    "Echec de l\u02bcenregistrement du fichier de n\u0153uds, veuillez contacter votre administrateur.",
+  "archive.import.importACL.unauthorized.help":
+    "Non autoris\u00e9 \u00e0 cr\u00e9er des strat\u00e9gies ACL.",
+  "archive.import.importScm.true.help":
+    "Importer la configuration SCM du projet sauf si le projet dispose d\u02bcune configuration SCM.",
+  profile: "Profil",
+  logout: "D\u00e9connexion",
+  "domain.User.email.label": "Email",
+  "domain.User.firstName.label": "Pr\u00e9nom",
+  "domain.User.lastName.label": "Nom de famille",
+  "security.groups.label": "Groupes",
+  "security.groups.description":
+    "La liste des noms de groupes / r\u00f4les fournis par le syst\u00e8me de connexion. (Ne peut pas \u00eatre modifi\u00e9 via le profil utilisateur.)",
+  "not.set": "Pas encore d\u00e9fini",
+  "Add a new Node Source":
+    "Ajouter une nouvelle source de mod\u00e8le de ressource",
+  "Add a new Node Enhancer": "Ajouter un nouveau modificateur de n\u0153ud",
+  "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
+    "Vous pouvez ajouter des sources personnalis\u00e9es suppl\u00e9mentaires et leurs r\u00e9sultats seront utilis\u00e9s dans l\u02bcordre affich\u00e9 ci-dessous. Les sources ult\u00e9rieures remplaceront les sources ant\u00e9rieures. (Vous pouvez utiliser <code>${project.name}</code> dans les valeurs de configuration pour remplacer le nom du projet.)",
+  "Node Enhancers can modify the data loaded from Node Sources.":
+    "Les modificateurs de n\u0153ud peuvent modifier les donn\u00e9es charg\u00e9es depuis les sources de n\u0153uds.",
+  message_webhookButtonRegenerate: "G\u00e9n\u00e9rer \u00e0 nouveau",
+  "project.activitySummary.failedCount": "({0} \u00c9chec)",
+  "execution.status.succeeded": "R\u00e9ussi",
+  "execution.status.failed": "\u00c9chou\u00e9",
+  "execution.status.running": "En cours",
+  "execution.status.waiting": "En attente",
+  "scheduledExecution.crontab.field.hour": "Heure",
+  "Activity for Jobs": "Activit\u00e9 des traitements",
+  "Add an option": "Ajouter une option",
+  "All Jobs": "Tous les traitements",
+  "Collapse All": "Tout r\u00e9duire",
+  "Execute locally": "Ex\u00e9cuter localement",
+  Executions: "Ex\u00e9cutions",
+  "Expand All": "D\u00e9velopper tout",
+  "Global Log Filters": "Filtres de journal global",
+  "No Options": "Aucune option",
+  "Save Filter": "Enregistrer le filtre \u2026",
+  "Selected Plugins will be enabled for this Job.":
+    "Les plugins s\u00e9lectionn\u00e9s seront activ\u00e9s pour ce traitement.",
+  "Workflow.property.strategy.label": "Strat\u00e9gie",
+  "button.cancel": "Annuler",
+  "button.create": "Cr\u00e9er",
+  "scheduledExecution.property.timeout.title": "Temps max",
+  Enhancers: "Modificateurs",
+  Yes: "Oui",
+  No: "Non",
+  "thread.count": "Nombre de threads",
+  "settings.theme.options.system": "Syst\u00e8me",
+  "Allow this Job to be scheduled?":
+    "Autoriser ce traitement \u00e0 \u00eatre planifi\u00e9 ?",
+  "Allow this Job to be executed?":
+    "Autoriser l\u02bcex\u00e9cution de ce traitement ?",
+  "scheduledExecution.property.description.plain.description":
+    "La description sera affich\u00e9e en texte brut",
+  Workflow: {
+    property: {
+      keepgoing: {
+        true: {
+          description:
+            "Ex\u00e9cutez les \u00e9tapes restantes avant d\u02bc\u00e9chouer.",
+        },
+        false: {
+          description:
+            "Arr\u00eatez \u00e0 l\u02bc\u00e9tape \u00e9chou\u00e9e.",
+        },
+        prompt: "Si une \u00e9tape \u00e9choue :",
+      },
+      strategy: {
+        label: "Strat\u00e9gie",
+        description:
+          "S\u00e9lectionnez la strat\u00e9gie de chronologie des \u00e9tapes du workflow.",
+        learnMore: "En savoir plus",
+        selectPlaceholder: "S\u00e9lectionnez une strat\u00e9gie",
+      },
+      executionBehavior: {
+        label: "Comportement d\u02bcex\u00e9cution",
+      },
+      stepFailureBehavior: {
+        label: "Comportement en cas d\u02bc\u00e9chec d\u02bcune \u00e9tape",
+      },
+    },
+    logFilters: "Filtres de journal",
+    edit: "modifier",
+    duplicateStep: "Dupliquer cette \u00e9tape",
+    deleteThisStep: "Supprimer cette \u00e9tape",
+    dragToReorder: "Faites glisser pour r\u00e9organiser",
+    errorHandlerDescription:
+      "Le gestionnaire d\u02bcerreurs s\u02bcex\u00e9cutera si l\u02bc\u00e9tape \u00e9choue.",
+    nodeStep: "\u00c9tape du n\u0153ud",
+    workflowStep: "\u00c9tape du flux de traitement",
+    label: "Workflow",
+    addStep: "Ajouter une \u00e9tape",
+    jobSteps: {
+      label: "\u00c9tapes du traitement",
+    },
+    logFiltersTooltip:
+      "Filtres qui affecteront les journaux produits par ces \u00e9tapes",
+    addLogFilter: "Ajouter un filtre de journal",
+    clickToEdit: "Cliquez pour modifier",
+    itemControls: "Contr\u00f4les de l\u02bc\u00e9l\u00e9ment",
+    clickOnStepType:
+      "Cliquez sur un type d\u02bc\u00e9tape pour l\u02bcajouter",
+    editStep: "Modifier l\u02bc\u00e9tape",
+    saveStep: "Enregistrer l\u02bc\u00e9tape",
+    setSteps: "D\u00e9finir les \u00e9tapes",
+    conditional: {
+      defineCondition: "D\u00e9finir la condition",
+      conditionDescription:
+        "Toutes les conditions suivantes doivent \u00eatre remplies. Ajoutez un ensemble de conditions pour int\u00e9grer une logique OU.",
+      conditionGroups: "Ensemble de conditions",
+      addCondition: "+ Ajouter",
+      addconditionGroups: "+ Ajouter un ensemble de conditions",
+      removeconditionGroups: "Supprimer l\u02bcensemble de conditions",
+      removeCondition: "Supprimer la condition",
+      selectField: "S\u00e9lectionner un champ",
+      selectOperator: "S\u00e9lectionner un op\u00e9rateur",
+      enterValue: "Saisir une valeur",
+      operator: {
+        equals: "\u00c9gal \u00e0",
+        notEquals: "Diff\u00e9rent de",
+        contains: "Contient",
+        notContains: "Ne contient pas",
+        matches: "Correspond \u00e0",
+        greaterThan: "Sup\u00e9rieur \u00e0",
+        greaterThanOrEqual: "Sup\u00e9rieur ou \u00e9gal \u00e0",
+        lessThan: "Inf\u00e9rieur \u00e0",
+        lessThanOrEqual: "Inf\u00e9rieur ou \u00e9gal \u00e0",
+      },
+    },
+    stepLabel: "Libell\u00e9 de l\u02bc\u00e9tape",
+    noSteps: "Aucune \u00e9tape de workflow",
+    clickAddStep:
+      "Ajoutez des \u00e9tapes pour d\u00e9finir ce que fera ce traitement. Cliquez sur \u00ab Ajouter une \u00e9tape \u00bb pour commencer.",
+    addErrorHandler: "Ajouter un gestionnaire d\u02bcerreur",
+    errorHandler: "Gestionnaire d\u02bcerreur",
+    editErrorHandler: "Modifier le gestionnaire d\u02bcerreur",
+    collapse: "R\u00e9duire",
+    expand: "D\u00e9velopper",
+  },
+  "plugin.type.WorkflowStep.title.plural": "\u00c9tapes du flux de traitement",
+  "plugin.type.WorkflowStep.title": "\u00c9tape du flux de traitement",
+  "plugin.type.WorkflowNodeStep.title.plural": "N\u0153ud \u00e9tapes",
+  "plugin.type.WorkflowNodeStep.title": "\u00c9tape du n\u0153ud",
+  "job.label": "Traitement",
+  "archive.import.validateJobRef.false.title": "Ne pas valider",
+  "archive.import.validateJobRef.true.help":
+    "G\u00e9n\u00e9rer des erreurs lors de l\u02bcutilisation d\u02bcun traitement r\u00e9f\u00e9renc\u00e9 qui n\u02bcexiste pas.",
+  "archive.import.validateJobRef.true.title":
+    "Valider les traitements r\u00e9f\u00e9renc\u00e9s",
+  "archive.import.validateJobRef.false.help":
+    "Importer les traitements r\u00e9f\u00e9renc\u00e9s sans v\u00e9rifier leur existence.",
+  "archive.import.uuidOption.remove.description":
+    "Supprimer les UUID des traitements import\u00e9s.",
+  "archive.import.uuidOption.preserve.description":
+    "Conservez les UUID de traitements import\u00e9s. Remarque : Si un traitement avec le m \u00eame UUID existe dans un autre projet, le nouveau traitement ne sera pas import\u00e9.",
+  "archive.import.uuidOption.preserve.label": "Pr\u00e9server les UUID",
+  "archive.import.uuidOption.remove.label": "Supprimer les UUID",
+  jobUpload: {
+    dupeOption: {
+      create: {
+        word: "Cr\u00e9er",
+        label: "Toujours {0} un nouveau traitement",
+      },
+      label:
+        "Lorsqu\u02bcun traitement portant le m\u00eame nom existe d\u00e9j\u00e0 :",
+      update: {
+        word: "Mettre \u00e0 jour",
+        label: "{0} le traitement existant",
+      },
+      skip: {
+        word: "Ignorer",
+        label: "{0} le traitement t\u00e9l\u00e9vers\u00e9",
+      },
+    },
+    button: {
+      cancel: "Annuler",
+      upload: "T\u00e9l\u00e9verser",
+      uploadAnother:
+        "T\u00e9l\u00e9verser un autre fichier de d\u00e9finition de traitement...",
+    },
+    title:
+      "T\u00e9l\u00e9verser une d\u00e9finition de traitement dans le projet",
+    fileSelectLabel:
+      "S\u00e9lectionnez un fichier de d\u00e9finition de traitement.",
+    formatRadioLabel: {
+      xml: "Format XML",
+      yaml: "Format YAML",
+      json: "Format JSON",
+    },
+    uploadingFile: "T\u00e9l\u00e9versement du fichier...",
+    jobs: "Traitement | Traitements",
+    wasWere: {
+      singular: " a \u00e9t\u00e9",
+      plural: " ont \u00e9t\u00e9",
+    },
+    results: {
+      error: {
+        notProcessed: "non trait\u00e9(s) en raison d\u02bcerreurs",
+        definitionErrors: "Erreurs de d\u00e9finition de traitement",
+      },
+      skipped: {
+        skippedMessage:
+          "ignor\u00e9(s) car des traitements portant le m\u00eame nom existent d\u00e9j\u00e0",
+        existing: "Existant :",
+      },
+      success: {
+        successMessage: "cr\u00e9\u00e9(s)/modifi\u00e9(s) avec succ\u00e8s",
+      },
+    },
+  },
+  sysConfigMenuHeader: "Syst\u00e8me",
+  nodeSteps: "N\u0153ud \u00e9tapes",
+  workflowSteps: "\u00c9tapes du flux de traitement",
+  hideIncompleteNodes: "Masquer les n\u0153uds incomplets",
+  hideIncompleteNodesDescription:
+    "Masquer les n\u0153uds dont les seules \u00e9tapes inachev\u00e9es ont \u00e9t\u00e9 ignor\u00e9es par une condition. Ex\u00e9cutions r\u00e9ussies uniquement.",
+  "user.list.title": "Utilisateurs",
+  "user.list.edit": "modifier",
+  Configuration: "Configuration",
+  "None configured. Click NodeEnhancer to add a new plugin.":
+    "Aucun configur\u00e9. Cliquez sur NodeEnhancer pour ajouter un nouveau plugin.",
+  "Scans a directory and loads all resource document files":
+    "Analyse un r\u00e9pertoire et charge tous les fichiers de documents de ressources",
+  "Reads a file containing node definitions in a supported format":
+    "Lit un fichier contenant des d\u00e9finitions de n\u0153uds dans un format pris en charge",
+  "Provides the local node as the single resource":
+    "Fournit le n\u0153ud local comme unique ressource",
+  "Run a script to produce resource model data":
+    "Ex\u00e9cute un script pour produire les donn\u00e9es du mod\u00e8le de ressources",
+  "Retrieves a URL containing node definitions in a supported format":
+    "R\u00e9cup\u00e8re une URL contenant des d\u00e9finitions de n\u0153uds dans un format pris en charge",
+  "storage.keyPath.error.traversal":
+    "La travers\u00e9e de r\u00e9pertoire \u00ab .. \u00bb n\u02bcest pas autoris\u00e9e dans les chemins du stockage de cl\u00e9s.",
+  "storage.keyPath.error.leadingSpace":
+    "Les composants du chemin ne peuvent pas commencer par un espace.",
+  "storage.keyPath.error.invalidChar":
+    "Le caract\u00e8re \u00ab {0} \u00bb n\u02bcest pas autoris\u00e9. Les chemins du stockage de cl\u00e9s ne peuvent contenir que : lettres, chiffres, espaces (pas au d\u00e9but), / . + _ - ,",
+  "storage.keyPath.error.invalidFormat":
+    "Format de chemin du stockage de cl\u00e9s non valide.",
+  message_warning: "Attention !",
+  message_fieldLabelHelp:
+    "Facultatif. Affich\u00e9 comme nom de ce champ. Par d\u00e9faut, la cl\u00e9 du champ si laiss\u00e9 vide.",
+  message_fieldKeyHelp:
+    "La cl\u00e9 utilis\u00e9e pour identifier ce champ (par ex. \u00ab environment \u00bb). Doit \u00eatre unique dans cette liste.",
+  message_fieldKeyDescription: "Cl\u00e9 du champ : {0}",
+  message_fieldKeyOnlyDescription: "Cl\u00e9 du champ {0}",
+  message_fieldKeyAppendedDescription: "{0} (Cl\u00e9 du champ : {1})",
+  message_fieldDescriptionHelp:
+    "Facultatif. D\u00e9crit ce champ pour votre propre r\u00e9f\u00e9rence ; si laiss\u00e9 vide, une description est g\u00e9n\u00e9r\u00e9e automatiquement \u00e0 partir de la cl\u00e9 du champ.",
+  notifications: {
+    helpText:
+      "Les notifications peuvent \u00eatre d\u00e9clench\u00e9es par diff\u00e9rents \u00e9v\u00e9nements pendant l\u02bcex\u00e9cution du traitement.",
+    emptyText:
+      "Aucune notification n\u02bcest d\u00e9finie. Cliquez sur un \u00e9v\u00e9nement ci-dessous pour ajouter une notification pour ce d\u00e9clencheur.",
+    addButton: "Ajouter une notification",
+    triggerLabel: "D\u00e9clencheur",
+    selectTrigger: "S\u00e9lectionnez un d\u00e9clencheur",
+    typeLabel: "Type de notification",
+    selectNotification: "S\u00e9lectionnez une notification",
+  },
+  message_webhookFilterListPlaceholder: "Filtrer les webhooks",
+  message_webhookTabGeneral: "G\u00e9n\u00e9ral",
+  message_webhookTabHandlerConfiguration: "Configuration du gestionnaire",
+  message_webhookNewHookName: "Nouveau hook",
+  "success.rate": "Taux de r\u00e9ussite",
+  "Bulk Delete Executions: Results":
+    "Suppression en masse des ex\u00e9cutions : r\u00e9sultats",
+  noResultsFound: "Aucun r\u00e9sultat trouv\u00e9",
+  noMatchesFound: "Aucune correspondance trouv\u00e9e",
+  noMatchesFoundSecondary: "Veuillez essayer une autre recherche.",
+  "project.activitySummary.userCount": "par {count} {users} :",
+  "users.plural": "utilisateur|utilisateurs",
+  "execution.action.saveAsJob": "Enregistrer comme traitement",
+  "execution.status.aborted": "Abandonn\u00e9e",
+  "kill.job": "Tuer le traitement",
+  killing: "Arr\u00eat forc\u00e9 en cours...",
+  "scheduledExecution.uuid.autogenerated.label":
+    "G\u00e9n\u00e9r\u00e9 automatiquement \u00e0 l\u02bcenregistrement",
+  "scheduledExecution.crontab.tab.simple": "Simple",
+  "scheduledExecution.crontab.tab.crontab": "Crontab",
+  "scheduledExecution.crontab.field.minute": "Minute",
+  "scheduledExecution.crontab.everyDay": "Tous les jours",
+  "scheduledExecution.crontab.everyMonth": "Tous les mois",
+  "scheduledExecution.crontab.help.ranges": "Plages :",
+  "scheduledExecution.crontab.help.lists": "Listes :",
+  "scheduledExecution.crontab.help.increments": "Incr\u00e9ments :",
+  "scheduledExecution.crontab.help.increments.description":
+    "\u00ab toutes les 15 unit\u00e9s \u00e0 partir de 0 \u00bb.",
+  "scheduledExecution.crontab.help.validDayOfWeek":
+    "Valeurs valides du jour de la semaine : 1-7 ou SUN-SAT",
+  "scheduledExecution.crontab.help.validMonth":
+    "Valeurs valides du mois : 1-12 ou JAN-DEC",
+  "scheduledExecution.crontab.help.see": "Voir :",
+  "scheduledExecution.crontab.help.formatting":
+    "pour l\u02bcaide sur le format",
+  "Add Notification": "Ajouter une notification",
+  "Also kill processes whose process SID matches the tracked PIDs":
+    "Tuer aussi les processus dont le SID correspond aux PID suivis",
+  Explain: "Expliquer",
+  "Kill all processes collected by the 'Capture Process IDs' log filter":
+    "Tuer tous les processus collect\u00e9s par le filtre de journal \u00ab Capture Process IDs \u00bb",
+  "Kill processes only if job failed or is killed":
+    "Tuer les processus uniquement si le traitement a \u00e9chou\u00e9 ou est tu\u00e9",
+  "Kill spawned processes": "Tuer les processus lanc\u00e9s",
+  "Kill tracked processes after execution":
+    "Tuer les processus suivis apr\u00e8s l\u02bcex\u00e9cution",
+  Modules: "Modules",
+  "More...": "Plus...",
+  "No Workflow steps": "Aucune \u00e9tape de workflow",
+  "Node First": "N\u0153ud d\u02bcabord",
+  "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)":
+    "Sources de n\u0153uds du projet. Les sources sont charg\u00e9es dans l\u02bcordre d\u00e9fini, les sources suivantes rempla\u00e7ant les pr\u00e9c\u00e9dentes. (Vous pouvez utiliser  {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
+  "None configured. Click ResourceModelSource to add a new plugin.":
+    "Aucun configur\u00e9. Cliquez sur ResourceModelSource pour ajouter un nouveau plugin.",
+  "Save as a Filter...": "Enregistrer comme filtre...",
+  "This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windows commands. These commands must be available at the node.":
+    "Cette op\u00e9ration utilisera les commandes \u00ab kill \u00bb et \u00ab pkill \u00bb pour Unix et \u00ab taskkill \u00bb pour Windows. Ces commandes doivent \u00eatre disponibles sur le n\u0153ud.",
+  "Workflow.noSteps": "Aucune \u00e9tape de workflow",
+  "Workflow.strategy.description.step-first":
+    "Ex\u00e9cute chaque \u00e9tape sur tous les n\u0153uds avant de passer \u00e0 l\u02bc\u00e9tape suivante.",
+  "Workflow.strategy.label.node-first": "N\u0153ud d\u02bcabord",
+  "Workflow.strategy.label.step-first": "\u00c9tape d\u02bcabord",
+  "delete.project.ellipsis": "Supprimer le projet...",
+  "edit.readme.ellipsis": "Modifier le Readme...",
+  "export.archive.ellipsis": "Exporter l\u02bcarchive...",
+  "import.archive.ellipsis": "Importer une archive...",
+  "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter":
+    "Aucun n\u0153ud s\u00e9lectionn\u00e9. S\u00e9lectionnez des n\u0153uds en choisissant ou en saisissant un filtre",
+  "none.configured.click.plugin.to.add.a.new.plugin":
+    "Aucun configur\u00e9. Cliquez sur {0} pour ajouter un nouveau plugin.",
+  "notifications.addButton": "Ajouter une notification",
+  "notifications.emptyText":
+    "Aucune notification n\u02bcest d\u00e9finie. Cliquez sur un \u00e9v\u00e9nement ci-dessous pour ajouter une notification pour ce d\u00e9clencheur.",
+  "notifications.helpText":
+    "Les notifications peuvent \u00eatre d\u00e9clench\u00e9es par diff\u00e9rents \u00e9v\u00e9nements pendant l\u02bcex\u00e9cution du traitement.",
+  "scheduledExecution.property.doNodedispatch.description":
+    "Choisissez d\u02bcex\u00e9cuter ce traitement sur les n\u0153uds filtr\u00e9s ou localement.",
+  "scheduledExecution.property.excludeFilter.description":
+    "Filtre secondaire pour exclure des n\u0153uds des r\u00e9sultats du filtre de n\u0153uds.",
+  "step.type.jobreference.nodestep.description":
+    "Ex\u00e9cute un traitement sur le n\u0153ud distant",
+  description: "description",
+  explain: "Expliquer",
+  "adhoc.no.nodes.matched": "Aucun n\u0153ud",
+  "adhoc.loading.output": "Chargement de la sortie\u2026",
+  "adhoc.form.not.found": "Formulaire introuvable",
+  "adhoc.server.response.invalid":
+    "La r\u00e9ponse du serveur n\u02bc\u00e9tait pas valide",
+  "adhoc.request.failed": "La requ\u00eate a \u00e9chou\u00e9",
+  "adhoc.execution.output.load.failed":
+    "\u00c9chec du chargement de la sortie de l\u02bcex\u00e9cution",
+  "adhoc.execution.polling.timeout":
+    "D\u00e9lai d\u02bcinterrogation de l\u02bcex\u00e9cution d\u00e9pass\u00e9 - l\u02bcex\u00e9cution est peut-\u00eatre bloqu\u00e9e sur le serveur",
+  "view.in.nodes.page.prompt": "Afficher dans la page N\u0153uds",
+  recent: "r\u00e9cent",
+  "run.on.count.nodes": "Ex\u00e9cuter une commande sur {0} {1}",
+  "on.node.failure": "En cas d\u02bc\u00e9chec du n\u0153ud",
+  "page.section.Activity.for.adhoc.commands":
+    "Activit\u00e9 des commandes ad hoc",
+  "jobquery.title.optionFilter": "Options",
+  "jobquery.title.optionFilter.label":
+    "Options du traitement par paire, nom ou valeur (par ex. -sleep 10 ou -debug 1 -env prod ou -debug)",
+  "jobquery.title.execnodeFilter": "Filtre de n\u0153uds d\u02bcex\u00e9cution",
+  "scheduledExecution.action.activity.button.label":
+    "Voir l\u02bcactivit\u00e9 de ce traitement",
+  "job.execution.acl.invalid.warning.title":
+    "Les ex\u00e9cutions planifi\u00e9es utilisent l\u02bcutilisateur enregistr\u00e9 \u00ab {user} \u00bb, qui n\u02bcest pas autoris\u00e9 \u00e0 ex\u00e9cuter ce traitement. La planification s\u02bcex\u00e9cute toujours, mais une version future pourrait appliquer cette v\u00e9rification. Accordez \u00e0 cet utilisateur le droit d\u02bcex\u00e9cution, ou enregistrez \u00e0 nouveau le traitement avec un utilisateur qui dispose de ce droit.",
+  "job.execution.acl.invalid.blocked.warning.title":
+    "Les ex\u00e9cutions planifi\u00e9es utilisent l\u02bcutilisateur enregistr\u00e9 \u00ab {user} \u00bb, qui n\u02bcest pas autoris\u00e9 \u00e0 ex\u00e9cuter ce traitement ; la planification est donc ignor\u00e9e. Accordez \u00e0 cet utilisateur le droit d\u02bcex\u00e9cution, ou enregistrez \u00e0 nouveau le traitement avec un utilisateur qui dispose de ce droit.",
+  "settings.support.title": "Support",
+  "settings.support.label": "Support",
+  "settings.theme.title": "Th\u00e8me",
+  "settings.theme.description":
+    "S\u00e9lectionnez votre th\u00e8me visuel pr\u00e9f\u00e9r\u00e9 pour l\u02bcinterface.",
+  "settings.theme.options.light": "Clair",
+  "settings.theme.options.dark": "Sombre",
+  "settings.tabs.theme": "Th\u00e8me",
+  "settings.tabs.uiEarlyAccess":
+    "Acc\u00e8s anticip\u00e9 \u00e0 l\u02bcinterface",
+  "settings.nextUi.indicatorTitle": "Mode nouvelle interface",
+  "settings.nextUi.available": "Nouvelle interface disponible",
+  "settings.nextUi.enabled": "Nouvelle interface activ\u00e9e",
+  "settings.uiEarlyAccess.title":
+    "Acc\u00e8s anticip\u00e9 \u00e0 l\u02bcinterface",
+  "settings.uiEarlyAccess.description":
+    "Nous am\u00e9liorons progressivement l\u02bcinterface de Rundeck. Activez l\u02bcacc\u00e8s anticip\u00e9 ci-dessous pour essayer les nouvelles fonctionnalit\u00e9s d\u00e8s leur publication. Remarque : les fonctionnalit\u00e9s en acc\u00e8s anticip\u00e9 peuvent contenir des bogues ou \u00eatre incompl\u00e8tes. Nous vous encourageons vivement \u00e0 soumettre vos commentaires ou \u00e0 signaler les probl\u00e8mes via un ticket de support.",
+  "settings.uiEarlyAccess.enableLabel": "Activer la nouvelle interface",
+  "settings.uiEarlyAccess.feature1":
+    "Lorsque cette option est activ\u00e9e, vous verrez des mises \u00e0 jour exp\u00e9rimentales de l\u02bcinterface dans tout le produit. Un petit indicateur en bas de la page s\u02bcaffichera lorsque vous consulterez une fonctionnalit\u00e9 en acc\u00e8s anticip\u00e9.",
+  "settings.uiEarlyAccess.learnMore": "En savoir plus",
+  "settings.uiEarlyAccess.feedbackLink":
+    "Donner votre avis sur l\u02bcacc\u00e8s anticip\u00e9",
+  "settings.uiEarlyAccess.toast.enabled":
+    "Acc\u00e8s anticip\u00e9 \u00e0 la nouvelle interface activ\u00e9. Vous pouvez revenir en arri\u00e8re \u00e0 tout moment.",
+  "settings.uiEarlyAccess.toast.disabled":
+    "La nouvelle interface a \u00e9t\u00e9 d\u00e9sactiv\u00e9e. Vous pouvez revenir en arri\u00e8re \u00e0 tout moment.",
+  Any: "Tous",
+  "Any Time": "\u00c0 tout moment",
+  "Other...": "Autre...",
+  "Search Activity": "Rechercher dans l\u02bcactivit\u00e9",
+  "workflow.all.steps": "Toutes les \u00e9tapes du workflow",
+  "form.option.regex.description.md":
+    "Saisissez une expression r\u00e9guli\u00e8re au format [Java Pattern](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html).",
+  "form.option.regex.multiline.description.md":
+    "Pour les options de texte multiligne, utilisez `(?s)` pour faire correspondre toutes les lignes.",
+  "pagination.of": "sur",
+  "scheduledExecution.property.description.description":
+    "La premi\u00e8re ligne de la description sera affich\u00e9e en texte brut, le reste sera rendu avec Markdown.\n\nVoir [Markdown](http://en.wikipedia.org/wiki/Markdown).\n\nDans la description \u00e9tendue, vous pouvez cr\u00e9er un lien vers le traitement en utilisant {'`{{job.permalink}}`'} comme URL du traitement, par ex. `[ex\u00e9cuter le traitement]({'{{job.permalink}}#runjob'})`\n\nVous pouvez ajouter un Readme en pla\u00e7ant un s\u00e9parateur horizontal `---` seul sur une ligne ; tout ce qui suit sera rendu dans un onglet distinct \u00e0 l\u02bcaide de [Markdeep](https://casual-effects.com/markdeep).",
+  less: "Moins\u2026",
+  "plugin.choose.title": "Choisir un plugin",
+  "enter.a.step.filter.override": "Rechercher",
+  "workflow.search.help.string1": "Recherche simple :",
+  "workflow.search.help.string2": "mystep1",
+  "workflow.search.help.string3":
+    "Affiche les \u00e9tapes dont le titre, la description ou le nom contient \u00ab mystep1 \u00bb.",
+  "workflow.search.help.string4":
+    "Filtrer en faisant correspondre un champ pr\u00e9cis :",
+  "workflow.search.help.string5": "description :",
+  "workflow.search.help.string6": "description=value",
+  "workflow.search.help.string7": "name :",
+  "workflow.search.help.string8": "name=value",
+  "workflow.search.help.string9": "title :",
+  "workflow.search.help.string10": "title=value",
+  "workflow.search.help.string11":
+    "Filtrer en faisant correspondre la valeur d\u02bcune propri\u00e9t\u00e9 d\u02bcentr\u00e9e :",
+  "workflow.search.help.string12": "description de la propri\u00e9t\u00e9 :",
+  "workflow.search.help.string13": "property:description=value",
+  "workflow.search.help.string14": "titre de la propri\u00e9t\u00e9 :",
+  "workflow.search.help.string15": "property:title=value",
+  "workflow.search.help.string16": "nom de la propri\u00e9t\u00e9 :",
+  "workflow.search.help.string17": "property:name=value",
+  "node.step.plugin.plural": "{0} plugins d\u02bc\u00e9tape de n\u0153ud",
+  "workflow.step.plugin.plural": "{0} plugins d\u02bc\u00e9tape de workflow",
+  "choose.a.job...": "Choisir un traitement\u2026",
+  "Workflow.Step.jobreference.jobName.help":
+    "S\u00e9lectionnez un traitement existant \u00e0 l\u02bcaide du s\u00e9lecteur de projet et du bouton \u00ab Choisir un traitement... \u00bb ci-dessus, ou en saisissant le nom et/ou le groupe du traitement dans les champs ci-dessous.",
+  "plugin.edit.title": "Modifier l\u02bc\u00e9tape",
+  "Workflow.step.property.description.label": "Nom de l\u02bc\u00e9tape",
+  "Workflow.step.property.description.help": "Nom de cette \u00e9tape",
+  "notification.create": "Cr\u00e9er une notification",
+  "notification.edit": "Modifier la notification",
+  Search: "Rechercher",
+  "commandExec.jobName.blank.message":
+    "Le traitement doit \u00eatre sp\u00e9cifi\u00e9",
+  "Workflow.stepErrorHandler.label.on.error": "en cas d\u02bcerreur",
+  "Workflow.validation.oneError": "1 erreur",
+  "Workflow.validation.multipleErrors": "{count} erreurs",
+  "archive.import.validateJobRef.label":
+    "Valider les traitements r\u00e9f\u00e9renc\u00e9s :",
+  "archive.import.uuidOption.label": "Traitements import\u00e9s :",
+  userMenuGreeting: "Bonjour {0} !",
+  unknownUser: "(Utilisateur inconnu)",
+  searchForStep: "Rechercher une \u00e9tape",
+  learnMoreSearchPatterns:
+    "pour effectuer une recherche avec des motifs pr\u00e9cis",
+  nodeStepsDescription:
+    "Les \u00e9tapes de n\u0153ud s\u02bcex\u00e9cutent une fois pour chaque n\u0153ud cibl\u00e9 par le filtre de n\u0153uds du traitement.",
+  workflowStepsDescription:
+    "Les \u00e9tapes de workflow s\u02bcex\u00e9cutent une fois par ex\u00e9cution du traitement.",
+  commonNodeSteps: "\u00c9tapes de n\u0153ud courantes",
+  commonWorkflowSteps: "\u00c9tapes de workflow courantes",
+  learnMore: "En savoir plus",
+  plugins: "plugins",
+  "markdown.help.link.label": "Aide sur la syntaxe Markdown",
+  "job.tree.browse.group.label": "Parcourir le groupe de traitements : {0}",
+  "repository.plugin.sourceLink.label": "Code source du plugin",
+  "repository.plugin.pageLink.label": "Page du plugin",
+  "repository.plugin.docsLink.label": "Documentation du plugin",
+  "storage.path.link.label": "Lien vers le chemin de stockage",
+  "user.list.newProfile": "Nouveau profil \u2026",
+  "user.list.toggleDetails":
+    "Afficher/masquer les d\u00e9tails de l\u02bcutilisateur {0}",
 };
 
 export default messages;

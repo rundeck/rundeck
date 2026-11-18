@@ -637,7 +637,22 @@ class ExecutionUtilService {
                     killcount++;
                 } else {
                     //reached pre-set kill limit, so shut down
-                    thread.stop()
+                    try {
+                        thread.stop()
+                    } catch (UnsupportedOperationException e) {
+                        //Java 20+ has no forced stop: Thread.stop() is still on the API but always
+                        //throws. The thread will never exit, so the loop condition would never
+                        //clear -- abandon it and return, so the referencing step is reported as
+                        //interrupted instead of failing with the exception.
+                        log.warn(
+                            "Referenced job thread ${thread.name} did not exit after ${killcount} " +
+                                    "abort attempts and this runtime has no forced stop. " +
+                                    "Abandoning the thread; it keeps running until this instance " +
+                                    "restarts."
+                        )
+                        metricService.markMeter(ExecutionService.name, 'referencedJobAbandonedThreadMeter')
+                        break
+                    }
                 }
             }
         }

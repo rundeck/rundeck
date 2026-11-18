@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
-import com.dtolabs.rundeck.core.utils.TextUtils;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Data;
 import lombok.Getter;
@@ -43,6 +42,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -79,6 +79,13 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * Set while a pool thread queries a source, so a node load started from that query can be detected
      */
     private static final ThreadLocal<Boolean> IN_SOURCE_QUERY = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * Set by querySource on the thread that queries a source. StoreExceptionHandler records a failure caught by a
+     * caching source here, so the query can tell it returned cached nodes. Per thread and per query, so concurrent
+     * loads do not see each other's failures.
+     */
+    private static final ThreadLocal<AtomicReference<Throwable>> CACHE_FAILURE = new ThreadLocal<>();
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -176,14 +183,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final List<LoadedResourceModelSource> sources = new ArrayList<>(getResourceModelSourcesInternal());
         querySources(sources, (i, result) -> {
             //configured source index: sources that failed to initialize are not in the list
-            final int index = sources.get(i).getIndex();
+            final LoadedResourceModelSource source = sources.get(i);
+            final int index = source.getIndex();
             ResourceModelSourceException error = result.error();
             if (result.nodes() != null) {
                 try {
                     list.addNodeSet(result.nodes());
                 } catch (RuntimeException e) {
-                    logger.error("Cannot merge nodes from source #" + index + ": " + e.getMessage());
-                    logger.debug("Cannot merge nodes from source #" + index + ": " + e.getMessage(), e);
+                    logger.error("Cannot merge nodes from [{}]: {}", source, e.getMessage());
+                    logger.debug("Cannot merge nodes from [{}]: {}", source, e.getMessage(), e);
                     error = new ResourceModelSourceException(e.getMessage(), e);
                 }
             }
@@ -382,6 +390,40 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
+     * @param source object to describe
+     *
+     * @return its toString(), or its class name if that fails, so describing a source in a log message can
+     * never replace the original failure
+     */
+    private static String safeToString(final Object source) {
+        try {
+            return String.valueOf(source);
+        } catch (Throwable e) {
+            return source.getClass().getName();
+        }
+    }
+
+    /**
+     * @param nodesSource source
+     *
+     * @return the source description (project, index and type) in brackets, for log messages
+     */
+    static String sourceContext(final ResourceModelSource nodesSource) {
+        return "[" + safeToString(nodesSource) + "]";
+    }
+
+    /**
+     * @param nodesSource source
+     *
+     * @return the underlying source of a loaded source, e.g. the file path, as a log suffix; empty otherwise
+     */
+    static String sourceDetail(final ResourceModelSource nodesSource) {
+        return nodesSource instanceof LoadedSource
+               ? " (source: " + safeToString(((LoadedSource) nodesSource).getDelegate()) + ")"
+               : "";
+    }
+
+    /**
      * Query a single source, capturing any failure in the result
      *
      * @param nodesSource source
@@ -391,33 +433,80 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static SourceResult querySource(final ResourceModelSource nodesSource) {
         INodeSet nodes = null;
         ResourceModelSourceException error = null;
+        //keep an enclosing query's slot, for a source that loads another project's nodes on this thread
+        final AtomicReference<Throwable> enclosingCacheFailure = CACHE_FAILURE.get();
+        final AtomicReference<Throwable> cacheFailure = new AtomicReference<>();
+        CACHE_FAILURE.set(cacheFailure);
         try {
+            logger.debug("Loading nodes from {}", nodesSource);
+            long start = System.nanoTime();
             nodes = nodesSource.getNodes();
             if (null == nodes) {
-                logger.warn("Empty nodes result from [" + nodesSource.toString() + "]");
+                logger.warn("Empty nodes result from " + sourceContext(nodesSource));
+            }
+            //a caching source catches the failure, records it with StoreExceptionHandler and returns cached nodes
+            final Throwable cacheFallback = cacheFailure.get();
+            if (null != cacheFallback) {
+                logger.warn(
+                        "Loading nodes from {} failed after {} ms, using {} cached nodes: {}",
+                        nodesSource,
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start),
+                        nodeCount(nodes),
+                        cacheFallback.getMessage()
+                );
+            } else {
+                logger.debug(
+                        "Loaded {} nodes from {} in {} ms",
+                        nodeCount(nodes),
+                        nodesSource,
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+                );
             }
             if (nodesSource instanceof ResourceModelSourceErrors errs) {
                 List<String> modelSourceErrors = errs.getModelSourceErrors();
                 if (modelSourceErrors != null && !modelSourceErrors.isEmpty()) {
-                    logger.error("Some errors getting nodes from [" +
-                                 nodesSource.toString() +
-                                 "]: " +
-                                 modelSourceErrors);
+                    logger.error("Some errors getting nodes from " + sourceContext(nodesSource) + ": " + modelSourceErrors);
                     error = new ResourceModelSourceException(
-                            TextUtils.join(modelSourceErrors.toArray(new String[0]), ';')
+                            //one error per line, so the node sources page shows each error on its own line
+                            String.join("\n", modelSourceErrors)
                     );
                 }
             }
-        } catch (ResourceModelSourceException | RuntimeException e) {
-            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-            error = new ResourceModelSourceException(e.getMessage(), e);
         } catch (Throwable e) {
-            logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
-            logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-            error = new ResourceModelSourceException(e.getMessage());
+            final String message = "Cannot get nodes from " + sourceContext(nodesSource) + ": " + e.getMessage()
+                                   + sourceDetail(nodesSource);
+            logger.error(message);
+            logger.debug(message, e);
+            error = e instanceof Exception
+                    ? new ResourceModelSourceException(e.getMessage(), (Exception) e)
+                    : new ResourceModelSourceException(e.getMessage());
+        } finally {
+            if (null == enclosingCacheFailure) {
+                CACHE_FAILURE.remove();
+            } else {
+                CACHE_FAILURE.set(enclosingCacheFailure);
+            }
         }
         return new SourceResult(nodes, error);
+    }
+
+    /**
+     * Node count for log messages. Never fails the load: a node set that cannot report its size is logged as
+     * "unknown", and the merge reports the problem.
+     *
+     * @param nodes nodes, may be null
+     *
+     * @return node count, or "unknown"
+     */
+    private static String nodeCount(final INodeSet nodes) {
+        if (null == nodes) {
+            return "0";
+        }
+        try {
+            return String.valueOf(nodes.getNodes().size());
+        } catch (RuntimeException e) {
+            return "unknown";
+        }
     }
 
     /**
@@ -562,6 +651,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         @Override
         public void handleException(final Throwable t, final ResourceModelSource origin) {
             nodesSourceExceptions.put(sourceIdent, t);
+            final AtomicReference<Throwable> cacheFailure = CACHE_FAILURE.get();
+            if (null != cacheFailure) {
+                cacheFailure.set(t);
+            }
         }
     }
 
@@ -673,13 +766,35 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     static class LoadedSource
             extends DelegateResourceModelSource implements LoadedResourceModelSource
     {
+        @Getter final String project;
         @Getter final int index;
         @Getter final String type;
 
-        LoadedSource(final int index, final String type, final ResourceModelSource delegate) {
+        /**
+         * @param project  project name
+         * @param index    configured source index, from resources.source.N
+         * @param type     source provider type
+         * @param delegate source to delegate to
+         */
+        LoadedSource(
+                final String project,
+                final int index,
+                final String type,
+                final ResourceModelSource delegate
+        )
+        {
             super(delegate);
+            this.project = project;
             this.index = index;
             this.type = type;
+        }
+
+        /**
+         * @return label identifying the source by project, index and type, e.g. "project=Foo source #3 (aws-ec2)"
+         */
+        @Override
+        public String toString() {
+            return "project=" + project + " source #" + index + " (" + type + ")";
         }
 
         @Override
@@ -721,6 +836,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         nodeSourceReferences.add(sourceForConfiguration);
         if (useCache) {
             return new LoadedSource(
+                    projectConfig.getName(),
                     index,
                     type,
                     createCachingSource(sourceForConfiguration.getProvider(), ident, ident + " (" + type + ")")
@@ -728,6 +844,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         } else {
 
             return new LoadedSource(
+                    projectConfig.getName(),
                     index,
                     type, sourceForConfiguration.getProvider()
             );
