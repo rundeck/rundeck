@@ -52,12 +52,15 @@ import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
+import rundeck.codecs.AnsiColorStripCodec
 import rundeck.codecs.HTMLElementCodec
 import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import groovy.json.JsonSlurper
 
 import javax.security.auth.Subject
 import jakarta.servlet.http.HttpServletResponse
@@ -506,6 +509,92 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
             '3'      | 3
             '-1'     | 3
             'asdf'   | 3
+    }
+
+    def "tail exec output drops client loghtml and still renders ansi"() {
+        given:
+            mockCodec(AnsiColorStripCodec)
+            def assetTaglib = mockTagLib(AssetMethodTagLib)
+            assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+                assetBaseUrl(*_) >> ''
+                getAssetPath(*_) >> ''
+            }
+            mockTagLib(UtilityTagLib)
+
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+            )
+            e1.save() != null
+            controller.loggingService = Mock(LoggingService)
+            controller.configurationService = Mock(ConfigurationService) {
+                getBoolean('gui.execution.logs.renderConvertedContent', true) >> false
+            }
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+            reader.reader = new TestReader(
+                logs: [
+                    new DefaultLogEvent(
+                        eventType: LogUtil.EVENT_TYPE_LOG,
+                        datetime: new Date(),
+                        message: 'plain log line',
+                        metadata: [
+                            loghtml: '<img src=x>',
+                            node: 'localhost',
+                            'content-data-type': 'application/json',
+                        ],
+                        loglevel: LogLevel.NORMAL
+                    ),
+                    new DefaultLogEvent(
+                        eventType: LogUtil.EVENT_TYPE_LOG,
+                        datetime: new Date(),
+                        message: '\u001B[31mERROR\u001B[0m',
+                        metadata: [node: 'localhost'],
+                        loglevel: LogLevel.NORMAL
+                    ),
+                ]
+            )
+            session.subject = new Subject()
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+                1 * execution(_, _) >> Mock(AuthorizingExecution) {
+                    1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >> e1
+                }
+            }
+        when:
+            params.id = e1.id.toString()
+            request.api_version = 43
+            request.addHeader('accept', 'application/json')
+            controller.tailExecutionOutput()
+            def json = new JsonSlurper().parseText(response.text)
+        then:
+            1 * controller.loggingService.getLogReader(e1) >> reader
+            json.entries.size() == 2
+            json.entries[0].log == 'plain log line'
+            json.entries[0].loghtml == null
+            json.entries[0].metadata.node == 'localhost'
+            json.entries[0].metadata['content-data-type'] == 'application/json'
+            !json.entries[0].metadata.containsKey('loghtml')
+            json.entries[1].log == 'ERROR'
+            json.entries[1].loghtml.contains('ansi-fg-red')
+            !json.entries[1].metadata.containsKey('loghtml')
+    }
+
+    def "withoutClientLogHtml removes loghtml and leaves the source map unchanged"() {
+        given:
+            def source = [node: 'localhost', loghtml: '<img src=x>', 'content-data-type': 'text/html']
+        when:
+            def result = controller.withoutClientLogHtml(source)
+        then:
+            !result.containsKey('loghtml')
+            result.node == 'localhost'
+            result['content-data-type'] == 'text/html'
+            source.loghtml == '<img src=x>'
+            controller.withoutClientLogHtml(null) == null
     }
     def "tail exec output 0 totsize should have 0 percentLoaded"() {
         given:
