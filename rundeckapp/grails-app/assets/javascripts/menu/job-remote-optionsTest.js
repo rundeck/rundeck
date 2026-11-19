@@ -73,11 +73,8 @@ jQuery(function () {
                 }
             };
         };
-        //mirrors RemoteOptionLoader: a current request is completed before the callbacks run
+        //mirrors RemoteOptionLoader: a successful request stays pending until the callbacks apply it
         loader.resolve = function (req, data) {
-            if (req.request && req.request.isCurrent()) {
-                req.request.complete();
-            }
             req.callbacks.forEach(function (cb) {
                 cb(data);
             });
@@ -845,6 +842,73 @@ jQuery(function () {
                 this.assert("b no longer loading after a failed", false, o.b.loading());
                 this.assert("c no longer loading after a failed", false, o.c.loading());
                 this.assert("c never requested", cCount, loader.forName('c').length);
+            },
+            cascade_dependentDeferredRegardlessOfDeclarationOrder_Test: function () {
+                var loader = mkDeferredLoader();
+                //version is declared before client, although it depends on client
+                var control = mkChain(loader, ['region', 'version', 'client'], {
+                    client: ['region'],
+                    version: ['region', 'client']
+                });
+                var o = control.options;
+                o.region.value('/EMEA');
+                loader.resolve(loader.forName('client')[0], mkdata(['/ALPHA']));
+                loader.forName('version').forEach(function (r) {
+                    loader.resolve(r, mkdata(['/ALPHA_R1']));
+                });
+                var versionCount = loader.forName('version').length;
+                o.region.value('/APAC');
+                this.assert("version not requested with the old client", versionCount,
+                    loader.forName('version').length);
+                var clientReqs = loader.forName('client');
+                loader.resolve(clientReqs[clientReqs.length - 1], mkdata(['/GAMMA']));
+                var versionReqs = loader.forName('version');
+                this.assert("version requested once client reloaded", versionCount + 1, versionReqs.length);
+                this.assert("version requested with consistent values", {region: '/APAC', client: '/GAMMA'}, {
+                    region: versionReqs[versionReqs.length - 1].params['region'],
+                    client: versionReqs[versionReqs.length - 1].params['client']
+                });
+            },
+            cyclicDependencies_loadIndependently_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['r', 'a', 'b'], {a: ['r', 'b'], b: ['a']});
+                control.cyclic = true;
+                control.loadRemoteOptionValues('r');
+                var aCount = loader.forName('a').length;
+                var bCount = loader.forName('b').length;
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('b');
+                this.assert("a requested while r loads in cyclic mode", aCount + 1, loader.forName('a').length);
+                this.assert("b requested while a loads in cyclic mode", bCount + 1, loader.forName('b').length);
+            },
+            loader_successKeepsRequestPendingUntilApplied_Test: function () {
+                var ajaxOpts = null;
+                var thenCallbacks = [];
+                var origAjax = jQuery.ajax;
+                jQuery.ajax = function (opts) {
+                    ajaxOpts = opts;
+                    return {
+                        then: function (cb) {
+                            thenCallbacks.push(cb);
+                        }
+                    };
+                };
+                try {
+                    var loader = new RemoteOptionLoader({url: '/remote', fieldPrefix: 'extra.option.', id: 'job1'});
+                    var control = mkChain(loader, ['a', 'c'], {c: ['a']});
+                    control.loadRemoteOptionValues('a');
+                    //transport finished, response not applied yet (jQuery 3 runs .then asynchronously)
+                    ajaxOpts.success(mkdata(['a1']), 'success', {});
+                    this.assert("a still pending after transport success", true, !!control.pending['a']);
+                    this.assert("c defers while a is not applied", true, control.hasPendingDependency('c'));
+                    thenCallbacks.forEach(function (cb) {
+                        cb(mkdata(['a1']));
+                    });
+                    this.assert("a no longer pending once applied", false, !!control.pending['a']);
+                    this.assert("a value applied", 'a1', control.options.a.value());
+                } finally {
+                    jQuery.ajax = origAjax;
+                }
             },
             abortsPreviousRequest_Test: function () {
                 var aborted = 0;

@@ -199,7 +199,8 @@ function RemoteOptionController(data) {
      * reload the values for an option by name (calls _loadRemoteOptionValues). Only the response of the
      * latest request for the option is applied; responses and errors of superseded requests are ignored.
      * While an option it depends on is still loading, the request is deferred until that load finishes,
-     * so it is never built from a mix of new and outdated upstream values.
+     * so it is never built from a mix of new and outdated upstream values (not applied when the
+     * dependencies are cyclic).
      * @param name
      */
     self.loadRemoteOptionValues = function (name) {
@@ -207,7 +208,8 @@ function RemoteOptionController(data) {
         // self.stopObserving(name);
         var option = self.options[name];
         self.invalidateRequest(name);
-        if (self.hasPendingDependency(name)) {
+        //cyclic dependencies load every option independently: waiting could deadlock
+        if (!self.cyclic && self.hasPendingDependency(name)) {
             self.needsReload[name] = true;
             option.loading(true);
             return;
@@ -312,6 +314,11 @@ function RemoteOptionController(data) {
         if (self.dependents[name] && !self.cyclic) {
             //responses computed from the previous value of this option are stale for every transitive dependent
             self.invalidateDependents(name);
+            //mark every direct dependent as waiting first, so a dependent reloaded before one of its
+            //upstream siblings defers until that sibling reloads, regardless of declaration order
+            for (var k = 0; k < self.dependents[name].length; k++) {
+                self.needsReload[self.dependents[name][k]] = true;
+            }
             for (var i = 0; i < self.dependents[name].length; i++) {
                 var dependentName = self.dependents[name][i];
                 self.reloadOptionIfRequirementsMet(dependentName);
@@ -427,15 +434,16 @@ function RemoteOptionLoader(data) {
      * @param opt Option to load
      * @param options all options, keyed by name, used as request parameters
      * @param request optional staleness handle: isCurrent() tells if this request is still the latest one
-     *  for the option, complete() is called when the request finishes while current
+     *  for the option, complete() is called when the request fails while current (on success the
+     *  caller completes it once the response is applied)
      * @returns the jqXHR of the request
      */
     self.loadRemoteOptionValues = function (opt, options, request) {
         var isCurrent = function () {
             return !request || request.isCurrent();
         };
-        var finish = function () {
-            if (request && request.complete) {
+        var finish = function (completeRequest) {
+            if (completeRequest && request && request.complete) {
                 request.complete();
             }
             //show loading spinner at least for a little while
@@ -461,8 +469,9 @@ function RemoteOptionLoader(data) {
             type: 'json',
             url: _genUrl(self.url, params),
             success: function (data, status, jqxhr) {
+                //the request stays pending until the caller applies the response
                 if (isCurrent()) {
-                    finish();
+                    finish(false);
                 }
             },
             error: function (jqxhr, status, message) {
@@ -470,7 +479,7 @@ function RemoteOptionLoader(data) {
                 if (status === 'abort' || !isCurrent()) {
                     return;
                 }
-                finish();
+                finish(true);
                 opt.remoteError({error: "ERROR loading result from Rundeck server: " + status + ": " + message});
                 if (request && request.failed) {
                     request.failed();
