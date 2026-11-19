@@ -956,6 +956,76 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     /**
+     * Builds a cache key scoped to the LDAP config that produced the cached UserInfo.
+     * 
+     * USERINFOCACHE is static and is therefore shared by every instance of this login module.
+     * Multiple JAAS entries can authenticate the same user while using different roleBaseDn values.
+     * The module config must therefore be part of the key, otherwise a cached entry created by one
+     * JAAS module can incorrectly satisfy another module's lookup.
+     * 
+     * The returned key is a digest. The clear-text password and LDAP config are not stored in USERINFOCACHE.
+     */
+    protected String buildUserInfoCacheToken(final String normalizedUsername, final Object password) {
+        final String passwordString = 
+                password instanceof char[]
+                ? new String((char[]) password)
+                : String.valueOf(password);
+
+        StringBuilder cacheIdentity = new StringBuilder();
+
+        //Authentication identity
+        appendCacheKeyPart(cacheIdentity, normalizedUsername);
+        appendCacheKeyPart(cacheIdentity, passwordString);
+
+        //Directory scope
+        appendCacheKeyPart(cacheIdentity, _providerUrl);
+        appendCacheKeyPart(cacheIdentity, _userBaseDn);
+        appendCacheKeyPart(cacheIdentity, _userObjectClass);
+        appendCacheKeyPart(cacheIdentity, _userRdnAttribute);
+        appendCacheKeyPart(cacheIdentity, _userIdAttribute);
+
+        //Role-query scope
+        appendCacheKeyPart(cacheIdentity, _roleBaseDn);
+        appendCacheKeyPart(cacheIdentity, _roleObjectClass);
+        appendCacheKeyPart(cacheIdentity, _roleMemberAttribute);
+        appendCacheKeyPart(cacheIdentity, _roleUsernameMemberAttribute);
+        appendCacheKeyPart(cacheIdentity, _roleNameAttribute);
+        appendCacheKeyPart(cacheIdentity, _rolePrefix);
+
+        // Options that can change the resulting role set
+        appendCacheKeyPart(cacheIdentity, Boolean.toString(_nestedGroups));
+        appendCacheKeyPart(cacheIdentity, Boolean.toString(_allGroups));
+        appendCacheKeyPart(cacheIdentity, Boolean.toString(_forceBindingLoginUseRootContextForRoles));
+
+        if (_supplementalRoles == null) {
+            appendCacheKeyPart(cacheIdentity, null);
+        } else {
+            for (String supplementalRole : _supplementalRoles) {
+                appendCacheKeyPart(cacheIdentity, supplementalRole);
+            }
+        }
+
+        return PasswordCredential.md5Digest(cacheIdentity.toString());
+    }
+
+    /**
+     * Adds an unambigous length-prefixed value to the cache-key input.
+     * 
+     * This avoids collisions caused by delimiters appearing in LDAP names
+     * or configuration values. Null is represented separately from an empty string.
+     */
+    private void appendCacheKeyPart(final StringBuilder cacheIdentity, final String value) {
+        if (value == null) {
+            cacheIdentity.append("-1:");
+            return;
+        }
+
+        cacheIdentity.append(value.length())
+                     .append(':')
+                     .append(value);
+    }
+
+    /**
      * binding authentication check This methode of authentication works only if
      * the user branch of the DIT (ldap tree) has an ACI (acces control
      * instruction) that allow the access to any user or at least for the user
@@ -975,8 +1045,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         // password arrives as a char[] via the standard JAAS PasswordCallback path (e.g. Spring
         // Security's JAAS bridge); Object.toString() on an array is identity-based and differs per
         // instance even for equal content, which made the cache key never match across requests.
-        final String passwordString = password instanceof char[] ? new String((char[]) password) : password.toString();
-        final String cacheToken = PasswordCredential.md5Digest(normalizedUsername + ":" + passwordString);
+        final String cacheToken = buildUserInfoCacheToken(normalizedUsername, password);
         if (_cacheDuration > 0) { // only worry about caching if there is a cacheDuration set.
             CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
             if (cached != null) {
