@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.shared.resources.ResourceXMLParser;
 
 import java.io.File;
 import java.io.InputStream;
@@ -53,6 +54,24 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
             "text/xml",
             "*/xml"
     )));
+
+    private final ResourceXMLParser.EntityLimitPolicy entityLimitPolicy;
+
+    /**
+     * Creates a parser with the default JAXP entity-size limits.
+     */
+    public ResourceXMLFormatParser() {
+        this(null);
+    }
+
+    /**
+     * Creates a parser with finite JAXP entity-size limits.
+     *
+     * @param entityLimitPolicy optional finite entity-size limits
+     */
+    public ResourceXMLFormatParser(final ResourceXMLParser.EntityLimitPolicy entityLimitPolicy) {
+        this.entityLimitPolicy = entityLimitPolicy;
+    }
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
@@ -75,7 +94,7 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
     public INodeSet parseDocument(final File file) throws ResourceFormatParserException {
         final NodeSetImpl nodeReceiver = new NodeSetImpl();
         try {
-            new NodesXMLParser(file, nodeReceiver).parse();
+            new NodesXMLParser(file, nodeReceiver, entityLimitPolicy).parse();
         } catch (NodeFileParserException e) {
             throw new ResourceFormatParserException(e);
         }
@@ -85,7 +104,7 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
     public INodeSet parseDocument(final InputStream input) throws ResourceFormatParserException {
         final NodeSetImpl nodeReceiver = new NodeSetImpl();
         try {
-            new NodesXMLParser(input, nodeReceiver).parse();
+            new NodesXMLParser(input, nodeReceiver, entityLimitPolicy).parse();
         } catch (NodeFileParserException e) {
             throw new ResourceFormatParserException(e);
         }

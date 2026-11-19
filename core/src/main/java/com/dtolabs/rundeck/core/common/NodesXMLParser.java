@@ -50,6 +50,7 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
     final File file;
     final InputStream input;
     final NodeReceiver nodeReceiver;
+    final ResourceXMLParser.EntityLimitPolicy entityLimitPolicy;
 
     /**
      * Create NodesXmlParser
@@ -60,6 +61,7 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
         this.file = null;
         this.input=null;
         this.nodeReceiver = nodeReceiver;
+        this.entityLimitPolicy = null;
     }
     /**
      * Create NodesXmlParser
@@ -68,9 +70,25 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
      * @param nodeReceiver Nodes object
      */
     public NodesXMLParser(final File file, final NodeReceiver nodeReceiver) {
+        this(file, nodeReceiver, null);
+    }
+
+    /**
+     * Create NodesXmlParser with finite XML entity-size limits.
+     *
+     * @param file              nodes file
+     * @param nodeReceiver      Nodes object
+     * @param entityLimitPolicy optional finite entity-size limits
+     */
+    public NodesXMLParser(
+            final File file,
+            final NodeReceiver nodeReceiver,
+            final ResourceXMLParser.EntityLimitPolicy entityLimitPolicy
+    ) {
         this.file = file;
         this.input=null;
         this.nodeReceiver = nodeReceiver;
+        this.entityLimitPolicy = entityLimitPolicy;
     }
     /**
      * Create NodesXmlParser
@@ -79,9 +97,25 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
      * @param nodeReceiver Nodes object
      */
     public NodesXMLParser(final InputStream input, final NodeReceiver nodeReceiver) {
+        this(input, nodeReceiver, null);
+    }
+
+    /**
+     * Create NodesXmlParser with finite XML entity-size limits.
+     *
+     * @param input             nodes stream
+     * @param nodeReceiver      Nodes object
+     * @param entityLimitPolicy optional finite entity-size limits
+     */
+    public NodesXMLParser(
+            final InputStream input,
+            final NodeReceiver nodeReceiver,
+            final ResourceXMLParser.EntityLimitPolicy entityLimitPolicy
+    ) {
         this.input = input;
         this.file=null;
         this.nodeReceiver = nodeReceiver;
+        this.entityLimitPolicy = entityLimitPolicy;
     }
 
     /**
@@ -90,9 +124,9 @@ public class NodesXMLParser implements NodeFileParser, ResourceXMLReceiver {
     public void parse() throws NodeFileParserException {
         final ResourceXMLParser resourceXMLParser;
         if(null!=file){
-            resourceXMLParser=new ResourceXMLParser(file);
+            resourceXMLParser=new ResourceXMLParser(file, entityLimitPolicy);
         }else{
-            resourceXMLParser = new ResourceXMLParser(input);
+            resourceXMLParser = new ResourceXMLParser(input, entityLimitPolicy);
         }
         //parse both node and settings
         resourceXMLParser.setReceiver(this);
