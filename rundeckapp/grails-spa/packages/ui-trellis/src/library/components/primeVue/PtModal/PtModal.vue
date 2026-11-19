@@ -134,3 +134,25 @@ export default defineComponent({
   }
 }
 </style>
+
+<style scoped lang="scss">
+// PrimeVue's own dark preset is gated behind a ".dark" class the app never
+// sets (we use the "data-color-theme" attribute instead), so the Dialog
+// chrome needs its own explicit dark-mode colors here. :global() because the
+// Dialog is teleported out of this component's subtree.
+:global(*[data-color-theme="dark"] .p-dialog.pt-modal),
+:global(*[data-color-theme="dark"] .p-dialog.pt-modal .p-dialog-header),
+:global(*[data-color-theme="dark"] .p-dialog.pt-modal .p-dialog-footer) {
+  background: var(--background-color-lvl2);
+}
+
+:global(*[data-color-theme="dark"] .p-dialog.pt-modal .p-dialog-title),
+:global(*[data-color-theme="dark"] .p-dialog.pt-modal .p-dialog-close-button) {
+  color: var(--font-color);
+}
+
+:global(*[data-color-theme="dark"] .p-dialog.pt-modal .p-dialog-content) {
+  background: var(--background-color-lvl2);
+  color: var(--text-secondary-color);
+}
+</style>

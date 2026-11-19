@@ -253,5 +253,17 @@ export default defineComponent({
       color: var(--white, #fff);
     }
   }
+
+  // Default (non-secondary) link/text buttons keep their saturated blue
+  // label, but the light hover/active chip background needs a dark one.
+  .p-button-link:hover,
+  .p-button-text:hover {
+    background-color: var(--grey-800);
+  }
+
+  .p-button-link:active,
+  .p-button-text:active {
+    background-color: var(--grey-700);
+  }
 }
 </style>

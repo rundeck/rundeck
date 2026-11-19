@@ -30,6 +30,7 @@
     v-else
     :value="activeStep"
     linear
+    class="pt-stepper-horizontal"
     data-testid="pt-stepper-horizontal"
   >
     <StepList>
@@ -173,6 +174,33 @@ export default defineComponent({
   //&.p-disabled {
   //  opacity: 1;
   //}
+}
+
+// Dark mode for the horizontal stepper (the vertical variant has its own
+// scoped dark block below). The active/completed states keep their
+// saturated blue accent; only the muted base state and completed/active
+// titles need a dark-safe color here. The base and completed overrides
+// exclude active/completed steps so the light-mode state precedence
+// (active wins over completed) is preserved.
+// Scoped to .pt-stepper-horizontal so it never competes with the vertical
+// variant's own dark rules.
+*[data-color-theme="dark"] .pt-stepper-horizontal {
+  .p-step:not(.p-completed):not(.p-step-active) .p-step-header .p-step-number {
+    // Lara's dark step-number background is gated on ".dark", so the light
+    // preset background would remain without this.
+    background: var(--background-color-lvl2);
+    border-color: var(--border-color);
+    color: var(--text-muted-color);
+  }
+
+  .p-step.p-completed:not(.p-step-active) .p-step-number {
+    background: var(--background-color-lvl3);
+  }
+
+  .p-step.p-completed .p-step-title,
+  .p-step.p-step-active .p-step-title {
+    color: var(--font-color);
+  }
 }
 </style>
 
