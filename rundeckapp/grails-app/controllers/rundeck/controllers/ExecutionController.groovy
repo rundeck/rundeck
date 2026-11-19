@@ -915,6 +915,25 @@ setTimeout(function(){
 
     }
 
+    /**
+     * Copy of log-file metadata with a client-supplied {@code loghtml} key removed.
+     * That key is rendered as HTML by the log UI. The server assigns {@code loghtml}
+     * later from ANSI color, content conversion, or markdown. A null input stays null
+     * so the output API does not grow an empty metadata object. The source map is not modified.
+     *
+     * @param metadata event metadata from the log file, or null
+     * @return copy without {@code loghtml}, or null when {@code metadata} is null
+     */
+    @PackageScope
+    Map withoutClientLogHtml(Map metadata) {
+        if (metadata == null) {
+            return null
+        }
+        Map copy = new LinkedHashMap(metadata)
+        copy.remove('loghtml')
+        return copy
+    }
+
     @PackageScope
     boolean checkAllowUnsanitized(String project) {
         if(frameworkService.getRundeckFramework().hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
@@ -1862,11 +1881,14 @@ JSON response requires API v14.
                 continue
             }
             log.debug("read stream event: ${data}")
-            def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString(),type:data.eventType]
-            
+            // Drop a client-supplied loghtml key. ANSI, content conversion, and markdown
+            // assign loghtml on this entry after the metadata copy.
+            Map logMeta = withoutClientLogHtml(data.metadata)
+            def logdata= (logMeta ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString(),type:data.eventType]
+
             // Since V43 we add metadata field to log entries.
             if (request.api_version >= ApiVersions.V43) {
-                logdata.metadata = data.metadata
+                logdata.metadata = logMeta
             }
             
             entry<<logdata
