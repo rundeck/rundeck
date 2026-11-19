@@ -1,7 +1,7 @@
 buildscript {
     repositories {
-        maven { url "https://repo.grails.org/grails/core" }
         gradlePluginPortal()
+        maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
         classpath "com.github.node-gradle:gradle-node-plugin:7.1.0"

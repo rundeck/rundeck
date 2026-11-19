@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
@@ -192,6 +193,15 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
      * The step's hierarchical path, e.g. "3" for a top-level step 3, or "3/1" for step 1 of a
      * nested job-reference's own workflow invoked from step 3. Tolerant of a null
      * {@code getStepContext()} (treated as no parent path).
+     * <p>
+     * An error handler runs under the same step number as the step it handles -- {@code
+     * BaseWorkflowExecutor} invokes it with the failed step's own {@code c} and a context built
+     * from the same parent -- so without a distinguishing suffix a handler and its parent step
+     * would collide on one key. They would then accumulate each other's elapsed time and node
+     * counts, and the handler's plugin type would be dropped (the type maps use
+     * {@code putIfAbsent}, the counters accumulate). Handlers are therefore suffixed "e",
+     * matching {@code StateUtils.CtxItem#toString()} and so the same identifier scheme
+     * state.json already uses for an error handler's own step.
      */
     private static String stepPath(final StepExecutionContext context) {
         final StringBuilder sb = new StringBuilder();
@@ -202,6 +212,14 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
             }
         }
         sb.append(context.getStepNumber());
+        // Null-tolerant for the same reason as getStepContext() above: a context implementation
+        // (or a test double) that does not supply components returns null rather than an empty
+        // Optional, and a listener must never be the thing that breaks an execution.
+        final Optional<WorkflowItemErrorHandlerContext> handlerMarker =
+                context.componentForType(WorkflowItemErrorHandlerContext.class);
+        if (handlerMarker != null && handlerMarker.isPresent()) {
+            sb.append('e');
+        }
         return sb.toString();
     }
 

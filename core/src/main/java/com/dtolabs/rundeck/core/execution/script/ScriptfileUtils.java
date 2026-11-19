@@ -80,6 +80,9 @@ public class ScriptfileUtils {
          */
         public static LineEndingStyle forOsFamily(final String family) {
             if (null != family) {
+                if ("linux".equalsIgnoreCase(family) || "cygwin".equalsIgnoreCase(family)) {
+                    return UNIX;
+                }
                 try {
                     return valueOf(family.toUpperCase());
                 } catch (IllegalArgumentException e) {

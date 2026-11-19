@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.ScriptExecHelper
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ScriptPluginNodeExecutorSpec extends Specification {
 
@@ -90,6 +91,136 @@ class ScriptPluginNodeExecutorSpec extends Specification {
         [option: [password: 12344]]     | [password: 12344]
         null                            | null
 
+    }
+
+    @Unroll
+    def "resolve remote command shell from plugin metadata #metaValue"() {
+        given:
+        def provider = testProvider(metaValue, scope)
+        def projectProperties = new Properties()
+        if (projectValue != null) {
+            projectProperties.setProperty(
+                "project.plugin.NodeExecutor.test-script-node-executor.shell",
+                projectValue
+            )
+        }
+        testProject.setProjectProperties(projectProperties)
+        def contextData = new BaseDataContext("node", [remoteShell: "powershell"])
+        def context = Mock(ExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> contextData
+        }
+        def node = new NodeEntryImpl("node")
+        if (nodeValue != null) {
+            node.setAttribute("remote-shell", nodeValue)
+        }
+        def executor = new ScriptPluginNodeExecutor(provider, framework)
+
+        expect:
+        executor.getRemoteCommandShell(context, node) == expected
+
+        where:
+        metaValue          | nodeValue    | projectValue       | scope      || expected
+        null               | null         | null               | "Instance" || RemoteCommandShell.DEFAULT
+        "powershell"       | null         | null               | "Instance" || RemoteCommandShell.POWERSHELL
+        '${config.shell}'  | null         | null               | "Instance" || RemoteCommandShell.POWERSHELL
+        '${config.shell}'  | "cmd"        | null               | "Instance" || RemoteCommandShell.CMD
+        '${config.shell}'  | null         | "cmd"              | "Instance" || RemoteCommandShell.CMD
+        '${config.shell}'  | null         | "cmd"              | null       || RemoteCommandShell.CMD
+        '${config.shell}'  | '${node.remoteShell}' | null         | "Instance" || RemoteCommandShell.POWERSHELL
+    }
+
+    def "reject invalid remote command shell metadata"() {
+        given:
+        def context = Mock(ExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext()
+        }
+        def executor = new ScriptPluginNodeExecutor(testProvider("invalid"), framework)
+
+        when:
+        executor.getRemoteCommandShell(context, new NodeEntryImpl("node"))
+
+        then:
+        thrown(ExecutionServiceException)
+    }
+
+    def "resolve legacy PowerShell shell property without metadata"() {
+        given:
+        def context = Mock(ExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext()
+        }
+        def executor = new ScriptPluginNodeExecutor(
+            testProvider(null, "Instance", true),
+            framework
+        )
+
+        expect:
+        executor.getRemoteCommandShell(context, new NodeEntryImpl("node")) == RemoteCommandShell.POWERSHELL
+    }
+
+    def "ignore non-PowerShell legacy shell property without metadata"() {
+        given:
+        def context = Mock(ExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext()
+        }
+        def executor = new ScriptPluginNodeExecutor(
+            testProvider(null, "Instance", true, "bash", "bash,powershell"),
+            framework
+        )
+
+        expect:
+        executor.getRemoteCommandShell(context, new NodeEntryImpl("node")) == RemoteCommandShell.DEFAULT
+    }
+
+    private TestScriptNodeExecutor testProvider(String remoteCommandShell, String scope = "Instance") {
+        testProvider(remoteCommandShell, scope, false)
+    }
+
+    private TestScriptNodeExecutor testProvider(
+        String remoteCommandShell,
+        String scope,
+        boolean legacyPowerShellProperty,
+        String defaultShell = "powershell",
+        String selectValues = "cmd,powershell"
+    ) {
+        def shellProperty = [
+            name: "shell",
+            type: legacyPowerShellProperty ? "Select" : "String",
+            default: defaultShell,
+            renderingOptions: ["instance-scope-node-attribute": "remote-shell"]
+        ]
+        if (legacyPowerShellProperty) {
+            shellProperty.values = selectValues
+        }
+        if (scope != null) {
+            shellProperty.scope = scope
+        }
+        def provider = new TestScriptNodeExecutor(
+            name: "test-script-node-executor",
+            service: "NodeExecutor",
+            metadata: [
+                config: [shellProperty]
+            ],
+            providerMeta: remoteCommandShell != null
+                ? ["remote-command-shell": remoteCommandShell]
+                : null,
+            archiveFile: File.createTempFile("test-script-node-executor", "tmp"),
+            scriptFile: File.createTempFile("test-scriptfile", "tmp"),
+            contentsBaseDir: File.createTempFile("test-basedir", "tmp"),
+            scriptArgs: "",
+            pluginMeta: new PluginMeta(rundeckPluginVersion: "1.2")
+        )
+        provider.archiveFile.deleteOnExit()
+        provider.scriptFile.deleteOnExit()
+        provider.contentsBaseDir.deleteOnExit()
+        provider
     }
 
 

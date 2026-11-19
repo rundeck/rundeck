@@ -38,7 +38,7 @@
 <g:set var="fieldColHalfSize" value="col-sm-5"/>
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
-<g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+<g:set var="uiType" value="${params.boolean('nextUi')?'next':params.legacyUi?'legacy':'current'}"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
 

@@ -11,7 +11,6 @@ buildPackDir="$buildDir/pack"
 #/ Create the npm package
 create_npm_package(){
   cd "$buildPackDir"
-  nvm use
   which node || ( echo "node not found $PATH" && exit 2 )
   npm pack
   cp -v *.tgz "$1/rundeck-ui-trellis.tgz"

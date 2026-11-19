@@ -17,10 +17,15 @@
 package com.dtolabs.rundeck.core.execution
 
 import com.dtolabs.rundeck.core.common.IExecutionProviders
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.PluginControlService
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.RemoteCommandShell
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -30,8 +35,44 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ExecutionServiceImplSpec extends Specification {
+
+    @Unroll
+    def "resolve command interpreter for #remoteShell with #attributes as #expected"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getProperty(_) >> { String key -> projectProperties[key] }
+        }
+        def projectManager = Mock(ProjectManager) {
+            getFrameworkProject("test-project") >> project
+        }
+        def framework = Mock(IFramework) {
+            getFrameworkProjectMgr() >> projectManager
+        }
+        def context = Mock(ExecutionContext) {
+            getFrameworkProject() >> "test-project"
+            getIFramework() >> framework
+        }
+        def node = new NodeEntryImpl("node")
+        node.setAttributes(attributes)
+        def nodeExecutor = Mock(NodeExecutor) {
+            getRemoteCommandShell(context, node) >> remoteShell
+        }
+
+        expect:
+        ExecutionServiceImpl.resolveCommandInterpreter(context, node, nodeExecutor) == expected
+
+        where:
+        remoteShell                 | attributes                                        | projectProperties                                      || expected
+        RemoteCommandShell.DEFAULT  | [:]                                               | [:]                                                    || null
+        RemoteCommandShell.CMD      | [:]                                               | [:]                                                    || null
+        RemoteCommandShell.POWERSHELL | [:]                                             | [:]                                                    || "powershell"
+        RemoteCommandShell.POWERSHELL | ["shell-escaping-interpreter": "cmd"]            | [:]                                                    || "cmd"
+        RemoteCommandShell.CMD      | ["shell-escaping-interpreter": "powershell"]       | [:]                                                    || "powershell"
+        RemoteCommandShell.POWERSHELL | [:]                                             | ["project.plugin.Shell.Escaping.interpreter": "cmd"]   || "cmd"
+    }
 
     /**
      * RUN-3651: when secureOption storagePath contains a node variable (resolved per-node),

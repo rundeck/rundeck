@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
@@ -564,6 +565,28 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         1*service.rundeckNodeService.refreshProjectNodes('test1')
         null==Project.findByName('test1')
 
+    }
+
+    void "remove project removes its node source query pool"(){
+        setup:
+        def p = new Project(name:'test1')
+        p.save(flush: true)
+
+        service.configStorageService=Mock(ConfigStorageService)
+        service.rundeckNodeService=Mock(NodeService)
+        service.projectCache=Mock(LoadingCache)
+        def pool = ProjectNodeSupport.LOAD_POOLS.computeIfAbsent('test1', ProjectNodeSupport.&createLoadPool)
+
+        when:
+        service.removeFrameworkProject('test1')
+
+        then:
+        !ProjectNodeSupport.LOAD_POOLS.containsKey('test1')
+        pool.isShutdown()
+        1*service.rundeckNodeService.refreshProjectNodes('test1')
+
+        cleanup:
+        ProjectNodeSupport.LOAD_POOLS.remove('test1')?.shutdownNow()
     }
 
     void "valid config file"(String data, boolean valid){

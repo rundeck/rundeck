@@ -33,7 +33,7 @@ class RdClient {
     /**
      *  The current (latest) released version of the Rundeck API
      */
-    public static final int API_CURRENT_VERSION = 60
+    public static final int API_CURRENT_VERSION = 61
 
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl

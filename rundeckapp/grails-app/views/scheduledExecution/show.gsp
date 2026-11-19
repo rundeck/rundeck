@@ -62,7 +62,7 @@ search
                          hasScheduleEnabled(), executionEnabled: scheduledExecution?.hasExecutionEnabled()]}"/>
     <g:embedJSON id="pageParams" data="${[project: params.project ?: request.project]}"/>
 
-    <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+    <g:set var="uiType" value="${params.boolean('nextUi')?'next':params.legacyUi?'legacy':'current'}"/>
     <g:jsMessages code="Node,Node.plural,option.value.required,options.remote.dependency.missing.required,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <script type="text/javascript">
         var joboptions;

@@ -10,7 +10,7 @@
     "test": "node test-fileops.js && node build.js && node verify-build.js",
     "test:unit": "node test-fileops.js",
     "dev:build": "npm install && npm run build",
-    "ci:build": "npm ci && npm run build",
+    "ci:build": "npm run build",
     "build": "node build.js"
   },
   "keywords": [],

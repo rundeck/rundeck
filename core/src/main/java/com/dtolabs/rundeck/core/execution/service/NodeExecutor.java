@@ -76,4 +76,15 @@ public interface NodeExecutor {
      */
     default boolean supportVariableInjection(){return false;}
 
+    /**
+     * @return shell used to evaluate the assembled command on the remote node
+     */
+    default RemoteCommandShell getRemoteCommandShell(
+            ExecutionContext context,
+            INodeEntry node
+    ) throws ExecutionServiceException
+    {
+        return RemoteCommandShell.DEFAULT;
+    }
+
 }

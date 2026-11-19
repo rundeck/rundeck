@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.IExecutionProviders;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
@@ -64,6 +65,7 @@ public class ExecutionServiceImpl implements ExecutionService {
 
     private static final String NODE_LEVEL_INTERPRETER = "shell-escaping-interpreter";
     private static final String PROJECT_LEVEL_INTERPRETER = "project.plugin.Shell.Escaping.interpreter";
+    private static final String POWERSHELL = "powershell";
 
     public ExecutionServiceImpl() {
     }
@@ -419,11 +421,12 @@ public class ExecutionServiceImpl implements ExecutionService {
                 .nodeContextData(node)
                 .build();
 
-        //It tries to get the interpreter from the node attributes first, then from the project properties.
-        String commandInterpreter = node.getAttributes().get(NODE_LEVEL_INTERPRETER) != null ?
-                node.getAttributes().get(NODE_LEVEL_INTERPRETER)
-                : context.getIFramework().getFrameworkProjectMgr()
-                        .getFrameworkProject(context.getFrameworkProject()).getProperty(PROJECT_LEVEL_INTERPRETER);
+        final String commandInterpreter;
+        try {
+            commandInterpreter = resolveCommandInterpreter(nodeContext, node, nodeExecutor);
+        } catch (ExecutionServiceException e) {
+            throw new CoreException(e);
+        }
 
         final ArrayList<String> commandList = command.buildCommandForNode(
                 nodeContext.getSharedDataContext(),
@@ -448,6 +451,27 @@ public class ExecutionServiceImpl implements ExecutionService {
             }
         }
         return result;
+    }
+
+    static String resolveCommandInterpreter(
+            final ExecutionContext context,
+            final INodeEntry node,
+            final NodeExecutor nodeExecutor
+    ) throws ExecutionServiceException
+    {
+        String commandInterpreter = node.getAttributes().get(NODE_LEVEL_INTERPRETER);
+        IRundeckProjectConfig project = context.getIFramework()
+                .getFrameworkProjectMgr()
+                .getFrameworkProject(context.getFrameworkProject());
+
+        if (commandInterpreter == null) {
+            commandInterpreter = project.getProperty(PROJECT_LEVEL_INTERPRETER);
+        }
+        if (commandInterpreter != null) {
+            return commandInterpreter;
+        }
+        RemoteCommandShell remoteShell = nodeExecutor.getRemoteCommandShell(context, node);
+        return remoteShell == RemoteCommandShell.POWERSHELL ? POWERSHELL : null;
     }
 
     public String getName() {

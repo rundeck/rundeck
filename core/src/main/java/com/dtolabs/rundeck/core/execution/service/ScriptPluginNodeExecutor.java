@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -70,6 +71,79 @@ public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeEx
             createDescription(plugin, true, DescriptionBuilder.builder());
         } catch (ConfigurationException e) {
             throw new PluginException(e);
+        }
+    }
+
+    @Override
+    public RemoteCommandShell getRemoteCommandShell(
+            final ExecutionContext executionContext,
+            final INodeEntry node
+    ) throws ExecutionServiceException
+    {
+        final Map<String, String> providerMeta = getProvider().getProviderMeta();
+        String configuredShell = providerMeta == null
+                ? null
+                : providerMeta.get(RemoteCommandShell.PROVIDER_METADATA_KEY);
+        boolean explicitShellMetadata = configuredShell != null;
+        final Description pluginDesc = getDescription();
+        if (configuredShell == null) {
+            boolean supportsPowerShell = pluginDesc.getProperties().stream().anyMatch(
+                    property -> "shell".equals(property.getName())
+                            && property.getSelectValues() != null
+                            && property.getSelectValues().stream().anyMatch(
+                                    value -> RemoteCommandShell.POWERSHELL.name().equalsIgnoreCase(value)
+                            )
+            );
+            if (!supportsPowerShell) {
+                return RemoteCommandShell.DEFAULT;
+            }
+            configuredShell = "${config.shell}";
+        }
+
+        try {
+            if (!configuredShell.contains("${")) {
+                return RemoteCommandShell.parse(configuredShell);
+            }
+            final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+                    executionContext.getFramework(),
+                    executionContext.getFrameworkProject(),
+                    executionContext.getDataContext()
+            );
+            final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+                    executionContext,
+                    loadInstanceDataFromNodeAttributes(node, pluginDesc),
+                    ServiceNameConstants.NodeExecutor,
+                    getProvider().getName()
+            );
+            final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
+                    resolver,
+                    pluginDesc,
+                    PropertyScope.Instance
+            );
+            final Map<String, Object> expandedConfig = DataContextUtils.replaceDataReferences(
+                    config,
+                    localDataContext
+            );
+            final String resolvedShell = DataContextUtils.replaceDataReferencesInString(
+                    configuredShell,
+                    DataContextUtils.addContext(
+                            "config",
+                            MapData.toStringStringMap(expandedConfig),
+                            localDataContext
+                    )
+            );
+            if (!explicitShellMetadata) {
+                return RemoteCommandShell.POWERSHELL.name().equalsIgnoreCase(resolvedShell)
+                        ? RemoteCommandShell.POWERSHELL
+                        : RemoteCommandShell.DEFAULT;
+            }
+            return RemoteCommandShell.parse(resolvedShell);
+        } catch (IllegalArgumentException e) {
+            throw new ExecutionServiceException(
+                    "Unable to resolve remote command shell",
+                    e,
+                    ServiceNameConstants.NodeExecutor
+            );
         }
     }
 

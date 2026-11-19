@@ -530,6 +530,131 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         ctx.updateLoggers()
     }
 
+    def "skip requiredRoles check for webhook post authenticated with a webhook token"() {
+        given:
+        User user = new User(login: "webhookuser")
+        AuthToken token = new AuthToken(
+                token: "webhook-token",
+                user: user,
+                authRoles: "webhookrole",
+                type: AuthTokenType.WEBHOOK,
+                tokenMode: AuthTokenMode.LEGACY
+        )
+        user.save()
+        token.save()
+
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+        interceptor.apiService = apiService
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole", "") >> "enter,admin"
+            getString(_, _) >> ""
+            getBoolean(_, _) >> false
+        }
+
+        withRequest(controller: "webhook", action: "post")
+        request.setAttribute("org.grails.CONTROLLER_NAME_ATTRIBUTE", "webhook")
+        request.setAttribute("org.grails.ACTION_NAME_ATTRIBUTE", "post")
+        request.api_version = 44
+        interceptor.params.authtoken = "webhook-token"
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        result
+        response.status != 403
+        !request.invalidApiAuthentication
+        request.authenticatedUser == "webhookuser"
+        request.subject.principals.findAll { it instanceof Group }*.name == ["webhookrole"]
+    }
+
+    def "requiredRoles check still rejects a non-webhook api token without an allowed role"() {
+        given:
+        User user = new User(login: "apiuser")
+        AuthToken token = new AuthToken(
+                token: "api-token",
+                user: user,
+                authRoles: "otherrole",
+                type: AuthTokenType.USER,
+                tokenMode: AuthTokenMode.LEGACY
+        )
+        user.save()
+        token.save()
+
+        mockCodec(URIComponentCodec)
+        mockCodec(HTMLContentCodec)
+        mockCodec(HTMLAttributeCodec)
+        mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
+
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+        interceptor.apiService = apiService
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole", "") >> "enter,admin"
+            getString(_, _) >> ""
+            getBoolean(_, _) >> true
+        }
+
+        request.api_version = 44
+        request.addHeader("X-RunDeck-Auth-Token", "api-token")
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        !result
+        response.status == 403
+        request.authenticatedUser == "apiuser"
+    }
+
+    def "requiredRoles check still rejects a webhook post authenticated with a tokens file token"() {
+        given:
+        Properties tokens = new Properties()
+        tokens.setProperty("file-token", "fileuser,otherrole")
+        servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
+
+        mockCodec(URIComponentCodec)
+        mockCodec(HTMLContentCodec)
+        mockCodec(HTMLAttributeCodec)
+        mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
+
+        interceptor.apiService = Mock(ApiService)
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole", "") >> "enter,admin"
+            getString(_, _) >> ""
+            getBoolean(_, _) >> false
+        }
+
+        withRequest(controller: "webhook", action: "post")
+        request.setAttribute("org.grails.CONTROLLER_NAME_ATTRIBUTE", "webhook")
+        request.setAttribute("org.grails.ACTION_NAME_ATTRIBUTE", "post")
+        request.api_version = 44
+        interceptor.params.authtoken = "file-token"
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        !result
+        response.status == 403
+        request.authenticatedUser == "fileuser"
+
+        cleanup:
+        servletContext.removeAttribute("TOKENS_FILE_PROPS")
+    }
+
     static class TestRequireRoleProvider implements RequiredRoleProvider {
         List<String> requiredRoles = []
 

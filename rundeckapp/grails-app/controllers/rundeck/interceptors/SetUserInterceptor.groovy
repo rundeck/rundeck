@@ -76,7 +76,7 @@ class SetUserInterceptor {
         } else {
             authtoken = request.getHeader('X-RunDeck-Auth-Token')
         }
-        boolean isRunnerToken = false
+        boolean skipRequiredRoleCheck = false
 
         if (request.userPrincipal && session.user!=request.userPrincipal.name) {
             session.user = request.userPrincipal.name
@@ -100,9 +100,7 @@ class SetUserInterceptor {
             Set<String> roles = lookupTokenRoles(foundToken, servletContext) ?: ([] as Set<String>)
             String user = foundToken?.getOwnerName()
 
-            if(request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken?.type == AuthTokenType.RUNNER) {
-                isRunnerToken = true
-            }
+            skipRequiredRoleCheck = isRequiredRoleExempt(foundToken, webhookType)
 
             if (user){
                 session.user = user
@@ -150,7 +148,7 @@ class SetUserInterceptor {
         }
 
         def requiredRoles = loadRequiredRoles()
-        if( !requiredRoles.isEmpty() && !isRunnerToken){
+        if( !requiredRoles.isEmpty() && !skipRequiredRoleCheck){
             def requestGroups = request?.subject?.principals?.findAll { it instanceof Group } as List<Group>
             List<String> requestRoles = requestGroups.stream()
             .map{it.getName()}
@@ -158,7 +156,7 @@ class SetUserInterceptor {
             List<String> matchedRoles = new ArrayList<>(requiredRoles)
             matchedRoles.retainAll(requestRoles)
             if( matchedRoles.isEmpty()){
-                log.error("User ${request.remoteUser} must have an allowed role to log in.")
+                log.error("User ${request.authenticatedUser ?: request.remoteUser} must have an allowed role to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
@@ -199,6 +197,25 @@ class SetUserInterceptor {
         }
         subject.principals.addAll(roleset.collect{new Group(it)})
         subject
+    }
+
+    /**
+     * Determine whether a token-authenticated request is exempt from the login requiredRole check.
+     * Runner tokens on runner requests are exempt. Webhook tokens on webhook post requests are exempt:
+     * their roles are the webhook's own roles, and the post is still authorized by ACL in WebhookController.
+     * The token type is checked as well as the request type, because tokens from the static tokens file
+     * can also be presented on these requests.
+     * @param foundToken the token that authenticated the request, or null
+     * @param webhookType true if the request is a webhook post
+     * @return true if the requiredRole check should be skipped
+     */
+    @PackageScope
+    @CompileStatic
+    boolean isRequiredRoleExempt(AuthenticationToken foundToken, boolean webhookType) {
+        if (request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken?.type == AuthTokenType.RUNNER) {
+            return true
+        }
+        return webhookType && foundToken?.type == AuthTokenType.WEBHOOK
     }
 
     /**
