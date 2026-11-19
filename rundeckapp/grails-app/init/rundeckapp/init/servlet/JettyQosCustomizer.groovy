@@ -46,9 +46,14 @@ class JettyQosCustomizer implements JettyServerCustomizer {
         if (maxRequests <= 0 || server.handler == null) {
             return
         }
+        if (maxSuspendSeconds <= 0) {
+            // Jetty treats a zero suspend as unlimited, so over-cap requests would never expire.
+            throw new IllegalArgumentException(
+                    "rundeck.web.jetty.qos.maxSuspendSeconds must be > 0 when the cap is enabled, was ${maxSuspendSeconds}")
+        }
         HealthExemptQoSHandler qos = new HealthExemptQoSHandler(maxSuspendSeconds, contextPath)
         qos.maxRequestCount = maxRequests
-        qos.maxSuspend = Duration.ofSeconds(Math.max(maxSuspendSeconds, 0))
+        qos.maxSuspend = Duration.ofSeconds(maxSuspendSeconds)
         qos.handler = server.handler
         server.handler = qos
     }
@@ -77,7 +82,8 @@ class HealthExemptQoSHandler extends QoSHandler {
         exclude(new Predicate<Request>() {
             @Override
             boolean test(Request request) {
-                return matchesHealthPath(request?.httpURI?.canonicalPath, healthPath)
+                return isProbeMethod(request?.method) &&
+                        matchesHealthPath(request?.httpURI?.canonicalPath, healthPath)
             }
         })
     }
@@ -101,6 +107,14 @@ class HealthExemptQoSHandler extends QoSHandler {
      */
     static boolean isHealthPath(String path, String contextPath) {
         return matchesHealthPath(path, healthPathFor(contextPath))
+    }
+
+    /**
+     * @param method HTTP method
+     * @return {@code true} for {@code GET} and {@code HEAD}, the only methods probes use
+     */
+    static boolean isProbeMethod(String method) {
+        return method == 'GET' || method == 'HEAD'
     }
 
     /**

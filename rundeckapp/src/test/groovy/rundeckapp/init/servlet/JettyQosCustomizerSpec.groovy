@@ -88,6 +88,36 @@ class JettyQosCustomizerSpec extends Specification {
         '/monitoring/health'                    | '/rundeck' | false
     }
 
+    @Unroll
+    def "only #method counts as a probe method: #probe"() {
+        expect:
+        HealthExemptQoSHandler.isProbeMethod(method) == probe
+
+        where:
+        method | probe
+        'GET'  | true
+        'HEAD' | true
+        'POST' | false
+        'PUT'  | false
+        null   | false
+    }
+
+    @Unroll
+    def "maxSuspendSeconds=#secs is rejected when the cap is enabled"() {
+        given:
+        Server server = new Server()
+        server.handler = new ServletContextHandler('/')
+
+        when:
+        new JettyQosCustomizer(maxRequests: 2, maxSuspendSeconds: secs).customize(server)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        secs << [0, -1]
+    }
+
     def "health answers while non-health requests are past the cap"() {
         expect:
         healthStaysUp('/')
@@ -115,8 +145,11 @@ class JettyQosCustomizerSpec extends Specification {
         try {
             CountDownLatch finished = new CountDownLatch(2)
             List<CompletableFuture<HttpResponse<String>>> slow = (1..4).collect {
-                client.sendAsync(request(port, "${prefix}/slow/x"), HttpResponse.BodyHandlers.ofString())
-                        .whenComplete { r, e -> finished.countDown() }
+                CompletableFuture<HttpResponse<String>> f =
+                        client.sendAsync(request(port, "${prefix}/slow/x"), HttpResponse.BodyHandlers.ofString())
+                // Count down on a dependent stage; the source future is already done when it runs.
+                f.whenComplete { r, e -> finished.countDown() }
+                f
             }
             assert entered.await(5, TimeUnit.SECONDS)
 
