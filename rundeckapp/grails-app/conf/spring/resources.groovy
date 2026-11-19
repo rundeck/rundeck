@@ -932,6 +932,7 @@ beans={
         // has a measured jetty.threads.* baseline. Health paths are excluded either way.
         qosMaxRequests = grailsApplication.config.getProperty('rundeck.web.jetty.qos.maxRequests', Integer.class, 0)
         qosMaxSuspendSeconds = grailsApplication.config.getProperty('rundeck.web.jetty.qos.maxSuspendSeconds', Integer.class, 60)
+        qosContextPath = grailsApplication.config.getProperty('server.servlet.context-path', String.class, '')
     }
 
     // HSTS is only ever added when the connector has a secure port configured (see

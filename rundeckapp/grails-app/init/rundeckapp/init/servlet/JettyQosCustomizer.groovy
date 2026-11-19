@@ -20,8 +20,8 @@ import java.util.function.Predicate
  * Requests over the cap are suspended and do not hold a Jetty thread. When the suspend
  * budget runs out they receive {@code 503} with {@code Retry-After}. Liveness, readiness
  * and startup all live under {@code /monitoring/health} and skip the cap, so a stalled
- * request type cannot starve the probes. The match uses the canonical request path, so a
- * non-root context such as {@code /rundeck} is exempt too.
+ * request type cannot starve the probes. The handler wraps the whole server, so the match
+ * uses the canonical request path prefixed with the servlet {@link #contextPath}.
  * <p>
  * {@code maxRequests} of {@code 0} or less installs nothing. The cap stays off until an
  * instance has a measured thread-pool size to set it from.
@@ -36,13 +36,17 @@ class JettyQosCustomizer implements JettyServerCustomizer {
 
     int maxRequests = 0
     int maxSuspendSeconds = 60
+    /**
+     * Servlet context path ({@code server.servlet.context-path}); empty or {@code /} for root.
+     */
+    String contextPath = ''
 
     @Override
     void customize(Server server) {
         if (maxRequests <= 0 || server.handler == null) {
             return
         }
-        HealthExemptQoSHandler qos = new HealthExemptQoSHandler(maxSuspendSeconds)
+        HealthExemptQoSHandler qos = new HealthExemptQoSHandler(maxSuspendSeconds, contextPath)
         qos.maxRequestCount = maxRequests
         qos.maxSuspend = Duration.ofSeconds(Math.max(maxSuspendSeconds, 0))
         qos.handler = server.handler
@@ -60,30 +64,55 @@ class JettyQosCustomizer implements JettyServerCustomizer {
 @CompileStatic
 class HealthExemptQoSHandler extends QoSHandler {
     private final int retryAfterSeconds
+    private final String healthPath
 
-    HealthExemptQoSHandler(int retryAfterSeconds) {
+    /**
+     * @param retryAfterSeconds value of the {@code Retry-After} header on a suspend timeout
+     * @param contextPath servlet context path; {@code null}, empty or {@code /} for root
+     */
+    HealthExemptQoSHandler(int retryAfterSeconds, String contextPath) {
         this.retryAfterSeconds = retryAfterSeconds
-        // This handler sits outside the webapp context, so path-in-context still includes
-        // a non-root context path. Match the canonical path instead of a root-only spec.
+        this.healthPath = healthPathFor(contextPath)
+        // This handler sits outside the webapp context, so match the full canonical path.
         exclude(new Predicate<Request>() {
             @Override
             boolean test(Request request) {
-                return isHealthPath(request?.httpURI?.canonicalPath)
+                return matchesHealthPath(request?.httpURI?.canonicalPath, healthPath)
             }
         })
     }
 
     /**
-     * @param path canonical request path, including a servlet context path when one is set
-     * @return {@code true} for {@code /monitoring/health} and everything under it
+     * @param contextPath servlet context path; {@code null}, empty or {@code /} for root
+     * @return the health path under that context, e.g. {@code /rundeck/monitoring/health}
      */
-    static boolean isHealthPath(String path) {
-        if (path == null || path.length() == 0) {
+    static String healthPathFor(String contextPath) {
+        String ctx = contextPath ?: ''
+        if (ctx.endsWith('/')) {
+            ctx = ctx.substring(0, ctx.length() - 1)
+        }
+        return ctx + JettyQosCustomizer.HEALTH_PATH
+    }
+
+    /**
+     * @param path canonical request path, including the servlet context path
+     * @param contextPath servlet context path; {@code null}, empty or {@code /} for root
+     * @return {@code true} only for {@code <contextPath>/monitoring/health} and paths under it
+     */
+    static boolean isHealthPath(String path, String contextPath) {
+        return matchesHealthPath(path, healthPathFor(contextPath))
+    }
+
+    /**
+     * @param path canonical request path
+     * @param health full health path, from {@link #healthPathFor(String)}
+     * @return {@code true} when the path is the health path or below it
+     */
+    static boolean matchesHealthPath(String path, String health) {
+        if (path == null) {
             return false
         }
-        String normalized = path.endsWith('/') && path.length() > 1 ? path.substring(0, path.length() - 1) : path
-        return normalized.endsWith(JettyQosCustomizer.HEALTH_PATH) ||
-                normalized.contains(JettyQosCustomizer.HEALTH_PATH + '/')
+        return path == health || path.startsWith(health + '/')
     }
 
     @Override

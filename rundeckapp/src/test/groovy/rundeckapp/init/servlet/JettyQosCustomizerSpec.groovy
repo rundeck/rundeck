@@ -16,11 +16,12 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * RUN-5179: the request cap stays off unless configured, and health probes bypass it.
+ * The request cap stays off unless configured, and health probes bypass it.
  */
 class JettyQosCustomizerSpec extends Specification {
 
@@ -70,22 +71,21 @@ class JettyQosCustomizerSpec extends Specification {
     }
 
     @Unroll
-    def "health path #path is exempt=#exempt"() {
+    def "health path #path under context #ctx is exempt=#exempt"() {
         expect:
-        HealthExemptQoSHandler.isHealthPath(path) == exempt
+        HealthExemptQoSHandler.isHealthPath(path, ctx) == exempt
 
         where:
-        path                                      | exempt
-        '/monitoring/health'                      | true
-        '/monitoring/health/'                     | true
-        '/monitoring/health/liveness'             | true
-        '/monitoring/health/readiness'            | true
-        '/rundeck/monitoring/health'              | true
-        '/rundeck/monitoring/health/liveness'     | true
-        '/slow/x'                                 | false
-        '/api/44/webhook/token'                   | false
-        '/monitoring/healthcare'                  | false
-        null                                      | false
+        path                                    | ctx        | exempt
+        '/monitoring/health'                    | ''         | true
+        '/monitoring/health/liveness'           | ''         | true
+        '/monitoring/health/readiness/'         | '/'        | true
+        '/rundeck/monitoring/health/startup'    | '/rundeck' | true
+        '/monitoring/healthx'                   | ''         | false
+        '/api/x/monitoring/health'              | ''         | false
+        '/'                                     | ''         | false
+        null                                    | ''         | false
+        '/monitoring/health'                    | '/rundeck' | false
     }
 
     def "health answers while non-health requests are past the cap"() {
@@ -106,15 +106,17 @@ class JettyQosCustomizerSpec extends Specification {
         connector.port = 0
         server.addConnector(connector)
         server.handler = context(entered, release, contextPath)
-        new JettyQosCustomizer(maxRequests: 2, maxSuspendSeconds: 1).customize(server)
+        new JettyQosCustomizer(maxRequests: 2, maxSuspendSeconds: 1, contextPath: contextPath).customize(server)
         server.start()
         int port = connector.localPort
         HttpClient client = HttpClient.newHttpClient()
         String prefix = contextPath == '/' ? '' : contextPath
 
         try {
-            List<java.util.concurrent.CompletableFuture<HttpResponse<String>>> slow = (1..4).collect {
+            CountDownLatch finished = new CountDownLatch(2)
+            List<CompletableFuture<HttpResponse<String>>> slow = (1..4).collect {
                 client.sendAsync(request(port, "${prefix}/slow/x"), HttpResponse.BodyHandlers.ofString())
+                        .whenComplete { r, e -> finished.countDown() }
             }
             assert entered.await(5, TimeUnit.SECONDS)
 
@@ -127,9 +129,12 @@ class JettyQosCustomizerSpec extends Specification {
                     HttpResponse.BodyHandlers.ofString())
             long elapsedMs = (System.nanoTime() - started) / 1_000_000L
 
-            List<HttpResponse<String>> rejected = awaitDone(slow, 2, 8)
+            // The two over-cap requests expire after maxSuspendSeconds while the latch holds the rest.
+            assert finished.await(8, TimeUnit.SECONDS)
+            List<CompletableFuture<HttpResponse<String>>> expired = slow.findAll { it.isDone() }
+            List<HttpResponse<String>> rejected = expired.collect { it.get() }
             release.countDown()
-            slow.each { it.get(5, TimeUnit.SECONDS) }
+            List<HttpResponse<String>> served = (slow - expired).collect { it.get(5, TimeUnit.SECONDS) }
 
             assert liveness.statusCode() == 200
             assert readiness.statusCode() == 200
@@ -138,6 +143,8 @@ class JettyQosCustomizerSpec extends Specification {
             assert elapsedMs < 1000
             assert rejected.size() == 2
             assert rejected.every { it.statusCode() == 503 && it.headers().firstValue('retry-after').orElse('') == '1' }
+            assert served.size() == 2
+            assert served.every { it.statusCode() == 200 && it.body() == 'ok' }
         } finally {
             release.countDown()
             server.stop()
@@ -165,20 +172,5 @@ class JettyQosCustomizerSpec extends Specification {
 
     private static HttpRequest request(int port, String path) {
         HttpRequest.newBuilder(URI.create("http://127.0.0.1:${port}${path}")).GET().build()
-    }
-
-    private static List<HttpResponse<String>> awaitDone(
-            List<java.util.concurrent.CompletableFuture<HttpResponse<String>>> calls,
-            int wanted,
-            int timeoutSeconds) {
-        long deadline = System.currentTimeMillis() + timeoutSeconds * 1000L
-        List<HttpResponse<String>> done = []
-        while (done.size() < wanted && System.currentTimeMillis() < deadline) {
-            done = calls.findAll { it.isDone() }.collect { it.get() }
-            if (done.size() < wanted) {
-                Thread.sleep(50)
-            }
-        }
-        done
     }
 }

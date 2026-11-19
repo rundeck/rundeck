@@ -52,6 +52,10 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      * Seconds a request may stay suspended before {@code 503} with {@code Retry-After}.
      */
     int qosMaxSuspendSeconds = 60
+    /**
+     * Servlet context path, so {@link JettyQosCustomizer} exempts only the real health path.
+     */
+    String qosContextPath = ''
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
@@ -77,7 +81,8 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
         if (qosMaxRequests > 0) {
             factory.addServerCustomizers(new JettyQosCustomizer(
                     maxRequests: qosMaxRequests,
-                    maxSuspendSeconds: qosMaxSuspendSeconds
+                    maxSuspendSeconds: qosMaxSuspendSeconds,
+                    contextPath: qosContextPath
             ))
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
