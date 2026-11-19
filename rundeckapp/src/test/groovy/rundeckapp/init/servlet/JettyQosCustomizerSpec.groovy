@@ -4,11 +4,15 @@ import jakarta.servlet.http.HttpServlet
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler
+import org.eclipse.jetty.http.HttpFields
 import org.eclipse.jetty.ee10.servlet.ServletHolder
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.ServerConnector
 import org.eclipse.jetty.server.handler.QoSHandler
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
+import org.springframework.core.env.MapPropertySource
+import org.springframework.core.env.MutablePropertySources
+import org.springframework.core.env.PropertySourcesPropertyResolver
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -86,6 +90,93 @@ class JettyQosCustomizerSpec extends Specification {
         '/'                                     | ''         | false
         null                                    | ''         | false
         '/monitoring/health'                    | '/rundeck' | false
+        '/monitoring/health/not/a/probe'        | ''         | false
+        '/monitoring/health/liveness/x'         | ''         | false
+        '/rundeck/monitoring/health/other'      | '/rundeck' | false
+    }
+
+    @Unroll
+    def "request with headers #headers has a body: #body"() {
+        given:
+        HttpFields.Mutable fields = HttpFields.build()
+        headers.each { k, v -> fields.add(k as String, v as String) }
+
+        expect:
+        HealthExemptQoSHandler.hasBody(fields) == body
+
+        where:
+        headers                                                   | body
+        [:]                                                       | false
+        ['Content-Length': '0']                                   | false
+        ['Content-Length': '12']                                  | true
+        ['Transfer-Encoding': 'chunked']                          | true
+        ['Content-Type': 'multipart/form-data; boundary=x']       | true
+        ['Content-Type': 'application/json']                      | false
+    }
+
+    def "qosProperties reads the bound settings and their defaults"() {
+        given:
+        MutablePropertySources sources = new MutablePropertySources()
+        sources.addFirst(new MapPropertySource('test', props))
+        PropertySourcesPropertyResolver resolver = new PropertySourcesPropertyResolver(sources)
+        JettyServletContainerCustomizer container = new JettyServletContainerCustomizer(
+                JettyServletContainerCustomizer.qosProperties(resolver))
+        JettyServletWebServerFactory factory = new JettyServletWebServerFactory()
+        container.customize(factory)
+        JettyQosCustomizer qos = factory.serverCustomizers.find { it instanceof JettyQosCustomizer } as JettyQosCustomizer
+
+        expect:
+        container.qosMaxRequests == max
+        container.qosMaxSuspendSeconds == suspend
+        container.qosContextPath == ctx
+        (qos != null) == (max > 0)
+        qos == null || (qos.maxRequests == max && qos.maxSuspendSeconds == suspend && qos.contextPath == ctx)
+
+        where:
+        props                                                                   | max | suspend | ctx
+        [:]                                                                     | 0   | 60      | ''
+        ['rundeck.web.jetty.qos.maxRequests'      : '8',
+         'rundeck.web.jetty.qos.maxSuspendSeconds': '5',
+         'server.servlet.context-path'            : '/rundeck']                 | 8   | 5       | '/rundeck'
+    }
+
+    def "a multipart GET to a probe path stays under the cap"() {
+        given:
+        CountDownLatch entered = new CountDownLatch(1)
+        CountDownLatch release = new CountDownLatch(1)
+        Server server = new Server()
+        ServerConnector connector = new ServerConnector(server)
+        connector.port = 0
+        server.addConnector(connector)
+        server.handler = context(entered, release, '/')
+        new JettyQosCustomizer(maxRequests: 1, maxSuspendSeconds: 1).customize(server)
+        server.start()
+        int port = connector.localPort
+        HttpClient client = HttpClient.newHttpClient()
+
+        when:
+        CompletableFuture<HttpResponse<String>> slow =
+                client.sendAsync(request(port, '/slow/x'), HttpResponse.BodyHandlers.ofString())
+        assert entered.await(5, TimeUnit.SECONDS)
+        HttpResponse<String> plain = client.send(
+                request(port, '/monitoring/health/liveness'), HttpResponse.BodyHandlers.ofString())
+        HttpResponse<String> multipart = client.send(
+                HttpRequest.newBuilder(URI.create("http://127.0.0.1:${port}/monitoring/health/liveness"))
+                        .header('Content-Type', 'multipart/form-data; boundary=x')
+                        .method('GET', HttpRequest.BodyPublishers.ofString('--x--\r\n'))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString())
+        release.countDown()
+
+        then:
+        plain.statusCode() == 200
+        multipart.statusCode() == 503
+        multipart.headers().firstValue('retry-after').orElse('') == '1'
+        slow.get(5, TimeUnit.SECONDS).statusCode() == 200
+
+        cleanup:
+        release.countDown()
+        server.stop()
     }
 
     @Unroll

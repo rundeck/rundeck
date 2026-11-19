@@ -1,6 +1,7 @@
 package rundeckapp.init.servlet
 
 import groovy.transform.CompileStatic
+import org.eclipse.jetty.http.HttpFields
 import org.eclipse.jetty.http.HttpHeader
 import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.server.Handler
@@ -18,13 +19,18 @@ import java.util.function.Predicate
  * Caps concurrent requests on every path except the monitoring health endpoints.
  * <p>
  * Requests over the cap are suspended and do not hold a Jetty thread. When the suspend
- * budget runs out they receive {@code 503} with {@code Retry-After}. Liveness, readiness
- * and startup all live under {@code /monitoring/health} and skip the cap, so a stalled
- * request type cannot starve the probes. The handler wraps the whole server, so the match
+ * budget runs out they receive {@code 503} with {@code Retry-After}. The health probes
+ * ({@code /monitoring/health} and its {@code liveness}, {@code readiness} and {@code startup}
+ * paths, exact match, bodiless {@code GET}/{@code HEAD} only) skip the cap, so a stalled
+ * request type cannot starve them. The handler wraps the whole server, so the match
  * uses the canonical request path prefixed with the servlet {@link #contextPath}.
  * <p>
  * {@code maxRequests} of {@code 0} or less installs nothing. The cap stays off until an
  * instance has a measured thread-pool size to set it from.
+ * <p>
+ * Requests the server makes to itself (for example remote option URLs that point at this
+ * same instance) also take a permit while their caller holds one, so size the cap well
+ * above 1 or such a request can wait on its own caller until the suspend budget expires.
  */
 @CompileStatic
 class JettyQosCustomizer implements JettyServerCustomizer {
@@ -34,6 +40,19 @@ class JettyQosCustomizer implements JettyServerCustomizer {
      */
     static final String HEALTH_PATH = '/monitoring/health'
 
+    /**
+     * Probe paths exempt from the cap, relative to the context path. Exact match only.
+     */
+    static final List<String> PROBE_PATHS = Collections.unmodifiableList([
+            HEALTH_PATH,
+            HEALTH_PATH + '/liveness',
+            HEALTH_PATH + '/readiness',
+            HEALTH_PATH + '/startup'
+    ])
+
+    /**
+     * Concurrent request cap; {@code 0} or less disables it. Self-calls count against it too.
+     */
     int maxRequests = 0
     int maxSuspendSeconds = 60
     /**
@@ -69,7 +88,7 @@ class JettyQosCustomizer implements JettyServerCustomizer {
 @CompileStatic
 class HealthExemptQoSHandler extends QoSHandler {
     private final int retryAfterSeconds
-    private final String healthPath
+    private final String ctxPrefix
 
     /**
      * @param retryAfterSeconds value of the {@code Retry-After} header on a suspend timeout
@@ -77,36 +96,34 @@ class HealthExemptQoSHandler extends QoSHandler {
      */
     HealthExemptQoSHandler(int retryAfterSeconds, String contextPath) {
         this.retryAfterSeconds = retryAfterSeconds
-        this.healthPath = healthPathFor(contextPath)
+        this.ctxPrefix = contextPrefix(contextPath)
         // This handler sits outside the webapp context, so match the full canonical path.
         exclude(new Predicate<Request>() {
             @Override
             boolean test(Request request) {
                 return isProbeMethod(request?.method) &&
-                        matchesHealthPath(request?.httpURI?.canonicalPath, healthPath)
+                        !hasBody(request?.headers) &&
+                        matchesProbePath(request?.httpURI?.canonicalPath, ctxPrefix)
             }
         })
     }
 
     /**
      * @param contextPath servlet context path; {@code null}, empty or {@code /} for root
-     * @return the health path under that context, e.g. {@code /rundeck/monitoring/health}
+     * @return the context path without a trailing slash, e.g. {@code /rundeck} or empty for root
      */
-    static String healthPathFor(String contextPath) {
+    static String contextPrefix(String contextPath) {
         String ctx = contextPath ?: ''
-        if (ctx.endsWith('/')) {
-            ctx = ctx.substring(0, ctx.length() - 1)
-        }
-        return ctx + JettyQosCustomizer.HEALTH_PATH
+        return ctx.endsWith('/') ? ctx.substring(0, ctx.length() - 1) : ctx
     }
 
     /**
      * @param path canonical request path, including the servlet context path
      * @param contextPath servlet context path; {@code null}, empty or {@code /} for root
-     * @return {@code true} only for {@code <contextPath>/monitoring/health} and paths under it
+     * @return {@code true} only for the exact probe paths under that context
      */
     static boolean isHealthPath(String path, String contextPath) {
-        return matchesHealthPath(path, healthPathFor(contextPath))
+        return matchesProbePath(path, contextPrefix(contextPath))
     }
 
     /**
@@ -118,15 +135,38 @@ class HealthExemptQoSHandler extends QoSHandler {
     }
 
     /**
-     * @param path canonical request path
-     * @param health full health path, from {@link #healthPathFor(String)}
-     * @return {@code true} when the path is the health path or below it
+     * A request that declares a body is never exempt: the webapp may read it (multipart
+     * parsing, for one) and a slow upload would hold a worker outside the cap.
+     *
+     * @param headers request headers
+     * @return {@code true} for a positive {@code Content-Length}, any {@code Transfer-Encoding}
+     *         or a multipart {@code Content-Type}
      */
-    static boolean matchesHealthPath(String path, String health) {
-        if (path == null) {
+    static boolean hasBody(HttpFields headers) {
+        if (headers == null) {
             return false
         }
-        return path == health || path.startsWith(health + '/')
+        String contentType = headers.get(HttpHeader.CONTENT_TYPE)
+        return headers.getLongField(HttpHeader.CONTENT_LENGTH) > 0 ||
+                headers.contains(HttpHeader.TRANSFER_ENCODING) ||
+                contentType?.toLowerCase(Locale.ROOT)?.startsWith('multipart/')
+    }
+
+    /**
+     * @param path canonical request path
+     * @param ctxPrefix context path from {@link #contextPrefix(String)}
+     * @return {@code true} when the path is one of {@link JettyQosCustomizer#PROBE_PATHS}
+     *         under the context, with at most one trailing slash
+     */
+    static boolean matchesProbePath(String path, String ctxPrefix) {
+        if (path == null || !path.startsWith(ctxPrefix)) {
+            return false
+        }
+        String rel = path.substring(ctxPrefix.length())
+        if (rel.length() > 1 && rel.endsWith('/')) {
+            rel = rel.substring(0, rel.length() - 1)
+        }
+        return JettyQosCustomizer.PROBE_PATHS.contains(rel)
     }
 
     @Override

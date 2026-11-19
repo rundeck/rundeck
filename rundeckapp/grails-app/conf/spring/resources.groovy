@@ -929,10 +929,13 @@ beans={
         useForwardHeaders = useForwardHeadersConfig ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
         serverUrl = grailsApplication.config.getProperty('grails.serverURL', String.class)
         // 0 leaves the handler chain unchanged. Turn the cap on per instance once RUN-5188
-        // has a measured jetty.threads.* baseline. Health paths are excluded either way.
-        qosMaxRequests = grailsApplication.config.getProperty('rundeck.web.jetty.qos.maxRequests', Integer.class, 0)
-        qosMaxSuspendSeconds = grailsApplication.config.getProperty('rundeck.web.jetty.qos.maxSuspendSeconds', Integer.class, 60)
-        qosContextPath = grailsApplication.config.getProperty('server.servlet.context-path', String.class, '')
+        // has a measured jetty.threads.* baseline. Health probe paths are excluded either way.
+        // Requests this instance makes to itself (e.g. remote option URLs pointing back here)
+        // compete for permits with their caller, so size maxRequests well above 1.
+        Map<String, Object> qos = JettyServletContainerCustomizer.qosProperties(grailsApplication.config)
+        qosMaxRequests = qos.qosMaxRequests
+        qosMaxSuspendSeconds = qos.qosMaxSuspendSeconds
+        qosContextPath = qos.qosContextPath
     }
 
     // HSTS is only ever added when the connector has a secure port configured (see
