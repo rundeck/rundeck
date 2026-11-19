@@ -53,6 +53,83 @@ jQuery(function () {
         return new OptionVal({value: v, label: l || v});
     }
 
+
+    /**
+     * Creates a loader whose requests are deferred: each call is recorded with a snapshot of the
+     * other options' values, and is resolved or rejected manually by the test.
+     */
+    function mkDeferredLoader() {
+        var loader = {requests: []};
+        loader.loadRemoteOptionValues = function (opt, options, request) {
+            var params = {};
+            for (var n in options) {
+                params[n] = options[n].value();
+            }
+            var req = {name: opt.name(), params: params, opt: opt, callbacks: [], request: request};
+            loader.requests.push(req);
+            return {
+                then: function (func) {
+                    req.callbacks.push(func);
+                }
+            };
+        };
+        //mirrors RemoteOptionLoader: a successful request stays pending until the callbacks apply it
+        loader.resolve = function (req, data) {
+            req.callbacks.forEach(function (cb) {
+                cb(data);
+            });
+        };
+        //mirrors RemoteOptionLoader: an error only touches the option when the request is still current
+        loader.reject = function (req, message) {
+            if (!req.request || req.request.isCurrent()) {
+                req.request && req.request.complete();
+                req.opt.remoteError({error: message});
+                req.request && req.request.failed && req.request.failed();
+            }
+        };
+        loader.forName = function (name) {
+            return loader.requests.filter(function (r) {
+                return r.name === name;
+            });
+        };
+        return loader;
+    }
+
+    function mkdata(values) {
+        return {
+            values: values.map(function (v) {
+                return {name: v, value: v, selected: true};
+            })
+        };
+    }
+
+    /**
+     * Builds a controller over remote options; deps maps option name to its dependency names.
+     */
+    function mkChain(loader, names, deps) {
+        var opts = new JobOptions({});
+        var list = names.map(function (n) {
+            return mkopt({name: n, hasRemote: true, required: true, enforced: false, values: null, defaultValue: '', value: ''});
+        });
+        opts.options(list);
+        var control = new RemoteOptionController({loader: loader});
+        control.setupOptions(opts);
+        var config = {options: {}};
+        names.forEach(function (n) {
+            config.options[n] = {optionDependencies: deps[n] || [], optionDeps: []};
+        });
+        names.forEach(function (n) {
+            (deps[n] || []).forEach(function (d) {
+                config.options[d].optionDeps.push(n);
+            });
+        });
+        control.loadData(config);
+        names.forEach(function (n) {
+            control.observeChangesFor(n);
+        });
+        return control;
+    }
+
     new TestHarness("job-remote-optionsTest.js", {
             initTest: function (pref) {
                 var control = new RemoteOptionController({loader: 'xyz'});
@@ -509,6 +586,347 @@ jQuery(function () {
                     return toreload;
                 });
 
+            },
+            staleResponse_sameOption_ignored_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['a'], {});
+                var a = control.options['a'];
+                var loadedWith = [];
+                var origLoadRemote = a.loadRemote;
+                a.loadRemote = function (data) {
+                    loadedWith.push(data.values[0].value);
+                    origLoadRemote(data);
+                };
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('a');
+                this.assert("two requests", 2, loader.requests.length);
+                //latest first, then the stale one resolves last
+                loader.resolve(loader.requests[1], mkdata(['new']));
+                loader.resolve(loader.requests[0], mkdata(['old']));
+                this.assert("stale data not applied", ['new'], loadedWith);
+                this.assert("latest value kept", 'new', a.value());
+            },
+            staleResponse_inOrder_applied_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['a'], {});
+                var a = control.options['a'];
+                control.loadRemoteOptionValues('a');
+                loader.resolve(loader.requests[0], mkdata(['one']));
+                control.loadRemoteOptionValues('a');
+                loader.resolve(loader.requests[1], mkdata(['two']));
+                this.assert("latest value applied", 'two', a.value());
+            },
+            staleError_doesNotSetRemoteError_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['a'], {});
+                var a = control.options['a'];
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('a');
+                loader.reject(loader.requests[0], 'stale failure');
+                this.assert("stale error ignored", undefined, a.remoteError());
+                loader.reject(loader.requests[1], 'current failure');
+                this.assert("current error reported", {error: 'current failure'}, a.remoteError());
+            },
+            staleResponse_loadingIndicatorKept_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['a'], {});
+                var a = control.options['a'];
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('a');
+                a.loading(true);
+                loader.resolve(loader.requests[0], mkdata(['old']));
+                this.assert("loading untouched by stale response", true, a.loading());
+                this.assert("still pending", true, !!control.pending['a']);
+            },
+            invalidateDependents_transitiveAndCycleSafe_Test: function () {
+                var control = new RemoteOptionController({loader: 'x'});
+                control.dependents = {a: ['b', 'c'], b: ['d'], c: ['d'], d: ['a']};
+                var invalidated = [];
+                control.invalidateRequest = function (name) {
+                    invalidated.push(name);
+                    return false;
+                };
+                control.invalidateDependents('a');
+                this.assert("every transitive dependent once, origin excluded", ['b', 'c', 'd'], invalidated);
+            },
+            cascade_staleVersionResponse_neverApplied_Test: function () {
+                var loader = mkDeferredLoader();
+                var deps = {
+                    client: ['region'],
+                    version: ['region', 'client'],
+                    packages: ['region', 'client', 'version']
+                };
+                var control = mkChain(loader, ['region', 'client', 'version', 'packages'], deps);
+                var o = control.options;
+                var loadRemoteCalls = {version: [], packages: []};
+                ['version', 'packages'].forEach(function (n) {
+                    var orig = o[n].loadRemote;
+                    o[n].loadRemote = function (data) {
+                        loadRemoteCalls[n].push(data.values.map(function (v) {
+                            return v.value;
+                        }));
+                        orig(data);
+                    };
+                });
+                o.region.value('/EMEA');
+                //the region change reloads client, version and packages
+                var clientReq1 = loader.forName('client')[0];
+                loader.resolve(clientReq1, mkdata(['/OLDCLIENT']));
+                //client became /OLDCLIENT: version request #2 (stale once client changes again)
+                var staleVersionReq = loader.forName('version')[loader.forName('version').length - 1];
+                //user changes client while the version load is still pending
+                o.client.value('/VERA');
+                var freshVersionReq = loader.forName('version')[loader.forName('version').length - 1];
+                this.assert("a new version request was issued", true, freshVersionReq !== staleVersionReq);
+                this.assert("fresh version request sees the new client", '/VERA', freshVersionReq.params['client']);
+                loader.resolve(freshVersionReq, mkdata(['/VER_R14']));
+                this.assert("version selected from fresh response", '/VER_R14', o.version.value());
+                //late stale version response must be ignored
+                var callsBefore = loadRemoteCalls.version.length;
+                loader.resolve(staleVersionReq, mkdata(['/JHP_R2.1']));
+                this.assert("stale version not applied", callsBefore, loadRemoteCalls.version.length);
+                this.assert("version not overwritten by stale response", '/VER_R14', o.version.value());
+                var staleVersionUsed = loader.forName('packages').filter(function (r) {
+                    return r.params['version'] === '/JHP_R2.1';
+                });
+                this.assert("packages never requested with the stale version", 0, staleVersionUsed.length);
+                var lastPackages = loader.forName('packages')[loader.forName('packages').length - 1];
+                this.assert("latest packages request uses current upstream values",
+                    {region: '/EMEA', client: '/VERA', version: '/VER_R14'},
+                    {region: lastPackages.params['region'], client: lastPackages.params['client'], version: lastPackages.params['version']});
+            },
+            cascade_deepDependentInvalidated_Test: function () {
+                var loader = mkDeferredLoader();
+                //packages depends only on version, version only on client
+                var control = mkChain(loader, ['client', 'version', 'packages'], {
+                    version: ['client'],
+                    packages: ['version']
+                });
+                var o = control.options;
+                var packagesApplied = [];
+                var orig = o.packages.loadRemote;
+                o.packages.loadRemote = function (data) {
+                    packagesApplied.push(data.values[0].value);
+                    orig(data);
+                };
+                o.client.value('c1');
+                var v1 = loader.forName('version')[0];
+                loader.resolve(v1, mkdata(['ver1']));
+                this.assert("version chosen", 'ver1', o.version.value());
+                var p1 = loader.forName('packages')[0];
+                //client changes while packages (computed from ver1) is pending
+                o.client.value('c2');
+                loader.resolve(p1, mkdata(['pkg-from-ver1']));
+                this.assert("transitive dependent response dropped", [], packagesApplied);
+                this.assert("transitive dependent is no longer loading", false, o.packages.loading());
+            },
+            cascade_deepDependentReloadedWhenValueUnchanged_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['client', 'version', 'packages'], {
+                    version: ['client'],
+                    packages: ['version']
+                });
+                var o = control.options;
+                o.client.value('c1');
+                loader.resolve(loader.forName('version')[0], mkdata(['ver1']));
+                //packages in flight, client changes: version reloads, packages request is dropped
+                o.client.value('c2');
+                loader.resolve(loader.forName('version')[1], mkdata(['ver1']));
+                //version value did not change, so the dropped packages load must be re-issued
+                var packagesReqs = loader.forName('packages');
+                this.assert("packages reloaded after upstream finished", 2, packagesReqs.length);
+                loader.resolve(packagesReqs[1], mkdata(['pkg']));
+                this.assert("packages applied", 'pkg', o.packages.value());
+            },
+            /**
+             * Builds the region/client/version/packages chain with every option already selected,
+             * then changes client while version (still holding the previous client's value) reloads.
+             */
+            cascade_clientChangedSetup: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['region', 'client', 'version', 'packages'], {
+                    client: ['region'],
+                    version: ['region', 'client'],
+                    packages: ['region', 'client', 'version']
+                });
+                var o = control.options;
+                o.region.value('/EMEA');
+                loader.resolve(loader.forName('client')[0], mkdata(['/ALPHA']));
+                var versionReqs = loader.forName('version');
+                loader.resolve(versionReqs[versionReqs.length - 1], mkdata(['/ALPHA_R1']));
+                var pkgReqs = loader.forName('packages');
+                loader.resolve(pkgReqs[pkgReqs.length - 1], mkdata(['alpha-core']));
+                var pkgCountBefore = loader.forName('packages').length;
+                o.client.value('/BETA');
+                var versionReqs2 = loader.forName('version');
+                return {
+                    loader: loader,
+                    o: o,
+                    pkgCountBefore: pkgCountBefore,
+                    versionReq: versionReqs2[versionReqs2.length - 1]
+                };
+            },
+            cascade_dependentDeferredWhileUpstreamLoading_Test: function () {
+                var s = this.cascade_clientChangedSetup();
+                this.assert("version reloaded with the new client", '/BETA', s.versionReq.params['client']);
+                this.assert("packages not requested while version is loading", s.pkgCountBefore,
+                    s.loader.forName('packages').length);
+                this.assert("packages shows loading while waiting", true, s.o.packages.loading());
+                s.loader.resolve(s.versionReq, mkdata(['/BETA_R7']));
+                var pkgReqs = s.loader.forName('packages');
+                this.assert("exactly one new packages request", s.pkgCountBefore + 1, pkgReqs.length);
+                var last = pkgReqs[pkgReqs.length - 1];
+                this.assert("packages requested with consistent upstream values",
+                    {client: '/BETA', version: '/BETA_R7'},
+                    {client: last.params['client'], version: last.params['version']});
+                s.loader.resolve(last, mkdata(['beta-core']));
+                this.assert("packages applied", 'beta-core', s.o.packages.value());
+                this.assert("no error shown", false, !!s.o.packages.remoteError());
+            },
+            cascade_dependentReloadedWhenUpstreamValueUnchanged_Test: function () {
+                var s = this.cascade_clientChangedSetup();
+                //the new client offers the same version value, so version.value does not change
+                s.loader.resolve(s.versionReq, mkdata(['/ALPHA_R1']));
+                var pkgReqs = s.loader.forName('packages');
+                this.assert("deferred packages request issued", s.pkgCountBefore + 1, pkgReqs.length);
+                this.assert("packages requested with the new client", '/BETA', pkgReqs[pkgReqs.length - 1].params['client']);
+            },
+            cascade_dependentNotRequestedWhenUpstreamFails_Test: function () {
+                var s = this.cascade_clientChangedSetup();
+                s.loader.reject(s.versionReq, 'Server returned an error response: 500');
+                this.assert("upstream error reported", true, !!s.o.version.remoteError());
+                this.assert("packages not requested with outdated version", s.pkgCountBefore,
+                    s.loader.forName('packages').length);
+                this.assert("packages no longer loading", false, s.o.packages.loading());
+                this.assert("no error shown on packages", false, !!s.o.packages.remoteError());
+            },
+            cascade_dependentNotRequestedWhenServerReportsUpstreamError_Test: function () {
+                var s = this.cascade_clientChangedSetup();
+                //the server reports a failing remote URL inside a successful response
+                s.loader.resolve(s.versionReq, {err: {message: 'Not Found'}});
+                this.assert("upstream error reported", true, !!s.o.version.remoteError());
+                this.assert("packages not requested with outdated version", s.pkgCountBefore,
+                    s.loader.forName('packages').length);
+                this.assert("packages no longer loading", false, s.o.packages.loading());
+            },
+            cascade_deferredDependentClearedWhenRequiredValueRemoved_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['a', 'b', 'c'], {c: ['a', 'b']});
+                var o = control.options;
+                o.a.value('a0');
+                o.b.value('b1');
+                loader.forName('c').forEach(function (r) {
+                    loader.resolve(r, mkdata(['c1']));
+                });
+                control.loadRemoteOptionValues('a');
+                o.b.value('b2');
+                this.assert("c deferred while a loads", true, o.c.loading());
+                var cCount = loader.forName('c').length;
+                o.b.value('');
+                this.assert("c no longer loading once a required value is unset", false, o.c.loading());
+                loader.resolve(loader.forName('a')[loader.forName('a').length - 1], mkdata(['a1']));
+                this.assert("c not requested with an unset required value", cCount, loader.forName('c').length);
+                this.assert("c still not loading", false, o.c.loading());
+            },
+            cascade_deferralIsTransitive_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['a', 'b', 'c'], {b: ['a'], c: ['b']});
+                var o = control.options;
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('b');
+                var cCount = loader.forName('c').length;
+                control.loadRemoteOptionValues('c');
+                this.assert("c deferred while b is itself deferred", cCount, loader.forName('c').length);
+                this.assert("c shows loading", true, o.c.loading());
+                loader.reject(loader.forName('a')[loader.forName('a').length - 1], 'down');
+                this.assert("b no longer loading after a failed", false, o.b.loading());
+                this.assert("c no longer loading after a failed", false, o.c.loading());
+                this.assert("c never requested", cCount, loader.forName('c').length);
+            },
+            cascade_dependentDeferredRegardlessOfDeclarationOrder_Test: function () {
+                var loader = mkDeferredLoader();
+                //version is declared before client, although it depends on client
+                var control = mkChain(loader, ['region', 'version', 'client'], {
+                    client: ['region'],
+                    version: ['region', 'client']
+                });
+                var o = control.options;
+                o.region.value('/EMEA');
+                loader.resolve(loader.forName('client')[0], mkdata(['/ALPHA']));
+                loader.forName('version').forEach(function (r) {
+                    loader.resolve(r, mkdata(['/ALPHA_R1']));
+                });
+                var versionCount = loader.forName('version').length;
+                o.region.value('/APAC');
+                this.assert("version not requested with the old client", versionCount,
+                    loader.forName('version').length);
+                var clientReqs = loader.forName('client');
+                loader.resolve(clientReqs[clientReqs.length - 1], mkdata(['/GAMMA']));
+                var versionReqs = loader.forName('version');
+                this.assert("version requested once client reloaded", versionCount + 1, versionReqs.length);
+                this.assert("version requested with consistent values", {region: '/APAC', client: '/GAMMA'}, {
+                    region: versionReqs[versionReqs.length - 1].params['region'],
+                    client: versionReqs[versionReqs.length - 1].params['client']
+                });
+            },
+            cyclicDependencies_loadIndependently_Test: function () {
+                var loader = mkDeferredLoader();
+                var control = mkChain(loader, ['r', 'a', 'b'], {a: ['r', 'b'], b: ['a']});
+                control.cyclic = true;
+                control.loadRemoteOptionValues('r');
+                var aCount = loader.forName('a').length;
+                var bCount = loader.forName('b').length;
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('b');
+                this.assert("a requested while r loads in cyclic mode", aCount + 1, loader.forName('a').length);
+                this.assert("b requested while a loads in cyclic mode", bCount + 1, loader.forName('b').length);
+            },
+            loader_successKeepsRequestPendingUntilApplied_Test: function () {
+                var ajaxOpts = null;
+                var thenCallbacks = [];
+                var origAjax = jQuery.ajax;
+                jQuery.ajax = function (opts) {
+                    ajaxOpts = opts;
+                    return {
+                        then: function (cb) {
+                            thenCallbacks.push(cb);
+                        }
+                    };
+                };
+                try {
+                    var loader = new RemoteOptionLoader({url: '/remote', fieldPrefix: 'extra.option.', id: 'job1'});
+                    var control = mkChain(loader, ['a', 'c'], {c: ['a']});
+                    control.loadRemoteOptionValues('a');
+                    //transport finished, response not applied yet (jQuery 3 runs .then asynchronously)
+                    ajaxOpts.success(mkdata(['a1']), 'success', {});
+                    this.assert("a still pending after transport success", true, !!control.pending['a']);
+                    this.assert("c defers while a is not applied", true, control.hasPendingDependency('c'));
+                    thenCallbacks.forEach(function (cb) {
+                        cb(mkdata(['a1']));
+                    });
+                    this.assert("a no longer pending once applied", false, !!control.pending['a']);
+                    this.assert("a value applied", 'a1', control.options.a.value());
+                } finally {
+                    jQuery.ajax = origAjax;
+                }
+            },
+            abortsPreviousRequest_Test: function () {
+                var aborted = 0;
+                var loader = {
+                    loadRemoteOptionValues: function () {
+                        return {
+                            abort: function () {
+                                aborted++;
+                            },
+                            then: function () {
+                            }
+                        };
+                    }
+                };
+                var control = mkChain(loader, ['a'], {});
+                control.loadRemoteOptionValues('a');
+                control.loadRemoteOptionValues('a');
+                this.assert("first request aborted when superseded", 1, aborted);
             },
             unsubscribeAll_Test: function () {
                 var self = this;

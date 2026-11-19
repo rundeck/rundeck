@@ -48,6 +48,29 @@ function RemoteOptionController(data) {
      */
     self.cyclic = false;
 
+    /**
+     * latest request sequence number per option name; a response is only applied when its
+     * captured sequence still equals the latest one for that option
+     */
+    self.requestSeq = {};
+
+    /**
+     * request handle (e.g. jqXHR) of the in-flight load per option name
+     */
+    self.inflight = {};
+
+    /**
+     * true per option name while its latest load is in flight
+     */
+    self.pending = {};
+
+    /**
+     * true per option name when a load is waiting to be issued: either it was deferred because an
+     * option it depends on was loading, or its in-flight load was invalidated by a change of a
+     * non-direct upstream option, and no reload has been issued since
+     */
+    self.needsReload = {};
+
     function emptyValue(val) {
         return (!val || val === '');
     }
@@ -82,15 +105,150 @@ function RemoteOptionController(data) {
     };
 
     /**
-     * reload the values for an option by name (calls _loadRemoteOptionValues)
+     * Invalidate the in-flight load of an option: bumps its sequence so any late response or error
+     * is treated as stale, aborts the request when possible, and clears the loading indicator.
+     * @param name option name
+     * @returns {boolean} true if a load was in flight
+     */
+    self.invalidateRequest = function (name) {
+        var wasPending = !!self.pending[name];
+        self.requestSeq[name] = (self.requestSeq[name] || 0) + 1;
+        var req = self.inflight[name];
+        delete self.inflight[name];
+        delete self.pending[name];
+        if (req && typeof(req.abort) === 'function') {
+            req.abort();
+        }
+        if (wasPending && self.options[name]) {
+            self.options[name].loading(false);
+        }
+        return wasPending;
+    };
+
+    /**
+     * Invalidate the in-flight loads of all transitive dependents of an option (cycle safe).
+     * Options deeper than the direct dependents that lose an in-flight load are flagged
+     * so they are reloaded once their upstream option finishes loading, if nothing else reloads them.
+     * @param name option name
+     */
+    self.invalidateDependents = function (name) {
+        var visited = {};
+        visited[name] = true;
+        var direct = self.dependents[name] || [];
+        var queue = direct.slice();
+        while (queue.length > 0) {
+            var dep = queue.shift();
+            if (visited[dep]) {
+                continue;
+            }
+            visited[dep] = true;
+            var wasPending = self.invalidateRequest(dep);
+            if (wasPending && direct.indexOf(dep) < 0) {
+                self.needsReload[dep] = true;
+            }
+            queue = queue.concat(self.dependents[dep] || []);
+        }
+    };
+
+    /**
+     * reload dependents of an option whose in-flight load was dropped and not reloaded in the meantime
+     * @param name option name that just finished loading
+     */
+    self.reloadDroppedDependents = function (name) {
+        var deps = self.dependents[name] || [];
+        for (var i = 0; i < deps.length; i++) {
+            if (self.needsReload[deps[i]]) {
+                delete self.needsReload[deps[i]];
+                self.reloadOptionIfRequirementsMet(deps[i]);
+            }
+        }
+    };
+
+    /**
+     * @param name option name
+     * @returns {boolean} true if any option this option depends on has a load in flight or deferred
+     */
+    self.hasPendingDependency = function (name) {
+        var deps = self.dependencies[name] || [];
+        for (var i = 0; i < deps.length; i++) {
+            if (self.pending[deps[i]] || self.needsReload[deps[i]]) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    /**
+     * Called when the latest load of an option failed: its flagged dependents are not reloaded, since
+     * their request would be built from upstream values that could not be refreshed.
+     * @param name option name whose load failed
+     */
+    self.dependencyLoadFailed = function (name) {
+        var deps = self.dependents[name] || [];
+        for (var i = 0; i < deps.length; i++) {
+            if (self.needsReload[deps[i]] && !self.hasPendingDependency(deps[i])) {
+                delete self.needsReload[deps[i]];
+                self.options[deps[i]].loading(false);
+                //its own deferred dependents will not be reloaded either
+                self.dependencyLoadFailed(deps[i]);
+            }
+        }
+    };
+
+    /**
+     * reload the values for an option by name (calls _loadRemoteOptionValues). Only the response of the
+     * latest request for the option is applied; responses and errors of superseded requests are ignored.
+     * While an option it depends on is still loading, the request is deferred until that load finishes,
+     * so it is never built from a mix of new and outdated upstream values (not applied when the
+     * dependencies are cyclic).
      * @param name
      */
     self.loadRemoteOptionValues = function (name) {
         //stop observing option name if doing so
         // self.stopObserving(name);
         var option = self.options[name];
-        self.loader.loadRemoteOptionValues(option, self.options).then(function (data) {
+        self.invalidateRequest(name);
+        //cyclic dependencies load every option independently: waiting could deadlock
+        if (!self.cyclic && self.hasPendingDependency(name)) {
+            self.needsReload[name] = true;
+            option.loading(true);
+            return;
+        }
+        delete self.needsReload[name];
+        var seq = self.requestSeq[name];
+        var request = {
+            isCurrent: function () {
+                return self.requestSeq[name] === seq;
+            },
+            complete: function () {
+                if (self.requestSeq[name] === seq) {
+                    delete self.pending[name];
+                    delete self.inflight[name];
+                }
+            },
+            failed: function () {
+                if (self.requestSeq[name] === seq) {
+                    self.dependencyLoadFailed(name);
+                }
+            }
+        };
+        self.pending[name] = true;
+        var result = self.loader.loadRemoteOptionValues(option, self.options, request);
+        if (request.isCurrent()) {
+            self.inflight[name] = result;
+        }
+        result.then(function (data) {
+            if (!request.isCurrent()) {
+                return;
+            }
+            request.complete();
             option.loadRemote(data);
+            if (data && data.err && data.err.message) {
+                //the server reports remote URL failures in a successful response
+                self.dependencyLoadFailed(name);
+            } else {
+                self.reloadDroppedDependents(name);
+            }
         });
     };
 
@@ -135,6 +293,11 @@ function RemoteOptionController(data) {
         if (!skip) {
             self.loadRemoteOptionValues(name);
         } else if (self.options[name]) {
+            //drop any in-flight or deferred load: it would be built from unset required values
+            self.invalidateRequest(name);
+            delete self.needsReload[name];
+            self.options[name].loading(false);
+            self.dependencyLoadFailed(name);
             self.options[name].remoteError({
                 message: message("options.remote.dependency.missing.required", [name, missing.join(", ")])
             });
@@ -149,6 +312,13 @@ function RemoteOptionController(data) {
     self.optionValueChanged = function (name, value) {
         //trigger reload
         if (self.dependents[name] && !self.cyclic) {
+            //responses computed from the previous value of this option are stale for every transitive dependent
+            self.invalidateDependents(name);
+            //mark every direct dependent as waiting first, so a dependent reloaded before one of its
+            //upstream siblings defers until that sibling reloads, regardless of declaration order
+            for (var k = 0; k < self.dependents[name].length; k++) {
+                self.needsReload[self.dependents[name][k]] = true;
+            }
             for (var i = 0; i < self.dependents[name].length; i++) {
                 var dependentName = self.dependents[name][i];
                 self.reloadOptionIfRequirementsMet(dependentName);
@@ -259,8 +429,31 @@ function RemoteOptionLoader(data) {
     self.url = data.url;
     self.fieldPrefix = data.fieldPrefix;
     self.id = data.id;
-    //load remote values
-    self.loadRemoteOptionValues = function (opt, options) {
+    /**
+     * load remote values
+     * @param opt Option to load
+     * @param options all options, keyed by name, used as request parameters
+     * @param request optional staleness handle: isCurrent() tells if this request is still the latest one
+     *  for the option, complete() is called when the request fails while current (on success the
+     *  caller completes it once the response is applied)
+     * @returns the jqXHR of the request
+     */
+    self.loadRemoteOptionValues = function (opt, options, request) {
+        var isCurrent = function () {
+            return !request || request.isCurrent();
+        };
+        var finish = function (completeRequest) {
+            if (completeRequest && request && request.complete) {
+                request.complete();
+            }
+            //show loading spinner at least for a little while
+            setTimeout(function () {
+                //a newer request for the same option owns the loading indicator
+                if (isCurrent()) {
+                    opt.loading(false);
+                }
+            }, 200);
+        };
         opt.loading(true);
         var params = {option: opt.name(), selectedvalue: opt.value(), id: self.id};
         //
@@ -276,16 +469,21 @@ function RemoteOptionLoader(data) {
             type: 'json',
             url: _genUrl(self.url, params),
             success: function (data, status, jqxhr) {
-                //show loading spinner at least for a little while
-                setTimeout(function () {
-                    opt.loading(false)
-                },200);
+                //the request stays pending until the caller applies the response
+                if (isCurrent()) {
+                    finish(false);
+                }
             },
             error: function (jqxhr, status, message) {
-                setTimeout(function () {
-                    opt.loading(false)
-                },200);
+                //superseded or aborted requests must not report errors nor touch the loading indicator
+                if (status === 'abort' || !isCurrent()) {
+                    return;
+                }
+                finish(true);
                 opt.remoteError({error: "ERROR loading result from Rundeck server: " + status + ": " + message});
+                if (request && request.failed) {
+                    request.failed();
+                }
             }
         });
     }
