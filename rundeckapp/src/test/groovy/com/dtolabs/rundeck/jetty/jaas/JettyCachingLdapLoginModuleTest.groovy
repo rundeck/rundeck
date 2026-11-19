@@ -842,6 +842,287 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         'charcachekeyuser'  | 'charcachekeypassword'
     }
 
+    /**
+     * Builds a module configured for binding login with caching enabled, scoped to the given role
+     * base DN. The cache-scoping features below need two module instances that differ only in
+     * configuration, so the shared wiring lives here.
+     */
+    private JettyCachingLdapLoginModule cachingBindingLoginModule(
+            final String username,
+            final String passwordvalue,
+            final String roleBaseDn
+    ) {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._cacheDuration = Integer.MAX_VALUE
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = roleBaseDn
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = passwordvalue }
+        })  // Use setter instead of @field access (Groovy 4)
+        return module
+    }
+
+    /**
+     * Root context that resolves the user DN by exactly one user search, as a cache miss requires.
+     */
+    private DirContext userSearchRootContext(
+            final JettyCachingLdapLoginModule module,
+            final String username
+    ) {
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
+        }]
+        return Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >> {new EnumImpl<SearchResult>(found)}
+
+            0 * search(*_)
+        }
+    }
+
+    /**
+     * Bound user context that answers the role query for {@code roleBaseDn} with {@code roleNames}.
+     */
+    private DirContext roleSearchUserContext(
+            final JettyCachingLdapLoginModule module,
+            final String username,
+            final String roleBaseDn,
+            final List<String> roleNames
+    ) {
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(roleNames)}
+                }
+            }
+        }]
+        return Mock(DirContext) {
+            1 * search(
+                roleBaseDn,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+
+            0 * _(*_)
+        }
+    }
+
+    /**
+     * Role names the module resolved for the authenticated user, read back the way a container
+     * would: by letting the current user populate a Subject.
+     */
+    private List<String> resolvedRoleNames(final JettyCachingLdapLoginModule module) {
+        Subject subject = new Subject()
+        module.getCurrentUser().setJAASInfo(subject)  // Use getter instead of @field access (Groovy 4)
+        return subject.getPrincipals(RundeckRole)*.name.sort()
+    }
+
+    /**
+     * Module with every cache-key input set to a known, non-default value, so that a feature can
+     * change exactly one of them and observe the effect on the token.
+     */
+    private JettyCachingLdapLoginModule cacheTokenModule() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._providerUrl = 'ldap://directory:389'
+        module._userBaseDn = 'ou=users,dc=test,dc=com'
+        module._userObjectClass = 'inetOrgPerson'
+        module._userRdnAttribute = 'uid'
+        module._userIdAttribute = 'cn'
+        module._roleBaseDn = 'ou=roles,dc=test,dc=com'
+        module._roleObjectClass = 'groupOfUniqueNames'
+        module._roleMemberAttribute = 'uniqueMember'
+        module._roleUsernameMemberAttribute = 'memberUid'
+        module._roleNameAttribute = 'cn'
+        module._rolePrefix = 'rundeck_'
+        module._nestedGroups = false
+        module._allGroups = true
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._supplementalRoles = ['user']
+        return module
+    }
+
+    def "bindingLogin cache entries are scoped per module config"() {
+        // USERINFOCACHE is static, so it is shared by every instance of this login module. Two JAAS
+        // entries can authenticate the same user against different role subtrees; if the cache key
+        // did not cover the module config, the first module's roles would be satisfy every later
+        // module's lookup, so the authenticate subject only ever received the first module's roles.
+        given: 'two modules that differ only in the role subtree they query'
+        JettyCachingLdapLoginModule firstModule = cachingBindingLoginModule(username, passwordvalue, 'roleBaseDnOne')
+        firstModule._rootContext = userSearchRootContext(firstModule, username)
+        DirContext firstUserDir = roleSearchUserContext(firstModule, username, 'roleBaseDnOne', ['scopedRoleOne'])
+        firstModule.userBindDirContextCreator = { String user, Object pass -> firstUserDir }
+
+        JettyCachingLdapLoginModule secondModule = cachingBindingLoginModule(username, passwordvalue, 'roleBaseDnTwo')
+        secondModule._rootContext = userSearchRootContext(secondModule, username)
+        DirContext secondUserDir = roleSearchUserContext(secondModule, username, 'roleBaseDnTwo', ['scopedRoleTwo'])
+        secondModule.userBindDirContextCreator = { String user, Object pass -> secondUserDir }
+
+        when: 'the same user authenticates through both modules'
+        boolean firstResult = firstModule.login()
+        boolean secondResult = secondModule.login()
+
+        then: 'each module resolves roles from its own subtree, so neither reuses the other cache entry'
+        firstResult
+        secondResult
+        ['scopedRoleOne'] == resolvedRoleNames(firstModule)
+        ['scopedRoleTwo'] == resolvedRoleNames(secondModule)
+
+        and: 'the two configs produce different cache keys'
+        firstModule.buildUserInfoCacheToken(username, passwordvalue) !=
+                secondModule.buildUserInfoCacheToken(username, passwordvalue)
+
+        cleanup:
+        JettyCachingLdapLoginModule.USERINFOCACHE.remove(
+                firstModule.buildUserInfoCacheToken(username, passwordvalue))
+        JettyCachingLdapLoginModule.USERINFOCACHE.remove(
+                secondModule.buildUserInfoCacheToken(username, passwordvalue))
+
+        where:
+        username     | passwordvalue
+        'scopeduser' | 'scopedpassword'
+    }
+
+    def "bindingLogin reuses cached entry across module instances with identical config"() {
+        // The flip side of the scoping test: identically configured instances must still share the
+        // static cache, otherwise adding the config to the key would disable LDAP caching entirely,
+        // since a fresh login module instance is built per authentication.
+        given: 'a module that performs the LDAP lookups and populates the cache'
+        JettyCachingLdapLoginModule firstModule = cachingBindingLoginModule(username, passwordvalue, 'roleBaseDn')
+        firstModule._rootContext = userSearchRootContext(firstModule, username)
+        DirContext firstUserDir = roleSearchUserContext(
+                firstModule, username, 'roleBaseDn', ['cachedRoleOne', 'cachedRoleTwo'])
+        firstModule.userBindDirContextCreator = { String user, Object pass -> firstUserDir }
+
+        and: 'a second, identically configured module whose contexts must never be touched'
+        JettyCachingLdapLoginModule secondModule = cachingBindingLoginModule(username, passwordvalue, 'roleBaseDn')
+        secondModule._rootContext = Mock(DirContext) {
+            0 * _(*_)
+        }
+        secondModule.userBindDirContextCreator = { String user, Object pass ->
+            throw new IllegalStateException('bind must not be attempted on a cache hit')
+        }
+
+        when: 'the same user authenticates through both modules'
+        boolean firstResult = firstModule.login()
+        boolean secondResult = secondModule.login()
+
+        then: 'the second login is served from the cache, with the roles the first login resolved'
+        firstResult
+        secondResult
+        ['cachedRoleOne', 'cachedRoleTwo'] == resolvedRoleNames(secondModule)
+
+        and: 'both modules agree on the cache key'
+        firstModule.buildUserInfoCacheToken(username, passwordvalue) ==
+                secondModule.buildUserInfoCacheToken(username, passwordvalue)
+
+        cleanup:
+        JettyCachingLdapLoginModule.USERINFOCACHE.remove(
+                firstModule.buildUserInfoCacheToken(username, passwordvalue))
+
+        where:
+        username         | passwordvalue
+        'cachereuseuser' | 'cachereusepassword'
+    }
+
+    @Unroll
+    def "buildUserInfoCacheToken varies with #setting"() {
+        given: 'two fully configured modules that differ in exactly one cache-key input'
+        JettyCachingLdapLoginModule baseline = cacheTokenModule()
+        JettyCachingLdapLoginModule altered = cacheTokenModule()
+        mutate.call(altered)
+
+        expect: 'the altered setting changes the token'
+        baseline.buildUserInfoCacheToken(user1, password) !=
+                altered.buildUserInfoCacheToken(user1, password)
+
+        where:
+        setting                                   | mutate
+        'providerUrl'                             | { it._providerUrl = 'ldap://other:389' }
+        'userBaseDn'                              | { it._userBaseDn = 'ou=people,dc=test,dc=com' }
+        'userObjectClass'                         | { it._userObjectClass = 'person' }
+        'userRdnAttribute'                        | { it._userRdnAttribute = 'cn' }
+        'userIdAttribute'                         | { it._userIdAttribute = 'uid' }
+        'roleBaseDn'                              | { it._roleBaseDn = 'ou=groups,dc=test,dc=com' }
+        'roleObjectClass'                         | { it._roleObjectClass = 'group' }
+        'roleMemberAttribute'                     | { it._roleMemberAttribute = 'member' }
+        'roleUsernameMemberAttribute'             | { it._roleUsernameMemberAttribute = 'memberOf' }
+        'roleNameAttribute'                       | { it._roleNameAttribute = 'roleName' }
+        'rolePrefix'                              | { it._rolePrefix = 'other_' }
+        'nestedGroups'                            | { it._nestedGroups = true }
+        'allGroups'                               | { it._allGroups = false }
+        'forceBindingLoginUseRootContextForRoles' | { it._forceBindingLoginUseRootContextForRoles = true }
+        'supplementalRoles'                       | { it._supplementalRoles = ['user', 'admin'] }
+    }
+
+    def "buildUserInfoCacheToken varies with the credentials it is given"() {
+        given:
+        JettyCachingLdapLoginModule module = cacheTokenModule()
+
+        expect: 'a different user, or a different password for the same user, is keyed separately'
+        module.buildUserInfoCacheToken(user1, password) != module.buildUserInfoCacheToken(user2, password)
+        module.buildUserInfoCacheToken(user1, password) != module.buildUserInfoCacheToken(user1, 'otherpassword')
+
+        and: 'the password is keyed by content, so a char[] matches the equivalent String'
+        module.buildUserInfoCacheToken(user1, password) ==
+                module.buildUserInfoCacheToken(user1, password.toCharArray())
+
+        and: 'two equal char[] instances key the same, rather than by array identity'
+        module.buildUserInfoCacheToken(user1, password.toCharArray()) ==
+                module.buildUserInfoCacheToken(user1, password.toCharArray())
+    }
+
+    def "buildUserInfoCacheToken is unambiguous when adjacent values run together"() {
+        given: 'two configs whose adjacent values concatenate to the same raw text'
+        JettyCachingLdapLoginModule first = cacheTokenModule()
+        first._userBaseDn = 'ou=a'
+        first._userObjectClass = 'bPerson'
+
+        JettyCachingLdapLoginModule second = cacheTokenModule()
+        second._userBaseDn = 'ou=ab'
+        second._userObjectClass = 'Person'
+
+        expect: 'the length prefixes keep the two configs apart'
+        'ou=a' + 'bPerson' == 'ou=ab' + 'Person'
+        first.buildUserInfoCacheToken(user1, password) != second.buildUserInfoCacheToken(user1, password)
+
+        and: 'the same holds for the username and password, which are also adjacent in the key'
+        first.buildUserInfoCacheToken('ab', 'cd') != first.buildUserInfoCacheToken('a', 'bcd')
+    }
+
+    def "buildUserInfoCacheToken distinguishes an unset setting from an empty one"() {
+        given: 'one module with an unset role member attribute and one with an empty string'
+        JettyCachingLdapLoginModule unsetAttribute = cacheTokenModule()
+        unsetAttribute._roleUsernameMemberAttribute = null
+
+        JettyCachingLdapLoginModule emptyAttribute = cacheTokenModule()
+        emptyAttribute._roleUsernameMemberAttribute = ''
+
+        and: 'one module with no supplemental roles and one with an empty list of them'
+        JettyCachingLdapLoginModule unsetSupplementalRoles = cacheTokenModule()
+        unsetSupplementalRoles._supplementalRoles = null
+
+        JettyCachingLdapLoginModule emptySupplementalRoles = cacheTokenModule()
+        emptySupplementalRoles._supplementalRoles = []
+
+        expect: 'an unset attribute is not keyed the same as an empty one'
+        unsetAttribute.buildUserInfoCacheToken(user1, password) !=
+                emptyAttribute.buildUserInfoCacheToken(user1, password)
+
+        and: 'nor are absent supplemental roles keyed the same as an empty list of them'
+        unsetSupplementalRoles.buildUserInfoCacheToken(user1, password) !=
+                emptySupplementalRoles.buildUserInfoCacheToken(user1, password)
+    }
     @Unroll
     def "get ldapBind pwd from configuration service"() {
         setup:
