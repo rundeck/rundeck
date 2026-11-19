@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
 import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
+import org.springframework.core.env.PropertyResolver
 import rundeck.services.feature.FeatureService
 
 import java.lang.management.ManagementFactory
@@ -43,6 +44,35 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
     Boolean useForwardHeaders
     String serverUrl
     FeatureService featureService
+    /**
+     * Concurrent request cap installed by {@link JettyQosCustomizer}.
+     * {@code 0} (the default) installs no handler.
+     */
+    int qosMaxRequests = 0
+    /**
+     * Seconds a request may stay suspended before {@code 503} with {@code Retry-After}.
+     */
+    int qosMaxSuspendSeconds = 60
+    /**
+     * Servlet context path, so {@link JettyQosCustomizer} exempts only the real health path.
+     */
+    String qosContextPath = ''
+
+    /**
+     * Reads the QoS settings the {@code jettyServletCustomizer} bean binds.
+     *
+     * @param config application configuration
+     * @return {@code qosMaxRequests} ({@code rundeck.web.jetty.qos.maxRequests}, default 0),
+     *         {@code qosMaxSuspendSeconds} ({@code rundeck.web.jetty.qos.maxSuspendSeconds}, default 60)
+     *         and {@code qosContextPath} ({@code server.servlet.context-path}, default empty)
+     */
+    static Map<String, Object> qosProperties(PropertyResolver config) {
+        return [
+                qosMaxRequests      : config.getProperty('rundeck.web.jetty.qos.maxRequests', Integer, 0),
+                qosMaxSuspendSeconds: config.getProperty('rundeck.web.jetty.qos.maxSuspendSeconds', Integer, 60),
+                qosContextPath      : config.getProperty('server.servlet.context-path', String, '')
+        ] as Map<String, Object>
+    }
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
@@ -64,6 +94,13 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
         // TODO: Re-enable HTTP method filtering once ServletAPI issue is resolved
         if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
             factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
+        }
+        if (qosMaxRequests > 0) {
+            factory.addServerCustomizers(new JettyQosCustomizer(
+                    maxRequests: qosMaxRequests,
+                    maxSuspendSeconds: qosMaxSuspendSeconds,
+                    contextPath: qosContextPath
+            ))
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
