@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import com.dtolabs.rundeck.app.api.CDataString
 import com.dtolabs.rundeck.app.api.scm.*
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
@@ -1028,7 +1029,7 @@ Since: v15''',
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.status",
-                    args: [apiProjStatusIntRequest.integration, apiProjStatusIntRequest.project, e.message]
+                    args: [apiProjStatusIntRequest.integration, apiProjStatusIntRequest.project, ClientErrorMessages.publicMessage(e)]
             )
             return respond(
                     new ScmActionResult(success: false, message: message),
@@ -2066,7 +2067,7 @@ Export plugin values for `$synchState`:
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.job.status",
-                    args: [jobStatJobReq.integration, jobStatJobReq.id, e.message]
+                    args: [jobStatJobReq.integration, jobStatJobReq.id, ClientErrorMessages.publicMessage(e)]
             )
             return respond(
                     new ScmActionResult(success: false, message: message),
@@ -2246,7 +2247,7 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
         } catch (ScmPluginException e) {
             def message = message(
                     code: "api.scm.failed.to.get.scm.plugin.job.status",
-                    args: [jobDiffJobReq.integration, jobDiffJobReq.id, e.message]
+                    args: [jobDiffJobReq.integration, jobDiffJobReq.id, ClientErrorMessages.publicMessage(e)]
             )
             return respond(
                     new ScmActionResult(success: false, message: message),

@@ -173,6 +173,7 @@ class FileUploadService {
                             "$optionUploadMaxSizeString"
             )
         } catch (IOException e) {
+            log.error("Failed to receive uploaded file", e)
             throw new FileUploadServiceException("Error receiving file: " + e.message, e)
         }
         def shaString = shastream.SHAString

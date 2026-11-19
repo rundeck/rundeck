@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.utils.ClientErrorMessages
 import grails.converters.JSON
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,7 +44,7 @@ class MonitoringController {
         } catch (Exception e) {
             log.error("Error getting metrics: ${e.message}", e)
             response.status = 500
-            render([error: "Failed to get metrics: ${e.message}"] as JSON)
+            render([error: "Failed to get metrics: ${ClientErrorMessages.publicMessage(e)}"] as JSON)
         }
     }
     
@@ -76,7 +77,7 @@ class MonitoringController {
         } catch (Exception e) {
             log.error("Error getting Prometheus metrics: ${e.message}", e)
             response.status = 503
-            render([error: "Prometheus metrics not available: ${e.message}"] as JSON)
+            render([error: "Prometheus metrics not available: ${ClientErrorMessages.publicMessage(e)}"] as JSON)
         }
     }
     
@@ -178,7 +179,7 @@ class MonitoringController {
         } catch (Exception e) {
             log.error("Error getting thread dump: ${e.message}", e)
             response.status = 500
-            render([error: "Failed to retrieve thread dump: ${e.message}"] as JSON)
+            render([error: "Failed to retrieve thread dump: ${ClientErrorMessages.publicMessage(e)}"] as JSON)
         }
     }
     
