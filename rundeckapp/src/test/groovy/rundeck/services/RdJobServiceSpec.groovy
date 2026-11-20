@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.testing.gorm.DataTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -117,6 +118,45 @@ class RdJobServiceSpec extends Specification implements DataTest {
         then:
         1 * job.validate()
 
+    }
+
+    def "RunComponentBeforeSave passes job execution settings"() {
+        given:
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getNodes(_,_) >> Mock(INodeSet)
+        }
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
+        RdJob job = new RdJob(
+                jobName: 'job1',
+                project: 'one',
+                timeout: '3600',
+                retry: '${option.retries}',
+                multipleExecutions: true,
+                maxMultipleExecutions: '2',
+                nodeConfig: new RdNodeConfig(doNodedispatch: dispatch, nodeThreadcount: threadcount, nodeThreadcountDynamic: dynamic)
+        )
+
+        when:
+        service.runComponentBeforeSave("user", job)
+
+        then:
+        1 * service.jobLifecycleComponentService.beforeJobSave('one', { JobPersistEvent evt ->
+            evt.jobName == 'job1' &&
+            evt.userName == 'user' &&
+            evt.timeout == '3600' &&
+            evt.retry == '${option.retries}' &&
+            evt.nodeThreadcount == expected &&
+            evt.multipleExecutions &&
+            evt.maxMultipleExecutions == '2'
+        }) >> null
+
+        where:
+        dispatch | threadcount | dynamic           | expected
+        true     | 4           | null              | '4'
+        true     | 1           | '${option.count}' | '${option.count}'
+        true     | null        | null              | '1'
+        false    | 4           | null              | null
+        false    | 1           | '${option.count}' | null
     }
 
     def "ValidateComponents"() {

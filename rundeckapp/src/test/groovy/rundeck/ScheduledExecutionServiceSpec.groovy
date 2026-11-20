@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
+import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import grails.testing.gorm.DataTest
 
 /*
@@ -77,6 +78,48 @@ public class ScheduledExecutionServiceSpec extends Specification implements Data
         def result = service.runBeforeSave(scheduledExecution, authContext)
         then:
         assertEquals result, [success: false, scheduledExecution: scheduledExecution, error: "message from life cycle plugin"]
+    }
+
+    void runBeforeSavePassesJobExecutionSettings(){
+        given:
+        def scheduledExecution = new ScheduledExecution(
+                jobName: 'test1',
+                groupPath: 'group1',
+                project: 'aproject',
+                timeout: '2h30m',
+                retry: '3',
+                doNodedispatch: dispatch,
+                nodeThreadcountDynamic: '${option.threads}',
+                multipleExecutions: true,
+                maxMultipleExecutions: '5'
+        )
+        ScheduledExecutionService service = new ScheduledExecutionService()
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'admin'
+        }
+        service.frameworkService = Mock(FrameworkService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
+        service.frameworkService.filterAuthorizedNodes('aproject', new HashSet<String>(Arrays.asList("read", "run")), _, _) >> new NodeSetImpl()
+
+        when:
+        def result = service.runBeforeSave(scheduledExecution, authContext)
+
+        then:
+        1 * service.jobLifecycleComponentService.beforeJobSave('aproject', { JobPersistEvent evt ->
+            evt.jobName == 'test1' &&
+            evt.userName == 'admin' &&
+            evt.timeout == '2h30m' &&
+            evt.retry == '3' &&
+            evt.nodeThreadcount == expected &&
+            evt.multipleExecutions &&
+            evt.maxMultipleExecutions == '5'
+        }) >> null
+        result.success
+
+        where:
+        dispatch | expected
+        true     | '${option.threads}'
+        false    | null
     }
 
     void "Job gets persisted if the scheduling is changed"(){

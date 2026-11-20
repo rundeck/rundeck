@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.ScheduledExecution
 import rundeck.data.job.RdJob
+import rundeck.data.job.RdNodeConfig
 import rundeck.data.job.RdOption
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
@@ -147,16 +148,28 @@ class RdJobService {
         return new JobUpdateAuditEvent(jobUuid: se.uuid, project: se.project, fullName: se.generateFullName(), isnew: isnew)
     }
 
+    /**
+     * Run the Job Lifecycle plugins' before save handlers for a job. A plugin error is added to the job's errors,
+     * and options returned by a plugin replace the job's options.
+     *
+     * @param username user saving the job
+     * @param rdJob job being saved
+     */
     void runComponentBeforeSave(String username, RdJob rdJob) {
         INodeSet nodeSet = scheduledExecutionService.getNodes(rdJob,null)
-        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
-                rdJob.jobName,
-                rdJob.project,
-                convertToJobOptions(rdJob.optionSet),
-                nodeSet,
-                username,
-                rdJob.nodeConfig.filter
-        )
+        JobPersistEventImpl jobPersistEvent = JobPersistEventImpl.builder()
+                .jobName(rdJob.jobName)
+                .projectName(rdJob.project)
+                .options(convertToJobOptions(rdJob.optionSet))
+                .nodes(nodeSet)
+                .userName(username)
+                .nodeFilter(rdJob.nodeConfig.filter)
+                .timeout(rdJob.timeout)
+                .retry(rdJob.retry)
+                .nodeThreadcount(rawThreadCount(rdJob.nodeConfig))
+                .multipleExecutions(rdJob.multipleExecutions)
+                .maxMultipleExecutions(rdJob.maxMultipleExecutions)
+                .build()
         def jobEventStatus
         try {
             jobEventStatus = jobLifecycleComponentService?.beforeJobSave(rdJob.project, jobPersistEvent)
@@ -175,6 +188,24 @@ class RdJobService {
                     .collect {opt -> RdOption.convertFromJobOption(opt, rdJob.optionSet?.find { it.name == opt.name })} as SortedSet<RdOption>
             rdJob.validate()
         }
+    }
+
+    /**
+     * Thread count as defined on the job, following the same rules as
+     * {@link ScheduledExecution#rawThreadCountValue()}.
+     *
+     * @param nodeConfig job node config
+     * @return the dynamic thread count if set, otherwise the fixed thread count (default "1"), or null if the job does
+     *         not dispatch to nodes
+     */
+    private static String rawThreadCount(RdNodeConfig nodeConfig) {
+        if (!nodeConfig?.doNodedispatch) {
+            return null
+        }
+        if (null != nodeConfig.nodeThreadcountDynamic) {
+            return nodeConfig.nodeThreadcountDynamic
+        }
+        return null != nodeConfig.nodeThreadcount ? nodeConfig.nodeThreadcount.toString() : '1'
     }
 
     ImportedJob<ScheduledExecution> validateComponents(ScheduledExecution se, RdJob rdJob) {
