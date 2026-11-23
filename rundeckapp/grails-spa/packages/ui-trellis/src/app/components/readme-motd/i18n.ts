@@ -1,4 +1,10 @@
-export default {
+import publicMessages from "../../../../../../../../translations/core/rundeckapp/grails-spa/packages/ui-trellis/src/app/components/readme-motd/i18n";
+import {
+  mergeTranslationCatalogs,
+  type LocalizedTranslationCatalog,
+} from "../../../../../../../../tools/i18n/mergeCatalogs";
+
+const originalMessages = {
   en_US: {
     edit: {
       readme: {
@@ -124,4 +130,6 @@ export default {
       },
     },
   },
-};
+} as LocalizedTranslationCatalog;
+
+export default mergeTranslationCatalogs(originalMessages, publicMessages);
