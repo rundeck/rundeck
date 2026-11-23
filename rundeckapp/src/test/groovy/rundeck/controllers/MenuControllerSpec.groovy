@@ -45,6 +45,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.Action
 import spock.lang.Specification
+import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.auth.CoreTypedRequestAuthorizer
@@ -92,6 +93,7 @@ import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.StorageService
+import rundeck.services.UploadSizeLimitService
 import spock.lang.Ignore
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -3523,5 +3525,26 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         model.buildData.keySet().every { (it as String).startsWith('build.') }
         model.buildDataKeys.every { (it as String).startsWith('build.') }
         (model.buildDataKeys as Set) == model.buildData.keySet()
+    }
+
+    def "save system acl upload rejects a file over the access control limit"() {
+        given:
+        def input = new SaveSysAclFile(name: 'test', upload: true, fileType: 'storage', overwrite: true)
+        controller.uploadSizeLimitService = Stub(UploadSizeLimitService) {
+            aclMaxBytes() >> 4L
+            aclMaxSizeLabel() >> '4B'
+        }
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        request.addFile(new GrailsMockMultipartFile('uploadFile', 'policy.aclpolicy', 'text/yaml', 'too-big'.bytes))
+        controller.saveSystemAclFile(input)
+        then:
+        response.status == 302
+        response.redirectedUrl == '/menu/acls'
+        flash.errorCode == UploadSizeLimitService.ERROR_CODE
+        flash.errorArgs == ['4B']
+        0 * controller.aclFileManagerService.storePolicyFileContents(_, _, _)
     }
 }

@@ -71,6 +71,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.*
 import rundeck.data.util.OptionsParserUtil
@@ -102,6 +103,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     StorageService storageService
 
     def configurationService
+    UploadSizeLimitService uploadSizeLimitService
     ScmService scmService
     def quartzScheduler
     ContextACLManager<AppACLContext> aclFileManagerService
@@ -1229,15 +1231,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     ] + model
             )
         }
-        if (input.upload) {
-            if(request instanceof MultipartHttpServletRequest){
-                def file = request.getFile('uploadFile')
-                input.fileText = new String(file.bytes)
-            }
-            else {
-                response.status = HttpServletResponse.SC_BAD_REQUEST
-                return renderErrorView("Expected multipart file upload request")
-            }
+        if (input.upload && !acceptAclUpload(input, 'projectAcls', [project: params.project])) {
+            return
         }
         input.validate()
         if(!input.id && !input.name) {
@@ -1491,6 +1486,44 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
+    /**
+     * Reads an uploaded ACL policy into {@code input}, enforcing the configured size limit.
+     *
+     * @param input save command
+     * @param redirectAction action to redirect to when the file is too large
+     * @param redirectParams redirect parameters
+     * @return false when the response was already rendered or redirected
+     */
+    private boolean acceptAclUpload(def input, String redirectAction, Map redirectParams) {
+        if (!(request instanceof MultipartHttpServletRequest)) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            renderErrorView("Expected multipart file upload request")
+            return false
+        }
+        MultipartFile file = request.getFile('uploadFile')
+        if (rejectOversizedAclUpload(file)) {
+            redirect(controller: 'menu', action: redirectAction, params: redirectParams)
+            return false
+        }
+        input.fileText = new String(file.bytes)
+        return true
+    }
+
+    /**
+     * Records a flash error when the uploaded policy exceeds the Access Control limit.
+     *
+     * @param file uploaded policy file
+     * @return true when the upload was rejected
+     */
+    private boolean rejectOversizedAclUpload(MultipartFile file) {
+        if (file == null || file.size <= UploadSizeLimitService.resolveAclMaxBytes(uploadSizeLimitService)) {
+            return false
+        }
+        flash.errorCode = UploadSizeLimitService.ERROR_CODE
+        flash.errorArgs = [UploadSizeLimitService.resolveAclMaxSizeLabel(uploadSizeLimitService)]
+        return true
+    }
+
     def saveSystemAclFile(SaveSysAclFile input) {
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'acls')
@@ -1514,16 +1547,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
 
-        if (input.upload) {
-            if(request instanceof MultipartHttpServletRequest){
-                def file = request.getFile('uploadFile')
-                input.fileText = new String(file.bytes)
-            }
-            else {
-                response.status = HttpServletResponse.SC_BAD_REQUEST
-                return renderErrorView("Expected multipart file upload request")
-            }
-
+        if (input.upload && !acceptAclUpload(input, 'acls', [:])) {
+            return
         }
         input.validate()
         if (!input.id && !input.name) {

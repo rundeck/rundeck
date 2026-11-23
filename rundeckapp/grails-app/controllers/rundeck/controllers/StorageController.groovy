@@ -50,6 +50,8 @@ import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
+import rundeck.services.UploadSizeLimitService
+import rundeck.services.UploadTooLargeException
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -76,6 +78,7 @@ class StorageController extends ControllerBase{
     FrameworkService frameworkService
     AuthContextProvider rundeckAuthContextProvider
     ConfigurationService configurationService
+    UploadSizeLimitService uploadSizeLimitService
 
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
@@ -84,6 +87,14 @@ class StorageController extends ControllerBase{
             keyStorageUpload:['POST'],
             keyStorageDelete:['POST']
     ]
+
+    /**
+     * @param maxSizeLabel configured maximum shown to the caller
+     * @return 413 response
+     */
+    private def renderUploadTooLarge(String maxSizeLabel) {
+        apiService.renderErrorFormat(response, UploadSizeLimitService.tooLargeError(maxSizeLabel))
+    }
 
     private def pathUrl(path){
         def uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/incubator/storage/$path"
@@ -287,6 +298,25 @@ class StorageController extends ControllerBase{
         getResource(storageParams,true)
     }
     /**
+     * @param storageParams upload parameters
+     * @return storage content type, or null when the key type is invalid
+     */
+    private String uploadContentType(StorageParams storageParams) {
+        if (storageParams.uploadKeyType == 'public') {
+            return KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
+        }
+        if (storageParams.uploadKeyType == 'private') {
+            return KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
+        }
+        if (storageParams.uploadKeyType == 'password') {
+            return KeyStorageLayer.PASSWORD_MIME_TYPE
+        }
+        flash.errorCode = 'api.error.parameter.invalid'
+        flash.errorArgs = [storageParams.uploadKeyType, 'uploadKeyType']
+        return null
+    }
+
+    /**
      * non-api action wrapper for apiKeys method
      *
      */
@@ -303,18 +333,8 @@ class StorageController extends ControllerBase{
         AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         def resourcePath = storageParams.resourcePath
 
-        def contentType= null
-
-        if (storageParams.uploadKeyType == 'public') {
-            contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
-        } else if (storageParams.uploadKeyType == 'private') {
-            contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
-        } else if (storageParams.uploadKeyType == 'password') {
-            contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
-        } else {
-            //invalid
-            flash.errorCode = 'api.error.parameter.invalid'
-            flash.errorArgs = [storageParams.uploadKeyType, 'uploadKeyType']
+        def contentType = uploadContentType(storageParams)
+        if (contentType == null) {
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
         }
@@ -354,6 +374,13 @@ class StorageController extends ControllerBase{
             uploadText = params.uploadPassword
         }
 
+        def inputBytes = uploadText.bytes
+        if (inputBytes.length > UploadSizeLimitService.resolveKeyStorageMaxBytes(uploadSizeLimitService)) {
+            flash.errorCode = UploadSizeLimitService.ERROR_CODE
+            flash.errorArgs = [UploadSizeLimitService.resolveKeyStorageMaxSizeLabel(uploadSizeLimitService)]
+            return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
+        }
+
         resourcePath = PathUtil.cleanPath(resourcePath + '/' + filename)
 
         def newparams = new StorageParams(resourcePath: resourcePath)
@@ -382,8 +409,6 @@ class StorageController extends ControllerBase{
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
         }
-
-        def inputBytes = uploadText.bytes
 
         Map<String, String> map = [
                 (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
@@ -606,12 +631,21 @@ Authorization under the key path `project/{project}` can be granted at the proje
             response.status = 409
             return renderError("directory already exists: ${resourcePath}")
         }
+        byte[] body
+        try {
+            body = UploadSizeLimitService.readBody(
+                    request,
+                    UploadSizeLimitService.resolveKeyStorageMaxBytes(uploadSizeLimitService)
+            )
+        } catch (UploadTooLargeException ignored) {
+            return renderUploadTooLarge(UploadSizeLimitService.resolveKeyStorageMaxSizeLabel(uploadSizeLimitService))
+        }
         Map<String,String> map = [
                 (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Long.toString(body.length),
         ] + (request.resourcePostMeta?:[:])
         try{
-            def resource = storageService.createResource(authContext,resourcePath, map, request.inputStream)
+            def resource = storageService.createResource(authContext,resourcePath, map, new ByteArrayInputStream(body))
             response.status=201
             renderResourceFile(request,response,resource)
         } catch (StorageAuthorizationException e) {
@@ -830,12 +864,21 @@ Authorization under the key path `project/{project}` can be granted at the proje
             response.status = 404
             return renderError("resource not found: ${resourcePath}")
         }
+        byte[] body
+        try {
+            body = UploadSizeLimitService.readBody(
+                    request,
+                    UploadSizeLimitService.resolveKeyStorageMaxBytes(uploadSizeLimitService)
+            )
+        } catch (UploadTooLargeException ignored) {
+            return renderUploadTooLarge(UploadSizeLimitService.resolveKeyStorageMaxSizeLabel(uploadSizeLimitService))
+        }
         Map<String, String> map = [
                 (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): request.contentType,
-                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Integer.toString(request.contentLength),
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): Long.toString(body.length),
         ] + (request.resourcePostMeta ?: [:])
         try {
-            def resource = storageService.updateResource(authContext,resourcePath, map, request.inputStream)
+            def resource = storageService.updateResource(authContext,resourcePath, map, new ByteArrayInputStream(body))
             return renderResourceFile(request,response,resource)
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")

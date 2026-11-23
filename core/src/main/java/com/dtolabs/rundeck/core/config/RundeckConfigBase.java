@@ -566,6 +566,38 @@ public class RundeckConfigBase {
         HttpHeaders headers;
         HttpFirewall httpFirewall;
         InterceptorHelperConfig interceptor;
+        /**
+         * Key Storage and Access Control upload size limits.
+         * Bound from {@code rundeck.security.upload.*}.
+         */
+        Upload upload;
+
+        /**
+         * Configurable maximum sizes for Key Storage and Access Control uploads.
+         */
+        @Data
+        public static class Upload {
+            /** Key Storage limit, for example {@code 2MB}. */
+            Keystorage keystorage;
+            /** Access Control policy limit, for example {@code 2MB}. */
+            Acl acl;
+
+            /**
+             * {@code rundeck.security.upload.keystorage.maxsize}
+             */
+            @Data
+            public static class Keystorage {
+                String maxsize;
+            }
+
+            /**
+             * {@code rundeck.security.upload.acl.maxsize}
+             */
+            @Data
+            public static class Acl {
+                String maxsize;
+            }
+        }
 
         @Data
         public static class InterceptorHelperConfig {

@@ -481,6 +481,43 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         response.contentType.split(';').contains('application/json')
         response.json==[contents:'blah']
     }
+
+    def "system acls PUT rejects a body over the access control limit"() {
+        setup:
+        controller.uploadSizeLimitService = Stub(UploadSizeLimitService) {
+            aclMaxBytes() >> 8L
+            aclMaxSizeLabel() >> '8B'
+        }
+        controller.aclFileManagerService = Mock(ContextACLManager) {
+            1 * existsPolicyFile(AppACLContext.system(), 'test.aclpolicy') >> true
+            0 * storePolicyFileContents(_, _, _)
+        }
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceAny(_, _, _) >> true
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+            1 * extractResponseFormat(_, _, _, _) >> 'json'
+            1 * renderErrorFormat(_, _) >> { args ->
+                assert args[1].status == 413
+                assert args[1].code == UploadSizeLimitService.ERROR_CODE
+                assert args[1].args == ['8B']
+                args[0].status = args[1].status
+            }
+        }
+        when:
+        params.path = 'test.aclpolicy'
+        request.method = 'PUT'
+        request.format = 'yaml'
+        request.contentType = 'application/yaml'
+        request.content = '123456789'.bytes
+        controller.apiSystemAcls()
+        then:
+        response.status == 413
+    }
+
     def "system acls DELETE not found"(){
         setup:
         controller.aclFileManagerService=Mock(ContextACLManager){
