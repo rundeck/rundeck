@@ -9,6 +9,7 @@ import ActivityList from "../../components/activity/activityList.vue";
 import ActivityRunningIndicator from "../../components/activity/activityRunningIndicator.vue";
 import { EventBus } from "../../../library/utilities/vueEventBus";
 import { initI18n } from "../../utilities/i18n";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -33,5 +34,7 @@ for (let i = 0; i < els.length; i++) {
   app.use(uiv);
   app.use(i18n);
   app.use(VueCookies);
+  // The next UI activity table is built on PrimeVue DataTable/Paginator
+  configurePrimeVue(app);
   app.mount(e);
 }

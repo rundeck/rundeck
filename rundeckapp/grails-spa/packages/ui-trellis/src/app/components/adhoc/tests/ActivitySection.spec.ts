@@ -50,4 +50,18 @@ describe("ActivitySection", () => {
     expect(activityList.exists()).toBe(true);
     expect(activityList.props("eventBus")).toStrictEqual(mockEventBus);
   });
+
+  it("does not show the Options column for ad hoc commands", () => {
+    const wrapper = mount(ActivitySection, {
+      props: {
+        eventBus: mockEventBus,
+      },
+    });
+
+    const columns = wrapper
+      .findComponent(ActivityList)
+      .props("nextUiColumns") as string[];
+    expect(columns).not.toContain("args");
+    expect(columns).toContain("title");
+  });
 });

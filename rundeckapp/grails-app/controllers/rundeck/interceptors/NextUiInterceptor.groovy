@@ -18,6 +18,7 @@ class NextUiInterceptor {
         match(controller: 'menu', action: '(jobs|home)')
         match(controller: 'framework', action: 'adhoc')
         match(controller: 'user', action: 'list')
+        match(controller: 'reports', action: 'index')
     }
 
     boolean before() {

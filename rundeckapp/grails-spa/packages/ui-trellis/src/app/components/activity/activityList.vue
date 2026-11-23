@@ -2,7 +2,9 @@
   <div class="activity-list">
     <section class="section-space-bottom spacing-x">
       <span
-        v-if="pagination.total > 0 && pagination.total > pagination.max"
+        v-if="
+          !nextUi && pagination.total > 0 && pagination.total > pagination.max
+        "
         class="text-muted"
         data-testid="page-info"
       >
@@ -401,7 +403,7 @@
             </td>
           </tr>
         </tbody>
-        <tbody v-if="reports.length > 0" class="history-executions">
+        <tbody v-if="!nextUi && reports.length > 0" class="history-executions">
           <tr
             v-for="rpt in reports"
             :key="rpt.id"
@@ -554,7 +556,37 @@
       </table>
     </div>
 
-    <div v-if="reports.length < 1" class="loading-area">
+    <ActivityListEaTable
+      v-if="nextUi"
+      :reports="reports"
+      :pagination="pagination"
+      :loading="loading"
+      :columns="nextUiColumns"
+      :selectable="bulkEditMode"
+      :selected-ids="eaSelectedIds"
+      :show-toolbar="false"
+      :job-id-filter="query.jobIdFilter"
+      :moment-job-format="momentJobFormat"
+      :show-relative-date="true"
+      :highlight-id="highlightExecutionId"
+      :legacy-row-classes="true"
+      :middle-click-opens-tab="true"
+      execution-link-target="_self"
+      :sortable="true"
+      data-testid="activity-list-ea-table"
+      @page="onEaPage"
+      @row-click="autoBulkEdit"
+      @update:selected-ids="onEaSelection"
+    />
+    <div
+      v-if="historyLoadError && nextUi"
+      class="text-warning"
+      data-testid="error-message"
+    >
+      <i class="fas fa-error"></i>
+      {{ $t("error.message.0", [historyLoadError]) }}
+    </div>
+    <div v-if="!nextUi && reports.length < 1" class="loading-area">
       <span
         v-if="!loading && !loadError"
         data-testid="no-data-message"
@@ -573,6 +605,7 @@
     </div>
 
     <offset-pagination
+      v-if="!nextUi"
       :pagination="pagination"
       :disabled="loading"
       :show-prefix="false"
@@ -592,6 +625,16 @@ import { defineComponent, PropType } from "vue";
 import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
+import ActivityListEaTable from "./ActivityListEaTable.vue";
+import type {
+  ActivityColumn,
+  ActivityPageRequest,
+} from "./ActivityListEaTableTypes";
+import {
+  executionState as normalizeExecutionState,
+  KNOWN_EXECUTION_STATUSES,
+} from "./executionState";
+import { loadJsonData } from "../../utilities/loadJsonData";
 
 import { EventBus, getRundeckContext } from "../../../library";
 import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
@@ -630,21 +673,26 @@ function _genUrl(url: string, params: any) {
   );
 }
 
-const knownStatusList = [
-  "scheduled",
-  "running",
-  "queued",
-  "succeed",
-  "succeeded",
-  "failed",
-  "missed",
-  "cancel",
-  "aborted",
-  "retry",
-  "timedout",
-  "timeout",
-  "fail",
+const knownStatusList = KNOWN_EXECUTION_STATUSES;
+
+/** Activity columns shown by the next UI history table, in display order. */
+const NEXT_UI_COLUMNS: ActivityColumn[] = [
+  "status",
+  "id",
+  "dateEnded",
+  "nodes",
+  "duration",
+  "user",
+  "title",
+  "args",
 ];
+
+/** Maps activity table sort columns to persisted ExecutionQuery fields. */
+const SERVER_SORT_FIELDS: Record<string, string> = {
+  id: "id",
+  dateEnded: "dateCompleted",
+  user: "user",
+};
 
 function nodeStats(execution: any) {
   const info = {
@@ -672,6 +720,7 @@ export default defineComponent({
   components: {
     OffsetPagination,
     ActivityFilter,
+    ActivityListEaTable,
   },
   props: {
     eventBus: {
@@ -681,6 +730,11 @@ export default defineComponent({
     displayMode: {
       type: String as PropType<string>,
       required: false,
+    },
+    /** Columns of the next UI history table; pages drop ones they do not show. */
+    nextUiColumns: {
+      type: Array as PropType<ActivityColumn[]>,
+      default: () => [...NEXT_UI_COLUMNS],
     },
   },
 
@@ -742,11 +796,23 @@ export default defineComponent({
       currentFilter: "",
       disableRefresh: false,
       rundeckContext: getRundeckContext(),
+      /** Whether the page renders the next UI history table. */
+      nextUi: loadJsonData("pageUiMeta")?.uiType === "next",
+      /** Error from the latest history query, cleared on each new query. */
+      historyLoadError: null as null | string,
+      /** Identifies the latest history query; older responses are ignored. */
+      activityRequestSequence: 0,
+      /** Server sort requested by the next UI table, if any. */
+      sort: null as null | { sortBy: string; sortOrder: string },
     };
   },
   computed: {
     Status() {
       return Status;
+    },
+    /** Bulk selection exposed as numeric IDs for the next UI table. */
+    eaSelectedIds(): number[] {
+      return this.bulkSelectedIds.map(Number);
     },
     activityHref(): string {
       return _genUrl(this.activityPageHref, this.fullQueryParams());
@@ -1016,34 +1082,33 @@ export default defineComponent({
       return calculatedLastDate;
     },
     executionState(status: string) {
-      if (status == "scheduled") {
-        return "scheduled";
-      }
-      if (status == "succeed" || status == "succeeded") {
-        return "succeeded";
-      }
-      if (status == "fail" || status == "failed") {
-        return "failed";
-      }
-      if (status == "cancel" || status == "aborted") {
-        return "aborted";
-      }
-      if (status == "running") {
-        return "running";
-      }
-      if (status == "queued") {
-        return "queued";
-      }
-      if (status == "missed") {
-        return "missed";
-      }
-      if (status == "timedout") {
-        return "timedout";
-      }
-      if (status == "retry") {
-        return "failed-with-retry";
-      }
-      return "other";
+      return normalizeExecutionState(status);
+    },
+    /**
+     * Applies a page, page size or sort change from the next UI table.
+     * @param request requested offset, page size and sort column
+     */
+    onEaPage(request: ActivityPageRequest) {
+      const sortBy = request.sortField
+        ? SERVER_SORT_FIELDS[request.sortField]
+        : undefined;
+      this.sort = sortBy
+        ? {
+            sortBy,
+            sortOrder: request.sortOrder === 1 ? "ascending" : "descending",
+          }
+        : null;
+      this.pagination.max = request.max;
+      this.loadActivity(request.offset);
+    },
+    /**
+     * Stores the bulk selection made in the next UI table.
+     * @param ids selected execution IDs
+     */
+    onEaSelection(ids: number[]) {
+      // Row clicks and the legacy checkboxes store the execution's numeric id,
+      // so keep the same runtime values despite the legacy string typing.
+      this.bulkSelectedIds = [...ids] as unknown as string[];
     },
     reportState(rpt: Execution) {
       return this.executionState(rpt.status);
@@ -1142,6 +1207,8 @@ export default defineComponent({
       }
     },
     async loadActivity(offset: number) {
+      const requestId = ++this.activityRequestSequence;
+      this.historyLoadError = null;
       this.loading = true;
       this.pagination.offset = offset;
       const xquery = this.parseToExecutionQuery();
@@ -1151,6 +1218,9 @@ export default defineComponent({
           this.projectName,
           Object.assign({ offset: offset, max: this.pagination.max }, xquery),
         );
+        if (requestId !== this.activityRequestSequence) {
+          return;
+        }
         this.loading = false;
         if (response) {
           this.pagination.offset = response.paging.offset;
@@ -1165,8 +1235,12 @@ export default defineComponent({
             this.eventBus.emit("activity-query-result", response);
         }
       } catch (error) {
+        if (requestId !== this.activityRequestSequence) {
+          return;
+        }
         this.loading = false;
         this.loadError = (error as Error).message;
+        this.historyLoadError = this.loadError;
       }
     },
     parseToExecutionQuery() {
@@ -1191,6 +1265,9 @@ export default defineComponent({
       xquery["excludeRunning"] = "true";
 
       Object.assign(xquery, this.query);
+      if (this.sort) {
+        Object.assign(xquery, this.sort);
+      }
       return xquery;
     },
     changePageOffset(offset: number) {
