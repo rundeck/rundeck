@@ -29,6 +29,7 @@ import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
+import rundeck.services.UploadSizeLimitService
 import rundeck.services.feature.FeatureService
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -947,5 +948,66 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
             params.resourcePath = 'keys/monkey/ bonanza'
         expect:
             assertFalse(params.validate())
+    }
+
+    def "apiPostResource rejects a body over the key storage limit"() {
+        given:
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubject(_)
+            }
+            controller.storageService = Mock(StorageService) {
+                1 * getProjectPath(_) >> null
+                1 * hasResource(_, _) >> false
+                1 * hasPath(_, _) >> false
+                0 * createResource(_, _, _, _)
+            }
+            controller.uploadSizeLimitService = Stub(UploadSizeLimitService) {
+                keyStorageMaxBytes() >> 4L
+                keyStorageMaxSizeLabel() >> '4B'
+            }
+            controller.apiService = Mock(ApiService) {
+                1 * requireApi(_, _) >> true
+                1 * renderErrorFormat(_, _) >> { args ->
+                    assertEquals(413, args[1].status)
+                    assertEquals(UploadSizeLimitService.ERROR_CODE, args[1].code)
+                    assertEquals(['4B'], args[1].args)
+                    args[0].status = args[1].status
+                }
+            }
+            params.resourcePath = '/keys/abc'
+            request.content = 'too-big'.bytes
+            request.contentType = 'application/octet-stream'
+        when:
+            controller.apiPostResource()
+        then:
+            assertEquals(413, response.status)
+    }
+
+    def "keyStorageUpload rejects text over the key storage limit"() {
+        given:
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+                1 * getAuthContextForSubject(_)
+            }
+            controller.storageService = Mock(StorageService) {
+                1 * getProjectPath(_) >> null
+                0 * createResource(_, _, _, _)
+                0 * updateResource(_, _, _, _)
+            }
+            controller.uploadSizeLimitService = Stub(UploadSizeLimitService) {
+                keyStorageMaxBytes() >> 4L
+                keyStorageMaxSizeLabel() >> '4B'
+            }
+            params.uploadKeyType = 'private'
+            params.inputType = 'text'
+            params.fileName = 'monkey'
+            params.uploadText = 'too-big'
+            setupFormTokens(controller)
+            request.method = 'POST'
+        when:
+            controller.keyStorageUpload()
+        then:
+            assertEquals(302, response.status)
+            flash.errorCode == UploadSizeLimitService.ERROR_CODE
+            flash.errorArgs == ['4B']
     }
 }

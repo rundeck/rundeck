@@ -93,6 +93,8 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.UploadSizeLimitService
+import rundeck.services.UploadTooLargeException
 
 import jakarta.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -136,6 +138,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     UserService userService
     ProjectService projectService
     ConfigurationService configurationService
+    UploadSizeLimitService uploadSizeLimitService
 
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
@@ -4624,6 +4627,18 @@ by:
     private def renderAclHref(String path) {
         createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/system/acl/$path")
     }
+    /**
+     * @param respFormat response format
+     * @return 413 response for an Access Control upload over the configured limit
+     */
+    private def renderAclUploadTooLarge(String respFormat) {
+        Map<String, Object> error = UploadSizeLimitService.tooLargeError(
+                UploadSizeLimitService.resolveAclMaxSizeLabel(uploadSizeLimitService)
+        )
+        error.format = respFormat
+        return apiService.renderErrorFormat(response, error)
+    }
+
     private def apiSystemAclsPutResource(String filename, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
 
@@ -4646,14 +4661,23 @@ by:
         }
         def error = null
         String text = null
+        long maxBytes = UploadSizeLimitService.resolveAclMaxBytes(uploadSizeLimitService)
         if (request.format in ['yaml','text']) {
             try {
-                text = request.inputStream.text
+                text = UploadSizeLimitService.readText(request, maxBytes)
+            } catch (UploadTooLargeException ignored) {
+                return renderAclUploadTooLarge(respFormat)
             } catch (Throwable e) {
                 error = e.message
             }
         }else{
-            def succeeded = apiService.parseJsonXmlWith(request,response,[
+            def bounded
+            try {
+                bounded = UploadSizeLimitService.boundedRequest(request, maxBytes)
+            } catch (UploadTooLargeException ignored) {
+                return renderAclUploadTooLarge(respFormat)
+            }
+            def succeeded = apiService.parseJsonXmlWith(bounded,response,[
                     xml:{xml->
                         if(xml?.name()=='contents'){
                             text=xml?.text()
@@ -4684,6 +4708,9 @@ by:
                     message: "No content",
                     format: respFormat
             ])
+        }
+        if (UploadSizeLimitService.textExceeds(text, maxBytes)) {
+            return renderAclUploadTooLarge(respFormat)
         }
 
         //validate input

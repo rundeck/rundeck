@@ -60,6 +60,15 @@ import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
+import rundeck.services.ConfigurationService
+import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
+import rundeck.services.PluginService
+import rundeck.services.ProjectService
+import rundeck.services.ProjectServiceException
+import rundeck.services.ScheduledExecutionService
+import rundeck.services.UploadSizeLimitService
+import rundeck.services.UploadTooLargeException
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
@@ -86,6 +95,7 @@ class ProjectController extends ControllerBase{
     PluginService pluginService
     ContextACLManager<AppACLContext> aclFileManagerService
     ConfigurationService configurationService
+    UploadSizeLimitService uploadSizeLimitService
     AsyncImportService asyncImportService
 
     def static allowedMethods = [
@@ -1718,6 +1728,18 @@ Since: v14""",
      * @param create if true, attempt to create, if false update existing
      * @return
      */
+    /**
+     * @param respFormat response format
+     * @return 413 response for an Access Control upload over the configured limit
+     */
+    private def renderAclUploadTooLarge(String respFormat) {
+        Map<String, Object> error = UploadSizeLimitService.tooLargeError(
+                UploadSizeLimitService.resolveAclMaxSizeLabel(uploadSizeLimitService)
+        )
+        error.format = respFormat
+        return apiService.renderErrorFormat(response, error)
+    }
+
     private def apiProjectAclsPutResource(IRundeckProject project, String projectFilePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
         def exists = aclFileManagerService.existsPolicyFile(AppACLContext.project(project.name), projectFilePath)
@@ -1742,14 +1764,26 @@ Since: v14""",
 
         def error = null
         String text = null
+        long maxBytes = UploadSizeLimitService.resolveAclMaxBytes(uploadSizeLimitService)
+        if (UploadSizeLimitService.declaredLengthExceeds(request.getContentLengthLong(), maxBytes)) {
+            return renderAclUploadTooLarge(respFormat)
+        }
         if (request.format in ['yaml','text']) {
             try {
-                text = request.inputStream.text
+                text = UploadSizeLimitService.readText(request, maxBytes)
+            } catch (UploadTooLargeException ignored) {
+                return renderAclUploadTooLarge(respFormat)
             } catch (Throwable e) {
                 error = e.message
             }
         }else{
-            def succeeded = apiService.parseJsonXmlWith(request,response,[
+            def bounded
+            try {
+                bounded = UploadSizeLimitService.boundedRequest(request, maxBytes)
+            } catch (UploadTooLargeException ignored) {
+                return renderAclUploadTooLarge(respFormat)
+            }
+            def succeeded = apiService.parseJsonXmlWith(bounded,response,[
                     xml:{xml->
                         if(xml?.name()=='contents'){
                             text=xml?.text()
@@ -1780,6 +1814,9 @@ Since: v14""",
                     message: "No content",
                     format: respFormat
             ])
+        }
+        if (UploadSizeLimitService.textExceeds(text, maxBytes)) {
+            return renderAclUploadTooLarge(respFormat)
         }
 
         //validate input
