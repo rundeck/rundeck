@@ -134,7 +134,8 @@ implied. - See the License for the specific language governing permissions and -
                                         </label>
                                         <div class="col-sm-9">
                                             <div data-bind="visible: upload.inputType()=='file' ">
-                                                <input type="file" name="storagefile" id="storageuploadfile" data-bind="value: upload.file"/>
+                                                %{-- No name: FileReader copies the file into uploadText. Posting the file as well would count it twice against the upload limit. --}%
+                                                <input type="file" id="storageuploadfile" data-bind="value: upload.file"/>
                                             </div>
                                             <div data-bind="if: (upload.inputType()=='text' || upload.inputType()=='file') && upload.keyType() != 'password'" >
                                                 <textarea class="form-control" rows="5" id="storageuploadtext" data-bind="value: upload.textArea, visible: upload.inputType() != 'file'" name="uploadText"></textarea>

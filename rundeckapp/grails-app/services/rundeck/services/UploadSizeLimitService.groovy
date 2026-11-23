@@ -22,8 +22,13 @@ import org.rundeck.app.config.SystemConfigurable
 import org.rundeck.util.Sizes
 import org.rundeck.util.ThresholdInputStream
 
+import jakarta.servlet.ReadListener
+import jakarta.servlet.ServletInputStream
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequestWrapper
 import jakarta.servlet.http.HttpServletResponse
+
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 /**
@@ -175,6 +180,19 @@ class UploadSizeLimitService implements SystemConfigurable {
     }
 
     /**
+     * Reads at most {@code maxBytes} and returns a request that replays that body.
+     * Parsers then cannot read past the configured limit, including when Content-Length is absent.
+     *
+     * @param request current request
+     * @param maxBytes allowed maximum
+     * @return request whose body is the bytes already read
+     * @throws UploadTooLargeException when the body is larger than {@code maxBytes}
+     */
+    static HttpServletRequest boundedRequest(HttpServletRequest request, long maxBytes) {
+        return new BoundedBodyRequest(request, readBody(request, maxBytes))
+    }
+
+    /**
      * @param input source stream
      * @param maxBytes allowed maximum
      * @return bytes read
@@ -241,5 +259,72 @@ class UploadSizeLimitService implements SystemConfigurable {
                 .category('Security')
                 .authRequired('app_admin')
                 .build()
+    }
+
+    /**
+     * Replays a body that was already limited.
+     */
+    @GrailsCompileStatic
+    private static class BoundedBodyRequest extends HttpServletRequestWrapper {
+        private final byte[] body
+
+        BoundedBodyRequest(HttpServletRequest request, byte[] body) {
+            super(request)
+            this.body = body
+        }
+
+        @Override
+        ServletInputStream getInputStream() {
+            return new BodyServletInputStream(body)
+        }
+
+        @Override
+        BufferedReader getReader() {
+            String encoding = getCharacterEncoding()
+            Charset charset = encoding ? Charset.forName(encoding) : StandardCharsets.UTF_8
+            return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), charset))
+        }
+
+        @Override
+        int getContentLength() {
+            return body.length > Integer.MAX_VALUE ? -1 : body.length
+        }
+
+        @Override
+        long getContentLengthLong() {
+            return body.length
+        }
+    }
+
+    /**
+     * Servlet stream over an in-memory body.
+     */
+    @GrailsCompileStatic
+    private static class BodyServletInputStream extends ServletInputStream {
+        private final ByteArrayInputStream source
+
+        BodyServletInputStream(byte[] body) {
+            this.source = new ByteArrayInputStream(body)
+        }
+
+        @Override
+        int read() {
+            return source.read()
+        }
+
+        @Override
+        boolean isFinished() {
+            return source.available() == 0
+        }
+
+        @Override
+        boolean isReady() {
+            return true
+        }
+
+        @Override
+        void setReadListener(ReadListener readListener) {
+            throw new UnsupportedOperationException('Async read is not supported')
+        }
     }
 }

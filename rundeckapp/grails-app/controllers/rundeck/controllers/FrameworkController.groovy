@@ -4662,9 +4662,6 @@ by:
         def error = null
         String text = null
         long maxBytes = UploadSizeLimitService.resolveAclMaxBytes(uploadSizeLimitService)
-        if (UploadSizeLimitService.declaredLengthExceeds(request.getContentLengthLong(), maxBytes)) {
-            return renderAclUploadTooLarge(respFormat)
-        }
         if (request.format in ['yaml','text']) {
             try {
                 text = UploadSizeLimitService.readText(request, maxBytes)
@@ -4674,7 +4671,13 @@ by:
                 error = e.message
             }
         }else{
-            def succeeded = apiService.parseJsonXmlWith(request,response,[
+            def bounded
+            try {
+                bounded = UploadSizeLimitService.boundedRequest(request, maxBytes)
+            } catch (UploadTooLargeException ignored) {
+                return renderAclUploadTooLarge(respFormat)
+            }
+            def succeeded = apiService.parseJsonXmlWith(bounded,response,[
                     xml:{xml->
                         if(xml?.name()=='contents'){
                             text=xml?.text()

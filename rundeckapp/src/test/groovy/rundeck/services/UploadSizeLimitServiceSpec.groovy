@@ -16,6 +16,9 @@
 package rundeck.services
 
 import grails.testing.services.ServiceUnitTest
+import jakarta.servlet.ReadListener
+import jakarta.servlet.ServletInputStream
+import jakarta.servlet.http.HttpServletRequest
 import spock.lang.Specification
 
 class UploadSizeLimitServiceSpec extends Specification implements ServiceUnitTest<UploadSizeLimitService> {
@@ -80,6 +83,62 @@ class UploadSizeLimitServiceSpec extends Specification implements ServiceUnitTes
     def "readLimited returns the body when it fits"() {
         expect:
         UploadSizeLimitService.readLimited(new ByteArrayInputStream('1234'.bytes), 4L) == '1234'.bytes
+    }
+
+    def "boundedRequest rejects a chunked body over the limit"() {
+        given:
+        HttpServletRequest request = Stub(HttpServletRequest) {
+            getContentLengthLong() >> -1L
+            getInputStream() >> servletStream('12345'.bytes)
+        }
+
+        when:
+        UploadSizeLimitService.boundedRequest(request, 4L)
+
+        then:
+        thrown(UploadTooLargeException)
+    }
+
+    def "boundedRequest replays a body that fits"() {
+        given:
+        byte[] body = '{"contents":"ab"}'.bytes
+        HttpServletRequest request = Stub(HttpServletRequest) {
+            getContentLengthLong() >> -1L
+            getCharacterEncoding() >> 'UTF-8'
+            getInputStream() >> servletStream(body)
+        }
+
+        when:
+        HttpServletRequest bounded = UploadSizeLimitService.boundedRequest(request, 100L)
+
+        then:
+        bounded.reader.text == '{"contents":"ab"}'
+        bounded.contentLengthLong == body.length
+        bounded.inputStream.readAllBytes() == body
+    }
+
+    private static ServletInputStream servletStream(byte[] data) {
+        ByteArrayInputStream source = new ByteArrayInputStream(data)
+        return new ServletInputStream() {
+            @Override
+            int read() {
+                return source.read()
+            }
+
+            @Override
+            boolean isFinished() {
+                return source.available() == 0
+            }
+
+            @Override
+            boolean isReady() {
+                return true
+            }
+
+            @Override
+            void setReadListener(ReadListener readListener) {
+            }
+        }
     }
 
     def "missing service uses the default limit"() {
