@@ -546,6 +546,31 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         e.message.contains('does not exist')
     }
 
+    void "identity-aware removal leaves a replacement row untouched"() {
+        given:
+        def project = new Project(name: 'test1').save(flush: true, failOnError: true)
+
+        expect:
+        !service.removeFrameworkProject('test1', project.id + 1L)
+        Project.findByName('test1')?.id == project.id
+    }
+
+    void "identity-aware disable only changes the expected row"() {
+        given:
+        def project = new Project(name: 'test1').save(flush: true, failOnError: true)
+
+        expect:
+        !service.disableFrameworkProject('test1', project.id + 1L)
+        Project.findByName('test1').state == null
+
+        when:
+        boolean disabled = service.disableFrameworkProject('test1', project.id)
+
+        then:
+        disabled
+        Project.findByName('test1').state == RdProject.State.DISABLED
+    }
+
     void "remove project does exist"(){
         setup:
         def p = new Project(name:'test1')

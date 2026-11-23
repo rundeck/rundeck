@@ -190,6 +190,28 @@ class GormProjectDataProviderSpec extends Specification implements DataTest{
         
     }
 
+    def "identity state update advances optimistic lock version"() {
+        given:
+        Long projectId = provider.create(
+            new SimpleProjectBuilder()
+                .setName('project')
+                .setState(RdProject.State.ENABLED)
+        )
+        Long originalVersion = Project.get(projectId).version
+
+        when:
+        boolean updated = provider.updateStateIfIdentityMatches(
+            projectId,
+            'project',
+            RdProject.State.DISABLED
+        )
+
+        then:
+        updated
+        Project.get(projectId).state == RdProject.State.DISABLED
+        Project.get(projectId).version > originalVersion
+    }
+
     @Unroll
     def "Should Find Project names by state"() {
 

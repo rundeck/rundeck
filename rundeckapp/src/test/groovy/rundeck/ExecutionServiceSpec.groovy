@@ -106,6 +106,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
@@ -1550,6 +1551,80 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.error == 'running'
     }
 
+    def "trusted bulk deletion bypasses ACL evaluation"() {
+        given:
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            0 * _
+        }
+        def execution = new Execution(
+            user: 'system',
+            project: 'AProject',
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'true')]),
+            dateStarted: new Date(),
+            dateCompleted: new Date(),
+            status: 'succeeded'
+        ).save(failOnError: true)
+
+        when:
+        def result = service.deleteBulkExecutionIds([execution.id], null, 'system', true)
+
+        then:
+        1 * service.logFileStorageService.getExecutionFiles(execution, _, _) >> [:]
+        1 * service.reportService.deleteByExecution(execution)
+        result.success
+        !Execution.get(execution.id)
+    }
+
+    def "trusted bulk deletion still rejects running executions"() {
+        given:
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            0 * _
+        }
+        def execution = new Execution(
+            user: 'system',
+            project: 'AProject',
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'true')]),
+            dateStarted: new Date(),
+            status: 'running'
+        ).save(failOnError: true)
+
+        when:
+        def result = service.deleteBulkExecutionIds([execution.id], null, 'system', true)
+
+        then:
+        !result.success
+        result.failures*.error == ['running']
+        Execution.get(execution.id)
+    }
+
+    def "ordinary bulk deletion still enforces ACL evaluation"() {
+        given:
+        def auth = Mock(AuthContext)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def execution = new Execution(
+            user: 'user',
+            project: 'AProject',
+            workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'true')]),
+            dateStarted: new Date(),
+            dateCompleted: new Date(),
+            status: 'succeeded'
+        ).save(failOnError: true)
+
+        when:
+        def result = service.deleteBulkExecutionIds([execution.id], auth, 'user')
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authResourceForProject('AProject')
+        1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            auth,
+            _,
+            [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        ) >> false
+        !result.success
+        result.failures*.error == ['unauthorized']
+        Execution.get(execution.id)
+    }
+
     def "delete execution files"() {
         given:
 
@@ -1580,6 +1655,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+        Closure<Map> remoteRemoval = { -> [started: false, error: 'not found'] }
 
 
         service.fileUploadService = Mock(FileUploadService)
@@ -1589,8 +1665,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
-            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
+            1 * prepareRemoteLogFileRemoval(execution, 'rdlog') >> {
+                remoteRemoval
+            }
+            1 * prepareRemoteLogFileRemoval(execution, 'state.json') >> {
+                remoteRemoval
+            }
             0 * _(*_)
         }
 
@@ -1646,6 +1726,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+        Closure<Map> remoteRemoval = { -> [started: false, error: 'not found'] }
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
@@ -1654,8 +1735,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
-            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
+            1 * prepareRemoteLogFileRemoval(execution, 'rdlog') >> {
+                remoteRemoval
+            }
+            1 * prepareRemoteLogFileRemoval(execution, 'state.json') >> {
+                remoteRemoval
+            }
             0 * _(*_)
         }
 
@@ -1674,6 +1759,78 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.reportService.deleteByExecution(execution)
 
         result.success
+    }
+
+    def "execution files are removed only after transaction commit"() {
+        given:
+        def execution = new Execution()
+        def file = File.createTempFile('execution-commit', '.log')
+        int remoteDeletes = 0
+        Closure<Map> remoteRemoval = {
+            remoteDeletes++
+            [started: true]
+        }
+        def method = ExecutionService.getDeclaredMethod(
+            'deleteExecutionFilesAfterCommit',
+            Execution,
+            Collection,
+            Collection
+        )
+        method.accessible = true
+        TransactionSynchronizationManager.initSynchronization()
+
+        when:
+        method.invoke(service, execution, [remoteRemoval], [file])
+
+        then:
+        file.exists()
+        remoteDeletes == 0
+
+        when:
+        TransactionSynchronizationManager.synchronizations.each { it.afterCommit() }
+
+        then:
+        !file.exists()
+        remoteDeletes == 1
+
+        cleanup:
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+        file.delete()
+    }
+
+    def "execution files remain when transaction rolls back"() {
+        given:
+        def execution = new Execution()
+        def file = File.createTempFile('execution-rollback', '.log')
+        int remoteDeletes = 0
+        Closure<Map> remoteRemoval = {
+            remoteDeletes++
+            [started: true]
+        }
+        def method = ExecutionService.getDeclaredMethod(
+            'deleteExecutionFilesAfterCommit',
+            Execution,
+            Collection,
+            Collection
+        )
+        method.accessible = true
+        TransactionSynchronizationManager.initSynchronization()
+
+        when:
+        method.invoke(service, execution, [remoteRemoval], [file])
+        TransactionSynchronizationManager.clearSynchronization()
+
+        then:
+        file.exists()
+        remoteDeletes == 0
+
+        cleanup:
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.clearSynchronization()
+        }
+        file.delete()
     }
 
     def "delete execution job file records"() {

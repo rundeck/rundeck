@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectDeleteCoordinator
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.net.api.RundeckApi
 import com.dtolabs.rundeck.net.api.RundeckClient
@@ -47,11 +48,13 @@ import org.jetbrains.annotations.NotNull
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
@@ -78,6 +81,7 @@ import retrofit2.mock.MockRetrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.TimeUnit
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -114,6 +118,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         def providerExec = new GormExecReportDataProvider()
         service.execReportDataProvider = providerExec
+        service.projectDeleteCoordinator = new LocalProjectDeleteCoordinator()
 
 
         // Change the default promise factory so the async project deletion in ProjectService.deleteProject()
@@ -537,6 +542,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
     def "delete project with deferral disables project"() {
         given:
+        new Project(name: 'myproject').save(failOnError: true)
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }
@@ -557,14 +563,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
         3 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
-            1 * disableFrameworkProject('myproject')
-            1 * removeFrameworkProject('myproject')
+            1 * disableFrameworkProject('myproject', _ as Long) >> true
+            1 * removeFrameworkProject('myproject', _ as Long) >> true
         }
         result.success
     }
 
     def "delete project deferral switch config override"() {
         given:
+        new Project(name: 'myproject').save(failOnError: true)
         def project = Mock(IRundeckProject) {
             getName() >> 'myproject'
         }
@@ -585,8 +592,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
         fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * isFrameworkProjectDisabled('myproject') >> false
-            disablingCalls * disableFrameworkProject('myproject')
-            1 * removeFrameworkProject('myproject')
+            disablingCalls * disableFrameworkProject('myproject', _ as Long) >> true
+            (1 - disablingCalls) * removeFrameworkProject('myproject')
+            disablingCalls * removeFrameworkProject('myproject', _ as Long) >> true
         }
         result.success
 
@@ -599,6 +607,212 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         false      | true        | 0
         false      | false       | 0
 
+    }
+
+    def "deferred deletion does not schedule cleanup without ownership"() {
+        given:
+        def storedProject = new Project(name: 'myproject').save(failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.projectDeleteCoordinator = Mock(ProjectDeleteCoordinator) {
+            1 * tryAcquire('myproject', storedProject.id) >> null
+            0 * isOwner(_, _, _)
+            0 * release(_, _, _)
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        def projectManager = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            1 * disableFrameworkProject('myproject', storedProject.id) >> true
+            0 * removeFrameworkProject(_)
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> projectManager
+        }
+
+        when:
+        def result = service.deleteProject(project, framework, null, null)
+
+        then:
+        !result.success
+        result.error == 'Project deletion is owned by another process.'
+        0 * service.scmService.removeAllPluginConfiguration(_)
+    }
+
+    def "deferred deletion does not start cleanup without finalization fence"() {
+        given:
+        def storedProject = new Project(name: 'myproject').save(failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.projectDeleteCoordinator = Mock(ProjectDeleteCoordinator) {
+            1 * tryAcquire('myproject', storedProject.id) >> 'claim'
+            1 * isOwner('myproject', storedProject.id, 'claim') >> true
+            1 * beginFinalization('myproject', storedProject.id, 'claim') >> false
+            1 * release('myproject', storedProject.id, 'claim')
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean('projectService.deferredProjectDelete', _) >> true
+        }
+        service.scmService = Mock(ScmService)
+        service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        def projectManager = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> false
+            1 * disableFrameworkProject('myproject', storedProject.id) >> true
+            0 * removeFrameworkProject(_)
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> projectManager
+        }
+
+        when:
+        def result = service.deleteProject(project, framework, null, null)
+
+        then:
+        result.success
+        0 * service.scmService.removeAllPluginConfiguration(_)
+    }
+
+    def "owned deletion does not touch a replacement project row"() {
+        given:
+        def original = new Project(name: 'myproject').save(failOnError: true)
+        Long originalId = original.id
+        original.name = 'oldproject'
+        original.save(flush: true, failOnError: true)
+        new Project(name: 'myproject').save(failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.projectDeleteCoordinator = Mock(ProjectDeleteCoordinator) {
+            0 * isOwner(_, _, _)
+        }
+        service.scmService = Mock(ScmService)
+        def framework = Mock(Framework) {
+            0 * getFrameworkProjectMgr()
+        }
+
+        when:
+        def result = service.deleteProjectInternal(project, framework, null, null, false, originalId, 'stale')
+
+        then:
+        !result.success
+        result.error == 'Project deletion ownership changed.'
+        0 * service.scmService.removeAllPluginConfiguration(_)
+    }
+
+    def "disabled project recovery only runs for the ownership winner"() {
+        given:
+        def storedProject = new Project(
+            name: 'myproject',
+            state: RdProject.State.DISABLED
+        ).save(failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.projectDeleteCoordinator = Mock(ProjectDeleteCoordinator) {
+            1 * tryAcquireRecovery('myproject', storedProject.id) >> null
+        }
+        service.scmService = Mock(ScmService)
+        def projectManager = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> true
+            0 * disableFrameworkProject(_)
+            0 * removeFrameworkProject(_)
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> projectManager
+        }
+
+        when:
+        def result = service.resumeDeferredProjectDelete(project, framework, null, 'system')
+
+        then:
+        !result.success
+        result.error == 'Project deletion is owned by another process.'
+        0 * service.scmService.removeAllPluginConfiguration(_)
+    }
+
+    def "disabled recovery does not capture an enabled replacement"() {
+        given:
+        new Project(name: 'myproject', state: RdProject.State.ENABLED).save(failOnError: true)
+        def project = Mock(IRundeckProject) {
+            getName() >> 'myproject'
+        }
+        service.projectDeleteCoordinator = Mock(ProjectDeleteCoordinator) {
+            0 * tryAcquireRecovery(_, _)
+        }
+        def projectManager = Mock(ProjectManager) {
+            1 * isFrameworkProjectDisabled('myproject') >> true
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> projectManager
+        }
+
+        when:
+        def result = service.resumeDeferredProjectDelete(project, framework, null, 'system')
+
+        then:
+        !result.success
+        result.error == 'Disabled project identity is not available.'
+    }
+
+    def "bootstrap recovery continues after one project fails and removes the winner"() {
+        given:
+        new Project(name: 'bad', state: RdProject.State.DISABLED).save(failOnError: true)
+        def storedGood = new Project(
+            name: 'good',
+            state: RdProject.State.DISABLED
+        ).save(failOnError: true)
+        def good = Mock(IRundeckProject) {
+            getName() >> 'good'
+        }
+        def projectManager = Mock(ProjectManager) {
+            1 * listDisabledFrameworkProjectNames() >> ['bad', 'good']
+            1 * getFrameworkProject('bad') >> { throw new IllegalStateException('broken project') }
+            1 * getFrameworkProject('good') >> good
+            1 * isFrameworkProjectDisabled('good') >> true
+            1 * removeFrameworkProject('good', storedGood.id) >> true
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectMgr() >> projectManager
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> framework
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * getAuthContextForUserAndRolesAndProject('system', ['admin'], 'good') >> null
+        }
+        service.projectDeleteCoordinator = new LocalProjectDeleteCoordinator()
+        service.scmService = Mock(ScmService) {
+            1 * removeAllPluginConfiguration('good')
+        }
+        service.executionService = Mock(ExecutionService) {
+            1 * deleteBulkExecutionIds([], null, 'system', true) >> [
+                success: true,
+                failures: [],
+                successTotal: 0
+            ]
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService) {
+            1 * deleteRecordsForProject('good')
+        }
+        service.taskService = Mock(TaskService) {
+            1 * schedule(30L, 'project-delete-recovery', TimeUnit.SECONDS, _ as Closure)
+        }
+        service.targetEventBus = Mock(EventBus)
+
+        when:
+        service.resumeDisabledProjectsFromBootstrap()
+
+        then:
+        1 * service.eventBus.notify('projectWillBeDeleted', ['good'])
+        1 * service.eventBus.notify('projectWasDeleted', ['good'])
     }
 
     def "import project archive only nodes without config"() {
