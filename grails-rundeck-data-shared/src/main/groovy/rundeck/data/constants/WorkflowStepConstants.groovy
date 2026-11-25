@@ -16,4 +16,5 @@ class WorkflowStepConstants {
     public static final String ERR_CODE_JOB_NAME_BLANK = 'commandExec.jobName.blank.message'
     public static final String ERR_CODE_JOB_PROJECT_BLANK = 'commandExec.jobProject.blank.message'
     public static final String ERR_CODE_REF_JOB_UNAUTH = 'commandExec.jobProject.unauth.message'
+    public static final String ERR_CODE_STEP_NAME_BLANK = 'workflowStep.description.blank.message'
 }
