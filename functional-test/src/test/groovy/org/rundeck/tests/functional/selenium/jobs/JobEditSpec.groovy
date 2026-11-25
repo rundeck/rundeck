@@ -150,10 +150,10 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.refreshNodesButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
         jobCreatePage.openNodePopover("test-node2")
-        jobCreatePage.selectTabAddFilterByName("testBoth").click()
+        jobCreatePage.addNodeFilterAndWaitForReload("testBoth")
         jobCreatePage.waitForNodeFilterApplied("testBoth")
         jobCreatePage.openNodePopover("test-node")
-        jobCreatePage.selectTabAddFilterByName("test").click()
+        jobCreatePage.addNodeFilterAndWaitForReload("test")
         jobCreatePage.waitForNodeFilterApplied("tags: \"test\"")
 
         then:
