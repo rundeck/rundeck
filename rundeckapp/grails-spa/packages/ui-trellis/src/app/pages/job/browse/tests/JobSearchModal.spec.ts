@@ -12,11 +12,16 @@ jest.mock("@/library/rundeckService.ts", () => ({
   })),
 }));
 
-interface MountOptions {
-  props?: Record<string, any>;
+interface JobPageStoreStub {
+  query: Record<string, string>;
 }
 
-const createJobPageStoreStub = () => ({
+interface MountOptions {
+  props?: Record<string, any>;
+  jobPageStore?: JobPageStoreStub;
+}
+
+const createJobPageStoreStub = (): JobPageStoreStub => ({
   query: {
     project: "",
     idlist: "",
@@ -25,6 +30,7 @@ const createJobPageStoreStub = () => ({
     descFilter: "",
     scheduledFilter: "",
     serverNodeUUIDFilter: "",
+    jobUuidFilter: "",
   },
 });
 
@@ -38,7 +44,8 @@ const createWrapper = async (
     },
     global: {
       provide: {
-        [JobPageStoreInjectionKey as symbol]: createJobPageStoreStub(),
+        [JobPageStoreInjectionKey as symbol]:
+          options.jobPageStore || createJobPageStoreStub(),
         [JobListFilterStoreInjectionKey as symbol]: {},
       },
       stubs: {
@@ -77,5 +84,26 @@ describe("JobSearchModal", () => {
     expect(clearButton.exists()).toBe(true);
     expect(clearButton.classes()).toContain("btn-default");
     expect(clearButton.classes()).not.toContain("btn-button");
+  });
+
+  it("renders the job UUID search input", async () => {
+    const wrapper = await createWrapper();
+
+    const uuidInput = findByTestId(wrapper, "job-search-modal-job-uuid-input");
+
+    expect(uuidInput.attributes("name")).toBe("jobUuidFilter");
+  });
+
+  it("sets the jobUuidFilter query value when a job UUID is entered", async () => {
+    const jobPageStore = createJobPageStoreStub();
+    const wrapper = await createWrapper({ jobPageStore });
+
+    await findByTestId(wrapper, "job-search-modal-job-uuid-input").setValue(
+      "2020c78b-a228-4627-8015-3177ebaa00a7",
+    );
+
+    expect(jobPageStore.query.jobUuidFilter).toBe(
+      "2020c78b-a228-4627-8015-3177ebaa00a7",
+    );
   });
 });

@@ -92,6 +92,13 @@
                     </div>
                   </div>
                   <div class="form-group">
+                    <label class="col-sm-2 control-label" for="${enc(attr:rkey)}jobUuidFilter"><g:message code="jobquery.title.jobUuidFilter"/></label>
+                    <div class="col-sm-10">
+                      <g:textField name="jobUuidFilter" id="${rkey}jobUuidFilter" value="${params.jobUuidFilter}" class="form-control" />
+                      <span class="help-block"><g:message code="jobquery.description.jobUuidFilter"/></span>
+                    </div>
+                  </div>
+                  <div class="form-group">
                     <label class="col-sm-2 control-label" for="${enc(attr:rkey)}groupPath"><g:message code="jobquery.title.groupPath"/></label>
                     <div class="col-sm-10">
                       <div class="input-group">

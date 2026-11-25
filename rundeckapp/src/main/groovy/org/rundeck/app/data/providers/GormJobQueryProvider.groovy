@@ -17,6 +17,7 @@ import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.job.JobQueryProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
+import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.query.JobQueryConstants
@@ -72,6 +73,7 @@ class GormJobQueryProvider implements JobQueryProvider {
         }
 
         def idlist = createIdList(query)
+        def jobUuidRefIds = query.jobUuidFilter ? findJobIdsReferencingUuid(query.jobUuidFilter) : []
         def crit = createCriteria()
 
         def scheduled = crit.list{
@@ -83,6 +85,7 @@ class GormJobQueryProvider implements JobQueryProvider {
             }
 
             applyIdCriteria(idlist, delegate)
+            applyJobUuidCriteria(query, jobUuidRefIds, delegate)
             applyTxtFiltersCriteria(query, delegate)
             applyEqFiltersCriteria(query, delegate)
             applyBoolFiltersCriteria(query,delegate)
@@ -105,6 +108,7 @@ class GormJobQueryProvider implements JobQueryProvider {
             total = criteria.count {
 
                 applyIdCriteria(idlist, delegate)
+                applyJobUuidCriteria(query, jobUuidRefIds, delegate)
                 applyTxtFiltersCriteria(query, delegate)
                 applyEqFiltersCriteria(query, delegate)
                 applyBoolFiltersCriteria(query, delegate)
@@ -167,6 +171,46 @@ class GormJobQueryProvider implements JobQueryProvider {
                 }
             }
         }
+    }
+
+    /**
+     * Match the job with the given UUID, or any job referencing it
+     * @param refIds ids of jobs that reference the UUID in a Job Reference step
+     */
+    void applyJobUuidCriteria(JobQueryInputData query, List<Long> refIds, BuildableCriteria crit) {
+        if (query.jobUuidFilter) {
+            crit.or {
+                crit.eq("uuid", query.jobUuidFilter)
+                for (def partition : Lists.partition(refIds, 1000)) {
+                    crit.'in'("id", partition)
+                }
+            }
+        }
+    }
+
+    /**
+     * Find ids of jobs having a Job Reference step (or error handler) that references the given job UUID
+     */
+    @CompileStatic(TypeCheckingMode.SKIP)
+    static List<Long> findJobIdsReferencingUuid(String jobUuid) {
+        //JobExec.uuid is a text column, use like for cross-database comparison
+        List<Long> stepIds = JobExec.executeQuery(
+            'select je.id from JobExec je where je.uuid like :uuid',
+            [uuid: jobUuid]
+        )
+        if (!stepIds) {
+            return []
+        }
+        Set<Long> jobIds = new HashSet<>()
+        for (def partition : Lists.partition(stepIds, 1000)) {
+            jobIds.addAll(ScheduledExecution.executeQuery(
+                '''select distinct se.id from ScheduledExecution se
+                   join se.workflow w join w.commands c left join c.errorHandler eh
+                   where c.id in (:ids) or eh.id in (:ids)''',
+                [ids: partition]
+            ))
+        }
+        return jobIds.toList()
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)

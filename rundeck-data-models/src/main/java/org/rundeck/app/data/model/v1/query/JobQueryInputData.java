@@ -47,6 +47,11 @@ public interface JobQueryInputData extends Pageable {
 
     String getServerNodeUUIDFilter();
 
+    /**
+     * @return job UUID to match, also matches jobs referencing this UUID in a Job Reference step
+     */
+    default String getJobUuidFilter(){return null;}
+
     Integer getDaysAhead();
 
     Boolean getRunJobLaterFilter();

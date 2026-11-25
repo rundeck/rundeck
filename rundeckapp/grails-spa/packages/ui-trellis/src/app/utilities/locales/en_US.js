@@ -561,6 +561,9 @@ const messages = {
   "jobquery.title.objFilter": "Resource",
   "jobquery.title.scheduledFilter": "Scheduled",
   "jobquery.title.serverNodeUUIDFilter": "Server Node UUID",
+  "jobquery.title.jobUuidFilter": "UUID",
+  "jobquery.description.jobUuidFilter":
+    "Matches the job with this UUID and any jobs that call it from a 'Job Reference' step or from an 'Error Handler' action.",
   "jobquery.title.typeFilter": "Type",
   "jobquery.title.cmdFilter": "Command",
   "jobquery.title.userFilter": "User",
