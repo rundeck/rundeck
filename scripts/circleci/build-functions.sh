@@ -46,7 +46,7 @@ rundeck_docker_build() {
     # Only the JRE 21 image is published today, on unsuffixed tags. The suffix is kept so that
     # reintroducing an older-JRE variant tags it distinctly instead of overwriting the main image.
     local TAG_SUFFIX=""
-    if [[ "${jreVersion}" == *"17"* ]]; then
+    if [[ "${jreVersion}" == *"-17-"* ]]; then
         TAG_SUFFIX="-j17"
     fi
 
@@ -63,7 +63,7 @@ rundeck_docker_build() {
 rundeck_docker_push() {
     local jreVersion=${1}
     local TAG_SUFFIX=""
-    if [[ "${jreVersion}" == *"17"* ]]; then
+    if [[ "${jreVersion}" == *"-17-"* ]]; then
         TAG_SUFFIX="-j17"
     fi
 
@@ -92,7 +92,7 @@ rundeck_docker_push() {
 rundeck_test_images_build_push() {
     local jreVersion=${1:-}
     local TAG_SUFFIX=""
-    if [[ "${jreVersion}" == *"17"* ]]; then
+    if [[ "${jreVersion}" == *"-17-"* ]]; then
         TAG_SUFFIX="-j17"
     fi
     local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
