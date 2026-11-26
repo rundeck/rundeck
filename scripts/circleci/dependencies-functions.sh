@@ -34,7 +34,7 @@ dependencies_persist_jdk() {
     echo "Persisting JDK ${jdk_home} to ${target}"
     rm -rf "${target}"
     cp -aL "${jdk_home}" "${target}"
-    "${target}/bin/java" -version 2>&1 | grep -q 'version "25'
+    "${target}/bin/java" -version 2>&1 | grep -q 'version "21'
     "${target}/bin/javac" -version
 }
 
