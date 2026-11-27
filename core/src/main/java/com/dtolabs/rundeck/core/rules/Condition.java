@@ -2,8 +2,8 @@ package com.dtolabs.rundeck.core.rules;
 
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -31,10 +31,10 @@ public interface Condition extends Predicate<StateObj> {
      * predicate's own, typically unreadable, lambda text.
      *
      * @param pred        predicate
-     * @param description description
+     * @param description supplies the description; evaluated only when the condition is printed
      * @return condition
      */
-    static Condition with(final Predicate<StateObj> pred, final String description) {
+    static Condition with(final Predicate<StateObj> pred, final Supplier<String> description) {
         return new Condition() {
             @Override
             public boolean test(final StateObj input) {
@@ -43,7 +43,7 @@ public interface Condition extends Predicate<StateObj> {
 
             @Override
             public String toString() {
-                return description;
+                return description.get();
             }
         };
     }
@@ -63,19 +63,19 @@ public interface Condition extends Predicate<StateObj> {
 
     @Override
     default Condition negate() {
-        return Condition.with(t -> !test(t), "NOT " + this);
+        return Condition.with(t -> !test(t), () -> "NOT " + this);
     }
 
     public static Condition not(final Condition condition) {
-        return Condition.with(condition.negate(), "NOT " + condition);
+        return Condition.with(condition.negate(), () -> "NOT " + condition);
     }
 
     public static Condition and(final Condition condition1, final Condition condition2) {
-        return Condition.with(condition1.and(condition2), describe(List.of(condition1, condition2), "AND"));
+        return Condition.with(condition1.and(condition2), () -> describe(Arrays.asList(condition1, condition2), "AND"));
     }
 
     public static Condition and(final Condition... conditions) {
-        return Condition.with(andAll(conditions), describe(List.of(conditions), "AND"));
+        return Condition.with(andAll(conditions), () -> describe(Arrays.asList(conditions), "AND"));
     }
 
     static Predicate<StateObj> andAll(final Condition[] conditions) {
@@ -83,7 +83,7 @@ public interface Condition extends Predicate<StateObj> {
     }
 
     public static Condition and(final Iterable<Condition> conditions) {
-        return Condition.with(andAll(conditions), describe(conditions, "AND"));
+        return Condition.with(andAll(conditions), () -> describe(conditions, "AND"));
     }
 
     static Predicate<StateObj> andAll(final Iterable<Condition> conditions) {
@@ -95,14 +95,14 @@ public interface Condition extends Predicate<StateObj> {
     }
 
     public static Condition or(final Condition condition1, final Condition condition2) {
-        return Condition.with(condition1.or(condition2), describe(List.of(condition1, condition2), "OR"));
+        return Condition.with(condition1.or(condition2), () -> describe(Arrays.asList(condition1, condition2), "OR"));
     }
 
     public static Condition or(final Condition... conditions) {
-        return Condition.with(orAll(Arrays.asList(conditions)), describe(List.of(conditions), "OR"));
+        return Condition.with(orAll(Arrays.asList(conditions)), () -> describe(Arrays.asList(conditions), "OR"));
     }
 
     public static Condition or(final Iterable<Condition> conditions) {
-        return Condition.with(orAll(conditions), describe(conditions, "OR"));
+        return Condition.with(orAll(conditions), () -> describe(conditions, "OR"));
     }
 }
