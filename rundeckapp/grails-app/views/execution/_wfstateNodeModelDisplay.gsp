@@ -140,7 +140,7 @@
                           <span class="execstate execstatedisplay " data-bind="attr: {
                                'data-execstate': executionState,
                                'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' ),
-                               'title': ( executionState() == 'SKIPPED' ? '${enc(attr: g.message(code: 'execution.show.step.skipped.description'))}' : false )
+                               'title': ( executionState() == 'SKIPPED' ? '${enc(attr: enc(js: g.message(code: 'execution.show.step.skipped.description')))}' : false )
                            }"></span>
                       </div>
 
