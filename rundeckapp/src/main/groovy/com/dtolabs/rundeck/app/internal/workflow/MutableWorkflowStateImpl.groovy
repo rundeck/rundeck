@@ -327,7 +327,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 )
             }
             //the container itself must complete: normal cleanup cannot, as the parent step is already SKIPPED.
-            //The children keep their SKIPPED states since completed states are not overwritten
+            //The children keep their SKIPPED states unless a real result arrives later (see the allowed table in updateState)
             subflow.updateSubWorkflowState(
                     owner.stepIdentifier,
                     owner.stepIdentifier.context.size(),
@@ -745,6 +745,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         //a SKIPPED state can be replayed from one parameterized invocation into a step state that is shared with
         //other invocations, so a real result reported by another invocation must override it. A late RUNNING
         //event still does not.
+        //This is "last real result wins", with no aggregation across parameterized copies: the shared state
+        //follows whichever real result arrived last. The per-node states stay exact, and summaries are
+        //computed from those, so a stale shared state does not change the node or execution summary.
+        //The list is broad on purpose: it includes NOT_STARTED and NODE_MIXED, which are also completed states.
         ExecutionState.values().findAll { it.isCompletedState() && it != ExecutionState.SKIPPED }.each {
             allowed[it] = allowed[it] + [ExecutionState.SKIPPED]
         }
