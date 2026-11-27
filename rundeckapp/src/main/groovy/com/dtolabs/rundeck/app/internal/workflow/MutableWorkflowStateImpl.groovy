@@ -423,8 +423,63 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         subflow.updateStateForStep(identifier, index + 1, stepStateChange, timestamp);
         if (currentStep.ownerStepState) {
             //also update state for parameterized step owner
-            descendUpdateStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
+            List<String> skipTargets = invocationSkipTargets(currentStep, identifier, index, stepStateChange)
+            if (skipTargets) {
+                //replay the skip into the shared sub workflow only for the nodes this invocation targets
+                skipTargets.each { String node ->
+                    descendUpdateStateForStep(
+                            currentStep.ownerStepState,
+                            identifier,
+                            index,
+                            StateUtils.stepStateChange(StateUtils.stepState(ExecutionState.SKIPPED), node),
+                            timestamp
+                    )
+                }
+            } else {
+                descendUpdateStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
+            }
         }
+    }
+
+    /**
+     * A step skipped inside one parameterized invocation (for example 1@node=a/1) is also replayed into the
+     * shared sub workflow of the parameterized step's owner. When the skipped step is a node step there, the
+     * skip applies only to the invocation's node when the child runs there, or else to the nodes the
+     * invocation's own sub workflow targets, e.g. a job reference run on localhost whose child targets node-0.
+     *
+     * @param invocation the parameterized copy of the step being descended into
+     * @param identifier step identifier of the step being updated
+     * @param index index of the invocation's context entry
+     * @param stepStateChange the state change being replayed
+     * @return the nodes to skip the shared node step on, or empty when the change is replayed unchanged
+     */
+    private static List<String> invocationSkipTargets(
+            MutableWorkflowStepState invocation,
+            StepIdentifier identifier,
+            int index,
+            StepStateChange stepStateChange
+    ) {
+        if (stepStateChange.nodeState ||
+            stepStateChange.stepState.executionState != ExecutionState.SKIPPED ||
+            identifier.context.size() - index != 2 ||
+            !invocation.hasSubWorkflow()) {
+            return []
+        }
+        MutableWorkflowState shared = invocation.ownerStepState.hasSubWorkflow() ?
+                invocation.ownerStepState.mutableSubWorkflowState : null
+        MutableWorkflowStepState sharedChild =
+                (shared instanceof MutableWorkflowStateImpl) ?
+                ((MutableWorkflowStateImpl) shared).mutableStepStates[identifier.context[index + 1].step - 1] : null
+        if (!sharedChild?.nodeStep) {
+            return []
+        }
+        List<String> targets = invocation.mutableSubWorkflowState.nodeSet ?: []
+        String invocationNode = identifier.context[index].params?.get('node')
+        //the child runs on the invocation's own node when that is one of its targets, otherwise on its targets
+        if (invocationNode && (targets.isEmpty() || targets.contains(invocationNode))) {
+            return [invocationNode]
+        }
+        return new ArrayList<String>(targets)
     }
 /**
      * Descend into a sub workflow to update state
@@ -515,6 +570,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                           failed ? ExecutionState.FAILED :
                           skippedAll ? ExecutionState.SKIPPED :
                           ExecutionState.SUCCEEDED
+            if (overall == ExecutionState.SKIPPED && currentStep.hasSubWorkflow()) {
+                //every node skipped the step, so its prebuilt sub workflow steps never run either
+                skipSubWorkflowSteps(currentStep, timestamp)
+            }
             resolveStepCompleted(overall, timestamp, currentStep)
         }
     }
