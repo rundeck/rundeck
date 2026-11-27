@@ -1350,9 +1350,6 @@ const messages = {
   sysConfigMenuHeader: "Syst\u00e8me",
   nodeSteps: "N\u0153ud \u00e9tapes",
   workflowSteps: "\u00c9tapes du flux de traitement",
-  hideIncompleteNodes: "Masquer les n\u0153uds incomplets",
-  hideIncompleteNodesDescription:
-    "Masquer les n\u0153uds dont les seules \u00e9tapes inachev\u00e9es ont \u00e9t\u00e9 ignor\u00e9es par une condition. Ex\u00e9cutions r\u00e9ussies uniquement.",
   "user.list.title": "Utilisateurs",
   "user.list.edit": "modifier",
   Configuration: "Configuration",
