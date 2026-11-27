@@ -393,6 +393,25 @@ class MutableWorkflowStateImplSpec extends Specification {
         sub.stepStates[0].nodeStateMap[target].executionState == ExecutionState.SUCCEEDED
     }
 
+    def "skipping a job reference skips a prebuilt node step child whose node set is empty"() {
+        given: "a prebuilt sub workflow whose node step child has no known targets, e.g. an unresolved node filter"
+        def date = new Date()
+
+        def childStep = new MutableWorkflowStepStateImpl(stepIdentifier(1, 1))
+        childStep.nodeStep = true
+        def sub = new MutableWorkflowStateImpl([], 1, [0: childStep], stepIdentifier(1), 'server')
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub)
+        def wf = new MutableWorkflowStateImpl(['server'], 1, [0: parent], null, 'server')
+
+        when:
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, ['server'])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then: "the child is skipped rather than left running and later aborted"
+        sub.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+    }
+
     def "skipping a step skips nested sub workflows recursively"() {
         given: "step 1 contains a sub workflow whose step 1 itself contains a sub workflow"
         def date = new Date()

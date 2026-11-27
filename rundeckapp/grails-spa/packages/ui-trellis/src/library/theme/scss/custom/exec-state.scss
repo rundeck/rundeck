@@ -55,7 +55,7 @@
   }
 
   &[data-execstate="SKIPPED"] {
-    color: var(--medium-gray);
+    color: var(--font-color);
   }
 
   &[data-execstate="PASS"] {

@@ -211,8 +211,14 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 //the engine skipped this whole node step without running it on any node, so it is
                 //skipped on every node it targets, or only on the invocation's node when scoped to one.
                 //A scoped skip leaves the step state to be resolved from all of its node states.
-                (invocationNode ? [invocationNode] : (currentStep.nodeStepTargets ?: nodeSet))?.each { String targetNode ->
+                List<String> skipNodes = invocationNode ? [invocationNode] : (currentStep.nodeStepTargets ?: nodeSet)
+                skipNodes?.each { String targetNode ->
                     toUpdateComplete << updateNodeStepState(currentStep, targetNode, identifier, stepStateChange)
+                }
+                if (!skipNodes && !invocationNode) {
+                    //no known targets, e.g. a prebuilt job reference whose node filter could not be resolved:
+                    //there is no node to skip it on, so mark the step itself skipped
+                    updateState(identifier, currentStep.mutableStepState, ExecutionState.SKIPPED)
                 }
                 finishNodeStepIfNodesFinished(currentStep, timestamp)
             }
