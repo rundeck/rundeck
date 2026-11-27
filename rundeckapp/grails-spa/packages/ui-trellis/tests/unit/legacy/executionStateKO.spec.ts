@@ -1,0 +1,154 @@
+/**
+ * Tests for the legacy (non-module) Knockout execution state script, executionStateKO.js.
+ *
+ * The script is a Sprockets asset that declares globals, so it is evaluated in the test
+ * environment's global scope after its dependencies. This covers the node summary, node duration
+ * and the "Hide skipped steps" step filter, which mirror StateMapping.groovy on the server.
+ */
+import * as fs from "fs";
+import * as path from "path";
+
+const assets = path.resolve(
+  __dirname,
+  "../../../../../../grails-app/assets/javascripts",
+);
+
+/** Evaluate a legacy script in the global scope. */
+function loadGlobalScript(file: string): void {
+  // eslint-disable-next-line no-eval
+  (0, eval)(fs.readFileSync(path.join(assets, file), "utf8"));
+}
+
+let RDNode: any;
+let ko: any;
+
+beforeAll(() => {
+  (globalThis as any).moment = require("moment");
+  loadGlobalScript("vendor/knockout.min.js");
+  loadGlobalScript("vendor/knockout-mapping.js");
+  loadGlobalScript("executionStateKO.js");
+  RDNode = (globalThis as any).RDNode;
+  ko = (globalThis as any).ko;
+});
+
+/** A flow stand-in with only what RDNode uses. */
+function fakeFlow() {
+  return {
+    pendingStepsForNode: () => 0,
+    pluralize: (n: number, word: string) => (n == 1 ? word : word + "s"),
+    hideSkippedSteps: ko.observable(false),
+  };
+}
+
+function nodeWithSteps(states: string[], flow: any = fakeFlow()) {
+  const node = new RDNode("node1", [], flow);
+  states.forEach((state, i) => {
+    node.steps.push({
+      stepctx: String(i + 1),
+      parameterizedStep: ko.observable(false),
+      executionState: ko.observable(state),
+    });
+  });
+  return node;
+}
+
+function summarizeNode(states: string[]) {
+  const node = nodeWithSteps(states);
+  node.summarize();
+  return { state: node.summaryState(), text: node.summary() };
+}
+
+function stepFixture(opts: any) {
+  return {
+    parameterizedStep: ko.observable(false),
+    executionState: ko.observable(opts.executionState || "SUCCEEDED"),
+    startTime: ko.observable(opts.startTime || null),
+    endTime: ko.observable(opts.endTime || null),
+    updateTime: ko.observable(opts.updateTime || null),
+    duration: ko.observable(opts.duration != null ? opts.duration : -1),
+  };
+}
+
+describe("executionStateKO RDNode.summarize", () => {
+  it("counts skipped steps as complete", () => {
+    const result = summarizeNode(["SUCCEEDED", "SKIPPED", "SUCCEEDED"]);
+    expect(result.state).toBe("SUCCEEDED");
+    expect(result.text).toBe("All Steps OK (1 skipped)");
+  });
+
+  it("treats a node with only skipped steps as complete", () => {
+    const result = summarizeNode(["SKIPPED", "SKIPPED"]);
+    expect(result.state).toBe("SUCCEEDED");
+    expect(result.text).toBe("All Steps skipped");
+  });
+
+  it("keeps never-started steps incomplete", () => {
+    expect(
+      summarizeNode(["SUCCEEDED", "NOT_STARTED", "NOT_STARTED"]).state,
+    ).toBe("PARTIAL_NOT_STARTED");
+  });
+
+  it("does not let a skipped step hide a never-started one", () => {
+    expect(summarizeNode(["SUCCEEDED", "SKIPPED", "NOT_STARTED"]).state).toBe(
+      "PARTIAL_NOT_STARTED",
+    );
+  });
+
+  it("does not count skipped steps as did-not-succeed", () => {
+    expect(summarizeNode(["SUCCEEDED", "SKIPPED", "ABORTED"]).text).toBe(
+      "1 did not succeed",
+    );
+  });
+
+  it("still reports failure when a step failed", () => {
+    expect(summarizeNode(["SUCCEEDED", "SKIPPED", "FAILED"]).state).toBe(
+      "FAILED",
+    );
+  });
+});
+
+describe("executionStateKO RDNode.computeNodeDurationMs", () => {
+  it("clamps wall-clock time to the execution duration", () => {
+    const steps = [
+      stepFixture({
+        startTime: "2014-09-05T21:28:04Z",
+        endTime: "2014-09-05T21:28:05Z",
+        duration: 370,
+      }),
+      stepFixture({
+        startTime: "2014-09-05T21:28:04Z",
+        endTime: "2014-09-05T21:28:05Z",
+        duration: 457,
+      }),
+    ];
+    expect(RDNode.computeNodeDurationMs(-1, steps, 457)).toBe(457);
+  });
+
+  it("ignores skipped steps", () => {
+    const steps = [
+      stepFixture({
+        startTime: "2014-09-05T21:28:04Z",
+        endTime: "2014-09-05T21:28:05Z",
+        duration: 1000,
+      }),
+      stepFixture({
+        executionState: "SKIPPED",
+        startTime: "2014-09-05T21:28:43Z",
+        endTime: "2014-09-05T21:28:43Z",
+      }),
+    ];
+    expect(RDNode.computeNodeDurationMs(-1, steps, -1)).toBe(1000);
+  });
+});
+
+describe("executionStateKO RDNode.visibleSteps", () => {
+  it("hides skipped steps only when the toggle is on", () => {
+    const flow = fakeFlow();
+    const node = nodeWithSteps(["SUCCEEDED", "SKIPPED", "SUCCEEDED"], flow);
+    expect(node.visibleSteps()).toHaveLength(3);
+    flow.hideSkippedSteps(true);
+    expect(node.visibleSteps()).toHaveLength(2);
+    flow.hideSkippedSteps(false);
+    expect(node.visibleSteps()).toHaveLength(3);
+  });
+});
