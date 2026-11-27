@@ -450,10 +450,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 operations.stream().collect(Collectors.toMap(StepOperation::getIdentity, Function.identity()));
         return event -> {
             if (event.getEventType() != WorkflowSystemEventType.WillSkipOperation
-                || !(event.getData() instanceof StateWorkflowSystem.OperationEvent)) {
+                || !(event.getData() instanceof StateWorkflowSystem.OperationEvent<?> operationEvent)) {
                 return;
             }
-            StepOperation op = byIdentity.get(((StateWorkflowSystem.OperationEvent<?>) event.getData()).getIdentity());
+            StepOperation op = byIdentity.get(operationEvent.getIdentity());
             if (null == op) {
                 return;
             }
