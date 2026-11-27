@@ -644,7 +644,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         ExecutionState.values().findAll{it.isCompletedState()}.each{
             allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING, ExecutionState.NOT_STARTED]
         }
-        //a skip can be the first thing reported for a step, before any WAITING state was observed
+        //SKIPPED, like every completed state, is allowed from RUNNING on purpose: updateStateForStep first
+        //touches the step (WAITING -> RUNNING) before applying the reported state, so even a step that was
+        //skipped without ever running is RUNNING when its SKIPPED arrives. Do not narrow this list.
+        //A skip can also be the first thing reported for a step, before any WAITING state was observed.
         allowed[ExecutionState.SKIPPED] = allowed[ExecutionState.SKIPPED] + [null]
         if (errorHandler) {
             allowed[ExecutionState.RUNNING] << ExecutionState.FAILED
