@@ -271,7 +271,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             }
         }
 
-        if (!stepStateChange.nodeState && stepStateChange.stepState.executionState == ExecutionState.SKIPPED) {
+        //a node step with node states already propagated the skip in finishNodeStepIfNodesFinished, so only
+        //propagate here for other steps, otherwise nested job references repeat the work at every level
+        if (!stepStateChange.nodeState && stepStateChange.stepState.executionState == ExecutionState.SKIPPED
+                && !(currentStep.nodeStep && currentStep.nodeStateMap)) {
             skipSubWorkflowSteps(currentStep, timestamp)
         }
     }
