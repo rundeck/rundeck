@@ -345,6 +345,54 @@ class MutableWorkflowStateImplSpec extends Specification {
         sub.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
     }
 
+    def "a workflow step skipped in one parameterized invocation yields to a result from another invocation"() {
+        given: "a job reference run once per node, whose shared sub workflow has one workflow step"
+        def date = new Date()
+        def nodeA = 'a'
+        def nodeB = 'b'
+
+        def childStep = new MutableWorkflowStepStateImpl(stepIdentifier(1, 1))
+        def sub = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: childStep], stepIdentifier(1), nodeA)
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub)
+        parent.nodeStep = true
+        def wf = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: parent], null, nodeA)
+        def childOnA = stepIdentifier([stepContextId(1, false, [node: nodeA]), stepContextId(1, false)])
+        def childOnB = stepIdentifier([stepContextId(1, false, [node: nodeB]), stepContextId(1, false)])
+
+        when: "the step is skipped for node a, then succeeds for node b"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA, nodeB])
+        wf.updateStateForStep(childOnA, 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateStateForStep(childOnB, 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+        wf.updateStateForStep(childOnB, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
+
+        then: "the shared step is not left SKIPPED"
+        sub.stepStates[0].stepState.executionState == ExecutionState.SUCCEEDED
+    }
+
+    def "a node step skipped in one invocation yields to a result from another invocation on the same node"() {
+        given: "two invocations whose child workflow both target node-0"
+        def date = new Date()
+        def target = 'node-0'
+
+        def childStep = new MutableWorkflowStepStateImpl(stepIdentifier(1, 1))
+        childStep.nodeStep = true
+        def sub = new MutableWorkflowStateImpl([target], 1, [0: childStep], stepIdentifier(1), 'a')
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub)
+        parent.nodeStep = true
+        def wf = new MutableWorkflowStateImpl(['a', 'b'], 1, [0: parent], null, 'a')
+        def childOnA = stepIdentifier([stepContextId(1, false, [node: 'a']), stepContextId(1, false)])
+        def childOnB = stepIdentifier([stepContextId(1, false, [node: 'b']), stepContextId(1, false)])
+
+        when: "the child is skipped in invocation a, then runs and succeeds on node-0 in invocation b"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'])
+        wf.updateStateForStep(childOnA, 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateStateForStep(childOnB, 0, stepStateChange(stepState(ExecutionState.RUNNING), target), date)
+        wf.updateStateForStep(childOnB, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), target), date)
+
+        then: "node-0 reports the real result"
+        sub.stepStates[0].nodeStateMap[target].executionState == ExecutionState.SUCCEEDED
+    }
+
     def "skipping a step skips nested sub workflows recursively"() {
         given: "step 1 contains a sub workflow whose step 1 itself contains a sub workflow"
         def date = new Date()

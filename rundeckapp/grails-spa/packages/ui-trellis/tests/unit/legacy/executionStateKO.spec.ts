@@ -26,7 +26,7 @@ let ko: any;
 
 beforeAll(() => {
   (globalThis as any).moment = require("moment");
-  loadGlobalScript("knockout.debug.js");
+  loadGlobalScript("knockout_3_5_1.js");
   loadGlobalScript("knockout-mapping.debug.js");
   loadGlobalScript("executionStateKO.js");
   RDNode = (globalThis as any).RDNode;
