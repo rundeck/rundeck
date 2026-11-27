@@ -197,14 +197,21 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 updateState(identifier,toup, stepStateChange.stepState.executionState)
             }
         } else {
-            toUpdateComplete << currentStep.mutableStepState
+            boolean skipped = stepStateChange.stepState.executionState == ExecutionState.SKIPPED
+            //a skip reported inside one parameterized invocation (one node of a node step job reference) is
+            //replayed into the shared sub workflow, where it must only apply to that invocation's node
+            String invocationNode = skipped ? parameterizedInvocationNode(identifier, index) : null
+            if (!invocationNode) {
+                toUpdateComplete << currentStep.mutableStepState
+            }
             if (nodeSet && (null == currentStep.nodeStepTargets || currentStep.nodeStepTargets.size() < 1)) {
                 currentStep.setNodeStepTargets(nodeSet)
             }
-            if (stepStateChange.stepState.executionState == ExecutionState.SKIPPED) {
+            if (skipped) {
                 //the engine skipped this whole node step without running it on any node, so it is
-                //skipped on every node it targets
-                (currentStep.nodeStepTargets ?: nodeSet)?.each { String targetNode ->
+                //skipped on every node it targets, or only on the invocation's node when scoped to one.
+                //A scoped skip leaves the step state to be resolved from all of its node states.
+                (invocationNode ? [invocationNode] : (currentStep.nodeStepTargets ?: nodeSet))?.each { String targetNode ->
                     toUpdateComplete << updateNodeStepState(currentStep, targetNode, identifier, stepStateChange)
                 }
                 finishNodeStepIfNodesFinished(currentStep, timestamp)
@@ -261,6 +268,24 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         if (!stepStateChange.nodeState && stepStateChange.stepState.executionState == ExecutionState.SKIPPED) {
             skipSubWorkflowSteps(currentStep, timestamp)
         }
+    }
+
+    /**
+     * Find the node of the parameterized invocation, if any, that an update identified by the context
+     * entries above the given index belongs to, e.g. "node a" for step context [1@node=a, 1].
+     *
+     * @param identifier step identifier
+     * @param index index of the context entry being updated in the current workflow
+     * @return the node name of the enclosing parameterized invocation, or null when there is none
+     */
+    private static String parameterizedInvocationNode(StepIdentifier identifier, int index) {
+        for (int i = index - 1; i >= 0; i--) {
+            String node = identifier.context[i].params?.get('node')
+            if (node) {
+                return node
+            }
+        }
+        return null
     }
 
     /**

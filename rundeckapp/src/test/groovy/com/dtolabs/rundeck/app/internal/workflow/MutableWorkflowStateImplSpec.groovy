@@ -270,6 +270,35 @@ class MutableWorkflowStateImplSpec extends Specification {
         sub.endTime != null
     }
 
+    def "a skip in one parameterized invocation does not skip the shared node step on other nodes"() {
+        given: "a node step job reference run once per node, whose shared sub workflow has one node step"
+        def date = new Date()
+        def nodeA = 'a'
+        def nodeB = 'b'
+
+        def childStep = new MutableWorkflowStepStateImpl(stepIdentifier(1, 1))
+        childStep.nodeStep = true
+        def sub = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: childStep], stepIdentifier(1), nodeA)
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub)
+        parent.nodeStep = true
+        def wf = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: parent], null, nodeA)
+
+        //child step 1 inside the invocation for node a, and inside the invocation for node b
+        def childOnA = stepIdentifier([stepContextId(1, false, [node: nodeA]), stepContextId(1, false)])
+        def childOnB = stepIdentifier([stepContextId(1, false, [node: nodeB]), stepContextId(1, false)])
+
+        when: "the child is skipped for node a, then runs and succeeds for node b"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA, nodeB])
+        wf.updateStateForStep(childOnA, 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateStateForStep(childOnB, 0, stepStateChange(stepState(ExecutionState.RUNNING), nodeB), date)
+        wf.updateStateForStep(childOnB, 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), nodeB), date)
+
+        then: "the shared step is skipped only for node a, and succeeded for node b"
+        sub.stepStates[0].nodeStateMap[nodeA].executionState == ExecutionState.SKIPPED
+        sub.stepStates[0].nodeStateMap[nodeB].executionState == ExecutionState.SUCCEEDED
+        sub.stepStates[0].stepState.executionState == ExecutionState.SUCCEEDED
+    }
+
     def "skipping a step skips nested sub workflows recursively"() {
         given: "step 1 contains a sub workflow whose step 1 itself contains a sub workflow"
         def date = new Date()
