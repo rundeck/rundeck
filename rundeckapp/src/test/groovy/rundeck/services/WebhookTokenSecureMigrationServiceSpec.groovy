@@ -41,6 +41,9 @@ class WebhookTokenSecureMigrationServiceSpec extends Specification
 
         when:
         service.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
 
         then:
         AuthToken.findByUuid('uuid-legacy-clear-1').with {
@@ -72,10 +75,16 @@ class WebhookTokenSecureMigrationServiceSpec extends Specification
 
         when:
         service.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
         AuthToken afterFirstRun = AuthToken.findByUuid('uuid-legacy-clear-1')
         String tokenAfterFirstRun = afterFirstRun.token
         AuthTokenMode modeAfterFirstRun = afterFirstRun.tokenMode
         service.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
         AuthToken afterSecondRun = AuthToken.findByUuid('uuid-legacy-clear-1')
 
         then:
@@ -97,6 +106,9 @@ class WebhookTokenSecureMigrationServiceSpec extends Specification
 
         when:
         service.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
         AuthToken row = AuthToken.findByUuid('uuid-legacy-clear-1')
 
         then:
@@ -117,6 +129,9 @@ class WebhookTokenSecureMigrationServiceSpec extends Specification
 
         when:
         service.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
         AuthToken row = AuthToken.findByUuid('uuid-legacy-clear-1')
 
         then:
@@ -137,6 +152,9 @@ class WebhookTokenSecureMigrationServiceSpec extends Specification
 
         when:
         service.migrateWebhookTokensToSecured()
+        // the migration commits in a transaction of its own; this session still holds the rows
+        // it read before that write, so clear it or the reads below see the pre-migration state
+        AuthToken.withSession { it.clear() }
         AuthToken row = AuthToken.findByUuid('uuid-legacy-clear-1')
 
         then:

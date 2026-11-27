@@ -23,7 +23,7 @@ ARG TARGETARCH
 # installs pinned Azul Zulu 17.70.201 (OpenJDK 17.0.21.1) instead of Ubuntu's
 # OpenJDK 17.0.21.0.3, which is affected by CVE-2026-114938. Zulu 17.0.21.1
 # also ships IANA tzdata 2026e, so the Canadian zone overlay is no longer built.
-# Any other value is an Ubuntu apt package name (the JDK 25 CI image).
+# Any other value is an Ubuntu apt package name (the JDK 21 CI image).
 ARG JRE_VERSION=openjdk-17-jre-headless
 
 ENV DEBIAN_FRONTEND=noninteractive

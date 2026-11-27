@@ -756,10 +756,15 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
         def emock = new Expando()
         emock.executeCalled=false
-        emock.execute={Closure cls->
+        // R9 changed the production call from executorService.execute(saveTask) -- a Closure --
+        // to execute(new Runnable(){...}), because in Groovy 5 a Closure already implements
+        // Runnable and `as Runnable` was a no-op that picked the wrong overload. A Closure-typed
+        // parameter here no longer matches the argument. Left untyped so it accepts either, and
+        // dispatched via run() which both a Runnable and a Closure respond to.
+        emock.execute={ task ->
             emock.executeCalled=true
-            assertNotNull(cls)
-            cls.call()
+            assertNotNull(task)
+            task.run()
         }
         service.frameworkService = fmock
         service.pluginService = pmock

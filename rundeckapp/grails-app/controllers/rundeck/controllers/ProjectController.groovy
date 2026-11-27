@@ -78,9 +78,80 @@ import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartFile
 
 @Controller
 class ProjectController extends ControllerBase{
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * params first: on Grails 8 the request a controller holds is Spring Security's wrapper and
+     * DispatcherServlet adds the multipart request around it afterwards, so an instanceof check on
+     * the request is false for a real upload. The request is still consulted as a fallback, because
+     * controller unit tests drive a mock request that genuinely is one and does not fill params.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ? ((MultipartHttpServletRequest) request).getFile(name) : null
+    }
+
+    /**
+     * Whether this request is a file upload at all, regardless of which parts it carries.
+     *
+     * Separates "multipart, but the expected part is absent" -- which callers report as a missing
+     * upload -- from "not an upload at all", which falls through to the form-encoded handling. The
+     * instanceof that used to draw that line is always false on Grails 8, so the content type draws
+     * it instead.
+     *
+     * The mock request in a controller unit test is always a MultipartHttpServletRequest and sets
+     * no content type, so a bare instanceof would report every simulated form post as an upload;
+     * it only counts when a part was actually added.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    /**
+     * Fills in command object properties that come from a URL mapping variable rather than the query
+     * string, and re-validates.
+     *
+     * On Grails 8 a command object is bound from the request. When the binder cannot reach the
+     * GrailsWebRequest it falls back to the servlet parameter map, which carries only the query
+     * string -- URL mapping variables such as `project` are simply absent, so the property binds as
+     * null and the object fails its `nullable: false` constraint before the action does any work.
+     * The caller sees `"project" parameter is required` for a request whose path clearly names one.
+     *
+     * Measured on a live instance, same endpoint, same content type, same wrapper chain:
+     *
+     *   failing: source(request) keys = [jobUuidOption]
+     *   working: source(request) keys = [jobUuidOption, controller, project, action, api_version]
+     *   both:    source(params)  keys = [project, action, jobUuidOption, controller, api_version]
+     *
+     * `params` is right either way, which is what this reads from. Type-checked before assignment:
+     * a params value coerced into a String unchecked is its own class of bug -- see
+     * .claude/rules/grails-multipart.md.
+     */
+    private void bindProjectFromParams(ProjectArchiveParams archiveParams) {
+        if (archiveParams == null || archiveParams.project) {
+            return
+        }
+        if (params.project instanceof String) {
+            archiveParams.project = (String) params.project
+            archiveParams.clearErrors()
+            archiveParams.validate()
+        }
+    }
+
+    private boolean isMultipartRequest() {
+        if (request.contentType?.toLowerCase()?.startsWith('multipart/')) {
+            return true
+        }
+        request instanceof MultipartHttpServletRequest &&
+                ((MultipartHttpServletRequest) request).fileNames.hasNext()
+    }
+
     FrameworkService frameworkService
     ProjectService projectService
     PluginService pluginService
@@ -431,8 +502,8 @@ class ProjectController extends ControllerBase{
             def project1 = frameworkService.getFrameworkProject(project)
 
             //uploaded file
-            if (request instanceof MultipartHttpServletRequest) {
-                def file = request.getFile("zipFile")
+            if (isMultipartRequest()) {
+                MultipartFile file = uploadedFile('zipFile')
                 if (!file || file.empty) {
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
@@ -2587,10 +2658,10 @@ key2=value'''
                     break
                 }
             case 'json':
-                render(contentType: 'application/json') {
-                    key key_
-                    value value_
-                }
+                // Converter form, not render(contentType:..){closure}: the closure form commits no
+                // response on Grails 8, so the dispatcher falls through to view resolution and
+                // answers 500 "Could not resolve view with name '<action>'".
+                render([key: key_, value: value_] as JSON)
                 break
         }
     }
@@ -2831,10 +2902,10 @@ Authorization required: `configure` access for `project` resource type or `admin
                     break
                 }
             case 'json':
-                render(contentType: 'application/json') {
-                    key key_
-                    value value_
-                }
+                // Converter form, not render(contentType:..){closure}: the closure form commits no
+                // response on Grails 8, so the dispatcher falls through to view resolution and
+                // answers 500 "Could not resolve view with name '<action>'".
+                render([key: key_, value: value_] as JSON)
                 break
         }
     }
@@ -2964,6 +3035,7 @@ Requires `export` authorization for the project resource.""",
         if(!apiService.requireApi(request,response)){
             return
         }
+        bindProjectFromParams(archiveParams)
         def project = authorizingProject.resource
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
         if (archiveParams.hasErrors()) {
@@ -3686,6 +3758,7 @@ Note: `other_errors` included since API v35""",
         if(!apiService.requireApi(request,response)){
             return
         }
+        bindProjectFromParams(archiveParams)
         def project = authorizingProject.resource
         if(!apiService.requireRequestFormat(request,response,['application/zip'])){
             return
@@ -3846,31 +3919,33 @@ Note: `other_errors` included since API v35""",
                     break;
                 }
             case 'json':
-                render(contentType: 'application/json'){
-                    import_status result.success ? 'successful' : 'failed'
-                    successful result.success
-
-                    if (!result.success) {
-                        //list errors
-                        errors result.joberrors
-                    }
-
-                    if(result.execerrors){
-                        execution_errors result.execerrors
-                    }
-
-                    if(result.aclerrors){
-                        acl_errors result.aclerrors
-                    }
-                    if(result.scmerrors){
-                        scm_errors result.scmerrors
-                    }
-                    if (request.api_version > ApiVersions.V34) {
-                        if (result.importerErrors) {
-                            other_errors result.importerErrors
-                        }
-                    }
+                // The closure form of render(contentType:'application/json'){..} leaves this
+                // action with no committed response on Grails 8: the dispatcher then falls through
+                // to view resolution and answers 500 "Could not resolve view with name
+                // 'apiProjectImport'" on an import that had already completed successfully.
+                // apiProjectConfigKeyGet/Put in this file hit the same failure and were
+                // converted the same way.
+                Map importResult = [
+                        import_status: result.success ? 'successful' : 'failed',
+                        successful   : result.success
+                ]
+                if (!result.success) {
+                    //list errors
+                    importResult.errors = result.joberrors
                 }
+                if (result.execerrors) {
+                    importResult.execution_errors = result.execerrors
+                }
+                if (result.aclerrors) {
+                    importResult.acl_errors = result.aclerrors
+                }
+                if (result.scmerrors) {
+                    importResult.scm_errors = result.scmerrors
+                }
+                if (request.api_version > ApiVersions.V34 && result.importerErrors) {
+                    importResult.other_errors = result.importerErrors
+                }
+                render(importResult as JSON)
                 break;
         }
     }

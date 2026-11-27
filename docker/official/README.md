@@ -129,8 +129,8 @@ if running behind a TLS terminating proxy.
 
 ### `RUNDECK_GRAILS_UPLOAD_MAXSIZE`
 
-Controls both the `maxFileSize` and `maxRequest` for the grails controller config and `maxsize`
-for the Rundeck fileUploadService tempfile config.
+Controls both the `maxFileSize` and `maxRequestSize` of Spring Boot's multipart config and
+`maxsize` for the Rundeck fileUploadService tempfile config.
 
 The internal default is approximately `25Mib` or `26214400`.
 

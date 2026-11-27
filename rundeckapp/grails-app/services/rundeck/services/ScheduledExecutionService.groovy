@@ -126,6 +126,8 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
@@ -895,11 +897,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.info("Unscheduled job: ${se.id}")
         }
 
-        def results = Execution.isScheduledAdHoc()
-        if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
-        }
-        results.list().each { Execution e ->
+        // Restrictions go in the list{} closure, not chained .where{}: on a DetachedCriteria
+        // already returned by isScheduledAdHoc(), a further .where{} is silently discarded and
+        // the query degrades to `where status=?`, reading every cluster member's executions.
+        Execution.isScheduledAdHoc().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+        }.each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
             def identity = getJobIdent(se, e)
             quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
@@ -921,13 +924,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.info("Unscheduled job: ${se.id}")
         }
 
-        def results = Execution.isScheduledAdHoc()
-        if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
-        }
-        results = results.withProject(project)
-
-        results.list().each { Execution e ->
+        Execution.isScheduledAdHoc().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+            eq 'project', project
+        }.each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
             def identity = getJobIdent(se, e)
             quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
@@ -968,9 +968,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     def rescheduleJobsAsync(String serverUUID=null) {
-        executorService.execute{
-            rescheduleJobs(serverUUID)
-        }
+        // NB: the argument must be a real Runnable, not a Closure. groovy.lang.Closure already
+        // implements Runnable, so `{...} as Runnable` returns the Closure unchanged; the executor
+        // wrapper dispatches inPersistence() on the *runtime* type and would pick its Closure
+        // overload, which returns a Callable that ThreadPoolExecutor.execute() cannot accept.
+        // The work stays in a Closure so it keeps this service as its owner/delegate (an anonymous
+        // Runnable body would re-resolve unqualified calls against itself and hit methodMissing).
+        Closure task = { rescheduleJobs(serverUUID) }
+        executorService.execute(new Runnable() {
+            @Override
+            void run() { task.call() }
+        })
     }
 
     /**
@@ -999,14 +1007,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         // Reschedule any executions which were scheduled ad hoc
-        def results = Execution.isScheduledAdHoc()
-        if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+        def executionList = Execution.isScheduledAdHoc().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+            if (project) { eq 'project', project }
         }
-        if(project) {
-            results = results.withProject(project)
-        }
-        def executionList = results.list()
 
         def adhocRescheduleResult = rescheduleOnetimeExecutions(executionList)
 
@@ -1233,10 +1237,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
         // Reschedule any executions which were scheduled ad hoc
-        def executionList = Execution.isScheduledAdHoc()
-                .withScheduledExecution(se)
-                .withServerNodeUUID(targetServerUUID)
-                .list()
+        def executionList = Execution.isScheduledAdHoc().list {
+            eq 'scheduledExecution', se
+            eq 'serverNodeUUID', targetServerUUID
+        }
 
         rescheduleOnetimeExecutions(executionList)
     }
@@ -2304,14 +2308,37 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    /**
+     * Publishes the events once the caller's transaction commits. The subscribers run on another
+     * thread in their own transaction, so publishing earlier lets them read before the jobs exist.
+     */
+    @Transactional(propagation = Propagation.SUPPORTS)
     def void issueJobChangeEvents(Collection<JobChangeEvent> events) {
-        notify('multiJobChanged',new ArrayList(events))
+        def copy = new ArrayList(events)
+        afterCommit { notify('multiJobChanged', copy) }
     }
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+
+    @Transactional(propagation = Propagation.SUPPORTS)
     def void issueJobChangeEvent(JobChangeEvent event) {
         if (event) {
-            notify('jobChanged', event)
+            afterCommit { notify('jobChanged', event) }
+        }
+    }
+
+    /**
+     * Runs the action after the current transaction commits, or right away when there is none.
+     */
+    static void afterCommit(Closure action) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                void afterCommit() {
+                    action.call()
+                }
+            })
+        } else {
+            action.call()
         }
     }
 
@@ -4405,11 +4432,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
     /**
-     * Load options values from remote URL
+     * Load options values from remote URL.
+     *
+     * Runs without a transaction: the remote fetch can wait for minutes across retries, and a
+     * transaction, even a suspended one, keeps its database connection for that whole time.
+     *
      * @param scheduledExecution
      * @param mapConfig
      * @return option remote
      */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
@@ -4604,14 +4636,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     validationerrors << "Item: ${i} has no 'value' entry".toString()
                 }
                 normalized << withTextNameAndValue(item)
-            } else if (entry instanceof String || entry instanceof Number || entry instanceof Boolean) {
-                String text = entry.toString()
+            } else if (isScalarOptionValue(entry)) {
+                // String.valueOf(Object), not entry.toString(): under @CompileStatic, Groovy 5 narrows
+                // entry after an instanceof chain joined by || to the last type tested (Boolean) and
+                // casts to it, so a String entry failed with a ClassCastException.
+                String text = String.valueOf(entry)
                 normalized << [name: text, value: text]
             } else {
                 validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}".toString()
             }
         }
         return normalized
+    }
+
+    /**
+     * Whether a remote option list entry is a scalar (String, Number or Boolean) that becomes
+     * a [name: s, value: s] entry. Kept as a separate check so the caller's {@code entry} is not
+     * flow-typed by the instanceof chain.
+     * @param entry the remote option list entry
+     * @return true for a String, Number or Boolean entry
+     */
+    @CompileStatic
+    private static boolean isScalarOptionValue(Object entry) {
+        return entry instanceof String || entry instanceof Number || entry instanceof Boolean
     }
 
     /**

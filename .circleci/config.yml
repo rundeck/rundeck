@@ -72,10 +72,14 @@ slack-fail-post-step: &slack-fail-post-step
 
 executors:
 
-  # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
+  # Main docker executor (cimg/openjdk:21.0 includes Eclipse Temurin JDK 21).
+  # Grails 8 / Gradle 9 require at least a JDK 21 build JVM: the grails-gradle-plugin
+  # variant metadata declares `org.gradle.jvm.version = 21`, so resolving the
+  # buildscript classpath on a Java 17 JVM fails outright. The build compiles on 21
+  # and emits Java 21 bytecode -- see rundeck/gradle/java-version.gradle.
   docker-builder:
     docker:
-      - image: cimg/openjdk:17.0.21@sha256:5e03ff3d2e6f863cdb37c51b4fa8a34e2519392d914ccd324b1d5efb23970420
+      - image: cimg/openjdk:21.0.13@sha256:7dd5c936187f453507c36eba27daa0e78da5dbd8e9301d4b4da731ddf32ea235
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -211,18 +215,18 @@ commands:
 
   # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
-    description: Ensure JDK 17 is available
+    description: Ensure the JDK 21 build JVM is available
     steps:
       - run-build-step:
           step-name: Install Java JDK
-          command: dependencies_install_zulu17jdk
+          command: dependencies_install_zulu21jdk
 
-  install-java-jdk-25:
-    description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
+  install-java-jdk-21:
+    description: Install JDK 21 for host-side tests (BASH_ENV JAVA_HOME)
     steps:
       - run-build-step:
-          step-name: Install Java JDK 25
-          command: dependencies_install_zulu25jdk
+          step-name: Install Java JDK 21
+          command: dependencies_install_zulu21jdk
 
   ## Dependency groups
 
@@ -258,10 +262,10 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
-  install-testdeck-dependencies-jdk25:
-    description: JDK 25 on host + TestDeck extras (orchestration only; app still in Docker)
+  install-testdeck-dependencies-jdk21:
+    description: JDK 21 on host + TestDeck extras (orchestration only; app still in Docker)
     steps:
-      - install-java-jdk-25
+      - install-java-jdk-21
       - run-build-step:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
@@ -293,9 +297,9 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-17-jre-headless"
-      jre25Publish:
-        description: Also build and push a Docker image with JRE 25
+        default: "openjdk-21-jre-headless"
+      jre21Publish:
+        description: Also build and push a Docker image with JRE 21
         type: boolean
         default: false
       testImages:
@@ -319,13 +323,13 @@ jobs:
             rundeck_docker_build << parameters.jreVersion >>
             rundeck_docker_push << parameters.jreVersion >>
       - when:
-          condition: << parameters.jre25Publish >>
+          condition: << parameters.jre21Publish >>
           steps:
             - run-build-step:
-                step-name: Build And Push Docker Images (JRE 25)
+                step-name: Build And Push Docker Images (JRE 21)
                 command: |
-                  rundeck_docker_build openjdk-25-jre-headless
-                  rundeck_docker_push openjdk-25-jre-headless
+                  rundeck_docker_build openjdk-21-jre-headless
+                  rundeck_docker_push openjdk-21-jre-headless
       # Test images (rdtest, rundeckansible, functional-test oss) are built once per pipeline here
       # and pulled by the test jobs instead of running apt on every job. Skipped in the tag-only
       # release build, which has no downstream test jobs.
@@ -336,11 +340,11 @@ jobs:
                 step-name: Build And Push Test Images
                 command: rundeck_test_images_build_push << parameters.jreVersion >>
             - when:
-                condition: << parameters.jre25Publish >>
+                condition: << parameters.jre21Publish >>
                 steps:
                   - run-build-step:
-                      step-name: Build And Push Test Images (JRE 25)
-                      command: rundeck_test_images_build_push openjdk-25-jre-headless
+                      step-name: Build And Push Test Images (JRE 21)
+                      command: rundeck_test_images_build_push openjdk-21-jre-headless
       - run-build-step:
           step-name: Test CI Scripts
           command: bash scripts/circleci/test/apt-get-retry-test.sh
@@ -524,8 +528,8 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        # Grails 7: Java 17 required
-        default: "openjdk-17-jre-headless"
+        # Java 21 runtime, matching the Java 21 bytecode the build emits.
+        default: "openjdk-21-jre-headless"
     steps:
       - setup_docker
       - checkout
@@ -641,7 +645,7 @@ jobs:
       host_jdk_for_tests:
         description: JDK on the CI host (Docker image still uses JRE from build job)
         type: enum
-        enum: ["17", "25"]
+        enum: ["17", "21"]
         default: "17"
       pull_ansible_image:
         description: Also pull the rundeckansible test image (only the ansible tests use it)
@@ -652,9 +656,9 @@ jobs:
       - checkout
       - when:
           condition:
-            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+            equal: [ "21", << parameters.host_jdk_for_tests >> ]
           steps:
-            - install-testdeck-dependencies-jdk25
+            - install-testdeck-dependencies-jdk21
       - when:
           condition:
             equal: [ "17", << parameters.host_jdk_for_tests >> ]
@@ -695,7 +699,7 @@ jobs:
       host_jdk_for_tests:
         description: JDK version for selecting the Docker test image
         type: enum
-        enum: [ "17", "25" ]
+        enum: [ "17", "21" ]
         default: "17"
     steps:
       - checkout
@@ -738,7 +742,7 @@ jobs:
       host_jdk_for_tests:
         description: JDK for Gradle on the CI host (test image JRE comes from build job)
         type: enum
-        enum: [ "17", "25" ]
+        enum: [ "17", "21" ]
         default: "17"
     steps:
       - checkout
@@ -839,7 +843,7 @@ require-selenium: &require-selenium
 
 require-build-jre-17: &require-build-jre-17
   requires:
-    - Build with Docker image using JRE 17
+    - Build with Docker image using JRE 21
 
 filters:
   all: &filter-default
@@ -1061,7 +1065,7 @@ workflows:
           <<: *require-selenium
           <<: *slack-defaults
 
-  # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
+  # Build Rundeck Docker images with JRE 21; downstream tests run on JDK 21.
   build_and_test_with_jre_17:
     when:
       and:
@@ -1069,104 +1073,103 @@ workflows:
         - equal: [ main, << pipeline.git.branch >> ]
     jobs:
       - build-rundeck:
-          name: Build with Docker image using JRE 17
-          jreVersion: "openjdk-17-jre-headless"
-          jre25Publish: true
+          name: Build with Docker image using JRE 21
+          jreVersion: "openjdk-21-jre-headless"
       - test-docker:
-          name: T Integration SSL (host JDK 25, image JRE 17)
+          name: T Integration SSL (host JDK 21, image JRE 21)
           command: bash test/run-docker-ssl-tests.sh
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration Ansible (host JDK 25, image JRE 17)
+          name: T Integration Ansible (host JDK 21, image JRE 21)
           command: bash test/run-docker-ansible-tests.sh
           pull_ansible_image: true
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP (host JDK 25, image JRE 17)
+          name: T Integration LDAP (host JDK 21, image JRE 21)
           command: bash test/run-docker-ldap-tests.sh
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP Bind (host JDK 25, image JRE 17)
+          name: T Integration LDAP Bind (host JDK 21, image JRE 21)
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration PAM (host JDK 25, image JRE 17)
+          name: T Integration PAM (host JDK 21, image JRE 21)
           command: bash test/run-docker-pam-tests.sh
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
-          name: T Selenium - Auth & Login (host JDK 25)
+          name: T Selenium - Auth & Login (host JDK 21)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Context Path  (host JDK 25)
+          name: T Selenium - Context Path  (host JDK 21)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           parallelism: 1
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/contextPath/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Projects (host JDK 25)
+          name: T Selenium - Projects (host JDK 21)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Jobs Core (host JDK 25)
+          name: T Selenium - Jobs Core (host JDK 21)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec,ScheduledJobExecutionAclWarningSpec,NextUiParamSpec}.groovy"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Jobs Advanced (host JDK 25)
+          name: T Selenium - Jobs Advanced (host JDK 21)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Execution & Other (host JDK 25)
+          name: T Selenium - Execution & Other (host JDK 21)
           gradle-task: seleniumCoreTest
           resource_class: large.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Functional API (host JDK 25)
+          name: T Functional API (host JDK 21)
           gradle-task: apiTest
           resource_class: large.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Functional Plugin Blocklist (host JDK 25)
+          name: T Functional Plugin Blocklist (host JDK 21)
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Feature NodeExecutorSecureInput (host JDK 25)
+          name: T Feature NodeExecutorSecureInput (host JDK 21)
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium Alpha UI (host JDK 25)
+          name: T Selenium Alpha UI (host JDK 21)
           gradle-task: alphaUiSeleniumCoreTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
-          host_jdk_for_tests: "25"
+          host_jdk_for_tests: "21"
           <<: *require-build-jre-17
 
 functions:

@@ -415,3 +415,38 @@ hibernate:
     allow_update_outside_transaction: true
     physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+
+---
+# Connection-pool settings for the production environment. These lived in application.groovy as
+# `environments.production.dataSource.properties { ... }`, which Groovy 5 can no longer parse:
+# ConfigSlurper assigns each block as a key on a ConfigObject, and `properties` is a read-only bean
+# property on that Map subclass, so the assignment throws ReadOnlyPropertyException and the
+# application cannot start in the production environment at all. YAML is not parsed by ConfigSlurper,
+# so the same key is fine here. Values are unchanged.
+environments:
+    production:
+        dataSource:
+            properties:
+                # The names below use Tomcat JDBC pool naming and are silently ignored by HikariCP
+                # (the default pool). Kept as-is rather than dropped, so the move carries no
+                # behaviour change of its own.
+                jmxEnabled: true
+                initialSize: 5
+                maxActive: 50
+                minIdle: 5
+                maxIdle: 25
+                maxWait: 10000
+                maxAge: 600000
+                timeBetweenEvictionRunsMillis: 5000
+                minEvictableIdleTimeMillis: 60000
+                validationInterval: 15000
+                testOnBorrow: true
+                testWhileIdle: true
+                testOnReturn: false
+                jdbcInterceptors: "ConnectionState"
+                # java.sql.Connection.TRANSACTION_READ_COMMITTED; also a Tomcat-pool name, so inert.
+                defaultTransactionIsolation: 2
+                # HikariCP's own property name, so this one takes effect. READ_COMMITTED reduces
+                # gap/next-key locking on MySQL/InnoDB, reducing deadlocks on unique-index INSERTs.
+                # No-op on PostgreSQL/Oracle (already their default).
+                transactionIsolation: "TRANSACTION_READ_COMMITTED"

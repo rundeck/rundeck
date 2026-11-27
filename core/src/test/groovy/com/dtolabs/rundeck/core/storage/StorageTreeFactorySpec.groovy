@@ -178,4 +178,40 @@ class StorageTreeFactorySpec extends Specification {
         result == [2, 4]
     }
 
+
+    def "a root provider at index 1 replaces the base storage"() {
+        given: "RBA's license storage config: one db provider mounted at /"
+        def baseStoragePlugin = Mock(StoragePlugin)
+        def providerStoragePlugin = Mock(StoragePlugin)
+
+        and: "the registry hands out the base plugin first, then the provider plugin"
+        def registry = Stub(PluginRegistry) {
+            retainConfigurePluginByName(_, _, _, _) >>> [
+                new ConfiguredPlugin<>(baseStoragePlugin, [:]),
+                new ConfiguredPlugin<>(providerStoragePlugin, [:]),
+            ]
+        }
+
+        def factory = new StorageTreeFactory()
+        factory.with {
+            frameworkPropertyLookup = Mock(IPropertyLookup)
+            pluginRegistry = registry
+            storagePluginProviderService = Mock(PluggableProviderService)
+            storageConverterPluginProviderService = Mock(PluggableProviderService)
+            configuration = ['provider.1.type': 'db', 'provider.1.path': '/']
+            storageConfigPrefix = 'provider'
+            converterConfigPrefix = 'converter'
+            baseStorageType = 'db'
+            baseStorageConfig = [namespace: 'license']
+            loggerName = 'org.rundeckpro.license.storage.events'
+        }
+
+        when:
+        def tree = factory.createTree()
+        tree.hasResource('rundeckpro-license.key')
+
+        then: "the read goes to the provider, not to the namespaced base"
+        1 * providerStoragePlugin.hasResource(_)
+        0 * baseStoragePlugin.hasResource(_)
+    }
 }

@@ -23,7 +23,14 @@ class WaitUtilsSpec extends Specification {
         then:
         def e = thrown(ResourceAcceptanceTimeoutException)
         e.message == "Timeout reached (500ms) waiting for value: 0 to reach the desired state"
-        closure_loop_counter == 5
+        // The attempt count is wall-clock driven, so it is a range and not a number. Reaching five
+        // needs four sleeps (4 x 110ms = 440ms) to finish with the clock still under 500ms: 60ms of
+        // slack spread over four sleeps, 15ms each. Thread.sleep overshoots by a few ms on an idle
+        // machine and by far more on a loaded CI container, which is where this asserted 5 and got
+        // 4. What waitFor actually promises is that it retries, and that it stops once the budget
+        // is spent -- five is the ceiling that proves the second part, not a guarantee.
+        closure_loop_counter >= 2
+        closure_loop_counter <= 5
     }
 
     def testWaitForWithZeroTimeout() {
