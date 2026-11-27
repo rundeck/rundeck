@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import grails.async.Promises
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
@@ -5684,11 +5685,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 workflowData(scheduledExecution.getWorkflowData())
             }
             contextBuilder.authContext(authContext)
-            notificationService.triggerJobNotification(
-                    "failure", scheduledExecution,
-                    [execution: missed,
-                     context  : contextBuilder.build()]
-            )
+            Map content = [execution: missed, context: contextBuilder.build()]
+            String jobUuid = scheduledExecution.uuid
+            // The misfire checker runs this inside one transaction for every misfired trigger, and the
+            // send can wait on SMTP and HTTP with retries. Deliver once that transaction has committed,
+            // so the missed execution is visible to the notification, and on another thread, so no
+            // database connection is held while it waits.
+            ScheduledExecutionService.afterCommit {
+                Promises.task {
+                    notificationService.asyncTriggerJobNotification('failure', jobUuid, content)
+                }
+            }
         }
     }
 

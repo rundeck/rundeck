@@ -4432,11 +4432,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
     /**
-     * Load options values from remote URL
+     * Load options values from remote URL.
+     *
+     * Runs without a transaction: the remote fetch can wait for minutes across retries, and a
+     * transaction, even a suspended one, keeps its database connection for that whole time.
+     *
      * @param scheduledExecution
      * @param mapConfig
      * @return option remote
      */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }

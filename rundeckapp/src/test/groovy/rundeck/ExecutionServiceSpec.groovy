@@ -1,5 +1,7 @@
 package rundeck
 
+import org.grails.async.factory.SynchronousPromiseFactory
+import grails.async.Promises
 import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
@@ -7063,13 +7065,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         job.save()
         service.notificationService = Mock(NotificationService)
+        def previousFactory = Promises.promiseFactory
+        Promises.promiseFactory = new SynchronousPromiseFactory()
         when:
         service.createMissedExecution(job,"201365e7-2222-433d-a4d9-0d7712df0f84",scheduledTime)
         Execution execution = Execution.findByScheduledExecution(job)
         ExecReport execReport = ExecReport.findByJobUuid(job.uuid.toString())
 
         then:
-        triggerNotificationCalled * service.notificationService.triggerJobNotification(_,_,_)
+        0 * service.notificationService.triggerJobNotification(_,_,_)
+        triggerNotificationCalled * service.notificationService.asyncTriggerJobNotification('failure', job.uuid, { it.execution != null })
         execution.project == project
         execution.user == job.user
         execution.userRoleList == job.userRoleList
@@ -7077,6 +7082,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted > execution.dateStarted
         execution.executionState == "missed"
         execReport.status == "missed"
+
+        cleanup:
+        Promises.promiseFactory = previousFactory
 
         where:
         triggerNotificationCalled | notification
