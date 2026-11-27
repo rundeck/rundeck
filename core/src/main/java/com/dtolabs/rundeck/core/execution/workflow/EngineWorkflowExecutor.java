@@ -42,7 +42,9 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 /**
@@ -444,8 +446,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final WorkflowExecutionListener wlistener
     )
     {
-        final Map<String, StepOperation> byIdentity = new HashMap<>();
-        operations.forEach(op -> byIdentity.put(op.getIdentity(), op));
+        final Map<String, StepOperation> byIdentity =
+                operations.stream().collect(Collectors.toMap(StepOperation::getIdentity, Function.identity()));
         return event -> {
             if (event.getEventType() != WorkflowSystemEventType.WillSkipOperation
                 || !(event.getData() instanceof StateWorkflowSystem.OperationEvent)) {
