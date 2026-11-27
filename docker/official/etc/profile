@@ -1,8 +1,10 @@
 RDECK_BASE=/home/rundeck
 export RDECK_BASE
 
-# Grails 7: Java 17 required
-JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# Grails 7: Java 17 required.
+# Zulu's home differs by architecture (zulu17-ca-amd64 / zulu17-ca-arm64).
+# rundeckd runs ${JAVA_HOME}/bin/java, so a fixed Ubuntu path fails.
+JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
 export JAVA_HOME
 
 PATH=$JAVA_HOME/bin:$PATH

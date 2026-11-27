@@ -48,7 +48,12 @@ public enum Features implements FeaturesDefinition{
     /**
      * When enabled, Quartz scheduled triggers re-check ACTION_RUN for the job's stored user before creating an execution.
      */
-    SCHEDULED_RUN_AUTHORIZATION("scheduledRunAuthorization");
+    SCHEDULED_RUN_AUTHORIZATION("scheduledRunAuthorization"),
+    /**
+     * When enabled, each webhook rule template is compiled once and reused.
+     * Defaults to on. Set {@code rundeck.feature.webhookTemplateCache.enabled=false} to compile on every event.
+     */
+    WEBHOOK_TEMPLATE_CACHE("webhookTemplateCache");
 
     private final String propertyName;
 
