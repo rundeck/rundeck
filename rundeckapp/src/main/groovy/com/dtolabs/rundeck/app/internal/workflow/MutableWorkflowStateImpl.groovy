@@ -281,16 +281,28 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 return
             }
             MutableWorkflowState subflow = owner.mutableSubWorkflowState
-            int subIndex = owner.stepIdentifier.context.size()
             subflow.stepStates.each { WorkflowStepState child ->
-                //the sub step's own update recurses into its sub workflow, and fans out to its nodes
+                //job reference sub steps use local identifiers, so address the child by its own (last) context
+                //entry rather than the owner's depth. The sub step's own update recurses into its sub
+                //workflow, and fans out to its nodes
                 subflow.updateStateForStep(
                         child.stepIdentifier,
-                        subIndex,
+                        child.stepIdentifier.context.size() - 1,
                         StateUtils.stepStateChange(StateUtils.stepState(ExecutionState.SKIPPED)),
                         timestamp
                 )
             }
+            //the container itself must complete: normal cleanup cannot, as the parent step is already SKIPPED.
+            //The children keep their SKIPPED states since completed states are not overwritten
+            subflow.updateSubWorkflowState(
+                    owner.stepIdentifier,
+                    owner.stepIdentifier.context.size(),
+                    false,
+                    ExecutionState.SUCCEEDED,
+                    timestamp,
+                    null,
+                    this
+            )
         }
     }
 

@@ -228,6 +228,10 @@ class MutableWorkflowStateImplSpec extends Specification {
         sub.stepStates[0].nodeStateMap[node].executionState == ExecutionState.SKIPPED
         sub.stepStates[1].stepState.executionState == ExecutionState.SKIPPED
 
+        and: "the sub workflow container itself is completed, with an end time"
+        sub.executionState.isCompletedState()
+        sub.endTime != null
+
         when: "the workflow completes"
         wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
 
@@ -240,6 +244,30 @@ class MutableWorkflowStateImplSpec extends Specification {
         kind            | parentIsNodeStep
         "workflow step" | false
         "node step"     | true
+    }
+
+    def "skipping a job reference step skips sub steps that use local identifiers"() {
+        given: "a job reference sub workflow whose steps are identified locally, e.g. [1], not [1/1]"
+        def date = new Date()
+        def node = 'TargetNode1'
+
+        def subStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        def subStep2 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        def sub = new MutableWorkflowStateImpl([node], 2, [0: subStep1, 1: subStep2], stepIdentifier(1), 'server')
+        def parent = new MutableWorkflowStepStateImpl(stepIdentifier(1), sub)
+        def wf = new MutableWorkflowStateImpl([node], 1, [0: parent], null, 'server')
+
+        when:
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [node])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SKIPPED)), date)
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then: "every sub step is skipped and the container is complete"
+        wf.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        sub.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        sub.stepStates[1].stepState.executionState == ExecutionState.SKIPPED
+        sub.executionState == ExecutionState.SUCCEEDED
+        sub.endTime != null
     }
 
     def "skipping a step skips nested sub workflows recursively"() {
