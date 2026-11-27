@@ -126,6 +126,8 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.*
@@ -2306,14 +2308,37 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    /**
+     * Publishes the events once the caller's transaction commits. The subscribers run on another
+     * thread in their own transaction, so publishing earlier lets them read before the jobs exist.
+     */
+    @Transactional(propagation = Propagation.SUPPORTS)
     def void issueJobChangeEvents(Collection<JobChangeEvent> events) {
-        notify('multiJobChanged',new ArrayList(events))
+        def copy = new ArrayList(events)
+        afterCommit { notify('multiJobChanged', copy) }
     }
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+
+    @Transactional(propagation = Propagation.SUPPORTS)
     def void issueJobChangeEvent(JobChangeEvent event) {
         if (event) {
-            notify('jobChanged', event)
+            afterCommit { notify('jobChanged', event) }
+        }
+    }
+
+    /**
+     * Runs the action after the current transaction commits, or right away when there is none.
+     */
+    static void afterCommit(Closure action) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                void afterCommit() {
+                    action.call()
+                }
+            })
+        } else {
+            action.call()
         }
     }
 
