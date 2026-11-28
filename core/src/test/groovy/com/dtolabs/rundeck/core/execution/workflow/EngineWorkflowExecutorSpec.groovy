@@ -392,6 +392,13 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
     }
 
+    /**
+     * Build a mocked step execution context for the skip tests
+     *
+     * @param wfListener workflow listener that receives skip and begin callbacks
+     * @param listener execution listener that receives the log output, a stub by default
+     * @return mocked context with one node
+     */
     private StepExecutionContext skipTestContext(
             WorkflowExecutionListener wfListener,
             ExecutionListener listener = Stub(ExecutionListener)
