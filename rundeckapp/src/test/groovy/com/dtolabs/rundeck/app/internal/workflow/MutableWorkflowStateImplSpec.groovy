@@ -869,6 +869,40 @@ class MutableWorkflowStateImplSpec extends Specification {
         nodeSteps*.executionState.every { it == 'SUCCEEDED' }
     }
 
+    /**
+     * Each invocation of a parameterized job reference has its own copy of the nested sub workflow, so a skip
+     * reported inside one invocation must not complete the nested steps of an invocation that is still running.
+     */
+    def "a skip inside one invocation leaves the nested sub workflow of another invocation running"() {
+        given: "job reference 2 run on nodes a and b, whose step 1 is a node step job reference"
+        def fetchStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        fetchStep1.nodeStep = true
+        def fetchWorkflow = new MutableWorkflowStateImpl([], 1, [0: fetchStep1], null, 'a')
+        def nestedRef = new MutableWorkflowStepStateImpl(stepIdentifier(1), fetchWorkflow)
+        nestedRef.nodeStep = true
+        def middleWorkflow = new MutableWorkflowStateImpl([], 1, [0: nestedRef], null, 'a')
+        def step2 = new MutableWorkflowStepStateImpl(stepIdentifier(2), middleWorkflow)
+        step2.nodeStep = true
+        def state = new MutableWorkflowStateImpl(['a', 'b'], 1, [1: step2], null, 'a')
+        def date = new Date()
+
+        when: "invocation b starts its nested reference, then invocation a skips its own"
+        state.updateWorkflowState(ExecutionState.RUNNING, date, ['a', 'b'])
+        stepChange(state, '2', ExecutionState.RUNNING, null, date)
+        stepChange(state, '2', ExecutionState.RUNNING, 'a', date)
+        stepChange(state, '2', ExecutionState.RUNNING, 'b', date)
+        subWorkflowChange(state, '2@node=a', ExecutionState.RUNNING, ['node-0'], date)
+        subWorkflowChange(state, '2@node=b', ExecutionState.RUNNING, ['node-1'], date)
+        stepChange(state, '2@node=b/1', ExecutionState.RUNNING, null, date)
+        stepChange(state, '2@node=b/1', ExecutionState.RUNNING, 'node-1', date)
+        stepChange(state, '2@node=a/1', ExecutionState.SKIPPED, null, date)
+
+        then: "only invocation a is skipped; invocation b keeps running and is free to fail later"
+        step2.parameterizedStateMap['node=a'].subWorkflowState.stepStates[0].stepState.executionState == ExecutionState.SKIPPED
+        step2.parameterizedStateMap['node=b'].subWorkflowState.stepStates[0].stepState.executionState == ExecutionState.RUNNING
+        step2.parameterizedStateMap['node=b'].subWorkflowState.executionState == ExecutionState.RUNNING
+    }
+
     private static void nodeStepRuns(MutableWorkflowStateImpl state, String ident, String node, Date date) {
         stepChange(state, ident, ExecutionState.RUNNING, null, date)
         stepChange(state, ident, ExecutionState.RUNNING, node, date)
