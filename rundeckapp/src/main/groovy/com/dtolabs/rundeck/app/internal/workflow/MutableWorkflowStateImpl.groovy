@@ -745,9 +745,11 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         //a SKIPPED state can be replayed from one parameterized invocation into a step state that is shared with
         //other invocations, so a real result reported by another invocation must override it. A late RUNNING
         //event still does not.
-        //This is "last real result wins", with no aggregation across parameterized copies: the shared state
-        //follows whichever real result arrived last. The per-node states stay exact, and summaries are
-        //computed from those, so a stale shared state does not change the node or execution summary.
+        //So a real result always beats SKIPPED, whichever arrives first: SKIPPED is not allowed over a completed
+        //state (that skip is ignored below), while every completed state is allowed over SKIPPED. Real results do
+        //not replace each other. There is no counting of parameterized copies, so while another invocation is still
+        //RUNNING, a skip reported by one invocation shows the shared state as SKIPPED until that invocation completes.
+        //The per-node states stay exact, and summaries are computed from those.
         //The list is broad on purpose: it includes NOT_STARTED and NODE_MIXED, which are also completed states.
         ExecutionState.values().findAll { it.isCompletedState() && it != ExecutionState.SKIPPED }.each {
             allowed[it] = allowed[it] + [ExecutionState.SKIPPED]
