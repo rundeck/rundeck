@@ -2386,6 +2386,8 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 * `NODE_PARTIAL_SUCCEEDED` - Partial success for some nodes\\*
 * `NODE_MIXED` - Mixed states among nodes\\*
 * `NOT_STARTED` - After waiting the execution did not start\\*
+* `SKIPPED` - The step was skipped, e.g. a conditional or ruleset skip condition was met, or a step that already succeeded was skipped on resume. Unlike
+  `NOT_STARTED`, which means the step was never triggered, a skipped step is considered complete\\*
 
 \\* these states only apply to steps/nodes and do not apply to the overall execution or workflow.
 """,

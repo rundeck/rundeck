@@ -68,7 +68,7 @@
       </div>
     </div>
   </div>
-  <div data-bind="foreach: visibleNodes()">
+  <div data-bind="foreach: activeNodes()">
     <div class="wfnodestate" data-bind="css: { open: expanded() }, attr: { 'data-node': name } ">
       <div class="row wfnodeoverall action" data-bind="click: toggleExpand">
           <div class="col-sm-6  nodectx"
@@ -101,7 +101,7 @@
       %{--step specific info for node--}%
       <div data-bind="if: expanded">
       <div  data-bind="visible: expanded" >
-          <div data-bind="foreach: steps">
+          <div data-bind="foreach: visibleSteps">
               <div data-bind="if: !$data.parameterizedStep()">
               <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
               <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
@@ -139,7 +139,8 @@
                       <div class=" col-sm-2">
                           <span class="execstate execstatedisplay " data-bind="attr: {
                                'data-execstate': executionState,
-                               'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' )
+                               'data-next': ( node.currentStep()==$data && executionState() == 'WAITING' ),
+                               'title': ( executionState() == 'SKIPPED' ? '${enc(attr: enc(js: g.message(code: 'execution.show.step.skipped.description')))}' : false )
                            }"></span>
                       </div>
 

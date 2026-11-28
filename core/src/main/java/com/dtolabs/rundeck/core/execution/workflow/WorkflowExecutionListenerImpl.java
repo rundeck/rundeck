@@ -169,6 +169,35 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
     }
 
     @Override
+    public void skipWorkflowItem(final int step, final StepExecutionItem item) {
+        if (null != delegate) {
+            delegate.skipWorkflowItem(step, item);
+            return;
+        }
+        log(
+                Constants.DEBUG_LEVEL,
+                "[workflow] Skip step: " + step + "," + item.getType()
+        );
+    }
+
+    @Override
+    public void skipExecuteNodeStep(
+            final ExecutionContext context,
+            final StepExecutionItem item,
+            final INodeEntry node
+    )
+    {
+        if (null != delegate) {
+            delegate.skipExecuteNodeStep(context, item, node);
+            return;
+        }
+        log(
+                Constants.DEBUG_LEVEL,
+                "[workflow] skipExecuteNodeStep(" + node.getNodename() + "): " + item.getType()
+        );
+    }
+
+    @Override
     public ExecutionListenerOverride createOverride() {
         return new WorkflowExecutionListenerImpl(this, getLogger());
     }

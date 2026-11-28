@@ -51,7 +51,7 @@ class StateMapping {
         if (a == b) {
             return false
         }
-        def states = ['SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
+        def states = ['SKIPPED', 'SUCCEEDED', 'NONE','NOT_STARTED', 'WAITING', 'FAILED', 'ABORTED', 'RUNNING', 'RUNNING_HANDLER'];
         def ca = states.indexOf(a);
         def cb = states.indexOf(b);
         if (ca < 0) {
@@ -64,7 +64,7 @@ class StateMapping {
             return false
         }
         def state = step.executionState
-        return state && !(state in ['NOT_STARTED', 'NONE', 'WAITING'])
+        return state && !(state in ['NOT_STARTED', 'NONE', 'WAITING', 'SKIPPED'])
     }
     def Map summarizeForNode(Map map,String node, List steps){
         def summary=[:]
@@ -74,6 +74,7 @@ class StateMapping {
         def summarydata = [
             total: 0,
             SUCCEEDED: 0,
+            SKIPPED: 0,
             FAILED: 0,
             WAITING: 0,
             NOT_STARTED: 0,
@@ -84,7 +85,7 @@ class StateMapping {
         ]
 
         Date updated=null;
-        def testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
+        def testStates= ['SUCCEEDED', 'SKIPPED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
         def duration=-1;
         Date dateStarted=null;
         steps.each{step->
@@ -134,7 +135,12 @@ class StateMapping {
                 summary.summaryState=("RUNNING");
             } else if (summarydata.RUNNING_HANDLER > 0) {
                 summary.summaryState=("RUNNING_HANDLER");
-            } else if (summarydata.total == summarydata.SUCCEEDED && summarydata.pending < 1) {
+            } else if (summarydata.total == summarydata.SUCCEEDED + summarydata.SKIPPED && summarydata.pending < 1) {
+                //every step succeeded or was skipped: the node is complete. Skipped steps are neutral
+                if (summarydata.SKIPPED > 0) {
+                    summary.total = summarydata.total
+                    summary.SKIPPED = summarydata.SKIPPED
+                }
                 summary.summaryState=("SUCCEEDED");
             } else if (summarydata.FAILED > 0) {
                 summary.FAILED=summarydata.FAILED;
@@ -143,22 +149,14 @@ class StateMapping {
                 summary.WAITING=summarydata.WAITING;
                 summary.summaryState=("WAITING");
             } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
-                summary.total=summarydata.total;
-                summary.SUCCEEDED=summarydata.SUCCEEDED;
-                summary.NOT_STARTED=summarydata.NOT_STARTED;
                 summary.summaryState=("NOT_STARTED");
             } else if (summarydata.NOT_STARTED > 0) {
                 summary.PARTIAL_NOT_STARTED=summarydata.NOT_STARTED;
-                //the summary state alone cannot tell a skipped conditional apart from a step that was
-                //never reached, so expose the counts the UI needs to make that distinction
-                summary.total=summarydata.total;
-                summary.SUCCEEDED=summarydata.SUCCEEDED;
-                summary.NOT_STARTED=summarydata.NOT_STARTED;
                 summary.summaryState=("PARTIAL_NOT_STARTED");
             }else if(summarydata.pending > 0 ){
                 summary.summaryState=("WAITING");
             } else if (summarydata.SUCCEEDED > 0) {
-                summary.PARTIAL_SUCCEEDED=summarydata.total - summarydata.SUCCEEDED;
+                summary.PARTIAL_SUCCEEDED=summarydata.total - summarydata.SUCCEEDED - summarydata.SKIPPED;
                 summary.summaryState=("PARTIAL_SUCCEEDED");
             } else {
                 summary.summaryState=("NONE_SUCCEEDED");

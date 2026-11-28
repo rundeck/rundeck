@@ -58,6 +58,13 @@ public class StepCallable implements Function<WFSharedContext, BaseWorkflowExecu
         this.cmd = cmd;
     }
 
+    /**
+     * @return the step this callable runs
+     */
+    public StepExecutionItem getStepItem() {
+        return cmd;
+    }
+
     @Override
     public BaseWorkflowExecutor.StepResultCapture apply(final WFSharedContext inputData) {
         StepExecutionContext newContext =

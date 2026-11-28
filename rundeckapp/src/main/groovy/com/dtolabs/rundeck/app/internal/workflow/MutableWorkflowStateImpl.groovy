@@ -197,9 +197,30 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 updateState(identifier,toup, stepStateChange.stepState.executionState)
             }
         } else {
-            toUpdateComplete << currentStep.mutableStepState
+            boolean skipped = stepStateChange.stepState.executionState == ExecutionState.SKIPPED
+            //a skip reported inside one parameterized invocation (one node of a node step job reference) is
+            //replayed into the shared sub workflow, where it must only apply to that invocation's node
+            String invocationNode = skipped ? parameterizedInvocationNode(identifier, index) : null
+            if (!invocationNode) {
+                toUpdateComplete << currentStep.mutableStepState
+            }
             if (nodeSet && (null == currentStep.nodeStepTargets || currentStep.nodeStepTargets.size() < 1)) {
                 currentStep.setNodeStepTargets(nodeSet)
+            }
+            if (skipped) {
+                //the engine skipped this whole node step without running it on any node, so it is
+                //skipped on every node it targets, or only on the invocation's node when scoped to one.
+                //A scoped skip leaves the step state to be resolved from all of its node states.
+                List<String> skipNodes = invocationNode ? [invocationNode] : (currentStep.nodeStepTargets ?: nodeSet)
+                skipNodes?.each { String targetNode ->
+                    toUpdateComplete << updateNodeStepState(currentStep, targetNode, identifier, stepStateChange)
+                }
+                if (!skipNodes && !invocationNode) {
+                    //no known targets, e.g. a prebuilt job reference whose node filter could not be resolved:
+                    //there is no node to skip it on, so mark the step itself skipped
+                    updateState(identifier, currentStep.mutableStepState, ExecutionState.SKIPPED)
+                }
+                finishNodeStepIfNodesFinished(currentStep, timestamp)
             }
         }
         transitionStateIfWaiting(identifier,currentStep.mutableStepState)
@@ -250,6 +271,73 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             }
         }
 
+        //a node step with node states already propagated the skip in finishNodeStepIfNodesFinished, so only
+        //propagate here for other steps, otherwise nested job references repeat the work at every level
+        if (!stepStateChange.nodeState && stepStateChange.stepState.executionState == ExecutionState.SKIPPED
+                && !(currentStep.nodeStep && currentStep.nodeStateMap)) {
+            skipSubWorkflowSteps(currentStep, timestamp)
+        }
+    }
+
+    /**
+     * Find the node of the parameterized invocation, if any, that an update identified by the context
+     * entries above the given index belongs to, e.g. "node a" for step context [1@node=a, 1].
+     *
+     * @param identifier step identifier
+     * @param index index of the context entry being updated in the current workflow
+     * @return the node name of the enclosing parameterized invocation, or null when there is none
+     */
+    private static String parameterizedInvocationNode(StepIdentifier identifier, int index) {
+        for (int i = index - 1; i >= 0; i--) {
+            String node = identifier.context[i].params?.get('node')
+            if (node) {
+                return node
+            }
+        }
+        return null
+    }
+
+    /**
+     * When a step that contains a prebuilt sub workflow (e.g. a job reference) is skipped, the steps of
+     * that sub workflow never run, so skip them too, recursively. Otherwise they stay WAITING or are
+     * finalized as NOT_STARTED, which leaves the parent step and node summaries incomplete.
+     *
+     * @param skippedStep the step that was skipped
+     * @param timestamp time of the skip
+     */
+    private void skipSubWorkflowSteps(MutableWorkflowStepState skippedStep, Date timestamp) {
+        //a parameterized step has one sub workflow per parameter set
+        Collection<MutableWorkflowStepState> owners = skippedStep.parameterizedStateMap ?
+                skippedStep.mutableParameterizedStateMap.values() :
+                [skippedStep]
+        owners.each { MutableWorkflowStepState owner ->
+            if (!owner.hasSubWorkflow()) {
+                return
+            }
+            MutableWorkflowState subflow = owner.mutableSubWorkflowState
+            subflow.stepStates.each { WorkflowStepState child ->
+                //job reference sub steps use local identifiers, so address the child by its own (last) context
+                //entry rather than the owner's depth. The sub step's own update recurses into its sub
+                //workflow, and fans out to its nodes
+                subflow.updateStateForStep(
+                        child.stepIdentifier,
+                        child.stepIdentifier.context.size() - 1,
+                        StateUtils.stepStateChange(StateUtils.stepState(ExecutionState.SKIPPED)),
+                        timestamp
+                )
+            }
+            //the container itself must complete: normal cleanup cannot, as the parent step is already SKIPPED.
+            //The children keep their SKIPPED states unless a real result arrives later (see the allowed table in updateState)
+            subflow.updateSubWorkflowState(
+                    owner.stepIdentifier,
+                    owner.stepIdentifier.context.size(),
+                    false,
+                    ExecutionState.SUCCEEDED,
+                    timestamp,
+                    null,
+                    this
+            )
+        }
     }
 
     /**
@@ -344,8 +432,63 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         subflow.updateStateForStep(identifier, index + 1, stepStateChange, timestamp);
         if (currentStep.ownerStepState) {
             //also update state for parameterized step owner
-            descendUpdateStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
+            List<String> skipTargets = invocationSkipTargets(currentStep, identifier, index, stepStateChange)
+            if (skipTargets) {
+                //replay the skip into the shared sub workflow only for the nodes this invocation targets
+                skipTargets.each { String node ->
+                    descendUpdateStateForStep(
+                            currentStep.ownerStepState,
+                            identifier,
+                            index,
+                            StateUtils.stepStateChange(StateUtils.stepState(ExecutionState.SKIPPED), node),
+                            timestamp
+                    )
+                }
+            } else {
+                descendUpdateStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
+            }
         }
+    }
+
+    /**
+     * A step skipped inside one parameterized invocation (for example 1@node=a/1) is also replayed into the
+     * shared sub workflow of the parameterized step's owner. When the skipped step is a node step there, the
+     * skip applies only to the invocation's node when the child runs there, or else to the nodes the
+     * invocation's own sub workflow targets, e.g. a job reference run on localhost whose child targets node-0.
+     *
+     * @param invocation the parameterized copy of the step being descended into
+     * @param identifier step identifier of the step being updated
+     * @param index index of the invocation's context entry
+     * @param stepStateChange the state change being replayed
+     * @return the nodes to skip the shared node step on, or empty when the change is replayed unchanged
+     */
+    private static List<String> invocationSkipTargets(
+            MutableWorkflowStepState invocation,
+            StepIdentifier identifier,
+            int index,
+            StepStateChange stepStateChange
+    ) {
+        if (stepStateChange.nodeState ||
+            stepStateChange.stepState.executionState != ExecutionState.SKIPPED ||
+            identifier.context.size() - index != 2 ||
+            !invocation.hasSubWorkflow()) {
+            return []
+        }
+        MutableWorkflowState shared = invocation.ownerStepState.hasSubWorkflow() ?
+                invocation.ownerStepState.mutableSubWorkflowState : null
+        MutableWorkflowStepState sharedChild =
+                (shared instanceof MutableWorkflowStateImpl) ?
+                ((MutableWorkflowStateImpl) shared).mutableStepStates[identifier.context[index + 1].step - 1] : null
+        if (!sharedChild?.nodeStep) {
+            return []
+        }
+        List<String> targets = invocation.mutableSubWorkflowState.nodeSet ?: []
+        String invocationNode = identifier.context[index].params?.get('node')
+        //the child runs on the invocation's own node when that is one of its targets, otherwise on its targets
+        if (invocationNode && (targets.isEmpty() || targets.contains(invocationNode))) {
+            return [invocationNode]
+        }
+        return new ArrayList<String>(targets)
     }
 /**
      * Descend into a sub workflow to update state
@@ -429,7 +572,17 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         if (finished) {
             boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
             boolean failed = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.FAILED }
-            def overall = aborted ? ExecutionState.ABORTED : failed ? ExecutionState.FAILED : ExecutionState.SUCCEEDED
+            //a step whose nodes were all skipped is itself skipped rather than succeeded
+            boolean skippedAll = currentStep.nodeStateMap &&
+                                 currentStep.nodeStateMap.values()*.executionState.every { it == ExecutionState.SKIPPED }
+            def overall = aborted ? ExecutionState.ABORTED :
+                          failed ? ExecutionState.FAILED :
+                          skippedAll ? ExecutionState.SKIPPED :
+                          ExecutionState.SUCCEEDED
+            if (overall == ExecutionState.SKIPPED && currentStep.hasSubWorkflow()) {
+                //every node skipped the step, so its prebuilt sub workflow steps never run either
+                skipSubWorkflowSteps(currentStep, timestamp)
+            }
             resolveStepCompleted(overall, timestamp, currentStep)
         }
     }
@@ -476,17 +629,22 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     protected ExecutionState summarizedSubStateResult(Collection<? extends ExecutionState> execStates,
                                                       ExecutionState overall) {
         boolean finished = execStates.every { it!=null && it.isCompletedState() }
-        boolean aborted = execStates.any { it == ExecutionState.ABORTED }
-        boolean abortedAll = execStates.every { it == ExecutionState.ABORTED }
-        boolean failed = execStates.any { it == ExecutionState.FAILED }
-        boolean failedAll = execStates.every { it == ExecutionState.FAILED }
-        boolean succeeded = execStates.any { it == ExecutionState.SUCCEEDED }
-        boolean succeededAll = execStates.every { it == ExecutionState.SUCCEEDED }
+        //SKIPPED states are neutral: they do not count for or against success, failure or abort
+        boolean skippedAll = execStates.size() > 0 && execStates.every { it == ExecutionState.SKIPPED }
+        def considered = execStates.findAll { it != ExecutionState.SKIPPED }
+        boolean aborted = considered.any { it == ExecutionState.ABORTED }
+        boolean abortedAll = considered.every { it == ExecutionState.ABORTED }
+        boolean failed = considered.any { it == ExecutionState.FAILED }
+        boolean failedAll = considered.every { it == ExecutionState.FAILED }
+        boolean succeeded = considered.any { it == ExecutionState.SUCCEEDED }
+        boolean succeededAll = considered.every { it == ExecutionState.SUCCEEDED }
         boolean notStartedAll = execStates?.size() == 0 || execStates.every { it == ExecutionState.WAITING || it == null }
         ExecutionState result = overall
         if (finished) {
             //all nodes finished
-            if (abortedAll) {
+            if (skippedAll) {
+                result = ExecutionState.SKIPPED
+            } else if (abortedAll) {
                 result = ExecutionState.ABORTED
             } else if (failedAll) {
                 result = ExecutionState.FAILED
@@ -578,6 +736,23 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         ]
         ExecutionState.values().findAll{it.isCompletedState()}.each{
             allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING, ExecutionState.NOT_STARTED]
+        }
+        //SKIPPED, like every completed state, is allowed from RUNNING on purpose: updateStateForStep first
+        //touches the step (WAITING -> RUNNING) before applying the reported state, so even a step that was
+        //skipped without ever running is RUNNING when its SKIPPED arrives. Do not narrow this list.
+        //A skip can also be the first thing reported for a step, before any WAITING state was observed.
+        allowed[ExecutionState.SKIPPED] = allowed[ExecutionState.SKIPPED] + [null]
+        //a SKIPPED state can be replayed from one parameterized invocation into a step state that is shared with
+        //other invocations, so a real result reported by another invocation must override it. A late RUNNING
+        //event still does not.
+        //So a real result always beats SKIPPED, whichever arrives first: SKIPPED is not allowed over a completed
+        //state (that skip is ignored below), while every completed state is allowed over SKIPPED. Real results do
+        //not replace each other. There is no counting of parameterized copies, so while another invocation is still
+        //RUNNING, a skip reported by one invocation shows the shared state as SKIPPED until that invocation completes.
+        //The per-node states stay exact, and summaries are computed from those.
+        //The list is broad on purpose: it includes NOT_STARTED and NODE_MIXED, which are also completed states.
+        ExecutionState.values().findAll { it.isCompletedState() && it != ExecutionState.SKIPPED }.each {
+            allowed[it] = allowed[it] + [ExecutionState.SKIPPED]
         }
         if (errorHandler) {
             allowed[ExecutionState.RUNNING] << ExecutionState.FAILED

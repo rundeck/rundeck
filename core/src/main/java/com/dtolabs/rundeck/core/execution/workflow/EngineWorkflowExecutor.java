@@ -42,7 +42,9 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 /**
@@ -243,6 +245,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             list.add(event -> {
                 logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
             });
+            list.add(createSkipNotifier(operations, wlistener));
 
             executionContext.useAllComponentsOfType(WorkflowSystemEventListener.class, list::add);
 
@@ -294,7 +297,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     addUnknownStepFailure(executionContext, stepFailures, operation, failure, logDebug, logErr);
                 }
             }
-            logSkippedOperations(executionContext, operations, logWarn);
+            logSkippedOperations(executionContext, operations, logDebug, logWarn);
 
             workflowResult = workflowResult(
                     workflowSuccess,
@@ -429,26 +432,70 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         ));
     }
 
+    /**
+     * Create a listener which reports each step skipped by the workflow engine to the workflow
+     * execution listener, so the skipped step is recorded as SKIPPED rather than being left as
+     * never started.
+     *
+     * @param operations the step operations of the workflow
+     * @param wlistener  workflow listener, may be null
+     * @return event listener
+     */
+    static WorkflowSystemEventListener createSkipNotifier(
+            final Set<StepOperation> operations,
+            final WorkflowExecutionListener wlistener
+    )
+    {
+        //identities are expected to be unique per workflow ("[stepNum]label", one step number per command), but
+        //skip reporting is display-only, so on a duplicate keep the first rather than failing the execution
+        final Map<String, StepOperation> byIdentity = operations.stream().collect(
+                Collectors.toMap(StepOperation::getIdentity, Function.identity(), (first, second) -> first)
+        );
+        return event -> {
+            if (event.getEventType() != WorkflowSystemEventType.WillSkipOperation
+                || !(event.getData() instanceof StateWorkflowSystem.OperationEvent<?> operationEvent)) {
+                return;
+            }
+            StepOperation op = byIdentity.get(operationEvent.getIdentity());
+            if (null == op) {
+                return;
+            }
+            op.markSkipped();
+            if (null != wlistener) {
+                wlistener.skipWorkflowItem(op.getStepNum(), op.getStepItem());
+            }
+        };
+    }
+
+    /**
+     * Log the steps that did not run: skipped steps (a skip condition was met, which is normal) are
+     * logged at debug level, steps that were never started (their start conditions were never met)
+     * are logged as warnings.
+     */
     private static void logSkippedOperations(
             final StepExecutionContext executionContext,
             final Set<StepOperation> operations,
-            LogOut logOut
+            final LogOut logSkipped,
+            final LogOut logNeverStarted
     )
     {
         operations.stream()
                   .filter(op -> !op.isDidRun())
-                  .forEach(op ->
-                                   logOut.log(
-                                           String.format(
-                                                   "Step [%d] did not run. " +
-                                                   "start conditions: %s, skip " +
-                                                   "conditions: %s",
-                                                   op.getStepNum(),
-                                                   op.getStartTriggerConditions(),
-                                                   op.getSkipTriggerConditions()
-                                           )
-                                   )
-                  );
+                  .forEach(op -> {
+                      if (op.isDidSkip()) {
+                          logSkipped.log(String.format(
+                                  "Step [%d] skipped: skip condition met: %s",
+                                  op.getStepNum(),
+                                  op.getSkipTriggerConditions()
+                          ));
+                      } else {
+                          logNeverStarted.log(String.format(
+                                  "Step [%d] never started: start conditions not met: %s",
+                                  op.getStepNum(),
+                                  op.getStartTriggerConditions()
+                          ));
+                      }
+                  });
     }
 
     /**

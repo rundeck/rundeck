@@ -54,6 +54,10 @@
     color: var(--dark-gray);
   }
 
+  &[data-execstate="SKIPPED"] {
+    color: var(--font-color);
+  }
+
   &[data-execstate="PASS"] {
     color: var(--medium-gray);
   }
@@ -144,6 +148,10 @@
 
   &[data-execstate="NOT_STARTED"]:after {
     content: "Not Started";
+  }
+
+  &[data-execstate="SKIPPED"]:after {
+    content: "Skipped";
   }
 
   &[data-execstate="MISSED"]:after {

@@ -116,6 +116,24 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
         reversedListenerList*.finishExecuteNodeStep(result, context, item, node)
     }
 
+    /**
+     * Forward a skipped step to every listener. Must be overridden explicitly, otherwise the
+     * interface's no-op default would silently swallow the skip.
+     */
+    @Override
+    void skipWorkflowItem(int step, StepExecutionItem item) {
+        listenerList*.skipWorkflowItem(step, item)
+    }
+
+    /**
+     * Forward a node-level skip to every listener. Must be overridden explicitly, otherwise the
+     * interface's no-op default would silently swallow the skip.
+     */
+    @Override
+    void skipExecuteNodeStep(ExecutionContext context, StepExecutionItem item, INodeEntry node) {
+        listenerList*.skipExecuteNodeStep(context, item, node)
+    }
+
 
     @Override
     void log(int level, String message) {

@@ -623,6 +623,92 @@ class StateMappingSpec extends Specification {
             summarized.nodeSummaries['localhost'].startTime != stepStartTimes.max()
     }
 
+    @spock.lang.Unroll
+    def "summarizeForNode treats SKIPPED steps as neutral: #states -> #expectedState"() {
+        given:
+            def sut = new StateMapping()
+            def steps = states.withIndex().collect { st, i ->
+                [stepctx: "${i + 1}".toString(), executionState: st]
+            }
+        when:
+            def summary = sut.summarizeForNode([:], 'localhost', steps)
+        then:
+            summary.summaryState == expectedState
+            (summary.SKIPPED ?: 0) == expectedSkipped
+        where:
+            states                                    | expectedState         | expectedSkipped
+            ['SUCCEEDED', 'SKIPPED', 'SUCCEEDED']     | 'SUCCEEDED'           | 1
+            ['SUCCEEDED', 'SKIPPED']                  | 'SUCCEEDED'           | 1
+            ['SKIPPED', 'SKIPPED']                    | 'SUCCEEDED'           | 2
+            ['SUCCEEDED', 'SUCCEEDED']                | 'SUCCEEDED'           | 0
+            ['SUCCEEDED', 'SKIPPED', 'FAILED']        | 'FAILED'              | 0
+            ['SUCCEEDED', 'SKIPPED', 'NOT_STARTED']   | 'PARTIAL_NOT_STARTED' | 0
+            ['SUCCEEDED', 'NOT_STARTED', 'NOT_STARTED'] | 'PARTIAL_NOT_STARTED' | 0
+            ['NOT_STARTED', 'NOT_STARTED']            | 'NOT_STARTED'         | 0
+    }
+
+    def "summarizeForNode does not count SKIPPED steps as did-not-succeed in PARTIAL_SUCCEEDED"() {
+        given:
+            def sut = new StateMapping()
+            def steps = [
+                [stepctx: '1', executionState: 'SUCCEEDED'],
+                [stepctx: '2', executionState: 'SKIPPED'],
+                [stepctx: '3', executionState: 'ABORTED'],
+            ]
+        when:
+            def summary = sut.summarizeForNode([:], 'localhost', steps)
+        then: "only the aborted step did not succeed"
+            summary.summaryState == 'PARTIAL_SUCCEEDED'
+            summary.PARTIAL_SUCCEEDED == 1
+    }
+
+    def "summarizeForNode ignores SKIPPED steps when computing duration"() {
+        given:
+            def sut = new StateMapping()
+            def steps = [
+                [
+                    stepctx       : '1',
+                    executionState: 'SUCCEEDED',
+                    startTime     : '2014-09-05T21:28:04Z',
+                    endTime       : '2014-09-05T21:28:05Z',
+                ],
+                [
+                    stepctx       : '2',
+                    executionState: 'SKIPPED',
+                    startTime     : '2014-09-05T21:28:43Z',
+                    updateTime    : '2014-09-05T21:28:43Z',
+                    endTime       : '2014-09-05T21:28:43Z',
+                ],
+            ]
+        when:
+            def summary = sut.summarizeForNode([:], 'localhost', steps)
+        then:
+            summary.duration == 1000L
+    }
+
+    def "stateCompare ranks SKIPPED lowest so a succeeded step is the current step"() {
+        given:
+            def sut = new StateMapping()
+        expect:
+            sut.stateCompare('SKIPPED', 'SUCCEEDED')
+            !sut.stateCompare('SUCCEEDED', 'SKIPPED')
+            sut.stateCompare('SKIPPED', 'FAILED')
+    }
+
+    def "execution state data persisted before SKIPPED existed still maps"() {
+        given:
+            def sut = new StateMapping()
+            def steps = [
+                [stepctx: '1', executionState: 'SUCCEEDED'],
+                [stepctx: '2', executionState: 'NOT_STARTED'],
+            ]
+        when:
+            def summary = sut.summarizeForNode([:], 'localhost', steps)
+        then: "unchanged: a never-started step still leaves the node incomplete"
+            summary.summaryState == 'PARTIAL_NOT_STARTED'
+            summary.PARTIAL_NOT_STARTED == 1
+    }
+
     boolean mapEntriesAreEqualIgnoringDates(given, expected) {
         //assume they are the same type
         if (given instanceof Map) {
