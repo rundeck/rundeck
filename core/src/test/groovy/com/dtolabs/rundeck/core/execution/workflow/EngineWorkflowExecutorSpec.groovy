@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.NodesetEmptyException
 import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionServices
 import com.dtolabs.rundeck.core.common.Framework
@@ -391,9 +392,12 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
     }
 
-    private StepExecutionContext skipTestContext(WorkflowExecutionListener wfListener) {
+    private StepExecutionContext skipTestContext(
+            WorkflowExecutionListener wfListener,
+            ExecutionListener listener = Stub(ExecutionListener)
+    ) {
         Mock(StepExecutionContext) {
-            getExecutionListener() >> Stub(ExecutionListener)
+            getExecutionListener() >> listener
             getWorkflowExecutionListener() >> wfListener
             getNodes() >> Mock(INodeSet) {
                 getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
@@ -413,6 +417,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
         framework.getWorkflowStrategyService().registerClass('test-skip-strategy', TestSkipProfileWorkflowStrategy)
         def wfListener = Mock(WorkflowExecutionListener)
+        def listener = Mock(ExecutionListener)
         def stepItem = Mock(StepExecutionItem) {
             getType() >> 'blah'
         }
@@ -424,12 +429,17 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
 
         when:
-        def result = engine.executeWorkflowImpl(skipTestContext(wfListener), item)
+        def result = engine.executeWorkflowImpl(skipTestContext(wfListener, listener), item)
 
         then:
         result.success
         1 * wfListener.skipWorkflowItem(1, stepItem)
         0 * wfListener.beginWorkflowItem(_, _)
+
+        and: "the skip is logged at debug level as a skip, not as a step that never started"
+        1 * listener.log(Constants.DEBUG_LEVEL, { it.contains('Step [1] skipped: skip condition met') })
+        0 * listener.log(_, { it.contains('never started') })
+        _ * listener.log(_, _)
     }
 
     def "a step that was never started is not reported as skipped"() {
@@ -438,6 +448,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
         framework.getWorkflowStrategyService().registerClass('test-never-strategy', TestNeverStartWorkflowStrategy)
         def wfListener = Mock(WorkflowExecutionListener)
+        def listener = Mock(ExecutionListener)
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
                 getCommands() >> [
@@ -449,12 +460,17 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
 
         when:
-        engine.executeWorkflowImpl(skipTestContext(wfListener), item)
+        engine.executeWorkflowImpl(skipTestContext(wfListener, listener), item)
 
         then: "step 1 ran, step 2's start conditions were never met, and nothing was reported skipped"
         1 * wfListener.beginWorkflowItem(1, _)
         0 * wfListener.beginWorkflowItem(2, _)
         0 * wfListener.skipWorkflowItem(_, _)
+
+        and: "step 2 is logged as a warning that it never started, not as skipped"
+        1 * listener.log(Constants.WARN_LEVEL, { it.contains('Step [2] never started: start conditions not met') })
+        0 * listener.log(_, { it.contains('skipped: skip condition met') })
+        _ * listener.log(_, _)
     }
 
     def "createSkipNotifier ignores other events and unknown operations"() {
