@@ -446,10 +446,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final WorkflowExecutionListener wlistener
     )
     {
-        //identities are unique per workflow: each is "[stepNum]label" and buildOperations gives every command its
-        //own step number, so toMap needs no merge function (a duplicate would be a bug and should fail loudly)
-        final Map<String, StepOperation> byIdentity =
-                operations.stream().collect(Collectors.toMap(StepOperation::getIdentity, Function.identity()));
+        //identities are expected to be unique per workflow ("[stepNum]label", one step number per command), but
+        //skip reporting is display-only, so on a duplicate keep the first rather than failing the execution
+        final Map<String, StepOperation> byIdentity = operations.stream().collect(
+                Collectors.toMap(StepOperation::getIdentity, Function.identity(), (first, second) -> first)
+        );
         return event -> {
             if (event.getEventType() != WorkflowSystemEventType.WillSkipOperation
                 || !(event.getData() instanceof StateWorkflowSystem.OperationEvent<?> operationEvent)) {

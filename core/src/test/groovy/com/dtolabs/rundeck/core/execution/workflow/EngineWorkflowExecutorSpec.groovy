@@ -505,6 +505,25 @@ class EngineWorkflowExecutorSpec extends Specification {
         op.didSkip
     }
 
+    def "createSkipNotifier tolerates duplicate operation identities"() {
+        given: "two operations that share an identity"
+        def mk = {
+            new StepOperation(
+                    2, 'two', Mock(StepCallable) { getStepItem() >> Mock(StepExecutionItem) },
+                    null, null, [] as Set, [] as Set, null
+            )
+        }
+        def first = mk()
+        def second = mk()
+
+        when:
+        def notifier = EngineWorkflowExecutor.createSkipNotifier([first, second] as Set, Mock(WorkflowExecutionListener))
+
+        then: "building the notifier does not throw"
+        notifier != null
+        first.identity == second.identity
+    }
+
     def "composed conditions describe themselves instead of printing lambdas"() {
         given:
         def a = Rules.equalsCondition('a', '1')
