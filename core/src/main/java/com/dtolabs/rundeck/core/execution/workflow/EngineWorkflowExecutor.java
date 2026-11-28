@@ -446,6 +446,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final WorkflowExecutionListener wlistener
     )
     {
+        //identities are unique per workflow: each is "[stepNum]label" and buildOperations gives every command its
+        //own step number, so toMap needs no merge function (a duplicate would be a bug and should fail loudly)
         final Map<String, StepOperation> byIdentity =
                 operations.stream().collect(Collectors.toMap(StepOperation::getIdentity, Function.identity()));
         return event -> {
